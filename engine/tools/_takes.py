@@ -52,6 +52,7 @@ import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
 import hashlib
 import json
 import os
+import _compat_dirfd as _dfd  # port: dir_fd/O_DIRECTORY emulation on Windows (POSIX: same os functions)
 import stat
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -62,8 +63,8 @@ from log import job_lock_at, log_event
 TAKES_DIR = ".takes"
 PREVIOUS_DIR = "previous_takes"
 _LOCKS_DIR = ".locks"
-# port: getattr keeps POSIX identical and lets the module import on Windows (no O_DIRECTORY/O_NOFOLLOW/O_CLOEXEC).
-_DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+# port: _compat_dirfd flags = os flags on POSIX; private bits honoured by _compat_dirfd on Windows.
+_DIR_FLAGS = os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
 
 
 def request_key(request: dict) -> str:
@@ -85,8 +86,8 @@ def write_atomic(path: Path, data: bytes) -> None:
         with open(partial, "wb") as stream:
             stream.write(data)
             stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(partial, path)
+            _dfd.fsync(stream.fileno())
+        _dfd.replace(partial, path)
     finally:
         partial.unlink(missing_ok=True)
 
@@ -108,26 +109,26 @@ def _same_inode(a: os.stat_result | None, b: os.stat_result | None) -> bool:
 
 def _open_dir(root_fd: int, parts: tuple[str, ...], *, create: bool) -> int | None:
     """A no-follow descriptor for ``root/parts``; None when missing and not creating."""
-    current = os.dup(root_fd)
+    current = _dfd.dup(root_fd)
     try:
         for part in parts:
             if create:
                 try:
-                    os.mkdir(part, 0o755, dir_fd=current)
+                    _dfd.mkdir(part, 0o755, dir_fd=current)
                 except FileExistsError:
                     pass
             try:
-                child = os.open(part, _DIR_FLAGS, dir_fd=current)
+                child = _dfd.open(part, _DIR_FLAGS, dir_fd=current)
             except FileNotFoundError:
                 if create:
                     raise
-                os.close(current)
+                _dfd.close(current)
                 return None
-            os.close(current)
+            _dfd.close(current)
             current = child
         return current
     except BaseException:
-        os.close(current)
+        _dfd.close(current)
         raise
 
 
@@ -135,13 +136,13 @@ def _stat_at(dir_fd: int | None, name: str) -> os.stat_result | None:
     if dir_fd is None:
         return None
     try:
-        return os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
+        return _dfd.stat(name, dir_fd=dir_fd, follow_symlinks=False)
     except FileNotFoundError:
         return None
 
 
 def _digest_at(dir_fd: int, name: str) -> str:
-    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=dir_fd)
+    fd = _dfd.open(name, os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_NONBLOCK | _dfd.O_CLOEXEC, dir_fd=dir_fd)
     with os.fdopen(fd, "rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
@@ -188,7 +189,7 @@ class PaidTake:
         checked in the journal once the lock is held.
         """
         from _gateway import GatewayNotSubmittedError
-        root_fd = os.open(self.root, _DIR_FLAGS)
+        root_fd = _dfd.open(self.root, _DIR_FLAGS)
         lock_fd = -1
         try:
             try:
@@ -198,7 +199,7 @@ class PaidTake:
                         folder = _open_dir(root_fd, tuple(parts[:depth]), create=False)
                         if folder is None:
                             break
-                        os.close(folder)
+                        _dfd.close(folder)
                 locks = _open_dir(root_fd, (TAKES_DIR, _LOCKS_DIR), create=True)
             except OSError as exc:
                 raise GatewayNotSubmittedError(
@@ -208,13 +209,13 @@ class PaidTake:
                 name = request_key({"outputs": [str(rel) for rel in self.relative]}) + ".lock"
                 for _ in range(64):  # macOS can report ENOENT while a sibling creates the leaf (#273)
                     try:
-                        lock_fd = os.open(name, os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=locks)
+                        lock_fd = _dfd.open(name, os.O_RDWR | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC, dir_fd=locks)
                         break
                     except FileNotFoundError:
                         pass
                     try:
-                        lock_fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
-                                          | os.O_CLOEXEC, 0o600, dir_fd=locks)
+                        lock_fd = _dfd.open(name, os.O_RDWR | os.O_CREAT | os.O_EXCL | _dfd.O_NOFOLLOW
+                                          | _dfd.O_CLOEXEC, 0o600, dir_fd=locks)
                         break
                     except (FileExistsError, FileNotFoundError):
                         pass
@@ -223,7 +224,7 @@ class PaidTake:
                     f"{self.names}: the regeneration lock cannot be opened safely. "
                     "Nothing was submitted or charged.") from exc
             finally:
-                os.close(locks)
+                _dfd.close(locks)
             if lock_fd < 0:
                 raise OSError(f"could not open the regeneration lock for {self.names}")
             try:
@@ -243,8 +244,8 @@ class PaidTake:
             yield self
         finally:
             if lock_fd >= 0:
-                os.close(lock_fd)
-            os.close(root_fd)
+                _dfd.close(lock_fd)
+            _dfd.close(root_fd)
 
     def _refuse_other_pending_take(self) -> None:
         """Refuse before payment while another request's paid take of these outputs is on its way.
@@ -317,7 +318,7 @@ class PaidTake:
         published it).
         """
         kept: list[Path] = []
-        root_fd = os.open(self.root, _DIR_FLAGS)
+        root_fd = _dfd.open(self.root, _DIR_FLAGS)
         opened: list[int] = []
         try:
             with job_lock_at(root_fd):
@@ -352,22 +353,22 @@ class PaidTake:
                     if index in moving:
                         previous_fd = _open_dir(root_fd, (PREVIOUS_DIR, stamp, *rel.parts[:-1]), create=True)
                         opened.append(previous_fd)
-                        os.rename(rel.name, rel.name, src_dir_fd=out_fd, dst_dir_fd=previous_fd)
-                        os.fsync(previous_fd)
+                        _dfd.rename(rel.name, rel.name, src_dir_fd=out_fd, dst_dir_fd=previous_fd)
+                        _dfd.fsync(previous_fd)
                         kept.append(self.root / PREVIOUS_DIR / stamp / rel)
                     elif out_st is not None:
                         continue  # these bytes are already in place
-                    os.link(rel.name, rel.name, src_dir_fd=take_fd, dst_dir_fd=out_fd,
+                    _dfd.link(rel.name, rel.name, src_dir_fd=take_fd, dst_dir_fd=out_fd,
                             follow_symlinks=False)
-                    os.fsync(out_fd)
+                    _dfd.fsync(out_fd)
                 for rel, take_fd, *_ in present:
-                    os.unlink(rel.name, dir_fd=take_fd)
-                    os.fsync(take_fd)
+                    _dfd.unlink(rel.name, dir_fd=take_fd)
+                    _dfd.fsync(take_fd)
                 self._prune()
         finally:
             for fd in opened:
-                os.close(fd)
-            os.close(root_fd)
+                _dfd.close(fd)
+            _dfd.close(root_fd)
         if kept and self._log_job is not None:
             log_event(self._log_job, tool=self.tool, event="previous_take_kept", render_md=False,
                       extra={"outputs": [str(rel) for rel in self.relative],
@@ -378,7 +379,7 @@ class PaidTake:
     def set_aside(self) -> list[Path]:
         """Keep a saved take that cannot be used under ``previous_takes/``, unpublished."""
         kept: list[Path] = []
-        root_fd = os.open(self.root, _DIR_FLAGS)
+        root_fd = _dfd.open(self.root, _DIR_FLAGS)
         opened: list[int] = []
         try:
             with job_lock_at(root_fd):
@@ -393,14 +394,14 @@ class PaidTake:
                 for rel, take_fd in present:
                     previous_fd = _open_dir(root_fd, (PREVIOUS_DIR, stamp, *rel.parts[:-1]), create=True)
                     opened.append(previous_fd)
-                    os.rename(rel.name, rel.name, src_dir_fd=take_fd, dst_dir_fd=previous_fd)
-                    os.fsync(previous_fd)
+                    _dfd.rename(rel.name, rel.name, src_dir_fd=take_fd, dst_dir_fd=previous_fd)
+                    _dfd.fsync(previous_fd)
                     kept.append(self.root / PREVIOUS_DIR / stamp / rel)
                 self._prune()
         finally:
             for fd in opened:
-                os.close(fd)
-            os.close(root_fd)
+                _dfd.close(fd)
+            _dfd.close(root_fd)
         if kept and self._log_job is not None:
             log_event(self._log_job, tool=self.tool, event="unused_take_kept", render_md=False,
                       extra={"previous": [str(path.relative_to(self.root)) for path in kept],
@@ -480,7 +481,7 @@ class PaidTake:
                     try:
                         taken = _stat_at(folder, rel.name) is not None
                     finally:
-                        os.close(folder)
+                        _dfd.close(folder)
                 if taken:
                     break
             if not taken:
@@ -496,13 +497,13 @@ class PaidTake:
         if self._context is None or self.ready() or self._still_owed():
             return
         from _operations import delivered_record
-        root_fd = os.open(self.root, _DIR_FLAGS)
+        root_fd = _dfd.open(self.root, _DIR_FLAGS)
         takes_fd = None
         try:
             takes_fd = _open_dir(root_fd, (TAKES_DIR,), create=False)
             if takes_fd is None:
                 return
-            for key in sorted(os.listdir(takes_fd)):
+            for key in sorted(_dfd.listdir(takes_fd)):
                 if key == self.key or len(key) != 16 or any(c not in "0123456789abcdef" for c in key):
                     continue
                 for rel in self.relative:
@@ -514,7 +515,7 @@ class PaidTake:
                                 self.root, f"{TAKES_DIR}/{key}/{rel}", _digest_at(folder, rel.name), self._context)):
                             break
                     finally:
-                        os.close(folder)
+                        _dfd.close(folder)
                 else:
                     self.adopted_from = key
                     self.key = key
@@ -525,8 +526,8 @@ class PaidTake:
                     return
         finally:
             if takes_fd is not None:
-                os.close(takes_fd)
-            os.close(root_fd)
+                _dfd.close(takes_fd)
+            _dfd.close(root_fd)
 
     def _prune(self) -> None:
         """Remove this request's now-empty take folders."""

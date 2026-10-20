@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import os
+import _compat_dirfd as _dfd  # port: dir_fd/O_DIRECTORY emulation on Windows (POSIX: same os functions)
 import re
 import shutil
 import stat
@@ -66,32 +67,32 @@ def owner(context: dict) -> dict:
 def _journal(job: Path, *, lock: bool = True):
     """Share the existing job lock with foreground asset publication."""
     job = Path(os.path.abspath(job))
-    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
-    parent_fd = os.open(job.parent, flags)
+    flags = os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
+    parent_fd = _dfd.open(job.parent, flags)
     job_fd = journal_fd = -1
     try:
-        job_fd = os.open(job.name, flags, dir_fd=parent_fd)
+        job_fd = _dfd.open(job.name, flags, dir_fd=parent_fd)
         with job_lock_at(job_fd) if lock else nullcontext():
             try:
-                os.mkdir("operations", mode=0o700, dir_fd=job_fd)
-                os.fsync(job_fd)
+                _dfd.mkdir("operations", mode=0o700, dir_fd=job_fd)
+                _dfd.fsync(job_fd)
             except FileExistsError:
                 pass
-            journal_fd = os.open("operations", flags, dir_fd=job_fd)
+            journal_fd = _dfd.open("operations", flags, dir_fd=job_fd)
 
             def attached():
                 for parent, name, descriptor in [(None, job.parent, parent_fd),
                         (parent_fd, job.name, job_fd), (job_fd, "operations", journal_fd)]:
-                    if not _same_named_object(parent, name, os.fstat(descriptor)):
+                    if not _same_named_object(parent, name, _dfd.fstat(descriptor)):
                         raise OSError("operation journal directory changed")
             attached()
             yield job_fd, journal_fd, attached
-            os.fsync(journal_fd)
+            _dfd.fsync(journal_fd)
             attached()
     finally:
         for fd in (journal_fd, job_fd, parent_fd):
             if fd >= 0:
-                os.close(fd)
+                _dfd.close(fd)
 
 
 def _filename(operation_id: str) -> str:
@@ -101,9 +102,9 @@ def _filename(operation_id: str) -> str:
 
 
 def _read_at(fd: int, operation_id: str) -> dict:
-    source = os.open(_filename(operation_id), os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=fd)
+    source = _dfd.open(_filename(operation_id), os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC | _dfd.O_NONBLOCK, dir_fd=fd)
     with os.fdopen(source, "rb") as stream:
-        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+        if not stat.S_ISREG(_dfd.fstat(stream.fileno()).st_mode):
             raise OSError("operation record must be a regular file")
         record = json.load(stream)
     if not isinstance(record, dict) or record.get("schema") != SCHEMA or record.get("id") != operation_id:
@@ -234,18 +235,18 @@ def copy_local_source(job: Path, record: dict, destination: Path, *, max_bytes: 
     entry = verified_local_source(record)
     if entry is None or entry["bytes"] > max_bytes:
         return False
-    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+    directory_flags = os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
     opened: list[int] = []
     created = False
     try:
-        opened.append(os.open(os.path.abspath(job), directory_flags))
+        opened.append(_dfd.open(os.path.abspath(job), directory_flags))
         parts = entry["path"].split("/")
         for part in parts[:-1]:
-            opened.append(os.open(part, directory_flags, dir_fd=opened[-1]))
-        source_fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+            opened.append(_dfd.open(part, directory_flags, dir_fd=opened[-1]))
+        source_fd = _dfd.open(parts[-1], os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_NONBLOCK | _dfd.O_CLOEXEC,
                             dir_fd=opened[-1])
         with os.fdopen(source_fd, "rb") as source:
-            info = os.fstat(source.fileno())
+            info = _dfd.fstat(source.fileno())
             if not stat.S_ISREG(info.st_mode) or info.st_size != entry["bytes"]:
                 return False
             with open(destination, "xb") as out:
@@ -266,10 +267,10 @@ def copy_local_source(job: Path, record: dict, destination: Path, *, max_bytes: 
         return False
     finally:
         for fd in reversed(opened):
-            os.close(fd)
+            _dfd.close(fd)
         if created:
             try:
-                os.unlink(destination)
+                _dfd.unlink(destination)
             except FileNotFoundError:
                 pass
 
@@ -322,7 +323,7 @@ def _refuse_claimed(fd: int, ownership: dict, destinations: list[str], *, exclud
     wanted = {_same_name(destination) for destination in destinations}
     if not wanted:
         return
-    for name in sorted(os.listdir(fd)):
+    for name in sorted(_dfd.listdir(fd)):
         operation_id = name.removesuffix(".json")
         if not name.endswith(".json") or operation_id == exclude or not _ID.fullmatch(operation_id):
             continue
@@ -351,7 +352,7 @@ def _leaf_exists(job_fd: int, relative: str) -> bool:
     try:
         for part in parts[:-1]:
             try:
-                child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                child = _dfd.open(part, os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                                 dir_fd=current)
             except FileNotFoundError:
                 return False
@@ -362,13 +363,13 @@ def _leaf_exists(job_fd: int, relative: str) -> bool:
             opened.append(child)
             current = child
         try:
-            os.stat(parts[-1], dir_fd=current, follow_symlinks=False)
+            _dfd.stat(parts[-1], dir_fd=current, follow_symlinks=False)
         except FileNotFoundError:
             return False
         return True
     finally:
         for fd in opened:
-            os.close(fd)
+            _dfd.close(fd)
 
 
 def _refuse_occupied(job_fd: int, journal_fd: int, ownership: dict, destinations: list[str], *,
@@ -598,7 +599,7 @@ def record_delivery(job: Path, operation_id: str, context: dict, index: int, des
             # A process may die before its own rename. Keep these transformed
             # bytes so collection never substitutes the raw provider image.
             _replace_at(fd, staged, pending_bytes)
-            os.fsync(fd)
+            _dfd.fsync(fd)
             record["delivered"][relative] = {**digest, "asset_id": assets[index]["asset_id"],
                 "state": "publishing", "local_output": True}
             _replace_at(fd, _filename(operation_id), json.dumps(record, allow_nan=False).encode("utf8"))
@@ -608,15 +609,15 @@ def record_delivery(job: Path, operation_id: str, context: dict, index: int, des
             previous = record["delivered"].get(relative)
             if previous and previous.get("local_output") and {k: previous[k] for k in ("sha256", "bytes")} != digest:
                 raise ValueError("published native output differs from its staged bytes")
-            os.fsync(out_fd)
+            _dfd.fsync(out_fd)
             journal_attached()
             output_attached()
             record["delivered"][relative] = {**digest,
                 "asset_id": assets[index]["asset_id"], "state": "delivered"}
             _replace_at(fd, _filename(operation_id), json.dumps(record, allow_nan=False).encode("utf8"))
-            os.fsync(fd)
+            _dfd.fsync(fd)
             try:
-                os.unlink(staged, dir_fd=fd)
+                _dfd.unlink(staged, dir_fd=fd)
             except FileNotFoundError:
                 pass
 
@@ -631,35 +632,35 @@ def _output_parent(job_fd: int, relative: str):
     try:
         for part in parts[:-1]:
             try:
-                os.mkdir(part, mode=0o700, dir_fd=current)
-                os.fsync(current)
+                _dfd.mkdir(part, mode=0o700, dir_fd=current)
+                _dfd.fsync(current)
             except FileExistsError:
                 pass
-            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=current)
+            child = _dfd.open(part, os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC, dir_fd=current)
             opened.append((current, part, child))
             current = child
 
         def attached():
             for parent, name, fd in opened:
-                if not _same_named_object(parent, name, os.fstat(fd)):
+                if not _same_named_object(parent, name, _dfd.fstat(fd)):
                     raise OSError("operation output directory changed")
         attached()
         yield current, parts[-1], attached
     finally:
         for _, _, fd in reversed(opened):
-            os.close(fd)
+            _dfd.close(fd)
 
 
 def _file_digest_at(fd: int, name: str) -> dict:
-    source = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=fd)
+    source = _dfd.open(name, os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC | _dfd.O_NONBLOCK, dir_fd=fd)
     with os.fdopen(source, "rb") as stream:
-        before = os.fstat(stream.fileno())
+        before = _dfd.fstat(stream.fileno())
         if not stat.S_ISREG(before.st_mode):
             raise OSError("operation output must be a regular file")
-        os.fsync(stream.fileno())
+        _dfd.fsync(stream.fileno())
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
-        after = os.fstat(stream.fileno())
-        named = os.stat(name, dir_fd=fd, follow_symlinks=False)
+        after = _dfd.fstat(stream.fileno())
+        named = _dfd.stat(name, dir_fd=fd, follow_symlinks=False)
         if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
                 after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) or (
                 named.st_dev, named.st_ino) != (before.st_dev, before.st_ino):
@@ -706,14 +707,14 @@ def deliver(job: Path, operation_id: str, context: dict, download) -> dict:
                 def clean_parts():
                     # Terminal receipt: incomplete files left by killed workers
                     # can be removed. An active worker rechecks this receipt.
-                    for name in os.listdir(out_fd):
+                    for name in _dfd.listdir(out_fd):
                         if name.startswith(prefix) and name.endswith(".part"):
                             try:
-                                os.unlink(name, dir_fd=out_fd)
+                                _dfd.unlink(name, dir_fd=out_fd)
                             except FileNotFoundError:
                                 pass
                     try:
-                        os.unlink(f"{operation_id}-{index}.asset", dir_fd=fd)
+                        _dfd.unlink(f"{operation_id}-{index}.asset", dir_fd=fd)
                     except FileNotFoundError:
                         pass
 
@@ -734,14 +735,14 @@ def deliver(job: Path, operation_id: str, context: dict, download) -> dict:
                         if existing == {k: previous[k] for k in ("sha256", "bytes")}:
                             record["delivered"][relative] = {**previous, "state": "delivered"}
                             _replace_at(fd, _filename(operation_id), json.dumps(record, allow_nan=False).encode("utf8"))
-                            os.fsync(fd)
+                            _dfd.fsync(fd)
                             clean_parts()
                             continue
                     if not (previous and previous.get("local_output")) and (
                             not isinstance(asset.get("url"), str) or not asset["url"]):
                         raise ValueError("recovered asset has no download URL")
                 try:
-                    stream_fd = os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                    stream_fd = _dfd.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                                         0o600, dir_fd=out_fd)
                     with os.fdopen(stream_fd, "w+b") as stream:
                         if previous and previous.get("local_output"):
@@ -749,16 +750,16 @@ def deliver(job: Path, operation_id: str, context: dict, download) -> dict:
                                 record = current()
                                 if record["delivered"].get(relative, {}).get("state") == "delivered":
                                     continue
-                                source_fd = os.open(f"{operation_id}-{index}.asset",
-                                    os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=fd)
+                                source_fd = _dfd.open(f"{operation_id}-{index}.asset",
+                                    os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_NONBLOCK | _dfd.O_CLOEXEC, dir_fd=fd)
                                 with os.fdopen(source_fd, "rb") as source:
-                                    if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                                    if not stat.S_ISREG(_dfd.fstat(source.fileno()).st_mode):
                                         raise OSError("native operation output must be a regular file")
                                     shutil.copyfileobj(source, stream)
                         else:
                             download(asset["url"], stream)
                         stream.flush()
-                        os.fsync(stream.fileno())
+                        _dfd.fsync(stream.fileno())
                     with job_lock_at(job_fd):
                         record = current()
                         previous = record["delivered"].get(relative)
@@ -774,31 +775,31 @@ def deliver(job: Path, operation_id: str, context: dict, download) -> dict:
                             receipt["local_output"] = True
                         record["delivered"][relative] = receipt
                         _replace_at(fd, _filename(operation_id), json.dumps(record, allow_nan=False).encode("utf8"))
-                        os.fsync(fd)
+                        _dfd.fsync(fd)
                         journal_attached()
                         output_attached()
                         try:
-                            os.link(temporary, leaf, src_dir_fd=out_fd, dst_dir_fd=out_fd, follow_symlinks=False)
+                            _dfd.link(temporary, leaf, src_dir_fd=out_fd, dst_dir_fd=out_fd, follow_symlinks=False)
                         except FileExistsError:
                             if _file_digest_at(out_fd, leaf) != digest:
                                 # Never replace it. Record that this result can't
                                 # arrive, so the name stops reading "on its way".
                                 record["delivered"][relative] = {**receipt, "blocked": "destination_exists"}
                                 _replace_at(fd, _filename(operation_id), json.dumps(record, allow_nan=False).encode("utf8"))
-                                os.fsync(fd)
+                                _dfd.fsync(fd)
                                 raise FileExistsError(f"{relative} already contains different bytes; original result retained for recovery")
-                        os.fsync(out_fd)
+                        _dfd.fsync(out_fd)
                         journal_attached()
                         output_attached()
                         record["delivered"][relative] = {**receipt, "state": "delivered"}
                         _replace_at(fd, _filename(operation_id), json.dumps(record, allow_nan=False).encode("utf8"))
-                        os.fsync(fd)
+                        _dfd.fsync(fd)
                         clean_parts()
                 finally:
                     # Never remove the complete published file after a receipt
                     # write/flush exception; recovery can adopt it after restart.
                     try:
-                        os.unlink(temporary, dir_fd=out_fd)
+                        _dfd.unlink(temporary, dir_fd=out_fd)
                     except FileNotFoundError:
                         pass
         if len(record["outputs"]) != len(assets):
@@ -843,7 +844,7 @@ def delivered_record(job: Path, relative: str, sha256: str, context: dict) -> di
         return None
     ownership = owner(context)
     with _journal(job) as (_, fd, _):
-        for name in sorted(os.listdir(fd)):
+        for name in sorted(_dfd.listdir(fd)):
             operation_id = name.removesuffix(".json")
             if not name.endswith(".json") or not _ID.fullmatch(operation_id):
                 continue
@@ -873,7 +874,7 @@ def undelivered_claims(job: Path, context: dict) -> list[tuple[str, str, str]]:
     claims = []
     ownership = owner(context)
     with _journal(job) as (_, fd, _):
-        for name in sorted(os.listdir(fd)):
+        for name in sorted(_dfd.listdir(fd)):
             operation_id = name.removesuffix(".json")
             if not name.endswith(".json") or not _ID.fullmatch(operation_id):
                 continue

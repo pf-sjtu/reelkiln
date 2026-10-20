@@ -114,5 +114,90 @@ class VenvPython(unittest.TestCase):
         self.assertIn('else f"{PORTABLE_ENGINE_ROOT}/.venv/bin/python"', src)
         self.assertIn('f"{PORTABLE_ENGINE_ROOT}/.venv/Scripts/python.exe" if os.name == "nt"', src)
 
+
+LOG_SCRIPT = r"""
+import json, os, sys
+sys.path.insert(0, sys.argv[1])
+import log, _compat_dirfd
+job = sys.argv[2]
+ids = [log.log_event(job, "t.py", "start", extra={"n": 1}),
+       log.log_event(job, "t.py", "api", prompt="p" * 900, response="r" * 700, duration_seconds=1.23456),
+       log.log_event(job, "t.py", "done")]
+log.render_markdown(job)
+with log.job_lock_at(_compat_dirfd.open(job, os.O_RDONLY | _compat_dirfd.O_DIRECTORY), timeout=1):
+    pass
+print(json.dumps({"emulate": _compat_dirfd.EMULATE, "ids": ids}))
+"""
+
+class DirFdCompat(unittest.TestCase):
+    """log.py through _compat_dirfd: native dir_fd mode vs path-emulation mode (the Windows
+    code path, forced on Linux with VIDEOCLAW_PORT_DIRFD_EMULATE=1) must produce the same
+    job directory (modulo random ids/timestamps)."""
+    def run_mode(self, emulate):
+        job = Path(tempfile.mkdtemp()) / "job1"
+        env = {**os.environ, **({"VIDEOCLAW_PORT_DIRFD_EMULATE": "1"} if emulate else {})}
+        env.pop("VIDEOCLAW_PORT_DIRFD_EMULATE", None) if not emulate else None
+        out = subprocess.run([sys.executable, "-c", LOG_SCRIPT, str(TOOLS), str(job)], env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        meta = __import__("json").loads(out.stdout)
+        self.assertEqual(meta["emulate"], emulate)
+        files = sorted(str(p.relative_to(job)) for p in job.rglob("*"))
+        events = [__import__("json").loads(l) for l in (job / "run.log.jsonl").read_text().splitlines()]
+        norm = lambda s: s.replace(meta["ids"][1], "ID1")
+        return {
+            "files": [norm(f) for f in files],
+            "events": [{k: (norm(v) if isinstance(v, str) else v) for k, v in e.items() if k not in ("id", "ts")} for e in events],
+            "sidecar": (job / "run" / f"{meta['ids'][1]}__prompt.txt").read_text(),
+        }
+    def test_emulated_matches_native(self):
+        native, emulated = self.run_mode(False), self.run_mode(True)
+        self.assertEqual(native, emulated)
+        self.assertIn("run.md", native["files"])
+        self.assertIn("run/ID1__response.txt", native["files"])
+        self.assertEqual(native["events"][1]["prompt_sidecar"], "run/ID1__prompt.txt")
+    def test_posix_functions_are_os_functions(self):
+        m = load("_compat_dirfd", "_compat_dirfd_native")
+        if not m.EMULATE:
+            self.assertIs(m.open, os.open); self.assertIs(m.stat, os.stat); self.assertIs(m.replace, os.replace)
+            self.assertEqual(m.O_DIRECTORY, os.O_DIRECTORY)
+
+class DirFdEmulationUnit(unittest.TestCase):
+    def setUp(self):
+        os.environ["VIDEOCLAW_PORT_DIRFD_EMULATE"] = "1"
+        try:
+            self.d = load("_compat_dirfd", "_compat_dirfd_emul")
+        finally:
+            del os.environ["VIDEOCLAW_PORT_DIRFD_EMULATE"]
+        self.root = Path(tempfile.mkdtemp())
+    def test_at_calls_resolve_by_path(self):
+        d = self.d
+        self.assertTrue(d.EMULATE)
+        r = d.open(self.root, os.O_RDONLY | d.O_DIRECTORY)
+        self.assertGreaterEqual(r, 1 << 30)
+        d.mkdir("sub", 0o700, dir_fd=r)
+        s = d.open("sub", os.O_RDONLY | d.O_DIRECTORY | d.O_NOFOLLOW, dir_fd=r)
+        f = d.open("a.txt", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=s)
+        os.write(f, b"hello\n"); d.fsync(f); d.close(f)
+        self.assertEqual(sorted(d.listdir(s)), ["a.txt"])
+        self.assertTrue(__import__("stat").S_ISDIR(d.fstat(s).st_mode))
+        d.link("a.txt", "b.txt", src_dir_fd=s, dst_dir_fd=s, follow_symlinks=False)
+        d.rename("b.txt", "c.txt", src_dir_fd=s, dst_dir_fd=r)
+        d.replace("c.txt", "d.txt", src_dir_fd=r, dst_dir_fd=r)
+        g = d.open("d.txt", os.O_RDONLY, dir_fd=r)
+        os.lseek(g, 1, os.SEEK_SET)
+        self.assertEqual(d.pread(g, 3, 2), b"llo")
+        self.assertEqual(os.lseek(g, 0, os.SEEK_CUR), 1)
+        d.close(g)
+        s2 = d.dup(s); d.close(s)
+        self.assertEqual(d.stat("a.txt", dir_fd=s2, follow_symlinks=False).st_size, 6)
+        d.unlink("a.txt", dir_fd=s2); d.fsync(s2); d.close(s2)
+        os.symlink(self.root / "d.txt", self.root / "ln")
+        with self.assertRaises(OSError) as cm:
+            d.open("ln", os.O_RDONLY | d.O_NOFOLLOW, dir_fd=r)
+        self.assertEqual(cm.exception.errno, errno.ELOOP)
+        with self.assertRaises(NotADirectoryError):
+            d.open("d.txt", os.O_RDONLY | d.O_DIRECTORY, dir_fd=r)
+        d.close(r)
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

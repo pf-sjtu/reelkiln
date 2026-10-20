@@ -84,6 +84,7 @@ import argparse
 import hashlib
 import json
 import os
+import _compat_dirfd as _dfd  # port: dir_fd/O_DIRECTORY emulation on Windows (POSIX: same os functions)
 import re
 import stat
 import subprocess
@@ -181,18 +182,18 @@ class _PinnedImagesDir:
         self._success_run_fd = -1
         self._success_run_stat: os.stat_result | None = None
         self._success_sidecars: dict[str, tuple[int, int, int, str]] = {}
-        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+        flags = os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
         try:
-            self._parent_fd = os.open(self._parent_path, flags)
-            self._parent_stat = os.fstat(self._parent_fd)
-            self._job_fd = os.open(self._job_name, flags, dir_fd=self._parent_fd)
-            self._job_stat = os.fstat(self._job_fd)
+            self._parent_fd = _dfd.open(self._parent_path, flags)
+            self._parent_stat = _dfd.fstat(self._parent_fd)
+            self._job_fd = _dfd.open(self._job_name, flags, dir_fd=self._parent_fd)
+            self._job_stat = _dfd.fstat(self._job_fd)
             try:
-                os.mkdir("images", mode=0o700, dir_fd=self._job_fd)
+                _dfd.mkdir("images", mode=0o700, dir_fd=self._job_fd)
             except FileExistsError:
                 pass
-            self._images_fd = os.open("images", flags, dir_fd=self._job_fd)
-            self._images_stat = os.fstat(self._images_fd)
+            self._images_fd = _dfd.open("images", flags, dir_fd=self._job_fd)
+            self._images_stat = _dfd.fstat(self._images_fd)
             self._assert_attached()
         except OSError as exc:
             self.close()
@@ -214,7 +215,7 @@ class _PinnedImagesDir:
             for attr in ("_images_fd", "_job_fd", "_parent_fd"):
                 fd = getattr(self, attr, -1)
                 if fd >= 0:
-                    os.close(fd)
+                    _dfd.close(fd)
                     setattr(self, attr, -1)
 
     def __del__(self):
@@ -225,21 +226,21 @@ class _PinnedImagesDir:
 
     def _assert_attached(self) -> None:
         try:
-            parent = os.stat(self._parent_path, follow_symlinks=False)
-            job = os.stat(
+            parent = _dfd.stat(self._parent_path, follow_symlinks=False)
+            job = _dfd.stat(
                 self._job_name,
                 dir_fd=self._parent_fd,
                 follow_symlinks=False,
             )
-            current = os.stat("images", dir_fd=self._job_fd, follow_symlinks=False)
+            current = _dfd.stat("images", dir_fd=self._job_fd, follow_symlinks=False)
             lock = held_lock = None
             if self._lock_fd >= 0:
-                lock = os.stat(
+                lock = _dfd.stat(
                     JOB_LOCK_NAME,
                     dir_fd=self._job_fd,
                     follow_symlinks=False,
                 )
-                held_lock = os.fstat(self._lock_fd)
+                held_lock = _dfd.fstat(self._lock_fd)
         except OSError as exc:
             raise SystemExit("job images directory changed after billing plan binding") from exc
         if (
@@ -277,9 +278,9 @@ class _PinnedImagesDir:
         temporary = f".videoclaw-{os.getpid()}-{os.urandom(8).hex()}.tmp"
         fd = -1
         try:
-            fd = os.open(
+            fd = _dfd.open(
                 temporary,
-                os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 0o600,
                 dir_fd=dir_fd,
             )
@@ -287,13 +288,13 @@ class _PinnedImagesDir:
                 fd = -1
                 destination.write(data)
                 destination.flush()
-                os.fsync(destination.fileno())
-            os.replace(temporary, filename, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
+                _dfd.fsync(destination.fileno())
+            _dfd.replace(temporary, filename, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
         finally:
             if fd >= 0:
-                os.close(fd)
+                _dfd.close(fd)
             try:
-                os.unlink(temporary, dir_fd=dir_fd)
+                _dfd.unlink(temporary, dir_fd=dir_fd)
             except FileNotFoundError:
                 pass
 
@@ -301,13 +302,13 @@ class _PinnedImagesDir:
     def _fingerprint_at(
         dir_fd: int, filename: str
     ) -> tuple[int, int, int, str]:
-        fd = os.open(
+        fd = _dfd.open(
             filename,
-            os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC,
+            os.O_RDONLY | _dfd.O_NONBLOCK | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
             dir_fd=dir_fd,
         )
         try:
-            identity = os.fstat(fd)
+            identity = _dfd.fstat(fd)
             if not stat.S_ISREG(identity.st_mode):
                 raise OSError(f"publication target must be regular: {filename}")
             digest = hashlib.sha256()
@@ -323,14 +324,14 @@ class _PinnedImagesDir:
                 digest.hexdigest(),
             )
         finally:
-            os.close(fd)
+            _dfd.close(fd)
 
     @staticmethod
     def _read_fd(fd: int) -> bytes:
         data = bytearray()
         offset = 0
         while True:
-            chunk = os.pread(fd, 1 << 20, offset)
+            chunk = _dfd.pread(fd, 1 << 20, offset)
             if not chunk:
                 return bytes(data)
             data.extend(chunk)
@@ -338,9 +339,9 @@ class _PinnedImagesDir:
 
     @staticmethod
     def _same_named_fd(dir_fd: int, filename: str, fd: int) -> bool:
-        expected = os.fstat(fd)
+        expected = _dfd.fstat(fd)
         try:
-            current = os.stat(filename, dir_fd=dir_fd, follow_symlinks=False)
+            current = _dfd.stat(filename, dir_fd=dir_fd, follow_symlinks=False)
         except OSError:
             return False
         return (
@@ -366,7 +367,7 @@ class _PinnedImagesDir:
         for attr in ("_success_run_fd", "_success_log_fd"):
             fd = getattr(self, attr, -1)
             if fd >= 0:
-                os.close(fd)
+                _dfd.close(fd)
                 setattr(self, attr, -1)
         self._success_log_stat = None
         self._success_run_stat = None
@@ -374,12 +375,12 @@ class _PinnedImagesDir:
 
     def _pin_success_event(self, event_id: str) -> None:
         if self._success_log_fd < 0:
-            self._success_log_fd = os.open(
+            self._success_log_fd = _dfd.open(
                 "run.log.jsonl",
-                os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_RDWR | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 dir_fd=self._job_fd,
             )
-            self._success_log_stat = os.fstat(self._success_log_fd)
+            self._success_log_stat = _dfd.fstat(self._success_log_fd)
             if not stat.S_ISREG(self._success_log_stat.st_mode):
                 raise OSError("run.log.jsonl must be a regular file")
         if not self._same_named_fd(
@@ -405,12 +406,12 @@ class _PinnedImagesDir:
         if not sidecars:
             return
         if self._success_run_fd < 0:
-            self._success_run_fd = os.open(
+            self._success_run_fd = _dfd.open(
                 "run",
-                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 dir_fd=self._job_fd,
             )
-            self._success_run_stat = os.fstat(self._success_run_fd)
+            self._success_run_stat = _dfd.fstat(self._success_run_fd)
         if not self._same_named_fd(self._job_fd, "run", self._success_run_fd):
             raise OSError("run sidecar directory changed during success logging")
         for relative in sidecars:
@@ -458,7 +459,7 @@ class _PinnedImagesDir:
     def _snapshot(self, filename: str) -> bytes | None:
         """Current regular-file bytes, None when absent; SystemExit otherwise."""
         try:
-            current = os.stat(
+            current = _dfd.stat(
                 filename,
                 dir_fd=self._images_fd,
                 follow_symlinks=False,
@@ -474,9 +475,9 @@ class _PinnedImagesDir:
                 f"image publication target must be a regular file: {filename}"
             )
         try:
-            fd = os.open(
+            fd = _dfd.open(
                 filename,
-                os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_RDONLY | _dfd.O_NONBLOCK | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 dir_fd=self._images_fd,
             )
         except OSError as exc:
@@ -484,14 +485,14 @@ class _PinnedImagesDir:
                 f"image publication target must be a regular file: {filename}"
             ) from exc
         try:
-            if not stat.S_ISREG(os.fstat(fd).st_mode):
+            if not stat.S_ISREG(_dfd.fstat(fd).st_mode):
                 raise SystemExit(
                     f"image publication target must be a regular file: {filename}"
                 )
             with os.fdopen(fd, "rb", closefd=False) as source:
                 return source.read()
         finally:
-            os.close(fd)
+            _dfd.close(fd)
 
     def precheck(self, filenames: set[str]) -> None:
         """Before provider contact, without the lock: refuse unusable targets.
@@ -538,16 +539,16 @@ class _PinnedImagesDir:
             return
         owned_log_fd = log_fd < 0
         try:
-            fd = log_fd if log_fd >= 0 else os.open(
+            fd = log_fd if log_fd >= 0 else _dfd.open(
                 "run.log.jsonl",
-                os.O_RDWR | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_RDWR | _dfd.O_NONBLOCK | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 dir_fd=job_fd,
             )
         except OSError:
             return
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
+        if not stat.S_ISREG(_dfd.fstat(fd).st_mode):
             if owned_log_fd:
-                os.close(fd)
+                _dfd.close(fd)
             return
         lines = _PinnedImagesDir._read_fd(fd).decode("utf-8").splitlines(True)
         kept: list[str] = []
@@ -563,7 +564,7 @@ class _PinnedImagesDir:
                 kept.append(line)
         if not changed:
             if owned_log_fd:
-                os.close(fd)
+                _dfd.close(fd)
             return
         data = "".join(kept).encode()
         log_is_attached = _PinnedImagesDir._same_named_fd(
@@ -582,33 +583,33 @@ class _PinnedImagesDir:
                 if written <= 0:
                     raise OSError("short rollback write to run.log.jsonl")
                 view = view[written:]
-            os.fsync(fd)
+            _dfd.fsync(fd)
         if owned_log_fd:
-            os.close(fd)
+            _dfd.close(fd)
         if log_is_attached:
             try:
-                os.unlink("run.md", dir_fd=job_fd)
+                _dfd.unlink("run.md", dir_fd=job_fd)
             except OSError:
                 pass
         owned_run_fd = run_fd < 0
         try:
-            active_run_fd = run_fd if run_fd >= 0 else os.open(
+            active_run_fd = run_fd if run_fd >= 0 else _dfd.open(
                 "run",
-                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 dir_fd=job_fd,
             )
         except OSError:
             return
         try:
-            for name in os.listdir(active_run_fd):
+            for name in _dfd.listdir(active_run_fd):
                 if any(name.startswith(f"{event_id}__") for event_id in event_ids):
                     try:
-                        os.unlink(name, dir_fd=active_run_fd)
+                        _dfd.unlink(name, dir_fd=active_run_fd)
                     except OSError:
                         pass
         finally:
             if owned_run_fd:
-                os.close(active_run_fd)
+                _dfd.close(active_run_fd)
 
     def _remove_success_events(self) -> None:
         self._remove_events_at(
@@ -624,7 +625,7 @@ class _PinnedImagesDir:
         for filename, original in self._originals.items():
             if original is None:
                 try:
-                    os.unlink(filename, dir_fd=self._images_fd)
+                    _dfd.unlink(filename, dir_fd=self._images_fd)
                 except OSError:
                     pass
             else:
@@ -675,9 +676,9 @@ class _PinnedImagesDir:
     def _load_json(self, filename: str) -> dict:
         self._assert_attached()
         try:
-            fd = os.open(
+            fd = _dfd.open(
                 filename,
-                os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK,
+                os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC | _dfd.O_NONBLOCK,
                 dir_fd=self._images_fd,
             )
         except FileNotFoundError:
@@ -685,8 +686,8 @@ class _PinnedImagesDir:
             return {}
         except OSError as exc:
             raise SystemExit(f"image metadata must not be symlinked: {filename}") from exc
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
-            os.close(fd)  # a FIFO/device would block the publication lock forever
+        if not stat.S_ISREG(_dfd.fstat(fd).st_mode):
+            _dfd.close(fd)  # a FIFO/device would block the publication lock forever
             raise SystemExit(f"image metadata must be a regular file: {filename}")
         with os.fdopen(fd, "r", encoding="utf-8") as source:
             value = json.load(source)

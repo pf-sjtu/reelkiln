@@ -28,6 +28,7 @@ import requests
 from _gateway import GatewayError, gateway
 from job import add_job_arg, resolve_job_dir
 from log import job_lock_at, log_event
+import _compat_dirfd as _dfd  # port: dir_fd/O_DIRECTORY emulation on Windows
 
 TOOL = "sfx_catalog.py"
 PROVENANCE_NAME = "catalog-provenance.json"
@@ -186,7 +187,7 @@ def _filename(asset_id: str, version: int) -> str:
 
 
 def _write_provenance(job: Path, record: dict) -> None:
-    job_fd = os.open(job, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    job_fd = _dfd.open(job, os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_CLOEXEC)  # port: _compat_dirfd
     try:
         with job_lock_at(job_fd):
             manifest = job / "sfx" / PROVENANCE_NAME
@@ -209,7 +210,7 @@ def _write_provenance(job: Path, record: dict) -> None:
             finally:
                 pending.unlink(missing_ok=True)
     finally:
-        os.close(job_fd)
+        _dfd.close(job_fd)
 
 
 def fetch(asset_id: str, *, version: int, job: Path) -> Path:

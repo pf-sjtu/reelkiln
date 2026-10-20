@@ -3270,7 +3270,7 @@ def _is_incomplete_json_prefix(raw: bytes) -> bool:
 
 
 def _truncate_torn_history_tail(path: Path, expected_size: int, keep_bytes: int) -> None:
-    flags = os.O_RDWR
+    flags = os.O_RDWR | getattr(os, "O_BINARY", 0)  # port: no CRLF/Ctrl-Z translation on Windows
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     fd = os.open(path, flags)
@@ -3287,6 +3287,8 @@ def _truncate_torn_history_tail(path: Path, expected_size: int, keep_bytes: int)
 
 
 def _fsync_directory(path: Path) -> None:
+    if os.name == "nt":  # port: Windows cannot open/fsync a directory; NTFS metadata is journaled
+        return
     flags = os.O_RDONLY
     if hasattr(os, "O_DIRECTORY"):
         flags |= os.O_DIRECTORY
@@ -3443,7 +3445,7 @@ def _job_receipt_lock(job_dir: Path) -> Iterable[None]:
 
 
 def _append_history_line(path: Path, entry: dict[str, Any]) -> None:
-    flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT
+    flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_BINARY", 0)  # port: binary mode on Windows
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     fd = os.open(path, flags, 0o600)

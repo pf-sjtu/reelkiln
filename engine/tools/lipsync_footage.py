@@ -192,7 +192,7 @@ def exclusive_output(lock_path: Path, what: str):
     fd = -1
     for _ in range(64):
         try:
-            fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+            fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0), 0o600)  # port: flags absent on Windows
             break
         except FileNotFoundError:
             continue  # macOS can report ENOENT while a sibling creates the leaf (#273)

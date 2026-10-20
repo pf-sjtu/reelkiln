@@ -518,7 +518,7 @@ class DecodeClaim:
                 "completion": completion_rel,
             }
             try:
-                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600)  # port: binary mode on Windows
             except FileExistsError:
                 try:
                     existing = json.loads(path.read_text())

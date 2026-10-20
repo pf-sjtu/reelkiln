@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
 import os
+import _compat_dirfd as _dfd  # port: dir_fd/O_DIRECTORY emulation on Windows (POSIX: same os functions)
 import stat
 import sys
 import threading
@@ -68,7 +69,7 @@ def _after_fork_child() -> None:
         inherited_fd = state.get("fd", -1)
         if inherited_fd >= 0 and inherited_fd not in closed:
             try:
-                os.close(inherited_fd)
+                _dfd.close(inherited_fd)
             except OSError:
                 pass
             closed.add(inherited_fd)
@@ -105,15 +106,15 @@ def _open_job_lock(job_fd: int) -> int:
     Open an existing leaf first and create only exclusively; a lost creation
     race simply opens the winner's file on the next attempt.
     """
-    flags = os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC
+    flags = os.O_RDWR | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
     last: OSError | None = None
     for _ in range(_LOCK_OPEN_ATTEMPTS):
         try:
-            return os.open(JOB_LOCK_NAME, flags, dir_fd=job_fd)
+            return _dfd.open(JOB_LOCK_NAME, flags, dir_fd=job_fd)
         except FileNotFoundError as exc:
             last = exc
         try:
-            return os.open(
+            return _dfd.open(
                 JOB_LOCK_NAME, flags | os.O_CREAT | os.O_EXCL, 0o600, dir_fd=job_fd
             )
         except (FileExistsError, FileNotFoundError) as exc:
@@ -135,7 +136,7 @@ def job_lock_at(job_fd: int, timeout: float | None = None):
     as it takes.
     """
     deadline = None if timeout is None else time.monotonic() + max(0.0, timeout)
-    identity = os.fstat(job_fd)
+    identity = _dfd.fstat(job_fd)
     if not stat.S_ISDIR(identity.st_mode):
         raise OSError("job lock descriptor must reference a directory")
     key = (identity.st_dev, identity.st_ino)
@@ -160,7 +161,7 @@ def job_lock_at(job_fd: int, timeout: float | None = None):
     if state is None:
         try:
             lock_fd = _open_job_lock(job_fd)
-            if not stat.S_ISREG(os.fstat(lock_fd).st_mode):
+            if not stat.S_ISREG(_dfd.fstat(lock_fd).st_mode):
                 raise OSError(f"{JOB_LOCK_NAME} must be a regular file")
             if deadline is None:
                 fcntl.flock(lock_fd, fcntl.LOCK_EX)
@@ -178,7 +179,7 @@ def job_lock_at(job_fd: int, timeout: float | None = None):
                 _LOCKS[key]["fd"] = lock_fd
         except BaseException:
             if lock_fd >= 0:
-                os.close(lock_fd)
+                _dfd.close(lock_fd)
             with _LOCK_CONDITION:
                 _LOCKS.pop(key, None)
                 _LOCK_CONDITION.notify_all()
@@ -186,9 +187,9 @@ def job_lock_at(job_fd: int, timeout: float | None = None):
     with _LOCK_CONDITION:
         active_fd = _LOCKS[key]["fd"]
     try:
-        expected = os.fstat(active_fd)
+        expected = _dfd.fstat(active_fd)
         try:
-            current = os.stat(
+            current = _dfd.stat(
                 JOB_LOCK_NAME, dir_fd=job_fd, follow_symlinks=False
             )
         except OSError as exc:
@@ -208,7 +209,7 @@ def job_lock_at(job_fd: int, timeout: float | None = None):
                 held_fd = current["fd"]
                 if held_fd >= 0:
                     fcntl.flock(held_fd, fcntl.LOCK_UN)
-                    os.close(held_fd)
+                    _dfd.close(held_fd)
                 del _LOCKS[key]
                 _LOCK_CONDITION.notify_all()
 
@@ -247,16 +248,16 @@ def _truncate_at(
         return {label: text}
     filename = f"{event_id}__{label}.txt"
     try:
-        os.stat(filename, dir_fd=run_fd, follow_symlinks=False)
+        _dfd.stat(filename, dir_fd=run_fd, follow_symlinks=False)
     except FileNotFoundError:
         pass
     else:
         raise FileExistsError(f"sidecar already exists: {filename}")
     _replace_at(run_fd, filename, text.encode("utf-8"))
-    current = os.stat(filename, dir_fd=run_fd, follow_symlinks=False)
+    current = _dfd.stat(filename, dir_fd=run_fd, follow_symlinks=False)
     if not stat.S_ISREG(current.st_mode):
         raise OSError(f"sidecar must be a regular file: {filename}")
-    os.fsync(run_fd)
+    _dfd.fsync(run_fd)
     published.append(filename)
     return {
         label: text[:INLINE_TEXT_LIMIT] + f"... [+{len(text) - INLINE_TEXT_LIMIT} chars]",
@@ -286,8 +287,8 @@ def log_event(
     job_dir = Path(job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
 
-    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC
-    job_fd = os.open(job_dir, flags)
+    flags = os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_CLOEXEC
+    job_fd = _dfd.open(job_dir, flags)
     try:
         return log_event_at(
             job_fd,
@@ -302,7 +303,7 @@ def log_event(
             lock_timeout=lock_timeout,
         )
     finally:
-        os.close(job_fd)
+        _dfd.close(job_fd)
 
 
 def log_event_at(
@@ -319,7 +320,7 @@ def log_event_at(
     lock_timeout: float | None = None,
 ) -> str:
     """Append an event relative to an already-open, identity-pinned job dir."""
-    if not stat.S_ISDIR(os.fstat(job_fd).st_mode):
+    if not stat.S_ISDIR(_dfd.fstat(job_fd).st_mode):
         raise OSError("pinned job descriptor must reference a directory")
     with job_lock_at(job_fd, timeout=lock_timeout):
         return _log_event_at_locked(
@@ -337,7 +338,7 @@ def log_event_at(
 
 def _same_named_object(dir_fd: int, name: str, expected: os.stat_result) -> bool:
     try:
-        current = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
+        current = _dfd.stat(name, dir_fd=dir_fd, follow_symlinks=False)
     except OSError:
         return False
     return (
@@ -381,15 +382,15 @@ def _log_event_at_locked(
     try:
         if needs_sidecars:
             try:
-                os.mkdir(SIDECAR_DIR, mode=0o700, dir_fd=job_fd)
+                _dfd.mkdir(SIDECAR_DIR, mode=0o700, dir_fd=job_fd)
             except FileExistsError:
                 pass
-            run_fd = os.open(
+            run_fd = _dfd.open(
                 SIDECAR_DIR,
-                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
                 dir_fd=job_fd,
             )
-            run_stat = os.fstat(run_fd)
+            run_stat = _dfd.fstat(run_fd)
             if not _same_named_object(job_fd, SIDECAR_DIR, run_stat):
                 raise OSError("run sidecar directory changed during logging")
         record.update(
@@ -407,9 +408,9 @@ def _log_event_at_locked(
                 if key not in record:
                     record[key] = value
 
-        flags = os.O_RDWR | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC
-        log_fd = os.open(LOG_NAME, flags, 0o644, dir_fd=job_fd)
-        log_stat = os.fstat(log_fd)
+        flags = os.O_RDWR | os.O_APPEND | os.O_CREAT | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
+        log_fd = _dfd.open(LOG_NAME, flags, 0o644, dir_fd=job_fd)
+        log_stat = _dfd.fstat(log_fd)
         if not stat.S_ISREG(log_stat.st_mode):
             raise OSError(f"{LOG_NAME} must be a regular file")
         original_size = log_stat.st_size
@@ -418,7 +419,7 @@ def _log_event_at_locked(
         appended = written > 0
         if written != len(payload):
             raise OSError(f"short append to {LOG_NAME}")
-        os.fsync(log_fd)
+        _dfd.fsync(log_fd)
         if not _same_named_object(job_fd, LOG_NAME, log_stat):
             raise OSError(f"{LOG_NAME} changed during append")
         if run_stat is not None and not _same_named_object(
@@ -437,40 +438,40 @@ def _log_event_at_locked(
         if appended and log_fd >= 0:
             try:
                 os.ftruncate(log_fd, original_size)
-                os.fsync(log_fd)
+                _dfd.fsync(log_fd)
             except OSError:
                 pass
         if run_fd >= 0:
             for filename in published:
                 try:
-                    os.unlink(filename, dir_fd=run_fd)
+                    _dfd.unlink(filename, dir_fd=run_fd)
                 except OSError:
                     pass
             try:
-                os.fsync(run_fd)
+                _dfd.fsync(run_fd)
             except OSError:
                 pass
         raise
     finally:
         if log_fd >= 0:
-            os.close(log_fd)
+            _dfd.close(log_fd)
         if run_fd >= 0:
-            os.close(run_fd)
+            _dfd.close(run_fd)
 
 
 def _read_events_at(job_fd: int) -> list[dict[str, Any]]:
-    flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC
+    flags = os.O_RDONLY | _dfd.O_NONBLOCK | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC
     try:
-        fd = os.open(LOG_NAME, flags, dir_fd=job_fd)
+        fd = _dfd.open(LOG_NAME, flags, dir_fd=job_fd)
     except FileNotFoundError:
         return []
     try:
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
+        if not stat.S_ISREG(_dfd.fstat(fd).st_mode):
             raise OSError(f"{LOG_NAME} must be a regular file")
         with os.fdopen(fd, "r", encoding="utf-8", closefd=False) as source:
             lines = source.readlines()
     finally:
-        os.close(fd)
+        _dfd.close(fd)
     events: list[dict[str, Any]] = []
     for line in lines:
         try:
@@ -486,9 +487,9 @@ def _replace_at(dir_fd: int, filename: str, data: bytes) -> None:
     temporary = f".videoclaw-log-{os.getpid()}-{os.urandom(8).hex()}.tmp"
     fd = -1
     try:
-        fd = os.open(
+        fd = _dfd.open(
             temporary,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC,
             0o600,
             dir_fd=dir_fd,
         )
@@ -496,13 +497,13 @@ def _replace_at(dir_fd: int, filename: str, data: bytes) -> None:
             fd = -1
             destination.write(data)
             destination.flush()
-            os.fsync(destination.fileno())
-        os.replace(temporary, filename, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
+            _dfd.fsync(destination.fileno())
+        _dfd.replace(temporary, filename, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
     finally:
         if fd >= 0:
-            os.close(fd)
+            _dfd.close(fd)
         try:
-            os.unlink(temporary, dir_fd=dir_fd)
+            _dfd.unlink(temporary, dir_fd=dir_fd)
         except FileNotFoundError:
             pass
 
@@ -642,7 +643,7 @@ def render_markdown(job_dir: Path | str) -> Path:
     """Regenerate <job_dir>/run.md from the jsonl. Always overwrites."""
     job_dir = Path(job_dir)
     md_path = job_dir / MD_NAME
-    job_fd = os.open(job_dir, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    job_fd = _dfd.open(job_dir, os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_CLOEXEC)
     try:
         with job_lock_at(job_fd):
             markdown = _render_markdown_text(
@@ -651,7 +652,7 @@ def render_markdown(job_dir: Path | str) -> Path:
             )
             _replace_at(job_fd, MD_NAME, markdown.encode())
     finally:
-        os.close(job_fd)
+        _dfd.close(job_fd)
     return md_path
 
 

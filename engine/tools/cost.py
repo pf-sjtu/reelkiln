@@ -1558,7 +1558,7 @@ def _secure_file_bytes(path: Path) -> tuple[bytes, os.stat_result]:
     # must not make every tempfile fail closed.
     if stat.S_ISLNK(os.lstat(absolute).st_mode):
         raise ValueError(f"billing input is symlinked: {absolute}")
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)  # port: binary mode on Windows
     fd = os.open(absolute, flags)
     try:
         before = os.fstat(fd)

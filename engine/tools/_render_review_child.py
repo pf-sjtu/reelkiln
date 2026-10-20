@@ -38,6 +38,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import _compat_proc  # noqa: E402  port: process-group helpers
+import _compat_dirfd as _dfd  # noqa: E402  port: dir_fd/O_DIRECTORY emulation on Windows
 
 # Light (standard library only): safe to import before supervision starts.
 from _render_completion import (  # noqa: E402
@@ -123,14 +124,14 @@ def _log_to(folder: Path, job: Path) -> None:
         return write_event(job_dir, *args, **kwargs)
 
     def log_event_at(job_fd, job_name, *args, **kwargs):
-        if not is_job(os.fstat(job_fd)):
+        if not is_job(_dfd.fstat(job_fd)):
             return write_event_at(job_fd, job_name, *args, **kwargs)
         kwargs["render_md"] = False
-        fd = os.open(folder, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+        fd = _dfd.open(folder, os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_CLOEXEC)
         try:
             return write_event_at(fd, folder.name, *args, **kwargs)
         finally:
-            os.close(fd)
+            _dfd.close(fd)
 
     log.log_event, log.log_event_at = log_event, log_event_at
 

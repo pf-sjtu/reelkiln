@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import _compat_dirfd as _dfd  # port: dir_fd/O_DIRECTORY emulation on Windows (POSIX: same os functions)
 import re
 import sys
 import time
@@ -196,7 +197,7 @@ def _empty() -> dict:
 
 def _load_at(job_fd: int) -> dict:
     try:
-        fd = os.open(STORE_NAME, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=job_fd)
+        fd = _dfd.open(STORE_NAME, os.O_RDONLY | _dfd.O_NOFOLLOW | _dfd.O_CLOEXEC, dir_fd=job_fd)
     except FileNotFoundError:
         return _empty()
     with os.fdopen(fd, "rb") as handle:
@@ -212,7 +213,7 @@ def _load_at(job_fd: int) -> dict:
 
 
 def _open_job(job: Path) -> int:
-    return os.open(job, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    return _dfd.open(job, os.O_RDONLY | _dfd.O_DIRECTORY | _dfd.O_CLOEXEC)
 
 
 def _load(job: Path) -> dict:
@@ -220,7 +221,7 @@ def _load(job: Path) -> dict:
     try:
         return _load_at(fd)
     finally:
-        os.close(fd)
+        _dfd.close(fd)
 
 
 def _update(job: Path, change: Callable[[dict], None]) -> dict:
@@ -239,7 +240,7 @@ def _update(job: Path, change: Callable[[dict], None]) -> dict:
             _replace_at(fd, STORE_NAME, (json.dumps(state, indent=1, sort_keys=True) + "\n").encode("utf8"))
             return state
     finally:
-        os.close(fd)
+        _dfd.close(fd)
 
 
 def _refused_count(state: dict, output: str | None) -> int:
