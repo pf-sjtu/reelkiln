@@ -16,10 +16,10 @@ B="$(cd "$1" && pwd)"; H="${2:-/tmp/vc-shell-home}"; LOG="${3:-$H/shell-smoke.lo
 ELECTRON="$REPO/port/node_modules/electron/dist/electron"
 [ -x "$ELECTRON" ] || node "$REPO/port/node_modules/electron/install.js"
 rm -rf "$H"; mkdir -p "$H"
-run() { (cd "$REPO/port" && env HOME="$H" VIDEOCLAW_ENGINE_DIST="$B" VIDEOCLAW_PORT_SMOKE=1 "$@" timeout 900 xvfb-run -a "$ELECTRON" --no-sandbox .) 2>&1 | grep -v "dbus\|Fontconfig" ; }
+run() { (cd "$REPO/port" && env HOME="$H" XDG_CONFIG_HOME="$H/.config" VIDEOCLAW_ENGINE_DIST="$B" VIDEOCLAW_PORT_SMOKE=1 "$@" timeout 900 xvfb-run -a "$ELECTRON" --no-sandbox .) 2>&1 | grep -v "dbus\|Fontconfig" ; }
 echo "# run 1: bootstrap" | tee "$LOG"
 run VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED=1 | tee -a "$LOG"
-UD="$H/.config/videoclaw-port"
+UD="$H/.config/videoclaw-port"  # Electron userData on Linux = $XDG_CONFIG_HOME/<name> (GitHub runners export XDG_CONFIG_HOME, so it is pinned above)
 test -f "$UD/engine-current.json" || { echo "engine was not activated" >&2; exit 1; }
 JOB=linux-hf-20261020-d4e5f6; SID=11111111-2222-4333-8444-555555555555
 mkdir -p "$H/Videoclaw/jobs/$JOB"; cp -r "$REPO/artifacts/linux-run/fixtures/hyperframes-card" "$H/Videoclaw/jobs/$JOB/hyperframes"

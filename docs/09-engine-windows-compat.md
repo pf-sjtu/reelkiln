@@ -28,6 +28,8 @@
 
 - `python3 -m py_compile` 全部改动文件通过。
 - `python3 tools/test_engine_compat.py`：11 项通过（Phase 3 第二轮新增 3 项：`DirFdCompat` 原生/模拟模式 `log_event` 产物差分、POSIX 下 shim 函数即 `os` 函数、`DirFdEmulationUnit` 覆盖全部模拟调用含 ELOOP/ENOTDIR/pread 偏移恢复）——POSIX `flock` 为原函数、跨进程 `LOCK_NB` 冲突得到 `BlockingIOError`；Windows 分支用假 `msvcrt`（字节区间锁模型）验证冲突/错误码/重复解锁/位置恢复/阻塞等待；`kill_process_group` 在 Linux 上实际杀掉孙进程；`PORTABLE_ENGINE_PYTHON` 两个分支。
+- **2026-10-20 更新（Linux 基线 + CI）**：`test_engine_compat.py` 现为 14 项。POSIX 专属类（`PosixLock`/`PosixProc`）`skipUnless(os.name == "posix")`；新增 `WindowsReal` 类（仅 `os.name == "nt"` 运行）：真实 `msvcrt` 字节区间锁的跨进程冲突、`CREATE_NEW_PROCESS_GROUP` 启动 + `_compat_proc.kill_process_group`（`taskkill /T /F`）杀掉孙进程并用 `tasklist` 确认；`DirFdCompat` 在 nt 上断言走模拟路径。结果：Linux 11 过 3 skip；**GitHub Actions `windows-latest` 上全部通过**（含 `WindowsReal` 与 dirfd 模拟/原生产物差分——首次真实 Windows 验证 E11/E12，此前只有 winsim），macOS 亦通过（docs/13）。CI 首跑在 Windows 上暴露的唯一问题是测试本身用 `str(Path)` 比较文件列表（反斜杠），已改为 `as_posix()`；兼容层代码无需修改。
+- `_compat_lock.py`：`errno.EDEADLOCK` 在 macOS 不存在（CI macos-latest 首跑 AttributeError），改为 `getattr(errno, "EDEADLOCK", errno.EDEADLK)`；Linux/Windows 上取值不变。
 - `python3 tools/engine_import_smoke.py both`：逐模块（子进程、引擎临时副本）导入 `engine/tools/*.py`，第三方包统一替换为桩模块。
   - `posix`：80/80 导入成功（新增 `_compat_dirfd`）。
   - `winsim`（删除 `fcntl/pwd/grp/termios/resource/tty/pty`，删除 `os.O_NOFOLLOW/O_DIRECTORY/O_CLOEXEC/O_NONBLOCK/killpg/getpgrp/setsid/getuid/fchmod/…`、`signal.SIGKILL/SIGHUP/…`，提供假 `msvcrt`）：**改动前 31/77 → 改动后 80/80**。这是近似模拟，不能替代 Windows 实机。

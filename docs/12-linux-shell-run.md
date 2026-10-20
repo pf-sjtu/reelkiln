@@ -57,5 +57,7 @@ HyperFrames 合成 fixture：`artifacts/linux-run/fixtures/hyperframes-card/inde
 ## 4. 仍需凭据或不可在 box 上完成的部分
 
 - 账号与网关：doctor `gateway`、`configureEngineGatewaySession`、所有付费工具、网关下发引擎。
-- Agent 会话：创建会话、agent turn（需要 claude-agent-sdk 原生二进制及 Anthropic/网关凭据，或 codex 0.160.1 及 ChatGPT/OpenAI 凭据）。codex Linux 二进制可从 npm 获取，但要登录才能做有意义的 turn；无凭据的 `initialize` + `account/read` 握手见 `port-cli codex-handshake`（本阶段未在 box 上执行，因为 box 上没有 codex 二进制）。
+- Agent 会话：创建会话、agent turn（需要 claude-agent-sdk 原生二进制及 Anthropic/网关凭据，或 codex 0.160.1 及 ChatGPT/OpenAI 凭据）。codex Linux 二进制可从 npm 获取，但要登录才能做有意义的 turn；无凭据的 `initialize` + `account/read` 握手**已在 box 上跑通**：从 npm 取 `@openai/codex@0.160.1-linux-x64`（`@openai/codex@0.160.1` 的 optionalDependencies 是 `npm:@openai/codex@0.160.1-<platform>` 别名；原版 `payload.manifest.json` 的 npmIntegrity 等于 `-darwin-arm64` 包的 dist.integrity，可证原版就是这样取得 codex 的），把 `vendor/x86_64-unknown-linux-musl/` 内容放到 `bootstrap/codex/`，执行 `node dist/cli/port-cli.cjs codex-handshake <bootstrap>/codex/bin/codex`，结果（`artifacts/linux-run/codex-handshake.json`）：`{"ok":true,"step":"codex-handshake","account":{"account":null,"requiresOpenaiAuth":true,"workspaceRouting":null},…,"ms":171}`——即移植的 app-server 客户端完成了 `initialize`、服务端版本校验（`assertCompatibleServer`）与 `account/read`，状态为“未登录、需要 OpenAI 认证”。附带一条 codex 自身的 warning（无法在 `/tmp` 下创建 PATH 别名），不影响握手。更进一步的 agent turn 需要登录，属于凭据项。
+
+Windows 对应包已核实（下载解包检查，未执行）：`@openai/codex@0.160.1-win32-x64`，入口 `vendor/x86_64-pc-windows-msvc/bin/codex.exe`（`codex-package.json` 的 `"entrypoint": "bin/codex.exe"`）；`@anthropic-ai/claude-agent-sdk-win32-x64@0.3.281` 内为 `claude.exe`。详见 docs/08 §1.2。
 - mediaCapabilities 授权（`completed` 时原版会对 outputPath 调用 `grant`）：未移植。
