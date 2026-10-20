@@ -39,10 +39,10 @@ jobs:
         shell: bash
         run: |
           npm run gen
-          git diff --exit-code -- src/shared/ipc-contract.ts
-          sha1=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts | sha256sum)
+          git diff --exit-code -- src
+          sha1=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts src/main/engine/*.generated.ts src/main/engine/voice-guard.ts | sha256sum)
           npm run gen
-          sha2=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts | sha256sum)
+          sha2=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts src/main/engine/*.generated.ts src/main/engine/voice-guard.ts | sha256sum)
           test "$sha1" = "$sha2"
       - run: npm run build
       - run: npm test
@@ -105,3 +105,44 @@ jobs:
         with:
           name: linux-run
           path: ${{ runner.temp }}/linux-run
+
+  windows-runbook:
+    # docs/08 S3–S9 on a real Windows x64 runner (tools/windows_runbook.sh). Non-blocking while the
+    # Windows engine path is being brought up; its status is reported in docs/13-ci.md.
+    name: "Windows runbook (docs/08 S3–S9: engine install, uv sync, doctor, e2e, codex handshake)"
+    runs-on: windows-latest
+    continue-on-error: true
+    env:
+      PYTHONUTF8: "1"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v6
+      - name: ffmpeg
+        run: command -v ffmpeg || choco install ffmpeg -y --no-progress
+      - name: build port
+        working-directory: port
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: npm ci && npm run build
+      - name: tools/windows_runbook.sh
+        env:
+          OUT: ${{ runner.temp }}\windows-run
+        run: |
+          export PATH="/c/ProgramData/chocolatey/bin:$PATH"
+          bash tools/windows_runbook.sh "$RUNNER_TEMP/vc"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-run
+          path: ${{ runner.temp }}\windows-run
