@@ -1,0 +1,108 @@
+# PORT-NEW CI for the Videoclaw reverse/port repo (docs/13-ci.md).
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  port:
+    name: port (TS typecheck + tests) · ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: port
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - run: npm ci
+      - name: contract generator determinism
+        shell: bash
+        run: |
+          npm run gen
+          git diff --exit-code -- src/shared/ipc-contract.ts
+          sha1=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts | sha256sum)
+          npm run gen
+          sha2=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts | sha256sum)
+          test "$sha1" = "$sha2"
+      - run: npm run build
+      - run: npm test
+
+  engine-static:
+    name: engine compat (py_compile + compat tests + import smoke) · ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: py_compile engine/tools
+        shell: bash
+        run: python -m compileall -q engine/tools
+      - name: engine compat tests
+        run: python tools/test_engine_compat.py
+      - name: import smoke (native)
+        run: python tools/engine_import_smoke.py posix
+      - name: import smoke (simulated windows)
+        run: python tools/engine_import_smoke.py winsim
+      - name: uv.lock Windows wheel coverage
+        run: python tools/check_lock_windows.py
+      - name: Windows engine tarball builds
+        shell: bash
+        run: python tools/make_windows_engine.py "$RUNNER_TEMP/winbundle" | tee "$RUNNER_TEMP/winmanifest.json"
+
+  linux-baseline:
+    name: "Linux baseline (real engine, uv sync + doctor + e2e render)"
+    runs-on: ubuntu-latest
+    needs: [port]
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+      - name: system ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: managed CPython 3.14.6
+        run: uv python install 3.14.6
+      - name: build port
+        working-directory: port
+        run: npm ci && npm run build
+      - name: "tools/linux_baseline.sh (gateway check tolerated, needs credentials)"
+        env:
+          OUT: ${{ runner.temp }}/linux-run
+        run: bash tools/linux_baseline.sh "$RUNNER_TEMP/vc"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-run
+          path: ${{ runner.temp }}/linux-run

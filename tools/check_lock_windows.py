@@ -11,7 +11,7 @@ Usage: python3 tools/check_lock_windows.py [path/to/uv.lock]
 import re, sys, tomllib, json
 from pathlib import Path
 
-LOCK = Path(sys.argv[1] if len(sys.argv) > 1 else "/workspace/videoclaw/engine-extract/engine/uv.lock")
+LOCK = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent / "engine" / "uv.lock")
 data = tomllib.loads(LOCK.read_text())
 
 def tags(fn):
@@ -56,3 +56,4 @@ for p in data["package"]:
     elif p.get("sdist"): rows["sdist_only"].append(f"{name} {p.get('version')}")
     else: rows["no_artifact"].append(f"{name} {p.get('version')}")
 print(json.dumps({k: (len(v) if k == "wheel" else v) for k, v in rows.items()}, indent=1))
+sys.exit(1 if rows["sdist_only"] or rows["no_artifact"] else 0)
