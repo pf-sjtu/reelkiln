@@ -1,0 +1,18 @@
+{
+  "_doc": "Hand-curated payload/result shapes that were READ DIRECTLY from the reconstructed bundle. Only shapes with a cited code location belong here. Leaf types not proven by code stay `unknown`. level: full = every field proven; partial = envelope/keys proven, some leaves unknown.",
+  "push": {
+    "session:event": { "type": "{ sessionId: unknown; event: unknown }", "level": "partial", "evidence": "main/index.js L61049 sendToRenderer(IPC.sessionEvent, { sessionId, event })" },
+    "job:snapshot": { "type": "{ sessionId: unknown; snapshot: unknown }", "level": "partial", "evidence": "main/index.js L61079" },
+    "spend:snapshot": { "type": "{ sessionId: unknown; snapshot: unknown }", "level": "partial", "evidence": "main/index.js L61087" },
+    "memory:changed": { "type": "{ scope: { clientId: unknown } & Record<string, unknown>; change: unknown; sessionId: unknown; notice?: unknown }", "level": "partial", "evidence": "main/index.js L61098-61103" },
+    "engine:updated": { "type": "{ version: unknown }", "level": "partial", "evidence": "main/index.js L61161" },
+    "window:state": { "type": "{ fullscreen: unknown }", "level": "partial", "evidence": "main/index.js L60577 (null is filtered before send, L60576)" },
+    "account:emailSent": { "type": "void", "level": "full", "evidence": "main/index.js L61434 sendToRenderer(IPC.accountEmailSent) — no payload argument" },
+    "library:syncProgress": { "type": "{ clientId: unknown; kind: \"line\"; text: unknown } | { clientId: unknown; kind: \"done\"; code: unknown }", "level": "partial", "evidence": "main/index.js L62099-62110" },
+    "bootstrap:progress": { "type": "{ step: unknown; status: \"running\" | \"ok\" | \"skip\" | \"fail\"; detail?: unknown; reason?: unknown }", "level": "partial", "evidence": "Bootstrap.runAll step() main/index.js L9874-9891 (emitProgress calls)" },
+    "app:update": { "type": "unknown | null", "level": "partial", "evidence": "main/index.js L60476 sendToRenderer(IPC.updateInfo, null); L62602 sends `info` (shape not recovered)" }
+  },
+  "result": {
+    "app:update:state": { "type": "{ status: unknown; version: unknown; percent: unknown; message: unknown }", "level": "partial", "evidence": "main/index.js L61340-61349 fallback object { status: \"disabled\", version: null, percent: null, message: \"Updates are starting.\" }; QA fixture qaAppUpdateState has the same 4 keys (qaFixtures L40)" }
+  }
+}

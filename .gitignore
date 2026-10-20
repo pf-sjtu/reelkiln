@@ -11,3 +11,7 @@ ffprobe
 uv
 voice-dictation
 artifacts/rea/analyze-javascript-application.json
+# Windows port build output
+port/dist/
+port/dist-test/
+port/*.tsbuildinfo
