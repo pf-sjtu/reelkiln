@@ -195,11 +195,48 @@ export const IPC = {
 export type IpcKey = keyof typeof IPC;
 export type IpcChannel = (typeof IPC)[IpcKey];
 
+// ───────────────────────── shared verified types ─────────────────────────
+/** Verified (partial): createAppUpdater L2223+: initial state L2232-2239, set() L2243-2246 adds installBlocked, every set({status:…}) call L2232-2400; version/percent leaves typed from assignments (expectedVersion string, Math.floor percent). Other statuses not found. */
+export type AppUpdateState = { status: "idle" | "disabled" | "error" | "checking" | "downloading" | "downloaded" | "installing"; version: string | null; percent: number | null; message: string | null; installBlocked?: boolean };
+/** Verified (partial): Settings.get() L5441-5456 iterates APP_SETTINGS_KEYS L5273-5290 (gatewayUrl+telemetry always present, others only when defined) */
+export type PublicSettings = { gatewayUrl: unknown; telemetry: unknown; updateChannelPreference?: unknown; usageSharingConsentAt?: unknown; agentHarness?: unknown; codexProvider?: unknown; codexModel?: unknown; llmRoute?: unknown; llmRouteAcknowledgedAt?: unknown; alphaConsentAt?: unknown; alphaConsentsByKey?: Record<string, unknown>; accountSignedInOnce?: unknown; lastEngineVersion?: unknown; world3?: unknown; runnerUrl?: unknown; feedbackContact?: unknown };
+/** Verified (partial): signInFailure() L60857-60871 (reason: 'cancelled' | 'rejected' | passthrough of err.reason) */
+export type SignInFailure = { ok: false; reason: string; message: string };
+/** Verified (partial): Bootstrap.status() L9802-9829 */
+export type BootstrapStatus = { ready: boolean; engineVersion: unknown; enginePath: unknown; workspacePath: unknown; doctor: unknown; shouldOffer: boolean; managedDevelopment: unknown; packaged: boolean; devMode: boolean; engineLatest: unknown; engineUpdate: unknown; enginePrevious: unknown; studioBundle: unknown; engineIdentity: unknown; featureFlags: unknown };
+/** Verified (full): ERROR_COPY L56024-56044 + publicError() L56045-56047 */
+export type EditorRenderError = { code: "invalid-request" | "unknown-session" | "job-mismatch" | "job-not-found" | "composition-not-found" | "engine-unavailable" | "busy" | "cancelled" | "render-failed" | "worker-unavailable"; message: string; retryable: boolean };
+/** Verified (full): emitPhase calls in EditorRenderController L56048-56266 + worker phase posts (editorRenderWorker.js L14, L41) */
+export type EditorRenderPhase = "queued" | "preparing" | "rendering" | "cancelling" | "cancelled" | "completed" | "failed";
+/** Verified (full): EditorRenderController.readResult() L56212-56236 */
+export type EditorRenderResult = { requestId: string; jobId: string; outputPath: string; width: number; height: number; fps: number; durationSeconds: number; sizeBytes: number; hasAudio: boolean };
+/** Verified (full): voiceDictationStatus() L10472-10500 (every resolve/return) */
+export type VoiceDictationStatus = { available: boolean; attach: boolean; message: string };
+/** Verified (full): currentAgentProviderKeyStatus() L60359-60364 */
+export type AgentProviderKeyStatus = { openaiApi: { configured: boolean }; openrouter: { configured: boolean } };
+/** Verified (full): intake:pickFiles handler L62189-62194 */
+export type PickedFile = { path: string; name: string; sizeBytes: number };
+/** Verified (partial): isIntakePickerScope() L304-317 (extra keys tolerated) */
+export type IntakePickerScope = { kind: "character" } | { kind: "composer"; sessionId: string } | { kind: "input_request"; sessionId: string; requestId: string };
+/** Verified (partial): sessionPlanReply() L3995-4023 (value = host.* result, unrecovered) */
+export type PlanReply = { ok: true; value: unknown } | { ok: false; message: string };
+/** Verified (partial): projectMemoryReply() L10720-10753 */
+export type MemoryReply = { ok: true; value: unknown } | { ok: false; code: string; message: string };
+/** Verified (partial): voiceResult L61863-61872 */
+export type VoiceReply = { ok: true; snapshot: { voices: Array<{ samplePath?: unknown } & Record<string, unknown>> } & Record<string, unknown> } | { ok: false; message: string };
+/** Verified (full): guarded L62029-62038, guardedAppLibrary L62042-62064 */
+export type LibraryGuardError = { error: "no-tenant" } | { error: "engine"; message: string } | { error: "paid-work-unavailable"; message: string };
+/** Verified (partial): verifyKeyAt() L60601-60613 */
+export type GatewayVerify = { ok: false; status?: number } | { ok: true; name: unknown; id: unknown };
+/** Verified (partial): keys read by main handlers: session:delete L61739-61746, client:remove L61820-61825, analytics:playbackCompleted L62003-62027 (quickstart/jobId), attachment:captureMoment L62220-62248 (clientId/cwd/jobId) */
+export type SessionMeta = { sessionId: unknown; clientId: unknown; cwd: unknown; jobId: unknown; quickstart?: unknown } & Record<string, unknown>;
+
 // ───────────────────────── placeholder & verified types ─────────────────────────
 export type Unknown_sessionPlan_read__scope = unknown; // TODO: payload not yet recovered — param `scope` of preload readSessionPlan()
 export type Unknown_sessionPlan_read__result = unknown; // TODO: payload not yet recovered — see main/index.js L61920 ipcMain.handle: (_e, scope) =>
 export type Unknown_sessionPlan_choose__scope = unknown; // TODO: payload not yet recovered — param `scope` of preload chooseSessionPlan()
-export type Unknown_sessionPlan_choose__request = unknown; // TODO: payload not yet recovered — param `request` of preload chooseSessionPlan()
+/** Verified (partial): L61928-61943 reads request.action/planId/revision */
+export type Unknown_sessionPlan_choose__request = { action: unknown; planId?: unknown; revision?: unknown } & Record<string, unknown>;
 export type Unknown_sessionPlan_choose__result = unknown; // TODO: payload not yet recovered — see main/index.js L61928 ipcMain.handle: (_e, scope, request2) =>
 export type Unknown_sessionPlan_retry__scope = unknown; // TODO: payload not yet recovered — param `scope` of preload retrySessionPlan()
 export type Unknown_sessionPlan_retry__result = unknown; // TODO: payload not yet recovered — see main/index.js L61944 ipcMain.handle: (_e, scope) =>
@@ -215,24 +252,32 @@ export type Unknown_memory_undo__result = unknown; // TODO: payload not yet reco
 export type Unknown_memory_openSource__scope = unknown; // TODO: payload not yet recovered — param `scope` of preload openProjectMemorySource()
 export type Unknown_memory_openSource__source = unknown; // TODO: payload not yet recovered — param `source` of preload openProjectMemorySource()
 export type Unknown_memory_openSource__result = unknown; // TODO: payload not yet recovered — see main/index.js L61970 ipcMain.handle: (_e, scope, source2) =>
-export type Unknown_quickstart_catalog__result = unknown; // TODO: payload not yet recovered — see main/index.js L61215 ipcMain.handle: () => {
+/** Verified (partial): L61215-61249: returns cached/refresh() result; the same fresh value is pushed on quickstart:catalogChanged (L61239) */
+export type Unknown_quickstart_catalog__result = Unknown_quickstart_catalogChanged__payload;
 export type Unknown_quickstart_impression__journeyId = unknown; // TODO: payload not yet recovered — param `journeyId` of preload quickstartImpression()
 export type Unknown_quickstart_impression__catalogSha256 = unknown; // TODO: payload not yet recovered — param `catalogSha256` of preload quickstartImpression()
 export type Unknown_quickstart_impression__durationMs = unknown; // TODO: payload not yet recovered — param `durationMs` of preload quickstartImpression()
-export type Unknown_quickstart_impression__result = unknown; // TODO: payload not yet recovered — see main/index.js L61254 ipcMain.handle: (_e, journeyId, catalogSha256, durationMs) => {
+/** Verified (full): handler L61254-61273 has no return value */
+export type Unknown_quickstart_impression__result = void;
 export type Unknown_quickstart_previewed__journeyId = unknown; // TODO: payload not yet recovered — param `journeyId` of preload quickstartPreviewed()
 export type Unknown_quickstart_previewed__starterId = unknown; // TODO: payload not yet recovered — param `starterId` of preload quickstartPreviewed()
 export type Unknown_quickstart_previewed__durationMs = unknown; // TODO: payload not yet recovered — param `durationMs` of preload quickstartPreviewed()
-export type Unknown_quickstart_previewed__result = unknown; // TODO: payload not yet recovered — see main/index.js L61274 ipcMain.handle: (_e, journeyId, starterId, durationMs) => {
+/** Verified (full): handler L61274-61293 has no return value */
+export type Unknown_quickstart_previewed__result = void;
 export type Unknown_quickstart_start__req = unknown; // TODO: payload not yet recovered — param `req` of preload quickstartStart()
 export type Unknown_quickstart_start__result = unknown; // TODO: payload not yet recovered — see main/index.js L61294 ipcMain.handle: async (_e, request2) => {
-export type Unknown_quickstart_mark__stage = unknown; // TODO: payload not yet recovered — param `stage` of preload quickstartMark()
-export type Unknown_quickstart_mark__durationMs = unknown; // TODO: payload not yet recovered — param `durationMs` of preload quickstartMark()
-export type Unknown_quickstart_mark__journeyId = unknown; // TODO: payload not yet recovered — param `journeyId` of preload quickstartMark()
-export type Unknown_quickstart_mark__result = unknown; // TODO: payload not yet recovered — see main/index.js L61250 ipcMain.handle: (_e, stage, durationMs, journeyId) => {
+/** Verified (full): quickstartLatencyMark L30465-30467 */
+export type Unknown_quickstart_mark__stage = string;
+/** Verified (full): L30468-30475 */
+export type Unknown_quickstart_mark__durationMs = number;
+/** Verified (full): L30477 */
+export type Unknown_quickstart_mark__journeyId = string | undefined;
+/** Verified (full): handler L61250-61253 has no return value */
+export type Unknown_quickstart_mark__result = void;
 export type Unknown_session_create__req = unknown; // TODO: payload not yet recovered — param `req` of preload createSession()
 export type Unknown_session_create__result = unknown; // TODO: payload not yet recovered — see main/index.js L61690 ipcMain.handle: async (_e, req) => {
-export type Unknown_session_list__result = unknown; // TODO: payload not yet recovered — see main/index.js L61697 ipcMain.handle: () => host.listSessions());
+/** Verified (partial): L61697 host.listSessions(); array use (.find/.filter) in L61739-61825; renderer feeds it to the same receiveSessions() as session:changed (renderer index L49051-49058) */
+export type Unknown_session_list__result = SessionMeta[];
 export type Unknown_session_reorder__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload reorderSessions()
 export type Unknown_session_reorder__sessionIds = unknown; // TODO: payload not yet recovered — param `sessionIds` of preload reorderSessions()
 export type Unknown_session_reorder__result = unknown; // TODO: payload not yet recovered — see main/index.js L61698 ipcMain.handle: (_e, clientId, sessionIds) =>
@@ -261,19 +306,28 @@ export type Unknown_session_setModel__result = unknown; // TODO: payload not yet
 export type Unknown_session_setReasoningEffort__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload setSessionReasoningEffort()
 export type Unknown_session_setReasoningEffort__effort = unknown; // TODO: payload not yet recovered — param `effort` of preload setSessionReasoningEffort()
 export type Unknown_session_setReasoningEffort__result = unknown; // TODO: payload not yet recovered — see main/index.js L61787 ipcMain.handle: (_e, sessionId, effort) =>
-export type Unknown_interaction_replayPending__result = unknown; // TODO: payload not yet recovered — see main/index.js L61701 ipcMain.handle: () => {
+/** Verified (full): handler L61701-61708 has no return value */
+export type Unknown_interaction_replayPending__result = void;
 export type Unknown_session_history__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload getHistory()
 export type Unknown_session_history__result = unknown; // TODO: payload not yet recovered — see main/index.js L61747 ipcMain.handle: (_e, sessionId) => {
 export type Unknown_file_openPath__path = unknown; // TODO: payload not yet recovered — param `path` of preload openPath()
-export type Unknown_file_openPath__result = unknown; // TODO: payload not yet recovered — see main/index.js L61917 ipcMain.handle: async (_e, path) => {
-export type Unknown_file_openExternal__url = unknown; // TODO: payload not yet recovered — param `url` of preload openExternal()
-export type Unknown_file_openExternal__result = unknown; // TODO: payload not yet recovered — see main/index.js L61979 ipcMain.handle: async (_e, url) => {
+/** Verified (full): handler L61917-61919 has no return value */
+export type Unknown_file_openPath__result = void;
+/** Verified (full): L61980 /^https?:/.test(url) */
+export type Unknown_file_openExternal__url = string;
+/** Verified (full): handler L61979-61981 has no return value */
+export type Unknown_file_openExternal__result = void;
 export type Unknown_file_revealItem__path = unknown; // TODO: payload not yet recovered — param `path` of preload revealItem()
-export type Unknown_file_revealItem__result = unknown; // TODO: payload not yet recovered — see main/index.js L61982 ipcMain.handle: (_e, path) => {
-export type Unknown_file_saveItemAs__path = unknown; // TODO: payload not yet recovered — param `path` of preload saveItemAs()
-export type Unknown_file_saveItemAs__result = unknown; // TODO: payload not yet recovered — see main/index.js L61985 ipcMain.handle: async (e, path) => {
-export type Unknown_analytics_playbackCompleted__path = unknown; // TODO: payload not yet recovered — param `path` of preload playbackCompleted()
-export type Unknown_analytics_playbackCompleted__result = unknown; // TODO: payload not yet recovered — see main/index.js L62003 ipcMain.handle: (_e, path) => {
+/** Verified (full): handler L61982-61984 has no return value */
+export type Unknown_file_revealItem__result = void;
+/** Verified (full): L61986-61988 */
+export type Unknown_file_saveItemAs__path = string;
+/** Verified (full): L61985-62002 returns false (cancel) or true */
+export type Unknown_file_saveItemAs__result = boolean;
+/** Verified (full): L62004 */
+export type Unknown_analytics_playbackCompleted__path = string;
+/** Verified (full): handler L62003-62027 has no return value */
+export type Unknown_analytics_playbackCompleted__result = void;
 export type Unknown_client_list__result = unknown; // TODO: payload not yet recovered — see main/index.js L61817 ipcMain.handle: () => host.listClients());
 export type Unknown_client_create__name = unknown; // TODO: payload not yet recovered — param `name` of preload createClient()
 export type Unknown_client_create__result = unknown; // TODO: payload not yet recovered — see main/index.js L61818 ipcMain.handle: (_e, name) => host.createClient(name));
@@ -344,8 +398,10 @@ export type Unknown_job_originalContext__result = unknown; // TODO: payload not 
 export type Unknown_spend_get__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload getSpendSnapshot()
 export type Unknown_spend_get__result = unknown; // TODO: payload not yet recovered — see main/index.js L61755 ipcMain.handle: (_e, sessionId) => host.getSpendSnapshot(sessionId));
 export type Unknown_outbox_authoritySnapshot__result = unknown; // TODO: payload not yet recovered — see main/index.js L61709 ipcMain.handle: () => outbox.authoritySnapshot());
-export type Unknown_telemetry_bindReplay__binding = unknown; // TODO: payload not yet recovered — param `binding` of preload telemetryBindReplay()
-export type Unknown_telemetry_bindReplay__result = unknown; // TODO: payload not yet recovered — see main/index.js L61710 ipcMain.handle: async (_e, binding) => {
+/** Verified (full): L61710-61730 validation (throws otherwise) */
+export type Unknown_telemetry_bindReplay__binding = { appSessionId: string; posthogSessionId: string };
+/** Verified (full): handler L61710-61730 has no return value */
+export type Unknown_telemetry_bindReplay__result = void;
 export type Unknown_spend_setCeiling__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload setSpendCeiling()
 export type Unknown_spend_setCeiling__usd = unknown; // TODO: payload not yet recovered — param `usd` of preload setSpendCeiling()
 export type Unknown_spend_setCeiling__options = unknown; // TODO: payload not yet recovered — param `options` of preload setSpendCeiling()
@@ -366,39 +422,59 @@ export type Unknown_session_startContinuation__clientActionId = unknown; // TODO
 export type Unknown_session_startContinuation__result = unknown; // TODO: payload not yet recovered — see main/index.js L61766 ipcMain.handle: (_e, sessionId, clientActionId) =>
 export type Unknown_job_historicalSnapshot__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload historicalJobSnapshot()
 export type Unknown_job_historicalSnapshot__result = unknown; // TODO: payload not yet recovered — see main/index.js L61769 ipcMain.handle: (_e, sessionId) =>
-export type Unknown_settings_get__result = unknown; // TODO: payload not yet recovered — see main/index.js L61321 ipcMain.handle: async () => {
+/** Verified (partial): L61321-61329 settings.get() */
+export type Unknown_settings_get__result = PublicSettings;
 export type Unknown_settings_set__patch = unknown; // TODO: payload not yet recovered — param `patch` of preload setSettings()
-export type Unknown_settings_set__result = unknown; // TODO: payload not yet recovered — see main/index.js L61680 ipcMain.handle: async (_e, patch) => {
+/** Verified (partial): L61680-61689 settings.get() */
+export type Unknown_settings_set__result = PublicSettings;
 export type Unknown_settings_saveGatewayKey__key = unknown; // TODO: payload not yet recovered — param `key` of preload saveGatewayKey()
-export type Unknown_settings_saveGatewayKey__result = unknown; // TODO: payload not yet recovered — see main/index.js L61393 ipcMain.handle: async (_e, key) => {
+/** Verified (partial): L61393-61405 settings.get() */
+export type Unknown_settings_saveGatewayKey__result = PublicSettings;
 export type Unknown_settings_switchGateway__url = unknown; // TODO: payload not yet recovered — param `url` of preload switchGateway()
-export type Unknown_settings_switchGateway__result = unknown; // TODO: payload not yet recovered — see main/index.js L61377 ipcMain.handle: async (_e, url) => {
-export type Unknown_app_restart__result = unknown; // TODO: payload not yet recovered — see main/index.js L61375 ipcMain.handle: restartApp);
+/** Verified (partial): L61377-61392 */
+export type Unknown_settings_switchGateway__result = { settings: PublicSettings; verify: GatewayVerify | null; interrupted: never[]; requiresRestart: true };
+/** Verified (full): restartApp() L60768-60787 always returns true */
+export type Unknown_app_restart__result = true;
 export type Unknown_app_update_preferences__result = unknown; // TODO: payload not yet recovered — see main/index.js L61330 ipcMain.handle: async () => {
 export type Unknown_app_update_channel__channel = unknown; // TODO: payload not yet recovered — param `channel` of preload setAppUpdateChannel()
 export type Unknown_app_update_channel__result = unknown; // TODO: payload not yet recovered — see main/index.js L61334 ipcMain.handle: async (_event, channel) => {
-/** Verified (partial): main/index.js L61340-61349 fallback object { status: "disabled", version: null, percent: null, message: "Updates are starting." }; QA fixture qaAppUpdateState has the same 4 keys (qaFixtures L40) */
-export type Unknown_app_update_state__result = { status: unknown; version: unknown; percent: unknown; message: unknown };
-export type Unknown_app_update_download__result = unknown; // TODO: payload not yet recovered — see main/index.js L61362 ipcMain.handle: async () =>
-export type Unknown_app_update_install__result = unknown; // TODO: payload not yet recovered — see main/index.js L61367 ipcMain.handle: async () =>
+/** Verified (partial): L61340-61349: appUpdater?.state() (createAppUpdater state() returns {...state}) ?? fallback {status:'disabled',version:null,percent:null,message:'Updates are starting.'} */
+export type Unknown_app_update_state__result = AppUpdateState;
+/** Verified (partial): L61362-61366 appUpdater?.download() (returns {...state}) / appUpdater?.state() */
+export type Unknown_app_update_download__result = AppUpdateState | undefined;
+/** Verified (partial): L61367-61369 appUpdater?.install() — every path returns {...state} (L2357-2376) — / appUpdater?.state() */
+export type Unknown_app_update_install__result = AppUpdateState | undefined;
 export type Unknown_app_update_get__result = unknown; // TODO: payload not yet recovered — see main/index.js L61370 ipcMain.handle: () => currentUpdateInfo);
-export type Unknown_app_update_check__result = unknown; // TODO: payload not yet recovered — see main/index.js L61371 ipcMain.handle: () => updateChecker?.checkNow() ?? { kind: "failed", currentVersion: app.getVersion() },
+/** Verified (partial): L61371-61374 fallback when updateChecker is absent */
+export type Unknown_app_update_check__result = unknown | { kind: "failed"; currentVersion: string };
 export type Unknown_gateway_verify__key = unknown; // TODO: payload not yet recovered — param `key` of preload verifyGatewayKey()
-export type Unknown_gateway_verify__result = unknown; // TODO: payload not yet recovered — see main/index.js L61376 ipcMain.handle: (_e, key) => verifyKeyAt(openedGatewayUrl, key));
-export type Unknown_account_snapshot__result = unknown; // TODO: payload not yet recovered — see main/index.js L61406 ipcMain.handle: () => (account.loaded ? account : resolveAccount()));
-export type Unknown_account_refresh__result = unknown; // TODO: payload not yet recovered — see main/index.js L61407 ipcMain.handle: () => resolveAccount());
-export type Unknown_account_signInGoogle__result = unknown; // TODO: payload not yet recovered — see main/index.js L61408 ipcMain.handle: async () => {
+/** Verified (partial): L61376 verifyKeyAt() */
+export type Unknown_gateway_verify__result = GatewayVerify;
+/** Verified (partial): L61406 account (module var assigned by resolveAccount) or resolveAccount() */
+export type Unknown_account_snapshot__result = Unknown_account_changed__payload;
+/** Verified (partial): L61407 resolveAccount() returns the same `account` object it pushes on account:changed (L60839-60840) */
+export type Unknown_account_refresh__result = Unknown_account_changed__payload;
+/** Verified (partial): handlers L61408-61419 / L61431-61444 / L61498-61507 */
+export type Unknown_account_signInGoogle__result = { ok: true; account: unknown } | SignInFailure;
 export type Unknown_account_signInEmail__email = unknown; // TODO: payload not yet recovered — param `email` of preload accountSignInEmail()
-export type Unknown_account_signInEmail__result = unknown; // TODO: payload not yet recovered — see main/index.js L61431 ipcMain.handle: async (_e, email) => {
-export type Unknown_account_resendEmail__result = unknown; // TODO: payload not yet recovered — see main/index.js L61420 ipcMain.handle: async () => {
-export type Unknown_account_cancelSignIn__result = unknown; // TODO: payload not yet recovered — see main/index.js L61428 ipcMain.handle: () => {
-export type Unknown_account_signOut__result = unknown; // TODO: payload not yet recovered — see main/index.js L61445 ipcMain.handle: async () => {
+/** Verified (partial): handlers L61408-61419 / L61431-61444 / L61498-61507 */
+export type Unknown_account_signInEmail__result = { ok: true; account: unknown } | SignInFailure;
+/** Verified (partial): L61420-61427 */
+export type Unknown_account_resendEmail__result = { ok: true } | SignInFailure;
+/** Verified (full): handler L61428-61430 has no return value */
+export type Unknown_account_cancelSignIn__result = void;
+/** Verified (partial): L61445-61458 resolveAccount(); same object as account:changed (L60839-60840) */
+export type Unknown_account_signOut__result = Unknown_account_changed__payload;
 export type Unknown_account_consent__termsVersion = unknown; // TODO: payload not yet recovered — param `termsVersion` of preload accountConsent()
-export type Unknown_account_consent__result = unknown; // TODO: payload not yet recovered — see main/index.js L61498 ipcMain.handle: async (_e, termsVersion) => {
-export type Unknown_account_ensureAccess__result = unknown; // TODO: payload not yet recovered — see main/index.js L61508 ipcMain.handle: async () => {
-export type Unknown_account_mintKey__result = unknown; // TODO: payload not yet recovered — see main/index.js L61557 ipcMain.handle: async () => {
+/** Verified (partial): handlers L61408-61419 / L61431-61444 / L61498-61507 */
+export type Unknown_account_consent__result = { ok: true; account: unknown } | SignInFailure;
+/** Verified (partial): L61508-61556 (reason via mintFailureReason L60872-60877) */
+export type Unknown_account_ensureAccess__result = { ok: true; account: unknown } | { ok: false; reason: string; message: string; retryable?: true };
+/** Verified (partial): L61557-61573 */
+export type Unknown_account_mintKey__result = { ok: true; account: unknown } | { ok: false; reason: string; message: string; retryable?: true; existing?: unknown };
 export type Unknown_account_claimKey__key = unknown; // TODO: payload not yet recovered — param `key` of preload accountClaimKey()
-export type Unknown_account_claimKey__result = unknown; // TODO: payload not yet recovered — see main/index.js L61574 ipcMain.handle: async (_e, key) => {
+/** Verified (partial): L61574-61592 */
+export type Unknown_account_claimKey__result = { ok: true; account: unknown; alreadyClaimed: unknown } | { ok: false; reason: "unknown" | "network" | "vault-unreadable" | "rejected"; message: string };
 export type Unknown_account_localResetPrepare__result = unknown; // TODO: payload not yet recovered — see main/index.js L61496 ipcMain.handle: () => localReset.prepare());
 export type Unknown_account_localResetCommit__planId = unknown; // TODO: payload not yet recovered — param `planId` of preload accountLocalResetCommit()
 export type Unknown_account_localResetCommit__result = unknown; // TODO: payload not yet recovered — see main/index.js L61497 ipcMain.handle: (_e, planId) => localReset.commit(planId));
@@ -429,62 +505,83 @@ export type Unknown_engine_creditHandoffOffer__result = unknown; // TODO: payloa
 export type Unknown_engine_continueOnCredits__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload continueOnCredits()
 export type Unknown_engine_continueOnCredits__request = unknown; // TODO: payload not yet recovered — param `request` of preload continueOnCredits()
 export type Unknown_engine_continueOnCredits__result = unknown; // TODO: payload not yet recovered — see main/index.js L61656 ipcMain.handle: (_e, sessionId, request2) =>
-export type Unknown_engine_agentProviderKeyStatus__result = unknown; // TODO: payload not yet recovered — see main/index.js L61664 ipcMain.handle: () => currentAgentProviderKeyStatus());
-export type Unknown_engine_saveAgentProviderKey__provider = unknown; // TODO: payload not yet recovered — param `provider` of preload saveAgentProviderKey()
-export type Unknown_engine_saveAgentProviderKey__key = unknown; // TODO: payload not yet recovered — param `key` of preload saveAgentProviderKey()
-export type Unknown_engine_saveAgentProviderKey__result = unknown; // TODO: payload not yet recovered — see main/index.js L61665 ipcMain.handle: (_e, provider, key) => {
+/** Verified (full): L61664 */
+export type Unknown_engine_agentProviderKeyStatus__result = AgentProviderKeyStatus;
+/** Verified (full): L61666-61668 */
+export type Unknown_engine_saveAgentProviderKey__provider = "openai-api" | "openrouter";
+/** Verified (full): L61669-61671 */
+export type Unknown_engine_saveAgentProviderKey__key = string | undefined;
+/** Verified (full): L61665-61679 returns currentAgentProviderKeyStatus() */
+export type Unknown_engine_saveAgentProviderKey__result = AgentProviderKeyStatus;
 export type Unknown_input_respond__requestId = unknown; // TODO: payload not yet recovered — param `requestId` of preload respondInput()
 export type Unknown_input_respond__response = unknown; // TODO: payload not yet recovered — param `response` of preload respondInput()
 export type Unknown_input_respond__result = unknown; // TODO: payload not yet recovered — see main/index.js L61830 ipcMain.handle: (_e, requestId, r) =>
-export type Unknown_media_requestMic__result = unknown; // TODO: payload not yet recovered — see main/index.js L61904 ipcMain.handle: async () => {
-export type Unknown_media_voiceDictationStatus__result = unknown; // TODO: payload not yet recovered — see main/index.js L61910 ipcMain.handle: () => voiceDictationStatus());
+/** Verified (full): L61904-61909 true / systemPreferences.askForMediaAccess (Promise<boolean>) */
+export type Unknown_media_requestMic__result = boolean;
+/** Verified (full): L61910 → voiceDictationStatus() */
+export type Unknown_media_voiceDictationStatus__result = VoiceDictationStatus;
 export type Unknown_media_transcribeVoice__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload transcribeVoice()
 export type Unknown_media_transcribeVoice__recordingId = unknown; // TODO: payload not yet recovered — param `recordingId` of preload transcribeVoice()
 export type Unknown_media_transcribeVoice__audio = unknown; // TODO: payload not yet recovered — param `audio` of preload transcribeVoice()
 export type Unknown_media_transcribeVoice__result = unknown; // TODO: payload not yet recovered — see main/index.js L61911 ipcMain.handle: (_e, sessionId, recordingId, audio) => {
 export type Unknown_media_discardVoice__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload discardVoice()
 export type Unknown_media_discardVoice__recordingId = unknown; // TODO: payload not yet recovered — param `recordingId` of preload discardVoice()
-export type Unknown_media_discardVoice__result = unknown; // TODO: payload not yet recovered — see main/index.js L61914 ipcMain.handle: (_e, sessionId, recordingId) => {
+/** Verified (full): handler L61914-61916 has no return value */
+export type Unknown_media_discardVoice__result = void;
 export type Unknown_library_stats__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload libraryStats()
 export type Unknown_library_stats__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload libraryStats()
-export type Unknown_library_stats__result = unknown; // TODO: payload not yet recovered — see main/index.js L62065 ipcMain.handle: (_e, clientId, cwd) =>
+/** Verified (partial): guarded() L62029-62038 wraps the library call (success value unrecovered) */
+export type Unknown_library_stats__result = unknown | LibraryGuardError;
 export type Unknown_library_scan__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload libraryScan()
 export type Unknown_library_scan__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload libraryScan()
-export type Unknown_library_scan__result = unknown; // TODO: payload not yet recovered — see main/index.js L62068 ipcMain.handle: (_e, clientId, cwd) =>
+/** Verified (partial): guarded() L62029-62038 wraps the library call (success value unrecovered) */
+export type Unknown_library_scan__result = unknown | LibraryGuardError;
 export type Unknown_library_addSource__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload libraryAddSource()
 export type Unknown_library_addSource__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload libraryAddSource()
 export type Unknown_library_addSource__type = unknown; // TODO: payload not yet recovered — param `type` of preload libraryAddSource()
 export type Unknown_library_addSource__path = unknown; // TODO: payload not yet recovered — param `path` of preload libraryAddSource()
-export type Unknown_library_addSource__result = unknown; // TODO: payload not yet recovered — see main/index.js L62071 ipcMain.handle: async (_e, clientId, cwd, type, path) =>
+/** Verified (partial): guarded() L62029-62038 wraps the library call (success value unrecovered) */
+export type Unknown_library_addSource__result = unknown | LibraryGuardError;
 export type Unknown_library_removeSource__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload libraryRemoveSource()
 export type Unknown_library_removeSource__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload libraryRemoveSource()
 export type Unknown_library_removeSource__path = unknown; // TODO: payload not yet recovered — param `path` of preload libraryRemoveSource()
 export type Unknown_library_removeSource__purge = unknown; // TODO: payload not yet recovered — param `purge` of preload libraryRemoveSource()
-export type Unknown_library_removeSource__result = unknown; // TODO: payload not yet recovered — see main/index.js L62085 ipcMain.handle: (_e, clientId, cwd, path, purge) =>
+/** Verified (partial): guarded() L62029-62038 wraps the library call (success value unrecovered) */
+export type Unknown_library_removeSource__result = unknown | LibraryGuardError;
 export type Unknown_library_sync__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload librarySync()
 export type Unknown_library_sync__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload librarySync()
-export type Unknown_library_sync__result = unknown; // TODO: payload not yet recovered — see main/index.js L62092 ipcMain.handle: (_e, clientId, cwd) =>
+/** Verified (partial): L62092-62114 + guardedAppLibrary */
+export type Unknown_library_sync__result = { code: unknown } | LibraryGuardError;
 export type Unknown_library_search__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload librarySearch()
 export type Unknown_library_search__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload librarySearch()
 export type Unknown_library_search__query = unknown; // TODO: payload not yet recovered — param `query` of preload librarySearch()
 export type Unknown_library_search__type = unknown; // TODO: payload not yet recovered — param `type` of preload librarySearch()
 export type Unknown_library_search__tenants = unknown; // TODO: payload not yet recovered — param `tenants` of preload librarySearch()
-export type Unknown_library_search__result = unknown; // TODO: payload not yet recovered — see main/index.js L62115 ipcMain.handle: (_e, clientId, cwd, query2, type, tenants) =>
+/** Verified (partial): L62115-62121 exposeLibraryHits (hits.map(h=>h.sourceFile)) L60426 + guardedAppLibrary */
+export type Unknown_library_search__result = Array<{ sourceFile: unknown } & Record<string, unknown>> | LibraryGuardError;
 export type Unknown_library_preview__cwd = unknown; // TODO: payload not yet recovered — param `cwd` of preload libraryPreview()
 export type Unknown_library_preview__sourceFile = unknown; // TODO: payload not yet recovered — param `sourceFile` of preload libraryPreview()
 export type Unknown_library_preview__inSec = unknown; // TODO: payload not yet recovered — param `inSec` of preload libraryPreview()
 export type Unknown_library_preview__outSec = unknown; // TODO: payload not yet recovered — param `outSec` of preload libraryPreview()
-export type Unknown_library_preview__result = unknown; // TODO: payload not yet recovered — see main/index.js L62122 ipcMain.handle: async (_e, cwd, sourceFile, inSec, outSec) => {
+/** Verified (partial): L62122-62153 */
+export type Unknown_library_preview__result = unknown | { error: "media"; message: string };
 export type Unknown_library_setTenant__clientId = unknown; // TODO: payload not yet recovered — param `clientId` of preload librarySetTenant()
 export type Unknown_library_setTenant__tenant = unknown; // TODO: payload not yet recovered — param `tenant` of preload librarySetTenant()
 export type Unknown_library_setTenant__result = unknown; // TODO: payload not yet recovered — see main/index.js L62154 ipcMain.handle: (_e, clientId, tenant) =>
-export type Unknown_bootstrap_status__result = unknown; // TODO: payload not yet recovered — see main/index.js L61300 ipcMain.handle: () => bootstrap.status());
-export type Unknown_bootstrap_run__result = unknown; // TODO: payload not yet recovered — see main/index.js L61301 ipcMain.handle: () => bootstrap.runAll());
-export type Unknown_bootstrap_revertEngine__result = unknown; // TODO: payload not yet recovered — see main/index.js L61302 ipcMain.handle: () => bootstrap.revertEngine());
-export type Unknown_bootstrap_revealSetupLog__result = unknown; // TODO: payload not yet recovered — see main/index.js L61303 ipcMain.handle: () => {
-export type Unknown_engine_pendingToast__result = unknown; // TODO: payload not yet recovered — see main/index.js L61316 ipcMain.handle: () => {
-export type Unknown_intake_pickFiles__scope = unknown; // TODO: payload not yet recovered — param `scope` of preload intakePickFiles()
-export type Unknown_intake_pickFiles__result = unknown; // TODO: payload not yet recovered — see main/index.js L62157 ipcMain.handle: async (_event, scope) => {
+/** Verified (partial): L61300 bootstrap.status() */
+export type Unknown_bootstrap_status__result = BootstrapStatus;
+/** Verified (partial): Bootstrap.runAll L9863-9988 returns this.status() (L9864, L9987) */
+export type Unknown_bootstrap_run__result = BootstrapStatus;
+/** Verified (partial): Bootstrap.revertEngine returns this.status() (L10264) */
+export type Unknown_bootstrap_revertEngine__result = BootstrapStatus;
+/** Verified (full): handler L61303-61305 has no return value */
+export type Unknown_bootstrap_revealSetupLog__result = void;
+/** Verified (partial): L61316-61320; pendingEngineToast assigned { version: eng.version } L61311 or null */
+export type Unknown_engine_pendingToast__result = { version: unknown } | null;
+/** Verified (partial): isIntakePickerScope L304-317 */
+export type Unknown_intake_pickFiles__scope = IntakePickerScope;
+/** Verified (partial): L62157-62196 (scope echoes the validated request) */
+export type Unknown_intake_pickFiles__result = { scope: IntakePickerScope; files: PickedFile[] };
 export type Unknown_attachment_stage__req = unknown; // TODO: payload not yet recovered — param `req` of preload attachmentStage()
 export type Unknown_attachment_stage__result = unknown; // TODO: payload not yet recovered — see main/index.js L62193 ipcMain.handle: (_e, req) =>
 export type Unknown_attachment_list__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload attachmentList()
@@ -504,15 +601,18 @@ export type Unknown_attachment_destination__destination = unknown; // TODO: payl
 export type Unknown_attachment_destination__result = unknown; // TODO: payload not yet recovered — see main/index.js L62215 ipcMain.handle: (_e, sessionId, attachmentIds, destination) =>
 export type Unknown_attachment_pasteImage__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload attachmentPasteImage()
 export type Unknown_attachment_pasteImage__destination = unknown; // TODO: payload not yet recovered — param `destination` of preload attachmentPasteImage()
-export type Unknown_attachment_pasteImage__png = unknown; // TODO: payload not yet recovered — param `png` of preload attachmentPasteImage()
+/** Verified (full): L62274-62279 instanceof ArrayBuffer */
+export type Unknown_attachment_pasteImage__png = ArrayBuffer;
 export type Unknown_attachment_pasteImage__result = unknown; // TODO: payload not yet recovered — see main/index.js L62272 ipcMain.handle: (_e, sessionId, destination, png) => {
 export type Unknown_attachment_voiceNote__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload attachmentVoiceNote()
-export type Unknown_attachment_voiceNote__recordingId = unknown; // TODO: payload not yet recovered — param `recordingId` of preload attachmentVoiceNote()
+/** Verified (full): L62267-62268 /^[a-f0-9-]{36}$/ */
+export type Unknown_attachment_voiceNote__recordingId = string;
 export type Unknown_attachment_voiceNote__audio = unknown; // TODO: payload not yet recovered — param `audio` of preload attachmentVoiceNote()
 export type Unknown_attachment_voiceNote__result = unknown; // TODO: payload not yet recovered — see main/index.js L62265 ipcMain.handle: async (_e, sessionId, recordingId, audio) => {
 export type Unknown_materials_preview__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload materialPreview()
 export type Unknown_materials_preview__id = unknown; // TODO: payload not yet recovered — param `id` of preload materialPreview()
-export type Unknown_materials_preview__result = unknown; // TODO: payload not yet recovered — see main/index.js L62197 ipcMain.handle: (_e, sessionId, id2) => {
+/** Verified (partial): L62197-62205 */
+export type Unknown_materials_preview__result = null | { entry: Record<string, unknown> & { state: "missing" } } | ({ asset?: { path: unknown } } & Record<string, unknown> & { url?: string });
 export type Unknown_attachment_captureMoment__req = unknown; // TODO: payload not yet recovered — param `req` of preload attachmentCaptureMoment()
 export type Unknown_attachment_captureMoment__result = unknown; // TODO: payload not yet recovered — see main/index.js L62220 ipcMain.handle: (_e, request2) =>
 export type Unknown_attachment_momentPreview__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload attachmentMomentPreview()
@@ -530,29 +630,38 @@ export type Unknown_feedback_capture__result = unknown; // TODO: payload not yet
 export type Unknown_feedback_submit__req = unknown; // TODO: payload not yet recovered — param `req` of preload feedbackSubmit()
 export type Unknown_feedback_submit__result = unknown; // TODO: payload not yet recovered — see main/index.js L62346 ipcMain.handle: (_e, req) => feedback.submit(req));
 export type Unknown_feedback_discard__reportId = unknown; // TODO: payload not yet recovered — param `reportId` of preload feedbackDiscard()
-export type Unknown_feedback_discard__result = unknown; // TODO: payload not yet recovered — see main/index.js L62347 ipcMain.handle: (_e, reportId) => {
+/** Verified (full): handler L62347-62349 has no return value */
+export type Unknown_feedback_discard__result = void;
 export type Unknown_feedback_grantUsageSharing__result = unknown; // TODO: payload not yet recovered — see main/index.js L62350 ipcMain.handle: () => feedback.grantUsageSharing());
 export type Unknown_workflowSubmit_eligibility__result = unknown; // TODO: payload not yet recovered — see main/index.js L62398 ipcMain.handle: () => workflowSubmission.eligibility());
 export type Unknown_workflowSubmit_start__req = unknown; // TODO: payload not yet recovered — param `req` of preload workflowSubmit()
 export type Unknown_workflowSubmit_start__result = unknown; // TODO: payload not yet recovered — see main/index.js L62399 ipcMain.handle: (_e, req) => workflowSubmission.submit(req));
-export type Unknown_editorRender_start__req = unknown; // TODO: payload not yet recovered — param `req` of preload editorRenderStart()
-export type Unknown_editorRender_start__result = unknown; // TODO: payload not yet recovered — see main/index.js L62423 ipcMain.handle: (_e, req) => editorRender.start(req));
-export type Unknown_editorRender_cancel__requestId = unknown; // TODO: payload not yet recovered — param `requestId` of preload editorRenderCancel()
-export type Unknown_editorRender_cancel__result = unknown; // TODO: payload not yet recovered — see main/index.js L62424 ipcMain.handle: (_e, requestId) => editorRender.cancel(requestId));
-export type Unknown_editorRender_state__result = unknown; // TODO: payload not yet recovered — see main/index.js L62425 ipcMain.handle: () => editorRender.state());
+/** Verified (full): EditorRenderController.start validation L56061-56069 */
+export type Unknown_editorRender_start__req = { requestId: string; sessionId: string; jobId: string };
+/** Verified (full): EditorRenderController.start L56060-56106 / reject L56264-56266 */
+export type Unknown_editorRender_start__result = { requestId: string; accepted: true } | { requestId: string; accepted: false; error: EditorRenderError };
+/** Verified (partial): compared with active.requestId L56109 */
+export type Unknown_editorRender_cancel__requestId = string;
+/** Verified (full): EditorRenderController.cancel L56107-56118 */
+export type Unknown_editorRender_cancel__result = boolean;
+/** Verified (full): EditorRenderController.state L56055-56059 */
+export type Unknown_editorRender_state__result = { requestId: string; jobId: string; phase: EditorRenderPhase } | null;
 export type Unknown_hfPreview_available__sessionId = unknown; // TODO: payload not yet recovered — param `sessionId` of preload hfPreviewAvailable()
 export type Unknown_hfPreview_available__jobId = unknown; // TODO: payload not yet recovered — param `jobId` of preload hfPreviewAvailable()
 export type Unknown_hfPreview_available__result = unknown; // TODO: payload not yet recovered — see main/index.js L62437 ipcMain.handle: (_e, sessionId, jobId) =>
 export type Unknown_hfPreview_start__req = unknown; // TODO: payload not yet recovered — param `req` of preload hfPreviewStart()
 export type Unknown_hfPreview_start__result = unknown; // TODO: payload not yet recovered — see main/index.js L62440 ipcMain.handle: (_e, req) => hfPreview.start(req));
-export type Unknown_hfPreview_stop__result = unknown; // TODO: payload not yet recovered — see main/index.js L62441 ipcMain.handle: () => {
+/** Verified (full): handler L62441-62443 has no return value */
+export type Unknown_hfPreview_stop__result = void;
 export type Unknown_hfPreview_editApply__req = unknown; // TODO: payload not yet recovered — param `req` of preload hfEditApply()
 export type Unknown_hfPreview_editApply__result = unknown; // TODO: payload not yet recovered — see main/index.js L62444 ipcMain.handle: (_e, req) => hfPreview.applyEdit(req));
 export type Unknown_permission_respond__requestId = unknown; // TODO: payload not yet recovered — param `requestId` of preload respondPermission()
 export type Unknown_permission_respond__response = unknown; // TODO: payload not yet recovered — param `response` of preload respondPermission()
 export type Unknown_permission_shown__requestId = unknown; // TODO: payload not yet recovered — param `requestId` of preload notePermissionShown()
-export type Unknown_quit_rendererState__state = unknown; // TODO: payload not yet recovered — param `state` of preload noteQuitState()
-export type Unknown_sessionPlan_changed__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61096 sendToRenderer payload: event),
+/** Verified (partial): L61804-61816 sanitizer reads exactly these keys */
+export type Unknown_quit_rendererState__state = { composerSessionId?: string | null; unsentDraft?: boolean; pendingSendAttachmentIds?: string[]; recordingVoice?: boolean };
+/** Verified (partial): renderer index L48087-48096 (event.scope.gatewayUrl.replace(...) → string; event.plan) */
+export type Unknown_sessionPlan_changed__payload = { scope: { sessionId: unknown; gatewayUrl: string; canonicalKeyId: unknown } & Record<string, unknown>; plan: unknown } & Record<string, unknown>;
 /** Verified (partial): main/index.js L61098-61103 */
 export type Unknown_memory_changed__payload = { scope: { clientId: unknown } & Record<string, unknown>; change: unknown; sessionId: unknown; notice?: unknown };
 export type Unknown_characters_voices_changed__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61104 sendToRenderer payload: scope),
@@ -560,7 +669,8 @@ export type Unknown_characters_voices_changed__payload = unknown; // TODO: paylo
 export type Unknown_job_snapshot__payload = { sessionId: unknown; snapshot: unknown };
 /** Verified (partial): main/index.js L61087 */
 export type Unknown_spend_snapshot__payload = { sessionId: unknown; snapshot: unknown };
-export type Unknown_app_update_state_changed__payload = unknown; // TODO: payload not yet recovered — see main/index.js L62544 sendToRenderer payload: state),
+/** Verified (partial): L62544 publish: (state) => sendToRenderer(IPC.appUpdateState, state); createAppUpdater set() publishes {...state} (L2243-2246) */
+export type Unknown_app_update_state_changed__payload = AppUpdateState;
 /** Verified (partial): main/index.js L60476 sendToRenderer(IPC.updateInfo, null); L62602 sends `info` (shape not recovered) */
 export type Unknown_app_update__payload = unknown | null;
 /** Verified (full): main/index.js L61434 sendToRenderer(IPC.accountEmailSent) — no payload argument */
@@ -570,21 +680,28 @@ export type Unknown_account_changed__payload = unknown; // TODO: payload not yet
 export type Unknown_engine_updated__payload = { version: unknown };
 /** Verified (partial): main/index.js L61049 sendToRenderer(IPC.sessionEvent, { sessionId, event }) */
 export type Unknown_session_event__payload = { sessionId: unknown; event: unknown };
-export type Unknown_session_changed__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61051 sendToRenderer payload: sessions);
-export type Unknown_permission_request__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61056 sendToRenderer payload: req);
-export type Unknown_input_request__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61069 sendToRenderer payload: req);
+/** Verified (partial): main L61050-61052 iterates `for (const session2 of sessions)`; renderer L49051-49058 handles it exactly like listSessions() */
+export type Unknown_session_changed__payload = SessionMeta[];
+/** Verified (partial): renderer index L49095-49098 (req.kind === "question", req.sessionId, req.requestId); main L61053-61057 forwards `req` */
+export type Unknown_permission_request__payload = { kind: unknown; sessionId: unknown; requestId: unknown } & Record<string, unknown>;
+/** Verified (partial): renderer index L49099-49102; main L61066-61070 forwards `req` */
+export type Unknown_input_request__payload = { sessionId: unknown; requestId: unknown } & Record<string, unknown>;
 /** Verified (partial): main/index.js L62099-62110 */
 export type Unknown_library_syncProgress__payload = { clientId: unknown; kind: "line"; text: unknown } | { clientId: unknown; kind: "done"; code: unknown };
 /** Verified (partial): Bootstrap.runAll step() main/index.js L9874-9891 (emitProgress calls) */
 export type Unknown_bootstrap_progress__payload = { step: unknown; status: "running" | "ok" | "skip" | "fail"; detail?: unknown; reason?: unknown };
-/** Verified (partial): main/index.js L60577 (null is filtered before send, L60576) */
-export type Unknown_window_state__payload = { fullscreen: unknown };
+/** Verified (full): L60574-60577: fullscreenStateForWindow (L55783-55791) returns window.isFullScreen() or null; null is not sent */
+export type Unknown_window_state__payload = { fullscreen: boolean };
 export type Unknown_attachment_changed__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61045 sendToRenderer payload: attachment),
-export type Unknown_materials_changed__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61095 sendToRenderer payload: ledger),
+/** Verified (partial): renderer index L31478-31485 and L47916-47920 (ledger.sessionId, ledger.entries.find(item => item.id …)) */
+export type Unknown_materials_changed__payload = { sessionId: unknown; entries: Array<{ id: unknown } & Record<string, unknown>> } & Record<string, unknown>;
 export type Unknown_quickstart_catalogChanged__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61239 sendToRenderer payload: fresh);
-export type Unknown_characters_build__payload = unknown; // TODO: payload not yet recovered — see main/index.js L61092 sendToRenderer payload: evt),
-export type Unknown_editorRender_event__payload = unknown; // TODO: payload not yet recovered — see main/index.js L62412 sendToRenderer payload: event);
-export type Unknown_hfPreview_event__payload = unknown; // TODO: payload not yet recovered — see main/index.js L62432 sendToRenderer payload: event),
+/** Verified (partial): renderer index L34212-34220 (e.slug, e.state) */
+export type Unknown_characters_build__payload = { slug: unknown; state?: unknown } & Record<string, unknown>;
+/** Verified (full): EditorRenderController emitPhase L56237-56242, handleExit L56184-56211, fail L56246-56263; forwarded verbatim L62405-62413 */
+export type Unknown_editorRender_event__payload = { kind: "progress"; progress: { requestId: string; jobId: string; phase: EditorRenderPhase } } | { kind: "completed"; result: EditorRenderResult } | { kind: "error"; requestId: string; jobId: string; error: EditorRenderError };
+/** Verified (partial): renderer index L37856-37861 (e.kind === "stopped", e.jobId, e.reason) */
+export type Unknown_hfPreview_event__payload = { kind: unknown; jobId?: unknown; reason?: unknown } & Record<string, unknown>;
 
 // ───────────────────────── renderer → main: invoke ↔ ipcMain.handle (157) ─────────────────────────
 export interface IpcInvokeContract {
@@ -2018,4 +2135,4 @@ declare global {
 }
 
 /** Coverage stats emitted by the generator. */
-export const CONTRACT_STATS = {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"resultVerified":1,"resultPlaceholder":156,"pushVerified":10,"pushPlaceholder":13,"sendVoid":3} as const;
+export const CONTRACT_STATS = {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17} as const;

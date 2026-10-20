@@ -32,17 +32,17 @@ port/
    └─ main-ipc.test.ts          # 每个 channel 恰好注册一次；假后端、pendingExcept、推送
 ```
 
-### 1.1 IPC 契约覆盖率（生成器输出 `CONTRACT_STATS`）
+### 1.1 IPC 契约覆盖率（生成器输出 `CONTRACT_STATS`，第二轮静态恢复后）
 
-| 方向 | 数量 | 有真实类型 | 占位 `Unknown_*` |
+| 方向 | 数量 | 有真实类型（full / partial） | 占位 `Unknown_*` |
 |---|---|---|---|
-| renderer→main `invoke`↔`handle`（返回值） | 157 | 1（`app:update:state`，partial：4 个键，L61340-61349） | 156 |
-| renderer→main `send`↔`on` | 3 | 3（返回 `void`，由 `ipcRenderer.send` 语义确定） | 0 |
-| main→renderer 推送载荷 | 23 | 10（`account:emailSent`=void 完整；`session:event`/`job:snapshot`/`spend:snapshot`/`memory:changed`/`engine:updated`/`window:state`/`library:syncProgress`/`bootstrap:progress`/`app:update` 为 partial） | 13 |
-| 请求参数 | 198 个具名参数 | **名称**全部来自原 preload（已核验）；**类型**全部为 `unknown` 占位 | 198 |
-| 未使用 | 1（`file:pathForFile`，preload 用 `webUtils.getPathForFile` 本地实现） | — | — |
+| renderer→main `invoke`↔`handle`（返回值） | 157 | **57**（23 full / 34 partial） | 100 |
+| renderer→main `send`↔`on` | 3 | 3（`void`） | 0 |
+| main→renderer 推送载荷 | 23 | **19**（3 full：`account:emailSent`、`window:state`、`editorRender:event`；16 partial） | 4（`characters:voices:changed`、`attachment:changed` 无可证字段；`account:changed`、`quickstart:catalogChanged` 与对应 invoke 结果互为别名，形状本身仍未知） |
+| 请求参数 | 198 | **16**（名称全部已核验） | 182 |
+| 共享类型 | 17 个（`AppUpdateState`、`PublicSettings`、`BootstrapStatus`、`EditorRender*`、`LibraryGuardError`、`PlanReply`、`MemoryReply`、`VoiceReply`、`SessionMeta` …） | — | — |
 
-每个占位类型都带 `// TODO: payload not yet recovered`，并在契约接口注释中引用 main 的 handler 行号、签名首行与委托调用（`delegates to host.xxx`）。未编造任何载荷形状；partial 形状中未被代码证明的叶子仍为 `unknown`。
+（第一轮为 1 / 10 / 0。）所有形状都在 `port/tools/ipc-verified-shapes.json`，每条带 `level` 与行号证据（测试强制 `L\d+`）；当两个 channel 被代码证明携带**同一个值**时用类型别名连接（如 `account:refresh` 结果 ≡ `account:changed` 载荷，L60839-60840），不编造字段。
 
 ## 2. macOS 假设 → Windows 替换 → 状态
 

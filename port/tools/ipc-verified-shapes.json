@@ -1,18 +1,582 @@
 {
-  "_doc": "Hand-curated payload/result shapes that were READ DIRECTLY from the reconstructed bundle. Only shapes with a cited code location belong here. Leaf types not proven by code stay `unknown`. level: full = every field proven; partial = envelope/keys proven, some leaves unknown.",
-  "push": {
-    "session:event": { "type": "{ sessionId: unknown; event: unknown }", "level": "partial", "evidence": "main/index.js L61049 sendToRenderer(IPC.sessionEvent, { sessionId, event })" },
-    "job:snapshot": { "type": "{ sessionId: unknown; snapshot: unknown }", "level": "partial", "evidence": "main/index.js L61079" },
-    "spend:snapshot": { "type": "{ sessionId: unknown; snapshot: unknown }", "level": "partial", "evidence": "main/index.js L61087" },
-    "memory:changed": { "type": "{ scope: { clientId: unknown } & Record<string, unknown>; change: unknown; sessionId: unknown; notice?: unknown }", "level": "partial", "evidence": "main/index.js L61098-61103" },
-    "engine:updated": { "type": "{ version: unknown }", "level": "partial", "evidence": "main/index.js L61161" },
-    "window:state": { "type": "{ fullscreen: unknown }", "level": "partial", "evidence": "main/index.js L60577 (null is filtered before send, L60576)" },
-    "account:emailSent": { "type": "void", "level": "full", "evidence": "main/index.js L61434 sendToRenderer(IPC.accountEmailSent) — no payload argument" },
-    "library:syncProgress": { "type": "{ clientId: unknown; kind: \"line\"; text: unknown } | { clientId: unknown; kind: \"done\"; code: unknown }", "level": "partial", "evidence": "main/index.js L62099-62110" },
-    "bootstrap:progress": { "type": "{ step: unknown; status: \"running\" | \"ok\" | \"skip\" | \"fail\"; detail?: unknown; reason?: unknown }", "level": "partial", "evidence": "Bootstrap.runAll step() main/index.js L9874-9891 (emitProgress calls)" },
-    "app:update": { "type": "unknown | null", "level": "partial", "evidence": "main/index.js L60476 sendToRenderer(IPC.updateInfo, null); L62602 sends `info` (shape not recovered)" }
+ "_doc": "Hand-curated payload/result/argument shapes READ DIRECTLY from app/reconstructed/main/index.js (line-cited). Only shapes with a cited code location belong here. Leaf types not proven by code stay `unknown`. level: full = every field/variant proven; partial = envelope/keys/some variants proven, rest unknown. Types may reference `shared` names or other generated aliases (e.g. Unknown_<ch>__result) when the code proves the SAME value flows to both.",
+ "push": {
+  "session:event": {
+   "type": "{ sessionId: unknown; event: unknown }",
+   "level": "partial",
+   "evidence": "main/index.js L61049 sendToRenderer(IPC.sessionEvent, { sessionId, event })"
   },
-  "result": {
-    "app:update:state": { "type": "{ status: unknown; version: unknown; percent: unknown; message: unknown }", "level": "partial", "evidence": "main/index.js L61340-61349 fallback object { status: \"disabled\", version: null, percent: null, message: \"Updates are starting.\" }; QA fixture qaAppUpdateState has the same 4 keys (qaFixtures L40)" }
+  "job:snapshot": {
+   "type": "{ sessionId: unknown; snapshot: unknown }",
+   "level": "partial",
+   "evidence": "main/index.js L61079"
+  },
+  "spend:snapshot": {
+   "type": "{ sessionId: unknown; snapshot: unknown }",
+   "level": "partial",
+   "evidence": "main/index.js L61087"
+  },
+  "memory:changed": {
+   "type": "{ scope: { clientId: unknown } & Record<string, unknown>; change: unknown; sessionId: unknown; notice?: unknown }",
+   "level": "partial",
+   "evidence": "main/index.js L61098-61103"
+  },
+  "engine:updated": {
+   "type": "{ version: unknown }",
+   "level": "partial",
+   "evidence": "main/index.js L61161"
+  },
+  "window:state": {
+   "type": "{ fullscreen: boolean }",
+   "level": "full",
+   "evidence": "L60574-60577: fullscreenStateForWindow (L55783-55791) returns window.isFullScreen() or null; null is not sent"
+  },
+  "account:emailSent": {
+   "type": "void",
+   "level": "full",
+   "evidence": "main/index.js L61434 sendToRenderer(IPC.accountEmailSent) — no payload argument"
+  },
+  "library:syncProgress": {
+   "type": "{ clientId: unknown; kind: \"line\"; text: unknown } | { clientId: unknown; kind: \"done\"; code: unknown }",
+   "level": "partial",
+   "evidence": "main/index.js L62099-62110"
+  },
+  "bootstrap:progress": {
+   "type": "{ step: unknown; status: \"running\" | \"ok\" | \"skip\" | \"fail\"; detail?: unknown; reason?: unknown }",
+   "level": "partial",
+   "evidence": "Bootstrap.runAll step() main/index.js L9874-9891 (emitProgress calls)"
+  },
+  "app:update": {
+   "type": "unknown | null",
+   "level": "partial",
+   "evidence": "main/index.js L60476 sendToRenderer(IPC.updateInfo, null); L62602 sends `info` (shape not recovered)"
+  },
+  "app:update:state-changed": {
+   "type": "AppUpdateState",
+   "level": "partial",
+   "evidence": "L62544 publish: (state) => sendToRenderer(IPC.appUpdateState, state); createAppUpdater set() publishes {...state} (L2243-2246)"
+  },
+  "editorRender:event": {
+   "type": "{ kind: \"progress\"; progress: { requestId: string; jobId: string; phase: EditorRenderPhase } } | { kind: \"completed\"; result: EditorRenderResult } | { kind: \"error\"; requestId: string; jobId: string; error: EditorRenderError }",
+   "level": "full",
+   "evidence": "EditorRenderController emitPhase L56237-56242, handleExit L56184-56211, fail L56246-56263; forwarded verbatim L62405-62413"
+  },
+  "session:changed": {
+   "type": "SessionMeta[]",
+   "level": "partial",
+   "evidence": "main L61050-61052 iterates `for (const session2 of sessions)`; renderer L49051-49058 handles it exactly like listSessions()"
+  },
+  "permission:request": {
+   "type": "{ kind: unknown; sessionId: unknown; requestId: unknown } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "renderer index L49095-49098 (req.kind === \"question\", req.sessionId, req.requestId); main L61053-61057 forwards `req`"
+  },
+  "input:request": {
+   "type": "{ sessionId: unknown; requestId: unknown } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "renderer index L49099-49102; main L61066-61070 forwards `req`"
+  },
+  "characters:build": {
+   "type": "{ slug: unknown; state?: unknown } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "renderer index L34212-34220 (e.slug, e.state)"
+  },
+  "materials:changed": {
+   "type": "{ sessionId: unknown; entries: Array<{ id: unknown } & Record<string, unknown>> } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "renderer index L31478-31485 and L47916-47920 (ledger.sessionId, ledger.entries.find(item => item.id …))"
+  },
+  "sessionPlan:changed": {
+   "type": "{ scope: { sessionId: unknown; gatewayUrl: string; canonicalKeyId: unknown } & Record<string, unknown>; plan: unknown } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "renderer index L48087-48096 (event.scope.gatewayUrl.replace(...) → string; event.plan)"
+  },
+  "hfPreview:event": {
+   "type": "{ kind: unknown; jobId?: unknown; reason?: unknown } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "renderer index L37856-37861 (e.kind === \"stopped\", e.jobId, e.reason)"
   }
+ },
+ "result": {
+  "app:update:state": {
+   "type": "AppUpdateState",
+   "level": "partial",
+   "evidence": "L61340-61349: appUpdater?.state() (createAppUpdater state() returns {...state}) ?? fallback {status:'disabled',version:null,percent:null,message:'Updates are starting.'}"
+  },
+  "quickstart:impression": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61254-61273 has no return value"
+  },
+  "quickstart:previewed": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61274-61293 has no return value"
+  },
+  "quickstart:mark": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61250-61253 has no return value"
+  },
+  "interaction:replayPending": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61701-61708 has no return value"
+  },
+  "file:openPath": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61917-61919 has no return value"
+  },
+  "file:openExternal": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61979-61981 has no return value"
+  },
+  "file:revealItem": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61982-61984 has no return value"
+  },
+  "analytics:playbackCompleted": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L62003-62027 has no return value"
+  },
+  "telemetry:bindReplay": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61710-61730 has no return value"
+  },
+  "account:cancelSignIn": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61428-61430 has no return value"
+  },
+  "media:discardVoice": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61914-61916 has no return value"
+  },
+  "bootstrap:revealSetupLog": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L61303-61305 has no return value"
+  },
+  "feedback:discard": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L62347-62349 has no return value"
+  },
+  "hfPreview:stop": {
+   "type": "void",
+   "level": "full",
+   "evidence": "handler L62441-62443 has no return value"
+  },
+  "file:saveItemAs": {
+   "type": "boolean",
+   "level": "full",
+   "evidence": "L61985-62002 returns false (cancel) or true"
+  },
+  "media:requestMic": {
+   "type": "boolean",
+   "level": "full",
+   "evidence": "L61904-61909 true / systemPreferences.askForMediaAccess (Promise<boolean>)"
+  },
+  "media:voiceDictationStatus": {
+   "type": "VoiceDictationStatus",
+   "level": "full",
+   "evidence": "L61910 → voiceDictationStatus()"
+  },
+  "engine:agentProviderKeyStatus": {
+   "type": "AgentProviderKeyStatus",
+   "level": "full",
+   "evidence": "L61664"
+  },
+  "engine:saveAgentProviderKey": {
+   "type": "AgentProviderKeyStatus",
+   "level": "full",
+   "evidence": "L61665-61679 returns currentAgentProviderKeyStatus()"
+  },
+  "app:restart": {
+   "type": "true",
+   "level": "full",
+   "evidence": "restartApp() L60768-60787 always returns true"
+  },
+  "intake:pickFiles": {
+   "type": "{ scope: IntakePickerScope; files: PickedFile[] }",
+   "level": "partial",
+   "evidence": "L62157-62196 (scope echoes the validated request)"
+  },
+  "library:sync": {
+   "type": "{ code: unknown } | LibraryGuardError",
+   "level": "partial",
+   "evidence": "L62092-62114 + guardedAppLibrary"
+  },
+  "library:stats": {
+   "type": "unknown | LibraryGuardError",
+   "level": "partial",
+   "evidence": "guarded() L62029-62038 wraps the library call (success value unrecovered)"
+  },
+  "library:scan": {
+   "type": "unknown | LibraryGuardError",
+   "level": "partial",
+   "evidence": "guarded() L62029-62038 wraps the library call (success value unrecovered)"
+  },
+  "library:addSource": {
+   "type": "unknown | LibraryGuardError",
+   "level": "partial",
+   "evidence": "guarded() L62029-62038 wraps the library call (success value unrecovered)"
+  },
+  "library:removeSource": {
+   "type": "unknown | LibraryGuardError",
+   "level": "partial",
+   "evidence": "guarded() L62029-62038 wraps the library call (success value unrecovered)"
+  },
+  "library:search": {
+   "type": "Array<{ sourceFile: unknown } & Record<string, unknown>> | LibraryGuardError",
+   "level": "partial",
+   "evidence": "L62115-62121 exposeLibraryHits (hits.map(h=>h.sourceFile)) L60426 + guardedAppLibrary"
+  },
+  "library:preview": {
+   "type": "unknown | { error: \"media\"; message: string }",
+   "level": "partial",
+   "evidence": "L62122-62153"
+  },
+  "materials:preview": {
+   "type": "null | { entry: Record<string, unknown> & { state: \"missing\" } } | ({ asset?: { path: unknown } } & Record<string, unknown> & { url?: string })",
+   "level": "partial",
+   "evidence": "L62197-62205"
+  },
+  "settings:get": {
+   "type": "PublicSettings",
+   "level": "partial",
+   "evidence": "L61321-61329 settings.get()"
+  },
+  "settings:set": {
+   "type": "PublicSettings",
+   "level": "partial",
+   "evidence": "L61680-61689 settings.get()"
+  },
+  "settings:saveGatewayKey": {
+   "type": "PublicSettings",
+   "level": "partial",
+   "evidence": "L61393-61405 settings.get()"
+  },
+  "settings:switchGateway": {
+   "type": "{ settings: PublicSettings; verify: GatewayVerify | null; interrupted: never[]; requiresRestart: true }",
+   "level": "partial",
+   "evidence": "L61377-61392"
+  },
+  "gateway:verify": {
+   "type": "GatewayVerify",
+   "level": "partial",
+   "evidence": "L61376 verifyKeyAt()"
+  },
+  "account:signInGoogle": {
+   "type": "{ ok: true; account: unknown } | SignInFailure",
+   "level": "partial",
+   "evidence": "handlers L61408-61419 / L61431-61444 / L61498-61507"
+  },
+  "account:signInEmail": {
+   "type": "{ ok: true; account: unknown } | SignInFailure",
+   "level": "partial",
+   "evidence": "handlers L61408-61419 / L61431-61444 / L61498-61507"
+  },
+  "account:consent": {
+   "type": "{ ok: true; account: unknown } | SignInFailure",
+   "level": "partial",
+   "evidence": "handlers L61408-61419 / L61431-61444 / L61498-61507"
+  },
+  "account:resendEmail": {
+   "type": "{ ok: true } | SignInFailure",
+   "level": "partial",
+   "evidence": "L61420-61427"
+  },
+  "account:ensureAccess": {
+   "type": "{ ok: true; account: unknown } | { ok: false; reason: string; message: string; retryable?: true }",
+   "level": "partial",
+   "evidence": "L61508-61556 (reason via mintFailureReason L60872-60877)"
+  },
+  "account:mintKey": {
+   "type": "{ ok: true; account: unknown } | { ok: false; reason: string; message: string; retryable?: true; existing?: unknown }",
+   "level": "partial",
+   "evidence": "L61557-61573"
+  },
+  "account:claimKey": {
+   "type": "{ ok: true; account: unknown; alreadyClaimed: unknown } | { ok: false; reason: \"unknown\" | \"network\" | \"vault-unreadable\" | \"rejected\"; message: string }",
+   "level": "partial",
+   "evidence": "L61574-61592"
+  },
+  "account:refresh": {
+   "type": "Unknown_account_changed__payload",
+   "level": "partial",
+   "evidence": "L61407 resolveAccount() returns the same `account` object it pushes on account:changed (L60839-60840)"
+  },
+  "account:signOut": {
+   "type": "Unknown_account_changed__payload",
+   "level": "partial",
+   "evidence": "L61445-61458 resolveAccount(); same object as account:changed (L60839-60840)"
+  },
+  "account:snapshot": {
+   "type": "Unknown_account_changed__payload",
+   "level": "partial",
+   "evidence": "L61406 account (module var assigned by resolveAccount) or resolveAccount()"
+  },
+  "bootstrap:status": {
+   "type": "BootstrapStatus",
+   "level": "partial",
+   "evidence": "L61300 bootstrap.status()"
+  },
+  "bootstrap:run": {
+   "type": "BootstrapStatus",
+   "level": "partial",
+   "evidence": "Bootstrap.runAll L9863-9988 returns this.status() (L9864, L9987)"
+  },
+  "bootstrap:revertEngine": {
+   "type": "BootstrapStatus",
+   "level": "partial",
+   "evidence": "Bootstrap.revertEngine returns this.status() (L10264)"
+  },
+  "engine:pendingToast": {
+   "type": "{ version: unknown } | null",
+   "level": "partial",
+   "evidence": "L61316-61320; pendingEngineToast assigned { version: eng.version } L61311 or null"
+  },
+  "editorRender:start": {
+   "type": "{ requestId: string; accepted: true } | { requestId: string; accepted: false; error: EditorRenderError }",
+   "level": "full",
+   "evidence": "EditorRenderController.start L56060-56106 / reject L56264-56266"
+  },
+  "editorRender:cancel": {
+   "type": "boolean",
+   "level": "full",
+   "evidence": "EditorRenderController.cancel L56107-56118"
+  },
+  "editorRender:state": {
+   "type": "{ requestId: string; jobId: string; phase: EditorRenderPhase } | null",
+   "level": "full",
+   "evidence": "EditorRenderController.state L56055-56059"
+  },
+  "app:update:download": {
+   "type": "AppUpdateState | undefined",
+   "level": "partial",
+   "evidence": "L61362-61366 appUpdater?.download() (returns {...state}) / appUpdater?.state()"
+  },
+  "app:update:install": {
+   "type": "AppUpdateState | undefined",
+   "level": "partial",
+   "evidence": "L61367-61369 appUpdater?.install() — every path returns {...state} (L2357-2376) — / appUpdater?.state()"
+  },
+  "app:update:check": {
+   "type": "unknown | { kind: \"failed\"; currentVersion: string }",
+   "level": "partial",
+   "evidence": "L61371-61374 fallback when updateChecker is absent"
+  },
+  "quickstart:catalog": {
+   "type": "Unknown_quickstart_catalogChanged__payload",
+   "level": "partial",
+   "evidence": "L61215-61249: returns cached/refresh() result; the same fresh value is pushed on quickstart:catalogChanged (L61239)"
+  },
+  "session:list": {
+   "type": "SessionMeta[]",
+   "level": "partial",
+   "evidence": "L61697 host.listSessions(); array use (.find/.filter) in L61739-61825; renderer feeds it to the same receiveSessions() as session:changed (renderer index L49051-49058)"
+  }
+ },
+ "shared": {
+  "AppUpdateState": {
+   "type": "{ status: \"idle\" | \"disabled\" | \"error\" | \"checking\" | \"downloading\" | \"downloaded\" | \"installing\"; version: string | null; percent: number | null; message: string | null; installBlocked?: boolean }",
+   "level": "partial",
+   "evidence": "createAppUpdater L2223+: initial state L2232-2239, set() L2243-2246 adds installBlocked, every set({status:…}) call L2232-2400; version/percent leaves typed from assignments (expectedVersion string, Math.floor percent). Other statuses not found."
+  },
+  "PublicSettings": {
+   "type": "{ gatewayUrl: unknown; telemetry: unknown; updateChannelPreference?: unknown; usageSharingConsentAt?: unknown; agentHarness?: unknown; codexProvider?: unknown; codexModel?: unknown; llmRoute?: unknown; llmRouteAcknowledgedAt?: unknown; alphaConsentAt?: unknown; alphaConsentsByKey?: Record<string, unknown>; accountSignedInOnce?: unknown; lastEngineVersion?: unknown; world3?: unknown; runnerUrl?: unknown; feedbackContact?: unknown }",
+   "level": "partial",
+   "evidence": "Settings.get() L5441-5456 iterates APP_SETTINGS_KEYS L5273-5290 (gatewayUrl+telemetry always present, others only when defined)"
+  },
+  "SignInFailure": {
+   "type": "{ ok: false; reason: string; message: string }",
+   "level": "partial",
+   "evidence": "signInFailure() L60857-60871 (reason: 'cancelled' | 'rejected' | passthrough of err.reason)"
+  },
+  "BootstrapStatus": {
+   "type": "{ ready: boolean; engineVersion: unknown; enginePath: unknown; workspacePath: unknown; doctor: unknown; shouldOffer: boolean; managedDevelopment: unknown; packaged: boolean; devMode: boolean; engineLatest: unknown; engineUpdate: unknown; enginePrevious: unknown; studioBundle: unknown; engineIdentity: unknown; featureFlags: unknown }",
+   "level": "partial",
+   "evidence": "Bootstrap.status() L9802-9829"
+  },
+  "EditorRenderError": {
+   "type": "{ code: \"invalid-request\" | \"unknown-session\" | \"job-mismatch\" | \"job-not-found\" | \"composition-not-found\" | \"engine-unavailable\" | \"busy\" | \"cancelled\" | \"render-failed\" | \"worker-unavailable\"; message: string; retryable: boolean }",
+   "level": "full",
+   "evidence": "ERROR_COPY L56024-56044 + publicError() L56045-56047"
+  },
+  "EditorRenderPhase": {
+   "type": "\"queued\" | \"preparing\" | \"rendering\" | \"cancelling\" | \"cancelled\" | \"completed\" | \"failed\"",
+   "level": "full",
+   "evidence": "emitPhase calls in EditorRenderController L56048-56266 + worker phase posts (editorRenderWorker.js L14, L41)"
+  },
+  "EditorRenderResult": {
+   "type": "{ requestId: string; jobId: string; outputPath: string; width: number; height: number; fps: number; durationSeconds: number; sizeBytes: number; hasAudio: boolean }",
+   "level": "full",
+   "evidence": "EditorRenderController.readResult() L56212-56236"
+  },
+  "VoiceDictationStatus": {
+   "type": "{ available: boolean; attach: boolean; message: string }",
+   "level": "full",
+   "evidence": "voiceDictationStatus() L10472-10500 (every resolve/return)"
+  },
+  "AgentProviderKeyStatus": {
+   "type": "{ openaiApi: { configured: boolean }; openrouter: { configured: boolean } }",
+   "level": "full",
+   "evidence": "currentAgentProviderKeyStatus() L60359-60364"
+  },
+  "PickedFile": {
+   "type": "{ path: string; name: string; sizeBytes: number }",
+   "level": "full",
+   "evidence": "intake:pickFiles handler L62189-62194"
+  },
+  "IntakePickerScope": {
+   "type": "{ kind: \"character\" } | { kind: \"composer\"; sessionId: string } | { kind: \"input_request\"; sessionId: string; requestId: string }",
+   "level": "partial",
+   "evidence": "isIntakePickerScope() L304-317 (extra keys tolerated)"
+  },
+  "PlanReply": {
+   "type": "{ ok: true; value: unknown } | { ok: false; message: string }",
+   "level": "partial",
+   "evidence": "sessionPlanReply() L3995-4023 (value = host.* result, unrecovered)"
+  },
+  "MemoryReply": {
+   "type": "{ ok: true; value: unknown } | { ok: false; code: string; message: string }",
+   "level": "partial",
+   "evidence": "projectMemoryReply() L10720-10753"
+  },
+  "VoiceReply": {
+   "type": "{ ok: true; snapshot: { voices: Array<{ samplePath?: unknown } & Record<string, unknown>> } & Record<string, unknown> } | { ok: false; message: string }",
+   "level": "partial",
+   "evidence": "voiceResult L61863-61872"
+  },
+  "LibraryGuardError": {
+   "type": "{ error: \"no-tenant\" } | { error: \"engine\"; message: string } | { error: \"paid-work-unavailable\"; message: string }",
+   "level": "full",
+   "evidence": "guarded L62029-62038, guardedAppLibrary L62042-62064"
+  },
+  "GatewayVerify": {
+   "type": "{ ok: false; status?: number } | { ok: true; name: unknown; id: unknown }",
+   "level": "partial",
+   "evidence": "verifyKeyAt() L60601-60613"
+  },
+  "SessionMeta": {
+   "type": "{ sessionId: unknown; clientId: unknown; cwd: unknown; jobId: unknown; quickstart?: unknown } & Record<string, unknown>",
+   "level": "partial",
+   "evidence": "keys read by main handlers: session:delete L61739-61746, client:remove L61820-61825, analytics:playbackCompleted L62003-62027 (quickstart/jobId), attachment:captureMoment L62220-62248 (clientId/cwd/jobId)"
+  }
+ },
+ "args": {
+  "quit:rendererState": {
+   "state": {
+    "type": "{ composerSessionId?: string | null; unsentDraft?: boolean; pendingSendAttachmentIds?: string[]; recordingVoice?: boolean }",
+    "level": "partial",
+    "evidence": "L61804-61816 sanitizer reads exactly these keys"
+   }
+  },
+  "telemetry:bindReplay": {
+   "binding": {
+    "type": "{ appSessionId: string; posthogSessionId: string }",
+    "level": "full",
+    "evidence": "L61710-61730 validation (throws otherwise)"
+   }
+  },
+  "engine:saveAgentProviderKey": {
+   "provider": {
+    "type": "\"openai-api\" | \"openrouter\"",
+    "level": "full",
+    "evidence": "L61666-61668"
+   },
+   "key": {
+    "type": "string | undefined",
+    "level": "full",
+    "evidence": "L61669-61671"
+   }
+  },
+  "intake:pickFiles": {
+   "scope": {
+    "type": "IntakePickerScope",
+    "level": "partial",
+    "evidence": "isIntakePickerScope L304-317"
+   }
+  },
+  "file:saveItemAs": {
+   "path": {
+    "type": "string",
+    "level": "full",
+    "evidence": "L61986-61988"
+   }
+  },
+  "file:openExternal": {
+   "url": {
+    "type": "string",
+    "level": "full",
+    "evidence": "L61980 /^https?:/.test(url)"
+   }
+  },
+  "analytics:playbackCompleted": {
+   "path": {
+    "type": "string",
+    "level": "full",
+    "evidence": "L62004"
+   }
+  },
+  "attachment:pasteImage": {
+   "png": {
+    "type": "ArrayBuffer",
+    "level": "full",
+    "evidence": "L62274-62279 instanceof ArrayBuffer"
+   }
+  },
+  "attachment:voiceNote": {
+   "recordingId": {
+    "type": "string",
+    "level": "full",
+    "evidence": "L62267-62268 /^[a-f0-9-]{36}$/"
+   }
+  },
+  "editorRender:start": {
+   "req": {
+    "type": "{ requestId: string; sessionId: string; jobId: string }",
+    "level": "full",
+    "evidence": "EditorRenderController.start validation L56061-56069"
+   }
+  },
+  "editorRender:cancel": {
+   "requestId": {
+    "type": "string",
+    "level": "partial",
+    "evidence": "compared with active.requestId L56109"
+   }
+  },
+  "sessionPlan:choose": {
+   "request": {
+    "type": "{ action: unknown; planId?: unknown; revision?: unknown } & Record<string, unknown>",
+    "level": "partial",
+    "evidence": "L61928-61943 reads request.action/planId/revision"
+   }
+  },
+  "quickstart:mark": {
+   "stage": {
+    "type": "string",
+    "level": "full",
+    "evidence": "quickstartLatencyMark L30465-30467"
+   },
+   "durationMs": {
+    "type": "number",
+    "level": "full",
+    "evidence": "L30468-30475"
+   },
+   "journeyId": {
+    "type": "string | undefined",
+    "level": "full",
+    "evidence": "L30477"
+   }
+  }
+ }
 }

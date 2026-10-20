@@ -21,3 +21,25 @@ test("every invoke channel maps to a unique bridge method", () => {
   const m = Object.values(INVOKE_METHOD_BY_CHANNEL);
   assert.equal(new Set(m).size, m.length);
 });
+
+import { CONTRACT_STATS } from "../src/shared/ipc-contract";
+import shapes from "../tools/ipc-verified-shapes.json";
+
+test("every verified shape carries a line citation and a level", () => {
+  const all: [string, any][] = [];
+  for (const sect of ["shared", "result", "push"] as const) for (const [k, v] of Object.entries((shapes as any)[sect] ?? {})) all.push([`${sect}:${k}`, v]);
+  for (const [ch, m] of Object.entries((shapes as any).args ?? {})) for (const [k, v] of Object.entries(m as object)) all.push([`args:${ch}.${k}`, v]);
+  for (const [k, v] of all) {
+    assert.match(v.evidence, /L\d+/, `${k} lacks a line citation`);
+    assert.ok(v.level === "full" || v.level === "partial", `${k} level`);
+  }
+});
+
+test("coverage snapshot (update deliberately when shapes are added)", () => {
+  assert.deepEqual(
+    { r: CONTRACT_STATS.resultVerified, p: CONTRACT_STATS.pushVerified, a: CONTRACT_STATS.argsVerified },
+    { r: 57, p: 19, a: 16 },
+  );
+  assert.equal(CONTRACT_STATS.resultVerified + CONTRACT_STATS.resultPlaceholder, 157);
+  assert.equal(CONTRACT_STATS.pushVerified + CONTRACT_STATS.pushPlaceholder, 23);
+});
