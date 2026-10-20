@@ -1,0 +1,5139 @@
+[
+ {
+  "key": "readSessionPlan",
+  "channel": "sessionPlan:read",
+  "inPreload": true,
+  "bridge": [
+   [
+    "readSessionPlan",
+    "scope",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61920,
+    "(_e, scope) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.readSessionPlan"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "chooseSessionPlan",
+  "channel": "sessionPlan:choose",
+  "inPreload": true,
+  "bridge": [
+   [
+    "chooseSessionPlan",
+    "scope, request",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61928,
+    "(_e, scope, request2) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.chooseSessionPlan"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "retrySessionPlan",
+  "channel": "sessionPlan:retry",
+  "inPreload": true,
+  "bridge": [
+   [
+    "retrySessionPlan",
+    "scope",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61944,
+    "(_e, scope) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.retrySessionPlan"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "sessionPlanChanged",
+  "channel": "sessionPlan:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onSessionPlanChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61096,
+    "event),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "readProjectMemory",
+  "channel": "memory:read",
+  "inPreload": true,
+  "bridge": [
+   [
+    "readProjectMemory",
+    "scope",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61955,
+    "(_e, scope) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.readProjectMemory"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "updateProjectMemory",
+  "channel": "memory:update",
+  "inPreload": true,
+  "bridge": [
+   [
+    "updateProjectMemory",
+    "scope, mutation",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61960,
+    "(_e, scope, mutation) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.updateProjectMemory"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "undoProjectMemory",
+  "channel": "memory:undo",
+  "inPreload": true,
+  "bridge": [
+   [
+    "undoProjectMemory",
+    "scope, undoId, revision",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61965,
+    "(_e, scope, undoId, revision2) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.undoProjectMemory"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "openProjectMemorySource",
+  "channel": "memory:openSource",
+  "inPreload": true,
+  "bridge": [
+   [
+    "openProjectMemorySource",
+    "scope, source",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61970,
+    "(_e, scope, source2) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.resolveProjectMemorySource"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "projectMemoryChanged",
+  "channel": "memory:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onProjectMemoryChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61098,
+    "{"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "quickstartCatalog",
+  "channel": "quickstart:catalog",
+  "inPreload": true,
+  "bridge": [
+   [
+    "quickstartCatalog",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61215,
+    "() => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "quickstartCatalog.cached",
+     "quickstartCatalog.refresh"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "quickstartImpression",
+  "channel": "quickstart:impression",
+  "inPreload": true,
+  "bridge": [
+   [
+    "quickstartImpression",
+    "journeyId, catalogSha256, durationMs",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61254,
+    "(_e, journeyId, catalogSha256, durationMs) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "quickstartCatalog.load"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "quickstartPreviewed",
+  "channel": "quickstart:previewed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "quickstartPreviewed",
+    "journeyId, starterId, durationMs",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61274,
+    "(_e, journeyId, starterId, durationMs) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "quickstartCatalog.starter",
+     "quickstartCatalog.load"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "quickstartStart",
+  "channel": "quickstart:start",
+  "inPreload": true,
+  "bridge": [
+   [
+    "quickstartStart",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61294,
+    "async (_e, request2) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "quickstartMark",
+  "channel": "quickstart:mark",
+  "inPreload": true,
+  "bridge": [
+   [
+    "quickstartMark",
+    "stage, durationMs, journeyId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61250,
+    "(_e, stage, durationMs, journeyId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "createSession",
+  "channel": "session:create",
+  "inPreload": true,
+  "bridge": [
+   [
+    "createSession",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61690,
+    "async (_e, req) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "bootstrap.prepareNewSession",
+     "host.createSession"
+    ],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "listSessions",
+  "channel": "session:list",
+  "inPreload": true,
+  "bridge": [
+   [
+    "listSessions",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61697,
+    "() => host.listSessions());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listSessions"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "reorderSessions",
+  "channel": "session:reorder",
+  "inPreload": true,
+  "bridge": [
+   [
+    "reorderSessions",
+    "clientId, sessionIds",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61698,
+    "(_e, clientId, sessionIds) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.reorderSessions"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "renameSession",
+  "channel": "session:rename",
+  "inPreload": true,
+  "bridge": [
+   [
+    "renameSession",
+    "sessionId, title",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61731,
+    "(_e, sessionId, title) => host.renameSession(sessionId, title));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.renameSession"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "projectDeletionPlan",
+  "channel": "session:deletionPlan",
+  "inPreload": true,
+  "bridge": [
+   [
+    "projectDeletionPlan",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61732,
+    "(_e, sessionId) => host.planProjectDeletion(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.planProjectDeletion"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "deleteProject",
+  "channel": "session:delete",
+  "inPreload": true,
+  "bridge": [
+   [
+    "deleteProject",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61739,
+    "async (_e, sessionId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listSessions",
+     "host.deleteProject"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "sendMessage",
+  "channel": "session:send",
+  "inPreload": true,
+  "bridge": [
+   [
+    "sendMessage",
+    "sessionId, request",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61772,
+    "(_e, sessionId, request2) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.sendMessage"
+    ],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "retryTurn",
+  "channel": "session:retry",
+  "inPreload": true,
+  "bridge": [
+   [
+    "retryTurn",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61776,
+    "(_e, sessionId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.retryTurn"
+    ],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "interrupt",
+  "channel": "session:interrupt",
+  "inPreload": true,
+  "bridge": [
+   [
+    "interrupt",
+    "sessionId, reason",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61780,
+    "(_e, sessionId, reason) => host.interrupt(sessionId, reason));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.interrupt"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "setPermissionMode",
+  "channel": "session:setPermissionMode",
+  "inPreload": true,
+  "bridge": [
+   [
+    "setPermissionMode",
+    "sessionId, mode, options",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61781,
+    "(_e, sessionId, mode, options) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.setPermissionMode"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "setSessionModel",
+  "channel": "session:setModel",
+  "inPreload": true,
+  "bridge": [
+   [
+    "setSessionModel",
+    "sessionId, model",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61784,
+    "(_e, sessionId, model) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.setSessionModel"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "setSessionReasoningEffort",
+  "channel": "session:setReasoningEffort",
+  "inPreload": true,
+  "bridge": [
+   [
+    "setSessionReasoningEffort",
+    "sessionId, effort",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61787,
+    "(_e, sessionId, effort) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.setSessionReasoningEffort"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "respondPermission",
+  "channel": "permission:respond",
+  "inPreload": true,
+  "bridge": [
+   [
+    "respondPermission",
+    "requestId, response",
+    "send"
+   ]
+  ],
+  "handlers": [
+   [
+    "on",
+    61790,
+    "(_e, requestId, response) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.respondPermission"
+    ],
+    "guards": [
+     "paidWorkBlocked"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "notePermissionShown",
+  "channel": "permission:shown",
+  "inPreload": true,
+  "bridge": [
+   [
+    "notePermissionShown",
+    "requestId",
+    "send"
+   ]
+  ],
+  "handlers": [
+   [
+    "on",
+    61803,
+    "(_e, requestId) => host.noteSpendApprovalShown(requestId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.noteSpendApprovalShown"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "noteQuitState",
+  "channel": "quit:rendererState",
+  "inPreload": true,
+  "bridge": [
+   [
+    "noteQuitState",
+    "state",
+    "send"
+   ]
+  ],
+  "handlers": [
+   [
+    "on",
+    61804,
+    "(_e, state) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "replayPendingInteractions",
+  "channel": "interaction:replayPending",
+  "inPreload": true,
+  "bridge": [
+   [
+    "replayPendingInteractions",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61701,
+    "() => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listPendingInteractions"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getHistory",
+  "channel": "session:history",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getHistory",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61747,
+    "(_e, sessionId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.getHistory"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "openPath",
+  "channel": "file:openPath",
+  "inPreload": true,
+  "bridge": [
+   [
+    "openPath",
+    "path",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61917,
+    "async (_e, path) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "openExternal",
+  "channel": "file:openExternal",
+  "inPreload": true,
+  "bridge": [
+   [
+    "openExternal",
+    "url",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61979,
+    "async (_e, url) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "revealItem",
+  "channel": "file:revealItem",
+  "inPreload": true,
+  "bridge": [
+   [
+    "revealItem",
+    "path",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61982,
+    "(_e, path) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "saveItemAs",
+  "channel": "file:saveItemAs",
+  "inPreload": true,
+  "bridge": [
+   [
+    "saveItemAs",
+    "path",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61985,
+    "async (e, path) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "playbackCompleted",
+  "channel": "analytics:playbackCompleted",
+  "inPreload": true,
+  "bridge": [
+   [
+    "playbackCompleted",
+    "path",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62003,
+    "(_e, path) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "listClients",
+  "channel": "client:list",
+  "inPreload": true,
+  "bridge": [
+   [
+    "listClients",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61817,
+    "() => host.listClients());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listClients"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "createClient",
+  "channel": "client:create",
+  "inPreload": true,
+  "bridge": [
+   [
+    "createClient",
+    "name",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61818,
+    "(_e, name) => host.createClient(name));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.createClient"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "renameClient",
+  "channel": "client:rename",
+  "inPreload": true,
+  "bridge": [
+   [
+    "renameClient",
+    "clientId, name",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61819,
+    "(_e, clientId, name) => host.renameClient(clientId, name));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.renameClient"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "removeClient",
+  "channel": "client:remove",
+  "inPreload": true,
+  "bridge": [
+   [
+    "removeClient",
+    "clientId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61820,
+    "async (_e, clientId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listSessions",
+     "host.removeClient"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "reorderClients",
+  "channel": "client:reorder",
+  "inPreload": true,
+  "bridge": [
+   [
+    "reorderClients",
+    "clientIds",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61826,
+    "(_e, clientIds) => host.reorderClients(clientIds));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.reorderClients"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "seedProjectPack",
+  "channel": "project:seedPack",
+  "inPreload": true,
+  "bridge": [
+   [
+    "seedProjectPack",
+    "clientId, cwd, brief",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61827,
+    "(_e, clientId, cwd, brief) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.seedProjectPack"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "listTaste",
+  "channel": "taste:list",
+  "inPreload": true,
+  "bridge": [
+   [
+    "listTaste",
+    "clientId, cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61843,
+    "(_e, clientId, cwd) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listClients"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "commitTaste",
+  "channel": "taste:commit",
+  "inPreload": true,
+  "bridge": [
+   [
+    "commitTaste",
+    "cwd, files",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61849,
+    "(_e, cwd, files) => commitTaste(absCwd(cwd), files));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "declineProposal",
+  "channel": "taste:decline",
+  "inPreload": true,
+  "bridge": [
+   [
+    "declineProposal",
+    "cwd, file, cards, antiText",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61850,
+    "(_e, cwd, file, cards, antiText) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "tasteTitles",
+  "channel": "taste:titles",
+  "inPreload": true,
+  "bridge": [
+   [
+    "tasteTitles",
+    "entries",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61854,
+    "(_e, entries) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "tasteTitles.getTitles"
+    ],
+    "guards": [
+     "paidWorkBlocked"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "charactersList",
+  "channel": "characters:list",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersList",
+    "cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61860,
+    "(_e, cwd) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listCharacters"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "characterVoicesList",
+  "channel": "characters:voices:list",
+  "inPreload": true,
+  "bridge": [
+   [
+    "characterVoicesList",
+    "scope",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61873,
+    "(_e, scope) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.readCharacterVoices"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "characterVoiceApprove",
+  "channel": "characters:voice:approve",
+  "inPreload": true,
+  "bridge": [
+   [
+    "characterVoiceApprove",
+    "scope, id, sampleSha256",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61876,
+    "(_e, scope, id2, sampleSha256) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.approveCharacterVoice"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "characterVoiceRemove",
+  "channel": "characters:voice:remove",
+  "inPreload": true,
+  "bridge": [
+   [
+    "characterVoiceRemove",
+    "scope, id",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61879,
+    "(_e, scope, id2) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.removeCharacterVoice"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "characterVoicesChanged",
+  "channel": "characters:voices:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onCharacterVoicesChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61104,
+    "scope),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "charactersCreate",
+  "channel": "characters:create",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersCreate",
+    "cwd, name, isSelf, photos",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61882,
+    "async (_e, cwd, name, isSelf, photos) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.createCharacter"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "charactersSheetPlan",
+  "channel": "characters:sheetPlan",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersSheetPlan",
+    "cwd, slug",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61885,
+    "(_e, cwd, slug) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.characterSheetPlan"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "charactersSheetBuild",
+  "channel": "characters:sheetBuild",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersSheetBuild",
+    "cwd, slug",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61888,
+    "(_e, cwd, slug) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.characterSheetBuild"
+    ],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "charactersSheetStates",
+  "channel": "characters:sheetStates",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersSheetStates",
+    "cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61892,
+    "(_e, cwd) => host.characterSheetStates(absCwd(cwd)));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.characterSheetStates"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "charactersApprove",
+  "channel": "characters:approve",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersApprove",
+    "cwd, slug",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61893,
+    "(_e, cwd, slug) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.approveCharacter"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "charactersRetry",
+  "channel": "characters:retry",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersRetry",
+    "cwd, slug",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61896,
+    "(_e, cwd, slug) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.retryCharacter"
+    ],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "charactersDiscard",
+  "channel": "characters:discard",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersDiscard",
+    "cwd, slug",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61900,
+    "(_e, cwd, slug) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.discardCharacter"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "charactersDelete",
+  "channel": "characters:delete",
+  "inPreload": true,
+  "bridge": [
+   [
+    "charactersDelete",
+    "cwd, slug",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61903,
+    "(_e, cwd, slug) => host.deleteCharacter(absCwd(cwd), slug));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.deleteCharacter"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getJobSnapshot",
+  "channel": "job:get",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getJobSnapshot",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61751,
+    "(_e, sessionId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.getJobSnapshot"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getOriginalContext",
+  "channel": "job:originalContext",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getOriginalContext",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61754,
+    "(_e, sessionId) => host.getOriginalContext(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.getOriginalContext"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "jobSnapshot",
+  "channel": "job:snapshot",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onJobSnapshot",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61079,
+    "{ sessionId, snapshot: snapshot2 });"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "getSpendSnapshot",
+  "channel": "spend:get",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getSpendSnapshot",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61755,
+    "(_e, sessionId) => host.getSpendSnapshot(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.getSpendSnapshot"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "outboxAuthoritySnapshot",
+  "channel": "outbox:authoritySnapshot",
+  "inPreload": true,
+  "bridge": [
+   [
+    "outboxAuthoritySnapshot",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61709,
+    "() => outbox.authoritySnapshot());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "outbox.authoritySnapshot"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "telemetryBindReplay",
+  "channel": "telemetry:bindReplay",
+  "inPreload": true,
+  "bridge": [
+   [
+    "telemetryBindReplay",
+    "binding",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61710,
+    "async (_e, binding) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "setSpendCeiling",
+  "channel": "spend:setCeiling",
+  "inPreload": true,
+  "bridge": [
+   [
+    "setSpendCeiling",
+    "sessionId, usd, options",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61756,
+    "(_e, sessionId, usd, options) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.setSpendCeiling"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "spendSnapshot",
+  "channel": "spend:snapshot",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onSpendSnapshot",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61087,
+    "{ sessionId, snapshot: snapshot2 }),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "adoptJob",
+  "channel": "job:adopt",
+  "inPreload": true,
+  "bridge": [
+   [
+    "adoptJob",
+    "sessionId, jobId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61759,
+    "(_e, sessionId, jobId) => host.adoptJob(sessionId, jobId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.adoptJob"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "approveVersion",
+  "channel": "version:approve",
+  "inPreload": true,
+  "bridge": [
+   [
+    "approveVersion",
+    "sessionId, n",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61760,
+    "(_e, sessionId, n) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.approveVersion"
+    ],
+    "guards": [
+     "assertGenerationAllowed"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "revertFinal",
+  "channel": "version:revertFinal",
+  "inPreload": true,
+  "bridge": [
+   [
+    "revertFinal",
+    "sessionId, n",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61764,
+    "(_e, sessionId, n) => host.revertFinal(sessionId, n));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.revertFinal"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "unfinalizeSession",
+  "channel": "session:unfinalize",
+  "inPreload": true,
+  "bridge": [
+   [
+    "unfinalizeSession",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61765,
+    "(_e, sessionId) => host.unfinalizeSession(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.unfinalizeSession"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "startContinuationChat",
+  "channel": "session:startContinuation",
+  "inPreload": true,
+  "bridge": [
+   [
+    "startContinuationChat",
+    "sessionId, clientActionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61766,
+    "(_e, sessionId, clientActionId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.startContinuationChat"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "historicalJobSnapshot",
+  "channel": "job:historicalSnapshot",
+  "inPreload": true,
+  "bridge": [
+   [
+    "historicalJobSnapshot",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61769,
+    "(_e, sessionId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.historicalJobSnapshot"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getSettings",
+  "channel": "settings:get",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getSettings",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61321,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "settings.get"
+    ],
+    "guards": [
+     "ensureActiveAlphaConsent"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "setSettings",
+  "channel": "settings:set",
+  "inPreload": true,
+  "bridge": [
+   [
+    "setSettings",
+    "patch",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61680,
+    "async (_e, patch) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "settings.get",
+     "settings.patch",
+     "host.onLlmRouteChanged"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "saveGatewayKey",
+  "channel": "settings:saveGatewayKey",
+  "inPreload": true,
+  "bridge": [
+   [
+    "saveGatewayKey",
+    "key",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61393,
+    "async (_e, key) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "credentials.hasSignedInOnce",
+     "settings.legacySignedInOnceFor",
+     "credentials.setActiveKey"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "switchGateway",
+  "channel": "settings:switchGateway",
+  "inPreload": true,
+  "bridge": [
+   [
+    "switchGateway",
+    "url",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61377,
+    "async (_e, url) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "settings.patch",
+     "settings.get"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "restartApp",
+  "channel": "app:restart",
+  "inPreload": true,
+  "bridge": [
+   [
+    "restartApp",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61375,
+    "restartApp);"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getAppUpdatePreferences",
+  "channel": "app:update:preferences",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getAppUpdatePreferences",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61330,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "updatePreferences.get"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "setAppUpdateChannel",
+  "channel": "app:update:channel",
+  "inPreload": true,
+  "bridge": [
+   [
+    "setAppUpdateChannel",
+    "channel",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61334,
+    "async (_event, channel) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "updatePreferences.set"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getAppUpdateState",
+  "channel": "app:update:state",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getAppUpdateState",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61340,
+    "() =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "appUpdateState",
+  "channel": "app:update:state-changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onAppUpdateState",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    62544,
+    "state),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "downloadAppUpdate",
+  "channel": "app:update:download",
+  "inPreload": true,
+  "bridge": [
+   [
+    "downloadAppUpdate",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61362,
+    "async () =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "installAppUpdate",
+  "channel": "app:update:install",
+  "inPreload": true,
+  "bridge": [
+   [
+    "installAppUpdate",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61367,
+    "async () =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "getUpdateInfo",
+  "channel": "app:update:get",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getUpdateInfo",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61370,
+    "() => currentUpdateInfo);"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "checkForUpdates",
+  "channel": "app:update:check",
+  "inPreload": true,
+  "bridge": [
+   [
+    "checkForUpdates",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61371,
+    "() => updateChecker?.checkNow() ?? { kind: \"failed\", currentVersion: app.getVersion() },"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "updateInfo",
+  "channel": "app:update",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onUpdateInfo",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    60476,
+    "null);"
+   ],
+   [
+    62602,
+    "info);"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "verifyGatewayKey",
+  "channel": "gateway:verify",
+  "inPreload": true,
+  "bridge": [
+   [
+    "verifyGatewayKey",
+    "key",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61376,
+    "(_e, key) => verifyKeyAt(openedGatewayUrl, key));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountSnapshot",
+  "channel": "account:snapshot",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountSnapshot",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61406,
+    "() => (account.loaded ? account : resolveAccount()));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountRefresh",
+  "channel": "account:refresh",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountRefresh",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61407,
+    "() => resolveAccount());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountSignInGoogle",
+  "channel": "account:signInGoogle",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountSignInGoogle",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61408,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.signInWithGoogle"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountSignInEmail",
+  "channel": "account:signInEmail",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountSignInEmail",
+    "email",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61431,
+    "async (_e, email) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.signInWithEmailLink"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountResendEmail",
+  "channel": "account:resendEmail",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountResendEmail",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61420,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.resendEmailLink"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountCancelSignIn",
+  "channel": "account:cancelSignIn",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountCancelSignIn",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61428,
+    "() => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.cancelInteractiveSignIn"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountEmailSent",
+  "channel": "account:emailSent",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onAccountEmailSent",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61434,
+    ""
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "accountSignOut",
+  "channel": "account:signOut",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountSignOut",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61445,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.stopAuthenticatedWork",
+     "accountAuth.signOut"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountConsent",
+  "channel": "account:consent",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountConsent",
+    "termsVersion",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61498,
+    "async (_e, termsVersion) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.acceptConsent"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountEnsureAccess",
+  "channel": "account:ensureAccess",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountEnsureAccess",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61508,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountMintKey",
+  "channel": "account:mintKey",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountMintKey",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61557,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.issueKey"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountClaimKey",
+  "channel": "account:claimKey",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountClaimKey",
+    "key",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61574,
+    "async (_e, key) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "accountAuth.claimKey"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountLocalResetPrepare",
+  "channel": "account:localResetPrepare",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountLocalResetPrepare",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61496,
+    "() => localReset.prepare());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "localReset.prepare"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountLocalResetCommit",
+  "channel": "account:localResetCommit",
+  "inPreload": true,
+  "bridge": [
+   [
+    "accountLocalResetCommit",
+    "planId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61497,
+    "(_e, planId) => localReset.commit(planId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "localReset.commit"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "accountChanged",
+  "channel": "account:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onAccountChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    60839,
+    "account);"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "keyMeter",
+  "channel": "gateway:meter",
+  "inPreload": true,
+  "bridge": [
+   [
+    "keyMeter",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61593,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "topUp",
+  "channel": "gateway:topup",
+  "inPreload": true,
+  "bridge": [
+   [
+    "topUp",
+    "usd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61596,
+    "async (_e, usd) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "claudeCodeStatus",
+  "channel": "engine:claudeCodeStatus",
+  "inPreload": true,
+  "bridge": [
+   [
+    "claudeCodeStatus",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61603,
+    "() => host.claudeCodeStatus());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.claudeCodeStatus"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "claudeCodeConnect",
+  "channel": "engine:claudeCodeConnect",
+  "inPreload": true,
+  "bridge": [
+   [
+    "claudeCodeConnect",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61604,
+    "() => host.connectClaudeCode());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.connectClaudeCode"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "claudeCodeConnectCancel",
+  "channel": "engine:claudeCodeConnectCancel",
+  "inPreload": true,
+  "bridge": [
+   [
+    "claudeCodeConnectCancel",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61605,
+    "() => host.cancelClaudeCodeConnect());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.cancelClaudeCodeConnect"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "claudeCodeSignOutImpact",
+  "channel": "engine:claudeCodeSignOutImpact",
+  "inPreload": true,
+  "bridge": [
+   [
+    "claudeCodeSignOutImpact",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61606,
+    "() => host.claudeCodeSignOutImpact());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.claudeCodeSignOutImpact"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "claudeCodeSignOut",
+  "channel": "engine:claudeCodeSignOut",
+  "inPreload": true,
+  "bridge": [
+   [
+    "claudeCodeSignOut",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61607,
+    "() => host.signOutClaudeCode());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.signOutClaudeCode"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "llmRouteReadiness",
+  "channel": "engine:llmRouteReadiness",
+  "inPreload": true,
+  "bridge": [
+   [
+    "llmRouteReadiness",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61608,
+    "(_e, sessionId) => host.llmRouteReadiness(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.llmRouteReadiness"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexStatus",
+  "channel": "engine:codexStatus",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexStatus",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61609,
+    "() => host.codexStatus());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.codexStatus"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexConnectChatGpt",
+  "channel": "engine:codexConnectChatGpt",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexConnectChatGpt",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61610,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.connectCodexChatGpt"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexConnectCancel",
+  "channel": "engine:codexConnectCancel",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexConnectCancel",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61619,
+    "() => host.stopPendingCodexLogin());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.stopPendingCodexLogin"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexDisconnectImpact",
+  "channel": "engine:codexDisconnectImpact",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexDisconnectImpact",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61620,
+    "() => host.codexDisconnectImpact());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.codexDisconnectImpact"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexDisconnectChatGpt",
+  "channel": "engine:codexDisconnectChatGpt",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexDisconnectChatGpt",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61621,
+    "() => host.disconnectCodexChatGpt());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.disconnectCodexChatGpt"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexModels",
+  "channel": "engine:codexModels",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexModels",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61622,
+    "() => host.codexModels(true));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.codexModels",
+     "host.setCreditHandoffEligibility"
+    ],
+    "guards": [
+     "paidWorkBlocked"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "claudeModels",
+  "channel": "engine:claudeModels",
+  "inPreload": true,
+  "bridge": [
+   [
+    "claudeModels",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61659,
+    "() => host.claudeModels(true));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.claudeModels"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "codexHandoffOffer",
+  "channel": "engine:codexHandoffOffer",
+  "inPreload": true,
+  "bridge": [
+   [
+    "codexHandoffOffer",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61660,
+    "(_e, sessionId) => host.codexHandoffOffer(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.codexHandoffOffer"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "continueOnCodex",
+  "channel": "engine:continueOnCodex",
+  "inPreload": true,
+  "bridge": [
+   [
+    "continueOnCodex",
+    "sessionId, clientActionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61661,
+    "(_e, sessionId, clientActionId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.continueOnCodex"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "creditHandoffOffer",
+  "channel": "engine:creditHandoffOffer",
+  "inPreload": true,
+  "bridge": [
+   [
+    "creditHandoffOffer",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61655,
+    "(_e, sessionId) => host.creditHandoffOffer(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.creditHandoffOffer"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "continueOnCredits",
+  "channel": "engine:continueOnCredits",
+  "inPreload": true,
+  "bridge": [
+   [
+    "continueOnCredits",
+    "sessionId, request",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61656,
+    "(_e, sessionId, request2) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.continueOnCredits"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "agentProviderKeyStatus",
+  "channel": "engine:agentProviderKeyStatus",
+  "inPreload": true,
+  "bridge": [
+   [
+    "agentProviderKeyStatus",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61664,
+    "() => currentAgentProviderKeyStatus());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "saveAgentProviderKey",
+  "channel": "engine:saveAgentProviderKey",
+  "inPreload": true,
+  "bridge": [
+   [
+    "saveAgentProviderKey",
+    "provider, key",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61665,
+    "(_e, provider, key) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "credentials.providerKey",
+     "host.onCodexProviderCredentialChanged",
+     "credentials.setProviderKey"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "respondInput",
+  "channel": "input:respond",
+  "inPreload": true,
+  "bridge": [
+   [
+    "respondInput",
+    "requestId, response",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61830,
+    "(_e, requestId, r) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.respondInput"
+    ],
+    "guards": [
+     "paidWorkBlocked"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "requestMic",
+  "channel": "media:requestMic",
+  "inPreload": true,
+  "bridge": [
+   [
+    "requestMicAccess",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61904,
+    "async () => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "voiceDictationStatus",
+  "channel": "media:voiceDictationStatus",
+  "inPreload": true,
+  "bridge": [
+   [
+    "voiceDictationStatus",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61910,
+    "() => voiceDictationStatus());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "transcribeVoice",
+  "channel": "media:transcribeVoice",
+  "inPreload": true,
+  "bridge": [
+   [
+    "transcribeVoice",
+    "sessionId, recordingId, audio",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61911,
+    "(_e, sessionId, recordingId, audio) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.transcribeVoice"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "discardVoice",
+  "channel": "media:discardVoice",
+  "inPreload": true,
+  "bridge": [
+   [
+    "discardVoice",
+    "sessionId, recordingId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61914,
+    "(_e, sessionId, recordingId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.discardVoice"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "pathForFile",
+  "channel": "file:pathForFile",
+  "inPreload": false,
+  "bridge": [],
+  "handlers": [],
+  "sends": [],
+  "dir": "—",
+  "delegates": []
+ },
+ {
+  "key": "libraryStats",
+  "channel": "library:stats",
+  "inPreload": true,
+  "bridge": [
+   [
+    "libraryStats",
+    "clientId, cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62065,
+    "(_e, clientId, cwd) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "libraryScan",
+  "channel": "library:scan",
+  "inPreload": true,
+  "bridge": [
+   [
+    "libraryScan",
+    "clientId, cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62068,
+    "(_e, clientId, cwd) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "libraryAddSource",
+  "channel": "library:addSource",
+  "inPreload": true,
+  "bridge": [
+   [
+    "libraryAddSource",
+    "clientId, cwd, type, path",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62071,
+    "async (_e, clientId, cwd, type, path) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "libraryRemoveSource",
+  "channel": "library:removeSource",
+  "inPreload": true,
+  "bridge": [
+   [
+    "libraryRemoveSource",
+    "clientId, cwd, path, purge",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62085,
+    "(_e, clientId, cwd, path, purge) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "librarySync",
+  "channel": "library:sync",
+  "inPreload": true,
+  "bridge": [
+   [
+    "librarySync",
+    "clientId, cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62092,
+    "(_e, clientId, cwd) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "librarySearch",
+  "channel": "library:search",
+  "inPreload": true,
+  "bridge": [
+   [
+    "librarySearch",
+    "clientId, cwd, query, type, tenants",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62115,
+    "(_e, clientId, cwd, query2, type, tenants) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "libraryPreview",
+  "channel": "library:preview",
+  "inPreload": true,
+  "bridge": [
+   [
+    "libraryPreview",
+    "cwd, sourceFile, inSec, outSec",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62122,
+    "async (_e, cwd, sourceFile, inSec, outSec) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "librarySetTenant",
+  "channel": "library:setTenant",
+  "inPreload": true,
+  "bridge": [
+   [
+    "librarySetTenant",
+    "clientId, tenant",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62154,
+    "(_e, clientId, tenant) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.setClientTenant"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "bootstrapStatus",
+  "channel": "bootstrap:status",
+  "inPreload": true,
+  "bridge": [
+   [
+    "bootstrapStatus",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61300,
+    "() => bootstrap.status());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "bootstrap.status"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "bootstrapRun",
+  "channel": "bootstrap:run",
+  "inPreload": true,
+  "bridge": [
+   [
+    "bootstrapRun",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61301,
+    "() => bootstrap.runAll());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "bootstrap.runAll"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "bootstrapRevertEngine",
+  "channel": "bootstrap:revertEngine",
+  "inPreload": true,
+  "bridge": [
+   [
+    "bootstrapRevertEngine",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61302,
+    "() => bootstrap.revertEngine());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "bootstrap.revertEngine"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "bootstrapRevealSetupLog",
+  "channel": "bootstrap:revealSetupLog",
+  "inPreload": true,
+  "bridge": [
+   [
+    "bootstrapRevealSetupLog",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61303,
+    "() => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "bootstrap.setupLogPath",
+     "settings.get",
+     "settings.patch"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "enginePendingToast",
+  "channel": "engine:pendingToast",
+  "inPreload": true,
+  "bridge": [
+   [
+    "enginePendingToast",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    61316,
+    "() => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "engineUpdated",
+  "channel": "engine:updated",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onEngineUpdated",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61161,
+    "{ version: version2 })) {"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "intakePickFiles",
+  "channel": "intake:pickFiles",
+  "inPreload": true,
+  "bridge": [
+   [
+    "intakePickFiles",
+    "scope",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62157,
+    "async (_event, scope) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listSessions"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentStage",
+  "channel": "attachment:stage",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentStage",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62193,
+    "(_e, req) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.stageComposerAttachments"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentList",
+  "channel": "attachment:list",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentList",
+    "sessionId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62196,
+    "(_e, sessionId) => host.listComposerAttachments(sessionId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listComposerAttachments"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentOwnership",
+  "channel": "attachment:ownership",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentOwnership",
+    "sessionId, attachmentId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62206,
+    "(_e, sessionId, attachmentId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.composerAttachmentOwnership"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentRemove",
+  "channel": "attachment:remove",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentRemove",
+    "sessionId, attachmentId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62209,
+    "(_e, sessionId, attachmentId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.removeComposerAttachment"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentRetry",
+  "channel": "attachment:retry",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentRetry",
+    "sessionId, attachmentId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62212,
+    "(_e, sessionId, attachmentId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.retryComposerAttachment"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentDestination",
+  "channel": "attachment:destination",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentDestination",
+    "sessionId, attachmentIds, destination",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62215,
+    "(_e, sessionId, attachmentIds, destination) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.setComposerAttachmentDestination"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentPasteImage",
+  "channel": "attachment:pasteImage",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentPasteImage",
+    "sessionId, destination, png",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62272,
+    "(_e, sessionId, destination, png) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.assertComposerWritable"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentVoiceNote",
+  "channel": "attachment:voiceNote",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentVoiceNote",
+    "sessionId, recordingId, audio",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62265,
+    "async (_e, sessionId, recordingId, audio) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.assertComposerWritable",
+     "host.stageVoiceNote"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "materialPreview",
+  "channel": "materials:preview",
+  "inPreload": true,
+  "bridge": [
+   [
+    "materialPreview",
+    "sessionId, id",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62197,
+    "(_e, sessionId, id2) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.materialPreview"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentCaptureMoment",
+  "channel": "attachment:captureMoment",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentCaptureMoment",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62220,
+    "(_e, request2) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.assertComposerWritable",
+     "host.listSessions"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentMomentPreview",
+  "channel": "attachment:momentPreview",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentMomentPreview",
+    "sessionId, attachmentId, full",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62249,
+    "(_e, sessionId, attachmentId, full) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.composerMomentPreview"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "attachmentPreview",
+  "channel": "attachment:preview",
+  "inPreload": true,
+  "bridge": [
+   [
+    "attachmentPreview",
+    "sessionId, attachmentId, full",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62256,
+    "(_e, sessionId, attachmentId, full) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.composerAttachmentPreview"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "stageEtas",
+  "channel": "stats:stageEtas",
+  "inPreload": true,
+  "bridge": [
+   [
+    "getStageEtas",
+    "cwd",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62297,
+    "(_e, cwd) => computeStageEtas(absCwd(cwd)));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "host.listSessions",
+     "host.getJobSnapshot",
+     "host.mediaRecoveryEvidence"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "sessionEvent",
+  "channel": "session:event",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onSessionEvent",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61049,
+    "{ sessionId, event }),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "sessionsChanged",
+  "channel": "session:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onSessionsChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61051,
+    "sessions);"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "permissionRequest",
+  "channel": "permission:request",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onPermissionRequest",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61056,
+    "req);"
+   ],
+   [
+    61704,
+    "(replayPendingInteractions 重放)"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "inputRequest",
+  "channel": "input:request",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onInputRequest",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61069,
+    "req);"
+   ],
+   [
+    61704,
+    "(replayPendingInteractions 重放)"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "librarySyncProgress",
+  "channel": "library:syncProgress",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onLibrarySync",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    62099,
+    "{"
+   ],
+   [
+    62106,
+    "{"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "bootstrapProgress",
+  "channel": "bootstrap:progress",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onBootstrapProgress",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61142,
+    "p),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "windowState",
+  "channel": "window:state",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onWindowState",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    60577,
+    "{ fullscreen });"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "attachmentChanged",
+  "channel": "attachment:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onAttachmentChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61045,
+    "attachment),"
+   ],
+   [
+    61197,
+    "attachment),"
+   ],
+   [
+    62191,
+    "attachment);"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "materialsChanged",
+  "channel": "materials:changed",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onMaterialsChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61095,
+    "ledger),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "quickstartCatalogChanged",
+  "channel": "quickstart:catalogChanged",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onQuickstartCatalogChanged",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61239,
+    "fresh);"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "characterBuild",
+  "channel": "characters:build",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onCharacterBuild",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    61092,
+    "evt),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "feedbackCapture",
+  "channel": "feedback:capture",
+  "inPreload": true,
+  "bridge": [
+   [
+    "feedbackCapture",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62341,
+    "async (_e, req) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "feedback.capture"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "feedbackSubmit",
+  "channel": "feedback:submit",
+  "inPreload": true,
+  "bridge": [
+   [
+    "feedbackSubmit",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62346,
+    "(_e, req) => feedback.submit(req));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "feedback.submit"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "feedbackDiscard",
+  "channel": "feedback:discard",
+  "inPreload": true,
+  "bridge": [
+   [
+    "feedbackDiscard",
+    "reportId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62347,
+    "(_e, reportId) => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "feedback.discard"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "feedbackGrantUsageSharing",
+  "channel": "feedback:grantUsageSharing",
+  "inPreload": true,
+  "bridge": [
+   [
+    "feedbackGrantUsageSharing",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62350,
+    "() => feedback.grantUsageSharing());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "feedback.grantUsageSharing",
+     "host.listSessions",
+     "host.beginWorkflowSubmission"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "workflowSubmitEligibility",
+  "channel": "workflowSubmit:eligibility",
+  "inPreload": true,
+  "bridge": [
+   [
+    "workflowSubmitEligibility",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62398,
+    "() => workflowSubmission.eligibility());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "workflowSubmission.eligibility"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "workflowSubmitStart",
+  "channel": "workflowSubmit:start",
+  "inPreload": true,
+  "bridge": [
+   [
+    "workflowSubmit",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62399,
+    "(_e, req) => workflowSubmission.submit(req));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "workflowSubmission.submit"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "editorRenderStart",
+  "channel": "editorRender:start",
+  "inPreload": true,
+  "bridge": [
+   [
+    "editorRenderStart",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62423,
+    "(_e, req) => editorRender.start(req));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "editorRender.start"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "editorRenderCancel",
+  "channel": "editorRender:cancel",
+  "inPreload": true,
+  "bridge": [
+   [
+    "editorRenderCancel",
+    "requestId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62424,
+    "(_e, requestId) => editorRender.cancel(requestId));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "editorRender.cancel"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "editorRenderState",
+  "channel": "editorRender:state",
+  "inPreload": true,
+  "bridge": [
+   [
+    "editorRenderState",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62425,
+    "() => editorRender.state());"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "editorRender.state"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "editorRenderEvent",
+  "channel": "editorRender:event",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onEditorRenderEvent",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    62412,
+    "event);"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ },
+ {
+  "key": "hfPreviewAvailable",
+  "channel": "hfPreview:available",
+  "inPreload": true,
+  "bridge": [
+   [
+    "hfPreviewAvailable",
+    "sessionId, jobId",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62437,
+    "(_e, sessionId, jobId) =>"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "hfPreview.availability"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "hfPreviewStart",
+  "channel": "hfPreview:start",
+  "inPreload": true,
+  "bridge": [
+   [
+    "hfPreviewStart",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62440,
+    "(_e, req) => hfPreview.start(req));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "hfPreview.start"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "hfPreviewStop",
+  "channel": "hfPreview:stop",
+  "inPreload": true,
+  "bridge": [
+   [
+    "hfPreviewStop",
+    "",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62441,
+    "() => {"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "hfPreview.stop"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "hfEditApply",
+  "channel": "hfPreview:editApply",
+  "inPreload": true,
+  "bridge": [
+   [
+    "hfEditApply",
+    "req",
+    "invoke"
+   ]
+  ],
+  "handlers": [
+   [
+    "handle",
+    62444,
+    "(_e, req) => hfPreview.applyEdit(req));"
+   ]
+  ],
+  "sends": [],
+  "dir": "R→M",
+  "delegates": [
+   {
+    "calls": [
+     "hfPreview.applyEdit",
+     "host.setJobBusyProbe",
+     "editorRender.state"
+    ],
+    "guards": []
+   }
+  ]
+ },
+ {
+  "key": "hfPreviewEvent",
+  "channel": "hfPreview:event",
+  "inPreload": true,
+  "bridge": [
+   [
+    "onHfPreviewEvent",
+    "cb",
+    "subscribe"
+   ]
+  ],
+  "handlers": [],
+  "sends": [
+   [
+    62432,
+    "event),"
+   ]
+  ],
+  "dir": "M→R",
+  "delegates": []
+ }
+]
