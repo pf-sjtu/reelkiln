@@ -17,7 +17,7 @@ test("writeProjectStream (Node) writes, never overwrites, numbers duplicates, le
   assert.equal(await w("a.txt", "second"), join(d, "a_1.txt"));
   assert.equal(readFileSync(join(d, "a.txt"), "utf8"), "hello");
   assert.equal(readFileSync(join(d, "a_1.txt"), "utf8"), "second");
-  assert.equal(statSync(join(d, "a.txt")).mode & 0o777, 0o600);
+  if (process.platform !== "win32") assert.equal(statSync(join(d, "a.txt")).mode & 0o777, 0o600); // NTFS has no POSIX mode bits
   assert.deepEqual(readdirSync(d).sort(), ["a.txt", "a_1.txt"]);
 });
 

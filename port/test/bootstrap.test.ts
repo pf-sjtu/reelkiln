@@ -64,6 +64,9 @@ function makeEngineTarball(root: string) {
 }
 
 test("BootstrapCore.runAll: full step machine with a recording runner (real tar, fake uv/npm)", async () => {
+  // The step machine runs with the HOST platform family so FS paths and platform paths agree
+  // (on the Windows CI runner this exercises the win32 branches: uv.exe copy, npm.cmd, Path key).
+  const P = process.platform === "win32" ? "win32" : "linux";
   const root = mkdtempSync(join(tmpdir(), "vc-boot-"));
   const { tgz, sha } = makeEngineTarball(root);
   const bootDir = join(root, "bootstrap");
@@ -80,7 +83,7 @@ test("BootstrapCore.runAll: full step machine with a recording runner (real tar,
   const progress: any[] = [];
   const shims: string[] = [];
   const core = new B.BootstrapCore(
-    { platform: "linux", userData: join(root, "ud"), workspaceRoot: join(root, "ws"), bootstrapRoots: [bootDir], packaged: true, inheritedPath: "/usr/bin", bootstrapTool: (n) => (n === "uv" ? join(bootDir, "uv") : undefined) },
+    { platform: P, userData: join(root, "ud"), workspaceRoot: join(root, "ws"), bootstrapRoots: [bootDir], packaged: true, inheritedPath: "/usr/bin", bootstrapTool: (n) => (n === "uv" ? join(bootDir, "uv") : undefined) },
     B.notPortedHooks({
       resolveEngineSource: async () => ({ manifest: { version: "9.9.9", minAppVersion: "0.0.12", sha256: sha }, fetch: async () => tgz }),
       validateEngineSessionContext: () => {},
@@ -98,13 +101,14 @@ test("BootstrapCore.runAll: full step machine with a recording runner (real tar,
   assert.deepEqual(progress.filter((p) => p.status !== "running").map((p) => `${p.step}:${p.status}`), ["layout:ok", "engine:ok", "venv:ok", "remotion:ok", "hyperframes:ok", "workspace:ok", "env:ok", "doctor:ok"]);
   assert.equal(status.ready, true);
   assert.equal(status.engineVersion, "9.9.9");
-  assert.ok(existsSync(join(eng, "bin", "uv")));
+  assert.ok(existsSync(join(eng, "bin", P === "win32" ? "uv.exe" : "uv")));
   assert.equal(readFileSync(join(eng, ".videoclaw-build-sha256"), "utf8"), `${sha}\n`);
   const uvSync = calls.find((c) => c.args[0] === "sync");
   assert.deepEqual(uvSync, { cmd: join(bootDir, "uv"), args: ["sync", "--frozen", "--project", eng], cwd: eng, env: { UV_PYTHON_PREFERENCE: "only-managed" } });
-  const npmCi = calls.filter((c) => c.cmd === "npm");
+  const npmCi = calls.filter((c) => c.cmd === (P === "win32" ? "npm.cmd" : "npm") && c.args[0] === "ci");
   assert.deepEqual(npmCi.map((c) => c.cwd), [join(eng, "remotion"), join(eng, "hyperframes")]);
-  assert.equal(npmCi[0].env.PATH, `${join(eng, "bin")}:/usr/bin`);
+  if (P === "win32") assert.ok(String(Object.values(npmCi[0].env)[0]).startsWith(`${join(eng, "bin")};`));
+  else assert.equal(npmCi[0].env.PATH, `${join(eng, "bin")}:/usr/bin`);
   const doc = calls.find((c) => c.args.includes("--json"));
   assert.deepEqual(doc.args, ["run", "--project", eng, "python", join(eng, "tools", "doctor.py"), "--json"]);
   assert.equal(JSON.parse(readFileSync(join(root, "ud", "engine-current.json"), "utf8")).path, eng);

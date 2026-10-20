@@ -42,7 +42,7 @@ test("writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 add
   port.ensureEngineCommandShims(d, { platform: "linux" });
   const bin = join(d, "bin");
   assert.deepEqual(readdirSync(bin).sort(), ["git", "pip", "pip3", "python", "python3"]);
-  assert.equal(statSync(join(bin, "python")).mode & 0o777, 0o755);
+  if (process.platform !== "win32") assert.equal(statSync(join(bin, "python")).mode & 0o777, 0o755); // NTFS has no POSIX mode bits
   const m1 = statSync(join(bin, "python")).mtimeMs;
   port.ensureEngineCommandShims(d, { platform: "linux" });
   assert.equal(statSync(join(bin, "python")).mtimeMs, m1);
@@ -54,9 +54,11 @@ test("writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 add
 
 test("installAppCommandShims prepends bin to PATH (win32: replaces the case-variant key)", () => {
   const d = mkdtempSync(join(tmpdir(), "vc-app-"));
-  const env: NodeJS.ProcessEnv = { PATH: `/a:${join(d, "bin")}:/b` };
-  port.installAppCommandShims(d, env, { platform: "linux" });
-  assert.equal(env.PATH, `${join(d, "bin")}:/a:/b`);
+  if (process.platform !== "win32") { // linux sub-case needs host paths without a drive colon
+    const env: NodeJS.ProcessEnv = { PATH: `/a:${join(d, "bin")}:/b` };
+    port.installAppCommandShims(d, env, { platform: "linux" });
+    assert.equal(env.PATH, `${join(d, "bin")}:/a:/b`);
+  }
   const wenv: NodeJS.ProcessEnv = { Path: "C:\\x;C:\\y" };
   const bin = port.installAppCommandShims(d, wenv, { platform: "win32" });
   assert.equal(wenv.Path, `${bin};C:\\x;C:\\y`);
