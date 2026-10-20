@@ -13,6 +13,8 @@ if (process.argv.includes("--tests")) {
 } else {
   rmSync(join(root, "dist"), { recursive: true, force: true });
   await build({ ...common, entryPoints: { "main/index": "src/main/index.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
+  // utilityProcess worker (original out/main/editorRenderWorker.js)
+  await build({ ...common, entryPoints: { "main/editorRenderWorker": "src/main/workers/editor-render-worker.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   await build({ ...common, entryPoints: { "preload/index": "src/preload/index.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   await build({ ...common, entryPoints: { "renderer/renderer": "src/renderer/renderer.ts" }, outdir: "dist", platform: "browser", format: "iife", target: "chrome120" });
   mkdirSync(join(root, "dist/renderer"), { recursive: true });

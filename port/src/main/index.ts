@@ -1,13 +1,14 @@
 // Videoclaw Windows-port main process — SCAFFOLD.
 // Mirrors the original createWindow (out/main/index.js L60537-60560) and the IPC
 // registration pattern (trackIpcRequests → ipc.handle / ipc.on for every channel),
-// but every handler is served by the fake backend for now.
+// handlers are served by real-backend.ts where ported, else by the fake backend.
 import { app, BrowserWindow, ipcMain } from "electron";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
+import { createRealHandlers } from "./real-backend";
 
 let win: BrowserWindow | null = null;
 const sendToRenderer = createRendererEmitter(() => win);
@@ -16,7 +17,12 @@ const backend = createFakeBackend(sendToRenderer, log);
 
 function registerIpc() {
   const { ipc } = trackIpcRequests(ipcMain);
-  for (const ch of INVOKE_CHANNELS) ipc.handle(ch, (_e: unknown, ...args: unknown[]) => backend.invoke(ch as InvokeChannel, args));
+  const real = createRealHandlers(sendToRenderer, log);
+  for (const ch of INVOKE_CHANNELS) {
+    const h = real[ch as InvokeChannel];
+    ipc.handle(ch, (_e: unknown, ...args: unknown[]) => (h ? h(...args) : backend.invoke(ch as InvokeChannel, args)));
+  }
+  log(`[port] real (ported) handlers: ${Object.keys(real).join(", ")}`);
   for (const ch of SEND_CHANNELS) ipc.on(ch, (_e: unknown, ...args: unknown[]) => log(`[fake-backend] send ${ch} ${JSON.stringify(args)}`));
   log(`[port] registered ${INVOKE_CHANNELS.length} handle + ${SEND_CHANNELS.length} on; fake-implemented: ${backend.implemented().length}`);
 }

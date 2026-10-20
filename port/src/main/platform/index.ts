@@ -8,3 +8,4 @@ export * from "./kill";
 export * from "./pdf";
 export * from "./voice";
 export * from "./python";
+export * from "./npm";
