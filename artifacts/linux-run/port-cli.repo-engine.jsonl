@@ -1,0 +1,7 @@
+{"ok":true,"step":"install-engine","path":"/tmp/vc-lb/ud/engines/engine-0.1.57-rc7-15f8f2d","ms":362}
+{"ok":true,"step":"shims"}
+{"ok":true,"step":"venv","detail":"uv sync --frozen: venv ready","ms":166}
+{"ok":true,"step":"remotion","detail":"npm ci + browser ensure","ms":8219}
+{"ok":true,"step":"hyperframes","detail":"npm ci: HyperFrames renderer/player ready","ms":6564}
+{"ok":true,"step":"stage-workspace","notPorted":["CLAUDE.md (workspaceClaudeMd/migrateWorkspaceClaudeMd)","validateEngineSessionContext L4188","workspace symlink guards"]}
+{"ok":false,"step":"doctor","failing":[{"check":"gateway","detail":"no VIDEOCLAW_API_KEY (env or engine .env)","fix":"enter the key in the app (AccountModal) — bootstrap writes .env"}],"ms":3322}

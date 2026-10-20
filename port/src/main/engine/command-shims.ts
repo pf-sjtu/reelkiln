@@ -13,10 +13,10 @@
 //     no such prompt on Windows. The win32 git shim forwards to the first real git.exe found
 //     on PATH after the shim dir (resolved by the app at write time), else prints a port-new
 //     message. The xcode-select probe has no Windows equivalent and is dropped.
-import { chmodSync, lstatSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { join as hostJoin } from "node:path"; // FS paths always use the HOST path module; `platform` only selects script content
-import { isWin, pathDelimiter, pathEnvKey, type Plat } from "../platform";
+import { isWin, pathDelimiter, pathEnvKey, pathMod, type Plat } from "../platform";
 
 export const PYTHON_MISSING_REASON = "VideoClaw's own Python is missing or damaged, so it can't run commands safely."; // L6435
 export const SETUP_REPAIR_ACTION = "Repair VideoClaw"; // L6437
@@ -25,6 +25,8 @@ export const GIT_UNAVAILABLE_MESSAGE = "git isn't available because this Mac doe
 export const PIP_UNAVAILABLE_MESSAGE = "pip isn't available in VideoClaw. Setup installs its Python packages."; // L7201
 /** PORT-NEW (not in bundle): Windows wording for the git shim. */
 export const PORT_WIN_GIT_UNAVAILABLE_MESSAGE = "git isn't available. Install Git for Windows and restart VideoClaw.";
+/** PORT-NEW (not in bundle): Linux wording for the git shim. */
+export const PORT_POSIX_GIT_UNAVAILABLE_MESSAGE = "git isn't available. Install git and restart VideoClaw.";
 export const ENGINE_COMMAND_SHIMS = ["python3", "python", "pip3", "pip", "git"] as const; // L7203
 export type ShimLocation = "engine" | "app";
 
@@ -81,8 +83,20 @@ export function winGitShScript(realGit: string | undefined): string {
   ].join("\n");
 }
 
+/** PORT-NEW: Linux git shim. The original script (gitShimScript) probes /usr/bin/xcode-select,
+ *  which never exists on Linux, so it would block git entirely (observed on the Linux
+ *  baseline, docs/11). Forward to the real git found on PATH instead. */
+export function posixGitShScript(realGit: string | undefined): string {
+  return [
+    "#!/bin/sh",
+    "# VideoClaw port: forward to the system git (the macOS Xcode probe has no Linux equivalent).",
+    ...(realGit ? [`exec ${shellQuote(realGit)} "$@"`] : [`echo "${PORT_POSIX_GIT_UNAVAILABLE_MESSAGE}" >&2`, "exit 1"]),
+    "",
+  ].join("\n");
+}
+
 export function commandShimScript(name: string, location: ShimLocation = "engine", p: Plat = "darwin", realGit?: string): string {
-  if (name === "git") return isWin(p) ? winGitShScript(realGit) : gitShimScript();
+  if (name === "git") return isWin(p) ? winGitShScript(realGit) : p === "darwin" ? gitShimScript() : posixGitShScript(realGit);
   if (name === "pip3" || name === "pip") return pipShimScript();
   return pythonShimScript(location, p);
 }
@@ -121,8 +135,38 @@ function writeAtomic(target: string, script: string) {
   renameSync(staging, target);
 }
 
+/** PORT-NEW: locate the real git on PATH for the non-darwin shims, skipping the shim dir
+ *  itself (and any other dir whose `git` is a VideoClaw shim). darwin keeps the original
+ *  hard-coded /usr/bin/git + xcode-select probe. */
+export function findRealGit(o: { platform?: Plat; env?: NodeJS.ProcessEnv; skipDir?: string; exists?: (p: string) => boolean; read?: (p: string) => string } = {}): string | undefined {
+  const p = o.platform ?? process.platform;
+  if (p === "darwin") return undefined;
+  const env = o.env ?? process.env;
+  const exists = o.exists ?? existsSync;
+  const read = o.read ?? head64;
+  const pm = pathMod(p);
+  const raw = (isWin(p) ? env.Path ?? env.PATH : env.PATH) ?? "";
+  const skip = o.skipDir ? pm.resolve(o.skipDir) : undefined;
+  for (const dir of raw.split(pm.delimiter).filter(Boolean)) {
+    if (skip && pm.resolve(dir).toLowerCase() === skip.toLowerCase()) continue;
+    for (const name of isWin(p) ? ["git.exe", "git.cmd"] : ["git"]) {
+      const c = pm.join(dir, name);
+      if (!exists(c)) continue;
+      try { if (!isWin(p) && read(c).startsWith("#!/bin/sh\n# VideoClaw")) continue; } catch { /* binary: fine */ }
+      return c;
+    }
+  }
+  return undefined;
+}
+
+function head64(f: string): string {
+  const fd = openSync(f, "r");
+  try { const b = Buffer.alloc(64); return b.subarray(0, readSync(fd, b, 0, 64, 0)).toString("latin1"); } finally { closeSync(fd); }
+}
+
 export function writeCommandShims(bin: string, location: ShimLocation, o: { platform?: Plat; realGit?: string } = {}): void { // L7271
   const p = o.platform ?? process.platform;
+  if (o.realGit === undefined && p !== "darwin") o = { ...o, realGit: findRealGit({ platform: p, skipDir: bin }) };
   mkdirSync(bin, { recursive: true });
   for (const name of ENGINE_COMMAND_SHIMS) {
     const target = hostJoin(bin, name);

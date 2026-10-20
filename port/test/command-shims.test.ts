@@ -61,3 +61,16 @@ test("installAppCommandShims prepends bin to PATH (win32: replaces the case-vari
   const bin = port.installAppCommandShims(d, wenv, { platform: "win32" });
   assert.equal(wenv.Path, `${bin};C:\\x;C:\\y`);
 });
+
+test("linux git shim forwards to the real git (original xcode probe would block it)", () => {
+  assert.equal(port.commandShimScript("git", "engine", "linux", "/usr/bin/git"), "#!/bin/sh\n# VideoClaw port: forward to the system git (the macOS Xcode probe has no Linux equivalent).\nexec '/usr/bin/git' \"$@\"\n");
+  assert.match(port.commandShimScript("git", "engine", "linux", undefined), /Install git and restart/);
+  // darwin keeps the original bytes
+  assert.match(port.commandShimScript("git", "engine", "darwin"), /xcode-select/);
+  const files: Record<string, string> = { "/shim/git": "#!/bin/sh\n# VideoClaw port: x", "/fake/git": "#!/bin/sh\n# VideoClaw (#1038): y", "/usr/bin/git": "\x7fELF" };
+  const found = port.findRealGit({ platform: "linux", env: { PATH: "/shim:/fake:/usr/bin" }, skipDir: "/shim", exists: (p: string) => p in files, read: (p: string) => files[p] });
+  assert.equal(found, "/usr/bin/git");
+  const w = port.findRealGit({ platform: "win32", env: { Path: "C:\\vc\\bin;C:\\Program Files\\Git\\cmd" }, skipDir: "C:\\vc\\bin", exists: (p: string) => p === "C:\\Program Files\\Git\\cmd\\git.exe" });
+  assert.equal(w, "C:\\Program Files\\Git\\cmd\\git.exe");
+  assert.equal(port.findRealGit({ platform: "darwin" }), undefined);
+});

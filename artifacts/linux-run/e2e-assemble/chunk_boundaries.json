@@ -1,0 +1,46 @@
+{
+  "source": "assemble.py",
+  "chunks": [
+    {
+      "name": "b1_hook",
+      "start_sec": 0.0,
+      "end_sec": 2.0,
+      "role": "broll",
+      "beat_source": "broll/clip_a.mp4",
+      "source_kind": "real",
+      "framing": {
+        "strategy": "center_crop",
+        "reason": "no stable subject was detected; keep natural footage full-bleed",
+        "frameMode": "subject",
+        "faceCount": 0,
+        "sampledFaceDetections": 0,
+        "requestedPunch": 1.0,
+        "appliedPunch": 1.0
+      }
+    },
+    {
+      "name": "b2_card",
+      "start_sec": 2.0,
+      "end_sec": 3.5,
+      "role": "card",
+      "beat_source": "images/card.png",
+      "source_kind": "other"
+    },
+    {
+      "name": "b3_broll",
+      "start_sec": 3.5,
+      "end_sec": 5.5,
+      "role": "broll",
+      "beat_source": "broll/clip_b.mp4",
+      "source_kind": "real",
+      "framing": {
+        "strategy": "center_crop",
+        "reason": "caller deliberately requested geometric center crop",
+        "frameMode": "center",
+        "faceCount": 0,
+        "requestedPunch": 1.0,
+        "appliedPunch": 1.0
+      }
+    }
+  ]
+}

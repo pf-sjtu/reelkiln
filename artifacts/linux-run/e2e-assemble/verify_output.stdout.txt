@@ -1,0 +1,10 @@
+[verify_output] mode=render  avatar_type=synthetic_avatar (default (no markers found))
+[verify_output] input=/workspace/vc-linux/ws/jobs/linux-e2e-20261020-a1b2c3/final_raw.mp4
+
+Video:    /workspace/vc-linux/ws/jobs/linux-e2e-20261020-a1b2c3/final_raw.mp4 (5.50s)
+Sampling: 1 frames at [2.75]
+
+Wrote 1 frame(s). Read each one inline to inspect:
+  Read /workspace/vc-linux/ws/jobs/linux-e2e-20261020-a1b2c3/verify_frames/frame_002.75s.png  (23KB)
+
+[verify_output] STATUS: OK (mechanical checks passed)

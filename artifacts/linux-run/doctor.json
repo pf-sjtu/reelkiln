@@ -1,0 +1,58 @@
+{
+  "ok": false,
+  "engine": "/workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d",
+  "workspace": "/workspace/vc-linux/ws",
+  "checks": {
+    "ffmpeg": {
+      "ok": true,
+      "detail": "/workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d/bin/ffmpeg \u00b7 ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+      "ms": 69
+    },
+    "ffprobe": {
+      "ok": true,
+      "detail": "/workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d/bin/ffprobe \u00b7 ffprobe version 7.1.5-0+deb13u1 Copyright (c) 2007-2026 the FFmpeg developers",
+      "ms": 69
+    },
+    "node": {
+      "ok": true,
+      "detail": "/workspace/vc-linux/bootstrap/node/bin/node \u00b7 v24.22.0",
+      "ms": 4
+    },
+    "python venv": {
+      "ok": true,
+      "detail": "imports ok: PIL, numpy, scipy, requests, dotenv, elevenlabs, fontTools, openai",
+      "ms": 804
+    },
+    "yt-dlp": {
+      "ok": true,
+      "detail": "venv yt-dlp 2026.06.09",
+      "ms": 346
+    },
+    "remotion": {
+      "ok": true,
+      "detail": "package.json + node_modules present (use --deep for a smoke render)",
+      "ms": 0
+    },
+    "gateway": {
+      "ok": false,
+      "detail": "no VIDEOCLAW_API_KEY (env or engine .env)",
+      "fix": "enter the key in the app (AccountModal) \u2014 bootstrap writes .env",
+      "ms": 0
+    },
+    "workspace": {
+      "ok": true,
+      "detail": "split \u00b7 jobs=/workspace/vc-linux/ws/jobs",
+      "ms": 0
+    },
+    "hooks": {
+      "ok": true,
+      "detail": "all hook paths use portable engine root \u00b7 workspace bytes canonical",
+      "ms": 23
+    },
+    "taste packs": {
+      "ok": true,
+      "detail": "2 pack(s): _default, _starter",
+      "ms": 0
+    }
+  }
+}

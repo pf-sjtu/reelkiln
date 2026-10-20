@@ -13,7 +13,8 @@ What it does (nothing else):
   3. writes `engine/…` tar.gz with the original layout (top dir `engine/`, uid/gid 0,
      sorted, fixed mtime) and a manifest copied from bootstrap/engine.manifest.json with
      only `file` and `sha256` updated.
-Usage: python3 tools/make_windows_engine.py OUT_DIR [--engine DIR] [--manifest FILE]
+Usage: python3 tools/make_windows_engine.py OUT_DIR [--engine DIR] [--manifest FILE] [--target win|posix]
+(--target posix skips step 2 and names the file engine-<v>-posix.tar.gz — Linux/macOS baseline.)
 Then point VIDEOCLAW_ENGINE_DIST (original env var) at OUT_DIR on the Windows machine.
 """
 import argparse, gzip, hashlib, io, json, os, shutil, sys, tarfile, tempfile
@@ -50,22 +51,23 @@ def materialize_symlink_placeholders(stage: Path) -> list[str]:
             done.append(str(f.relative_to(stage)))
     return done
 
-def build(engine: Path, manifest_in: Path, out: Path) -> dict:
+def build(engine: Path, manifest_in: Path, out: Path, target: str = "win") -> dict:
     manifest = json.loads(manifest_in.read_bytes().decode("utf-8"))
     mtime = 0
     with tempfile.TemporaryDirectory() as td:
         stage = Path(td) / "engine"
         shutil.copytree(engine, stage, ignore=shutil.ignore_patterns("__pycache__", ".venv", "node_modules", "bin"))
         materialize_symlink_placeholders(stage)
-        s = stage / ".claude" / "settings.json"
-        s.write_bytes(rewrite_settings(s.read_bytes().decode("utf-8")).encode("utf-8"))  # bytes: no CRLF/codepage translation on Windows
-        name = f"engine-{manifest['version']}-win.tar.gz"
+        if target == "win":
+            s = stage / ".claude" / "settings.json"
+            s.write_bytes(rewrite_settings(s.read_bytes().decode("utf-8")).encode("utf-8"))  # bytes: no CRLF/codepage translation on Windows
+        name = f"engine-{manifest['version']}-{target}.tar.gz"
         out.mkdir(parents=True, exist_ok=True)
         raw = io.BytesIO()
         with tarfile.open(fileobj=raw, mode="w", format=tarfile.PAX_FORMAT) as tar:
             paths = sorted([stage] + list(stage.rglob("*")))
             for p in paths:
-                info = tar.gettarinfo(str(p), arcname=str(Path("engine") / p.relative_to(stage)) if p != stage else "engine")
+                info = tar.gettarinfo(str(p), arcname=(Path("engine") / p.relative_to(stage)).as_posix() if p != stage else "engine")  # as_posix: never backslashes in member names when built on Windows
                 info.uid = info.gid = 0; info.uname = info.gname = ""; info.mtime = mtime
                 if p.is_file():
                     with open(p, "rb") as fh: tar.addfile(info, fh)
@@ -84,5 +86,7 @@ if __name__ == "__main__":
     ap.add_argument("out", type=Path)
     ap.add_argument("--engine", type=Path, default=REPO / "engine")
     ap.add_argument("--manifest", type=Path, default=REPO / "bootstrap" / "engine.manifest.json")
+    ap.add_argument("--target", choices=["win", "posix"], default="win",
+                    help="posix (PORT-NEW): keep .venv/bin/python hooks; used for the Linux baseline/CI")
     a = ap.parse_args()
-    print(json.dumps(build(a.engine, a.manifest, a.out), indent=2))
+    print(json.dumps(build(a.engine, a.manifest, a.out, a.target), indent=2))

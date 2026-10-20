@@ -1,0 +1,10 @@
+{
+  "fps": 30, "width": 540, "height": 960,
+  "beats": [
+    {"name": "b1_hook", "source": "broll/clip_a.mp4", "in": 0.0, "out": 2.0, "role": "broll", "source_kind": "real"},
+    {"name": "b2_card", "source": "images/card.png", "duration": 1.5, "role": "card", "source_kind": "other"},
+    {"name": "b3_broll", "source": "broll/clip_b.mp4", "in": 0, "out": 2.0, "role": "broll", "source_kind": "real", "framing": "center"}
+  ],
+  "audio": {"from_beats": false, "vo": {"source": "audio/vo.mp3", "gain": 1.0}},
+  "output": "final_raw.mp4"
+}
