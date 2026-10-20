@@ -9,3 +9,4 @@ export * from "./pdf";
 export * from "./voice";
 export * from "./python";
 export * from "./npm";
+export * from "./pdf-windows";
