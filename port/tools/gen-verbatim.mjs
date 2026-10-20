@@ -14,7 +14,7 @@ const SRC = {
   main: "app/reconstructed/main/index.js",
   wb: "app/out/main/chunks/workbookContents-ChzKjQX1.js",
 };
-const lines = Object.fromEntries(Object.entries(SRC).map(([k, f]) => [k, readFileSync(join(repo, f), "utf8").split("\n")]));
+const lines = Object.fromEntries(Object.entries(SRC).map(([k, f]) => [k, readFileSync(join(repo, f), "utf8").split(/\r?\n/)]));
 
 function find(src, re, from = 0) {
   const i = lines[src].findIndex((l, n) => n >= from && re.test(l));

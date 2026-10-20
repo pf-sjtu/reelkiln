@@ -185,7 +185,7 @@ class DirFdCompat(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         meta = __import__("json").loads(out.stdout)
         self.assertEqual(meta["emulate"], emulate or os.name == "nt")  # Windows always emulates
-        files = sorted(str(p.relative_to(job)) for p in job.rglob("*"))
+        files = sorted(p.relative_to(job).as_posix() for p in job.rglob("*"))
         events = [__import__("json").loads(l) for l in (job / "run.log.jsonl").read_text().splitlines()]
         norm = lambda s: s.replace(meta["ids"][1], "ID1")
         return {

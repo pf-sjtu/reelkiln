@@ -1,3 +1,6 @@
+# Check out text with LF everywhere (Windows runners default to core.autocrlf=true, which broke
+# the verbatim-slice generator's line anchors and byte-level differential tests).
+* text=auto eol=lf
 # Engine + bootstrap files are byte-exact inputs (hashes, hook commands, sh scripts):
 # never convert line endings on checkout (Windows core.autocrlf).
 engine/** -text

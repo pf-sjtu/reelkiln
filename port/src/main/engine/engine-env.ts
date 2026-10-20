@@ -54,8 +54,8 @@ export function resolveEditorRenderEngine(d: ResolveEngineDeps): { root: string;
 
 /** claudeCodeExecutable (L22710-22719). Original joins `.../claude-agent-sdk-${platform}-${arch}/claude`
  *  with NO extension; dev (unpackaged) returns bare "claude". PORT: exeName on win32.
- *  TODO(verify on Windows): file name inside @anthropic-ai/claude-agent-sdk-win32-x64@0.3.281 —
- *  not in the macOS bundle; `claude.exe` assumed. */
+ *  VERIFIED (npm, 2026-10-20): @anthropic-ai/claude-agent-sdk-win32-x64@0.3.281 ships
+ *  `package/claude.exe` (package.json "files": ["claude.exe", …]); linux-x64 ships `package/claude`. */
 export function claudeCodeExecutable(o: { isPackaged: boolean; appPath: string; platform?: Plat; arch?: string }): string {
   const p = o.platform ?? process.platform;
   if (!o.isPackaged) return "claude";
@@ -63,7 +63,11 @@ export function claudeCodeExecutable(o: { isPackaged: boolean; appPath: string; 
 }
 
 /** resolveCodexExecutable (L23422-23446) minus devStagedCodexRoots. ORIGINAL env var
- *  VIDEOCLAW_CODEX_BIN is honoured exactly as in the bundle. PORT: `codex.exe` on win32. */
+ *  VIDEOCLAW_CODEX_BIN is honoured exactly as in the bundle. PORT: `codex.exe` on win32 — VERIFIED:
+ *  the bundled macOS payload is @openai/codex@0.160.1-darwin-arm64 (payload.manifest.json npmIntegrity
+ *  sha512-6Znu97… equals that tarball's dist.integrity); its win32 sibling
+ *  @openai/codex@0.160.1-win32-x64 has vendor/x86_64-pc-windows-msvc/codex-package.json
+ *  `"entrypoint": "bin/codex.exe"`. */
 export function resolveCodexExecutable(o: { explicit?: string; env: NodeJS.ProcessEnv; resourcesPath?: string; requireBundled?: boolean; exists?: (p: string) => boolean; platform?: Plat }): string {
   const p = o.platform ?? process.platform;
   const exists = o.exists ?? existsSync;

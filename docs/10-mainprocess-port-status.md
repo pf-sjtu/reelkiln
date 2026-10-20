@@ -8,10 +8,10 @@
 
 | 类别 | 数量 | 通道 |
 |---|---|---|
-| **真实移植（ported-real）** | 4 | `editorRender:start` / `editorRender:cancel` / `editorRender:state`（EditorRenderController + utilityProcess worker，L62405-62428）、`media:voiceDictationStatus`（原算法；Windows 下无 helper → 原版文案） |
-| **真实移植，需开关** | 1 | `bootstrap:run` —— 仅当 PORT-NEW 环境变量 `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时走 `BootstrapCore.runAll()`；`workspace` 步使用部分移植的 `writeWorkspacePartial`（`src/main/engine/workspace.ts`），预期一路跑到 `doctor` 步：因移植版未设置 `gatewayUrl`（原版 L9704 给 doctor 注入 `VIDEOCLAW_GATEWAY_URL` 与占位 key `vcs_doctor_no_authority`），doctor 的 `gateway` 检查必为红，runAll 在此以 `doctor failed → gateway: …` 结束；理想结果是“只有 gateway 红”（见 §3 与 docs/08）。即使通过 doctor，激活阶段也会以 `NOT PORTED: assertEngineMoneyCompatibility` 失败 |
+| **真实移植（ported-real）** | 5 | `editorRender:start` / `editorRender:cancel` / `editorRender:state`（EditorRenderController + utilityProcess worker，L62405-62428；`getSession` = SessionRegistry.liveSession，`resolveEngine` 走真实 `engineSessionEnv`）、`media:voiceDictationStatus`、`session:list`（L61697，只读 SessionRegistry，见 docs/12） |
+| **真实移植，需开关** | 1 | `bootstrap:run` —— 仅当 PORT-NEW `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时走 `BootstrapCore.runAll()`。doctor 的 `gateway` 检查需要凭据必为红，runAll 按原版在 doctor 步结束；PORT-NEW `VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED=1` 可接受“只有 gateway 红”的报告，随后真实执行激活：`assertEngineMoneyCompatibility`（L6426）、`assertInstalledEngineProductionContract`（L6982）、`validateEngineSessionContext`（L4188）均已移植（docs/12）。Linux 上已端到端跑通 |
 | **fixture 假实现（fake）** | 12 | `bootstrap:status`、`bootstrap:run`（默认）、`client:list`、`client:create`、`settings:get`、`app:restart`、`engine:pendingToast`、`hfPreview:available`、`feedback:discard`、`engine:codexHandoffOffer`、`job:get`、`app:update:state`（值来自 qaFixtures / 主进程 fallback，带行号） |
-| **未实现（stub → `undefined` + 日志）** | 141 | 其余全部（4 + 12 + 141 = 157） |
+| **未实现（stub → `undefined` + 日志）** | 140 | 其余全部（5 + 12 + 140 = 157） |
 | send（`permission:respond` / `permission:shown` / `quit:rendererState`） | 3 | 仅记录日志 |
 
 注：`editorRender:start` 虽为真实实现，但 `getSession` 依赖的 session host 尚未移植，因此当前每次都返回原版的 `unknown-session` 错误（文案与原版一致）。这是"真实逻辑 + 未移植依赖"的诚实状态，而非伪造成功。
@@ -69,3 +69,19 @@
 | W8 | editorRenderWorker 的 `windowsHide` + `detached:true` | detached 在 Windows 上会新开控制台；windowsHide 应抑制 |
 | W9 | codex client 在 win32 用 killTree 关闭 | codex.exe 子进程（rg 等）是否被清理 |
 | W10 | `installEngineDir` 复制 `uv.exe/ffmpeg.exe/ffprobe.exe` 到 `bin\` | 与引擎 doctor 的 ffmpeg 检查路径是否匹配 |
+
+
+## 增补（Linux 基线阶段，docs/11、docs/12）
+
+新增移植（逐字节切片，由 `port/tools/gen-verbatim.mjs` 从原 bundle 生成，`--check` 测试保证与原文一致，仅允许列出的平台层替换）：
+
+| 文件 | 来源 | 替换 |
+|---|---|---|
+| `session-context.generated.ts` | L972-978、L4024-4208（REQUIRED_SESSION_CONTEXT_FILES、SessionContextError、validateCanonicalSettings、readRequired、sourceHashes、validate(Installed)EngineSessionContext、assertEnginePython） | `.venv/bin/python` → `venvPython()`（1 处） |
+| `money-compat.generated.ts` | 分块 L1737-1799（PAID_GEN_TOOLS、unpricedPaidGenTools）、L6239-6434（billing CLI 契约、PRICE_SURFACE_DUMP、inspect/cached/assertEngineMoneyCompatibility） | `.venv/bin/python` → `venvPython()`（2 处） |
+| `production-contract.generated.ts` | L6439-6441、L6892-6987（exactPythonConstant、inspect/assertInstalledEngineProductionContract） | 无 |
+| `voice-guard.ts` | 分块 L3767+（BANNED_USER_FACING_VOCABULARY、VOICE_GUARD） | 无（测试与分块导出 `B`/`V` 比对） |
+
+手写移植：`session.ts`（`engineSessionEnv` L9380 逐行，含差分测试；`SessionRegistry` = `loadRegistry` L35661 的只读子集 + `listSessions` L38348 + `liveSession` L62403）。
+
+已从“未移植协作者”列表中移除：`validateEngineSessionContext`、`assertInstalledEngineProductionContract`、`inspectInstalledEngineProductionContract`、`assertEngineMoneyCompatibility`、`engineSessionEnv`。仍未移植：AgentHost 运行时（createSession、agent turn、registry 写入）、Studio bundle store、gateway 引擎下载、mediaCapabilities 授权。
