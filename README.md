@@ -32,3 +32,8 @@ Videoclaw 是一个 **Electron + React 桌面应用**，由 AI agent 驱动的�
 - 来源 dmg: `Videoclaw-0.0.40-arm64.dmg`（见 `artifacts/manifests/app.asar.sha256`）
 
 > 未入库的大体积第三方二进制（ffmpeg/ffprobe/uv/node/codex/voice-dictation 编译产物、app.asar、dmg）通过 `artifacts/manifests/*.sha256` 记录指纹，以支持字节级复现校验。
+
+## Windows port (scaffold)
+
+`port/` — faithful Electron+TS Windows port scaffold (typed IPC contract, fake backend,
+platform layer). Plan and status: `docs/07-windows-port-plan.md`.
