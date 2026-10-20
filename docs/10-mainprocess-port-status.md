@@ -9,7 +9,7 @@
 | 类别 | 数量 | 通道 |
 |---|---|---|
 | **真实移植（ported-real）** | 4 | `editorRender:start` / `editorRender:cancel` / `editorRender:state`（EditorRenderController + utilityProcess worker，L62405-62428）、`media:voiceDictationStatus`（原算法；Windows 下无 helper → 原版文案） |
-| **真实移植，需开关** | 1 | `bootstrap:run` —— 仅当 PORT-NEW 环境变量 `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时走 `BootstrapCore.runAll()`；预期在 `workspace` 步骤以 `NOT PORTED: writeWorkspace L9650` 失败（见 §3） |
+| **真实移植，需开关** | 1 | `bootstrap:run` —— 仅当 PORT-NEW 环境变量 `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时走 `BootstrapCore.runAll()`；`workspace` 步使用部分移植的 `writeWorkspacePartial`（`src/main/engine/workspace.ts`），预期跑完 doctor 后在激活阶段以 `NOT PORTED: assertEngineMoneyCompatibility` 失败（见 §3） |
 | **fixture 假实现（fake）** | 12 | `bootstrap:status`、`bootstrap:run`（默认）、`client:list`、`client:create`、`settings:get`、`app:restart`、`engine:pendingToast`、`hfPreview:available`、`feedback:discard`、`engine:codexHandoffOffer`、`job:get`、`app:update:state`（值来自 qaFixtures / 主进程 fallback，带行号） |
 | **未实现（stub → `undefined` + 日志）** | 141 | 其余全部（4 + 12 + 141 = 157） |
 | send（`permission:respond` / `permission:shown` / `quit:rendererState`） | 3 | 仅记录日志 |
@@ -40,7 +40,7 @@
 ## 3. 已知未移植的协作者（全部以 `NOT PORTED: <name> L<line>` 抛错，绝不静默通过）
 
 - `validateEngineSessionContext`（L4188）、`assertInstalledEngineProductionContract`（L6982）、`inspectInstalledEngineProductionContract`（L6952）
-- `writeWorkspace`（L9650，含 CLAUDE.md 迁移、taste packs、settings.json 复制）
+- `writeWorkspace`（L9650）—— **部分移植**：`initializeWorkspaceChannel` 的 6 个目录（L4456-4463）、taste packs 种子复制（L9651-9662）、`.claude/settings.json` 逐字节复制（L9685-9688）已移植（正是 doctor 的 workspace/hooks/taste packs 检查所读内容）；CLAUDE.md 生成/迁移、`auditWorkspaceChannel`、工作区符号链接逃逸防护未移植。真实模式下 `validateEngineSessionContext` 记录 SKIPPED 日志后跳过
 - `assertEngineMoneyCompatibility`、Studio bundle / feature flags（`configureStudioBundleStore` 等）
 - `engineSessionEnv`（L9380，依赖 session-context 哈希）
 - session host（`host.listSessions`）、mediaCapabilities.grant

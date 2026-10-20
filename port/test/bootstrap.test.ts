@@ -149,3 +149,18 @@ test("claude / codex executable resolution (original order; win32 suffix)", () =
   assert.equal(resolveCodexExecutable({ env: {}, resourcesPath: "/r", exists: () => false, platform: "darwin" }), "codex");
   assert.throws(() => resolveCodexExecutable({ env: {}, requireBundled: true, exists: () => false }), /The packaged Codex runtime is unavailable/);
 });
+
+import { writeWorkspacePartial } from "../src/main/engine/workspace";
+test("writeWorkspacePartial: dirs, taste packs, verbatim settings.json", () => {
+  const root = mkdtempSync(join(tmpdir(), "vc-wsp-"));
+  const eng = join(root, "e");
+  mkdirSync(join(eng, ".claude"), { recursive: true });
+  mkdirSync(join(eng, "taste", "packs", "_starter"), { recursive: true });
+  writeFileSync(join(eng, "taste", "packs", "_starter", "README.md"), "x");
+  writeFileSync(join(eng, ".claude", "settings.json"), '{"a":1}\r\n');
+  const ws = join(root, "w");
+  writeWorkspacePartial(eng, ws);
+  for (const d of ["jobs", "assets", "incoming", "taste/packs", ".claude"]) assert.ok(existsSync(join(ws, d)), d);
+  assert.equal(readFileSync(join(ws, "taste", "packs", "_starter", "README.md"), "utf8"), "x");
+  assert.equal(readFileSync(join(ws, ".claude", "settings.json"), "utf8"), '{"a":1}\r\n');
+});

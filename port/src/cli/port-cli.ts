@@ -5,6 +5,7 @@
 //   node dist/cli/port-cli.cjs remotion <engineDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs hyperframes <engineDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs shims <engineDir>
+//   node dist/cli/port-cli.cjs stage-workspace <engineDir> <workspaceDir>
 //   node dist/cli/port-cli.cjs doctor <engineDir> <workspaceDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs codex-handshake <codexExe>
 //   node dist/cli/port-cli.cjs run-bash "<command>"
@@ -14,6 +15,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BootstrapCore, createRunner, notPortedHooks, resolveBundledEngineSource, type BootstrapEnv } from "../main/engine/bootstrap";
 import { ensureEngineCommandShims } from "../main/engine/command-shims";
+import { writeWorkspacePartial } from "../main/engine/workspace";
 import { CodexAppServerClient } from "../main/codex/app-server-client";
 import { runBash } from "../main/engine/run-bash";
 import { bootstrapTool } from "../main/platform";
@@ -51,6 +53,7 @@ async function main() {
         return out({ ok: true, step: cmd, path, ms: Date.now() - t0 });
       }
       case "shims": ensureEngineCommandShims(a1); return out({ ok: true, step: cmd });
+      case "stage-workspace": return out({ ok: true, step: cmd, ...writeWorkspacePartial(a1, a2) });
       case "venv": return out({ ok: true, step: cmd, detail: await core({ roots: a2 ? [a2] : [] }).ensureVenv(a1), ms: Date.now() - t0 });
       case "remotion": return out({ ok: true, step: cmd, detail: await core({ roots: a2 ? [a2] : [] }).ensureRemotion(a1), ms: Date.now() - t0 });
       case "hyperframes": return out({ ok: true, step: cmd, detail: await core({ roots: a2 ? [a2] : [] }).ensureHyperframes(a1), ms: Date.now() - t0 });

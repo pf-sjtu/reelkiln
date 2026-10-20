@@ -4,8 +4,9 @@
 //   editorRender:start/cancel/state  — original L62405-62428 (EditorRenderController +
 //                                      utilityProcess editorRenderWorker.js, killGroup)
 //   bootstrap:run                    — original Bootstrap.runAll; ONLY when the PORT-NEW env
-//                                      var VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 is set (it fails at
-//                                      the `workspace` step: writeWorkspace NOT PORTED).
+//                                      var VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 is set. Expected to run
+//                                      through doctor, then fail at activation:
+//                                      NOT PORTED assertEngineMoneyCompatibility.
 import { app, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -15,6 +16,7 @@ import { EditorRenderController, type RenderWorker } from "./engine/editor-rende
 import { resolveEditorRenderEngine } from "./engine/engine-env";
 import { BootstrapCore, createRunner, notPortedHooks, resolveBundledEngineSource } from "./engine/bootstrap";
 import { ensureEngineCommandShims } from "./engine/command-shims";
+import { writeWorkspacePartial } from "./engine/workspace";
 import { bootstrapTool, killTree, resolveBootstrapToolRoots } from "./platform";
 
 /** PORT-NEW env var (not in the original bundle). */
@@ -52,6 +54,8 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       resolveEngineSource: async () => resolveBundledEngineSource({ resourcesPath: process.resourcesPath ?? "", env: process.env, appVersion: app.getVersion(), packaged: app.isPackaged }),
       assertInstalledEngineProductionContract: () => log("[port] SKIPPED assertInstalledEngineProductionContract (NOT PORTED)"),
       ensureEngineCommandShims: (e) => ensureEngineCommandShims(e),
+      writeWorkspace: (e, ws) => { const r = writeWorkspacePartial(e, ws ?? workspaceRoot()); log(`[port] PARTIAL writeWorkspace; NOT PORTED: ${r.notPorted.join(", ")}`); },
+      validateEngineSessionContext: () => log("[port] SKIPPED validateEngineSessionContext (NOT PORTED)"),
     }),
     createRunner(),
     (p) => push("bootstrap:progress", p),
