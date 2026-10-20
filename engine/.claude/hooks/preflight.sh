@@ -67,6 +67,8 @@ TENANT="${VIDEOCLAW_TENANT:-}"
 # says how to fix it, in the app's words (videoclaw-app PYTHON_REPAIR_MESSAGE):
 # the chat's Repair card, whose one button opens Setup and starts the repair.
 PY="$ENGINE/.venv/bin/python"
+# port: Windows (Git Bash/MSYS) uv venvs use .venv/Scripts/python.exe; never true on macOS/Linux.
+if [ ! -x "$PY" ] && [ -x "$ENGINE/.venv/Scripts/python.exe" ]; then PY="$ENGINE/.venv/Scripts/python.exe"; fi
 if [ ! -x "$PY" ]; then
   echo "VideoClaw's own Python is missing or damaged, so it can't run commands safely. Click Repair VideoClaw in the chat to fix it."
 fi

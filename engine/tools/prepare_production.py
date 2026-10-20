@@ -27,7 +27,7 @@ receipt tests. No network or provider calls are made.
 from __future__ import annotations
 
 import argparse
-import fcntl
+import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
 import fnmatch
 import ast
 import hashlib
@@ -147,7 +147,11 @@ EFFECTIVE_HASH_ENVS = {
 PORTABLE_ENGINE_ROOT = "${VIDEOCLAW_ENGINE:-$CLAUDE_PROJECT_DIR}"
 # Python hooks run on the engine's own venv. A bare `python3` on a Mac without
 # the developer tools is Apple's install-the-tools stub (videoclaw-app#1038).
-PORTABLE_ENGINE_PYTHON = f"{PORTABLE_ENGINE_ROOT}/.venv/bin/python"
+# port: Windows venvs keep the interpreter in .venv/Scripts/python.exe (POSIX unchanged).
+PORTABLE_ENGINE_PYTHON = (
+    f"{PORTABLE_ENGINE_ROOT}/.venv/Scripts/python.exe" if os.name == "nt"
+    else f"{PORTABLE_ENGINE_ROOT}/.venv/bin/python"
+)
 EXPECTED_HOOK_COMMANDS = {
     "SessionStart": (
         f'bash "{PORTABLE_ENGINE_ROOT}/.claude/hooks/preflight.sh"'

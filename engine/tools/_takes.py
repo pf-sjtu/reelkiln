@@ -48,7 +48,7 @@ Takes and previous takes sit outside the folders tools glob
 """
 from __future__ import annotations
 
-import fcntl
+import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
 import hashlib
 import json
 import os
@@ -62,7 +62,8 @@ from log import job_lock_at, log_event
 TAKES_DIR = ".takes"
 PREVIOUS_DIR = "previous_takes"
 _LOCKS_DIR = ".locks"
-_DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+# port: getattr keeps POSIX identical and lets the module import on Windows (no O_DIRECTORY/O_NOFOLLOW/O_CLOEXEC).
+_DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
 
 
 def request_key(request: dict) -> str:

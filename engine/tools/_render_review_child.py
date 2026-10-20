@@ -37,6 +37,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import _compat_proc  # noqa: E402  port: process-group helpers
+
 # Light (standard library only): safe to import before supervision starts.
 from _render_completion import (  # noqa: E402
     DEADLINE_ENV,
@@ -57,7 +59,7 @@ def _supervise(deadline: float, parent: int) -> None:
         while True:
             if os.getppid() != parent or time.time() >= deadline:
                 try:
-                    os.killpg(os.getpgrp(), signal.SIGKILL)
+                    _compat_proc.kill_own_process_group()  # port: os.killpg(os.getpgrp(), SIGKILL) on POSIX
                 finally:
                     os._exit(3)
             time.sleep(0.2)

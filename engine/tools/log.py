@@ -24,7 +24,7 @@ pointer to a sidecar file in <job_dir>/run/<event_id>.txt for the full text.
 from __future__ import annotations
 
 import json
-import fcntl
+import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
 import os
 import stat
 import sys

@@ -65,6 +65,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import _compat_proc  # noqa: E402  port: process-group helpers
+
 from _paths import OUTPUT_ROOT  # noqa: E402
 from _render_completion import (  # noqa: E402
     FACTS_DIR,
@@ -377,7 +379,7 @@ def _run_worker(args, budget: float) -> str | None:
     proc = subprocess.Popen(
         _worker_command(args, time.time() + budget - WORKER_MARGIN_S),
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-        env=env, start_new_session=True,
+        env=env, **_compat_proc.new_session_kwargs(),  # port: start_new_session=True on POSIX
     )
     answer: str | None = None
     buffered = b""

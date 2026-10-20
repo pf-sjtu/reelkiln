@@ -54,7 +54,8 @@ offline unit suite defaults it off (``tests/__init__.py``).
 from __future__ import annotations
 
 import errno
-import fcntl
+import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
+import _compat_proc  # port: process-group helpers
 from contextlib import contextmanager
 import hashlib
 import json
@@ -491,7 +492,7 @@ def _kill_group(proc: subprocess.Popen) -> None:
     descendants (an ffmpeg, an abandoned request) in its group.
     """
     try:
-        os.killpg(proc.pid, signal.SIGKILL)
+        _compat_proc.kill_process_group(proc.pid)  # port: os.killpg(proc.pid, SIGKILL) on POSIX
     except (ProcessLookupError, PermissionError, OSError):
         pass
     if proc.poll() is None:
@@ -543,7 +544,7 @@ def _run_review_child(job_dir: Path, input_path: Path, log_path: Path,
         proc = subprocess.Popen(
             _review_command(input_path), cwd=str(REPO_ROOT), env=env,
             stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-            start_new_session=True,
+            **_compat_proc.new_session_kwargs(),  # port: start_new_session=True on POSIX
         )
         previous: dict[int, Any] = {}
 

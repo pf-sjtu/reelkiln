@@ -74,7 +74,7 @@ EXAMPLES
 from __future__ import annotations
 
 import argparse
-import fcntl
+import _compat_lock as fcntl  # port: fcntl on POSIX, msvcrt on Windows
 import hashlib
 import json
 import math
