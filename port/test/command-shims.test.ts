@@ -38,13 +38,16 @@ test("win32 shims: sh flavour points at .venv/Scripts/python.exe, .cmd siblings 
 });
 
 test("writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 adds .cmd", () => {
+  // Host platform family: isCurrentShim's exec-bit check only makes sense when FS and platform agree.
+  const P = process.platform === "win32" ? "win32" : "linux";
   const d = mkdtempSync(join(tmpdir(), "vc-shim-"));
-  port.ensureEngineCommandShims(d, { platform: "linux" });
+  port.ensureEngineCommandShims(d, { platform: P });
   const bin = join(d, "bin");
-  assert.deepEqual(readdirSync(bin).sort(), ["git", "pip", "pip3", "python", "python3"]);
-  if (process.platform !== "win32") assert.equal(statSync(join(bin, "python")).mode & 0o777, 0o755); // NTFS has no POSIX mode bits
+  const names = ["git", "pip", "pip3", "python", "python3"];
+  assert.deepEqual(readdirSync(bin).sort(), P === "win32" ? names.flatMap((n) => [n, `${n}.cmd`]).sort() : names);
+  if (P !== "win32") assert.equal(statSync(join(bin, "python")).mode & 0o777, 0o755); // NTFS has no POSIX mode bits
   const m1 = statSync(join(bin, "python")).mtimeMs;
-  port.ensureEngineCommandShims(d, { platform: "linux" });
+  port.ensureEngineCommandShims(d, { platform: P });
   assert.equal(statSync(join(bin, "python")).mtimeMs, m1);
   const w = mkdtempSync(join(tmpdir(), "vc-shimw-"));
   port.writeCommandShims(w, "engine", { platform: "win32" });

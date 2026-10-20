@@ -3,6 +3,7 @@
 > 适用对象：在一台 **Windows 10/11 x64** 机器上首次运行移植版。
 > 基线：仓库 `pf-sjtu/videoclaw-reverse` 分支 `master` 上包含本文档的最新提交（`git log -1 -- docs/08-local-windows-plan.md` 可查）。
 > 原则：每一步都是**可独立验证**的小步；每步结束把“回报清单”中的内容原样贴回（JSON 行或截图）。任何一步失败都**停止**，先回报，不要自行修改引擎源码。
+> **参考基线（2026-10-20 更新）：Linux 已实机跑通。** 本 Runbook 的每一步在 box（Debian 13 x86_64）上都有对应的已通过运行，可作为 Windows 结果的对照：引擎安装 / venv / doctor / 端到端出片见 `docs/11-linux-baseline.md` 与 `tools/linux_baseline.sh`；Electron 外壳真实 bootstrap + `editorRender:*` 出片见 `docs/12-linux-shell-run.md` 与 `tools/linux_shell_smoke.sh`；CI 中 `windows-latest` 已真实跑过移植版单元测试与引擎兼容层测试（`docs/13-ci.md`）。Windows 上的结果应与 Linux 基线**逐项一致**；不一致处即为 Windows 特有问题。
 > 记号：**PORT-NEW** = 移植新增（原版 bundle 中不存在）；**原版** = 0.0.40 bundle 中已有的名字/行为。所有原版行号指 `app/reconstructed/main/index.js`。
 
 ---
@@ -47,8 +48,8 @@
 | Node.js（bundled，给引擎用） | **22.17.0** win-x64 **zip** | `https://nodejs.org/dist/v22.17.0/node-v22.17.0-win-x64.zip` | 解压后**把内层目录内容**放到 `C:\vc\bootstrap\node\`，使 `C:\vc\bootstrap\node\node.exe` 与 `C:\vc\bootstrap\node\node_modules\npm\bin\npm-cli.js` 存在 | `npmInvocation` 依赖官方 zip 布局（W3） |
 | uv | 原版 bundle 中 uv 版本**无法从 bundle 确定**（字符串暗示 0.11.x，未确认）；用最新稳定版并**记录版本号** | github.com/astral-sh/uv releases：`uv-x86_64-pc-windows-msvc.zip` | `C:\vc\bootstrap\uv.exe` | `bootstrapTool("uv")` 在 roots 中找 `uv.exe` |
 | ffmpeg / ffprobe | 原版为 **9.0.1**（martin-riedl 构建，macOS）；Windows 取 9.x 的 win64 静态构建（如 gyan.dev 或 BtbN），**记录版本号** | — | `C:\vc\bootstrap\ffmpeg.exe`、`C:\vc\bootstrap\ffprobe.exe` | `installEngineDir` 会复制到 `<engine>\bin\`（W10） |
-| codex | **严格 0.160.1** | npm：`@openai/codex@0.160.1`。原版 bundle 只含 `aarch64-apple-darwin` 目标（`bootstrap/codex/codex-package.json`），Windows 原生二进制所在的具体包名/资产名 **not found in bundle**，需在 npm 包内找 `x86_64-pc-windows-msvc` 的 `codex.exe` | `C:\vc\bootstrap\codex\bin\codex.exe` | `resolveCodexExecutable`（L23422）：`VIDEOCLAW_CODEX_BIN` → `resources/bootstrap/codex/bin/codex` → `codex`；移植版在 win32 加 `.exe` |
-| claude-agent-sdk 原生包 | `@anthropic-ai/claude-agent-sdk-win32-x64@0.3.281` | npm（原版 `claude-agent-sdk@0.3.281` 的 optionalDependencies 中列出） | 本轮**只需下载并回报包内文件列表**（`npm pack @anthropic-ai/claude-agent-sdk-win32-x64@0.3.281` 后解包） | `claudeCodeExecutable`（L22710）拼 `…/claude-agent-sdk-${platform}-${arch}/claude`，无扩展名；移植版假定 `claude.exe`（**TODO 待核实**） |
+| codex | **严格 0.160.1** | npm：**`@openai/codex@0.160.1-win32-x64`**（已核实：`@openai/codex@0.160.1` 的 optionalDependencies 是 `npm:@openai/codex@0.160.1-<platform>` 别名；原版 bundle 的 `payload.manifest.json` npmIntegrity `sha512-6Znu97…` 正是 `0.160.1-darwin-arm64` 的 dist.integrity，故 Windows 取其同版本兄弟包）。dist.integrity：`sha512-yyqykHtHNhm0ZViofGozz9a4ffUyXDsiyRu9Q2hPNg/cu4uzSsovNr5kDmzBXPFWAilmlZuNkwpw1W7uae2nlg==`。获取：`npm pack @openai/codex@0.160.1-win32-x64` 后 `tar -xzf` | 把包内 `package\vendor\x86_64-pc-windows-msvc\` **下的全部内容**复制到 `C:\vc\bootstrap\codex\`，得到 `codex\bin\codex.exe`、`codex\bin\codex-code-mode-host.exe`、`codex\codex-package.json`（`"entrypoint": "bin/codex.exe"`）、`codex\codex-path\rg.exe`、`codex\codex-resources\{codex-command-runner.exe,codex-windows-sandbox-setup.exe,voice\…}`——与原版 macOS `bootstrap/codex/` 布局同构 | `resolveCodexExecutable`（L23422）：`VIDEOCLAW_CODEX_BIN` → `resources/bootstrap/codex/bin/codex` → `codex`；移植版在 win32 加 `.exe` |
+| claude-agent-sdk 原生包 | `@anthropic-ai/claude-agent-sdk-win32-x64@0.3.281` | npm（原版 `claude-agent-sdk@0.3.281` 的 optionalDependencies 中列出） | 本轮无需放置（会话层的 claude 接入未移植） | `claudeCodeExecutable`（L22710）拼 `…/claude-agent-sdk-${platform}-${arch}/claude`，无扩展名；移植版在 win32 用 `claude.exe`——**已核实**：该包 `package.json` 的 `"files": ["claude.exe", …]`，包内为 `package/claude.exe`（linux-x64 包内为 `package/claude`） |
 
 > 不要下载任何 macOS 引擎或从网关拉引擎：网关会下发 macOS 引擎，移植版已跳过网关分支（`resolveBundledEngineSource`，gateway 分支 NOT PORTED）。
 
@@ -57,8 +58,7 @@
 - [ ] `C:\vc\bootstrap\uv.exe --version`
 - [ ] `C:\vc\bootstrap\ffmpeg.exe -version` 第一行、`ffprobe.exe -version` 第一行
 - [ ] `C:\vc\bootstrap\node\node.exe -v`（应为 v22.17.0）
-- [ ] `C:\vc\bootstrap\codex\bin\codex.exe --version`（应为 0.160.1），以及你从哪个 npm 包/路径取出的 codex.exe
-- [ ] claude-agent-sdk-win32-x64 包内文件列表（重点：可执行文件名是不是 `claude.exe`）
+- [ ] `C:\vc\bootstrap\codex\bin\codex.exe --version`（应为 0.160.1），以及 `npm pack` 输出的 integrity 是否等于上表值
 - [ ] `where bash`、`where git`
 - [ ] LongPathsEnabled 是否已设为 1、是否开启开发者模式
 
@@ -75,7 +75,7 @@ git log -1 --format="%H %cI"
 git status --short
 ```
 
-说明：仓库 `.gitattributes` 已设置 `engine/** -text`、`bootstrap/** -text`，但仍请关闭 autocrlf 以防万一（引擎 `.claude/settings.json` 必须与工作区副本逐字节相等，doctor `hooks` 检查依赖这一点）。
+说明：仓库 `.gitattributes` 已设置 `* text=auto eol=lf`（所有文本以 LF 检出——CI 首次在 windows-latest 上运行时，runner 默认 `core.autocrlf=true` 导致 `gen-verbatim` 的行锚点失配，由此加入）以及 `engine/** -text`、`bootstrap/** -text`，但仍请关闭 autocrlf 以防万一（引擎 `.claude/settings.json` 必须与工作区副本逐字节相等，doctor `hooks` 检查依赖这一点）。
 
 ### S1 回报清单
 - [ ] 提交哈希
@@ -93,9 +93,7 @@ npm run build
 npm test
 ```
 
-预期：`npm run build` 依次执行 gen（IPC 契约生成）、tsc、esbuild，产出 `dist\main\index.cjs`、`dist\main\editorRenderWorker.cjs`、`dist\preload\…`、`dist\renderer\…`、`dist\cli\port-cli.cjs`。box 上 `npm test` 为 **69/69** 通过。
-
-已知可能的 Windows 差异：部分测试会真实执行 `/bin/sh` 或 POSIX 原脚本做差分（如 `relative-writer` 与原 sh 脚本的差分测试、`run-bash` 的管道测试）。在 Windows 上这些测试**可能失败或需要 Git Bash 在 PATH 上**——这是测试环境差异，不阻塞后续步骤；请回报失败测试的名称与报错。
+预期：`npm run build` 依次执行 gen（IPC 契约生成）、tsc、esbuild，产出 `dist\main\index.cjs`、`dist\main\editorRenderWorker.cjs`、`dist\preload\…`、`dist\renderer\…`、`dist\cli\port-cli.cjs`。box（Linux）上 `npm test` 为 **76/76** 通过；CI 的 `windows-latest` 同样运行这 76 项（POSIX 专属的差分/模式位断言在 win32 上显式 skip，`BootstrapCore.runAll` 步骤机用宿主平台运行，从而覆盖 win32 的 `uv.exe` 复制、`npm.cmd`、`Path` 键分支），结果见 `docs/13-ci.md`。本机结果应与 CI 一致；不一致请回报失败测试的名称与报错（本机多出的差异多半来自 Git Bash/PATH）。
 
 ### S2 回报清单
 - [ ] `npm run build` 最后 20 行
@@ -219,10 +217,10 @@ cd C:\vc\repo
 python tools\engine_import_smoke.py posix
 ```
 
-- `test_engine_compat.py`：box 上 11 项通过（含 `_compat_lock` 的 msvcrt 分支、`_compat_proc` 进程树终止、`_compat_dirfd` 原生/模拟差分）。在 Windows 上 `_compat_dirfd` 将**真正走模拟路径**（`os.name == "nt"`），这是第一次实机验证 docs/09 的 B1。
+- `test_engine_compat.py`：共 14 项。Linux 上 11 过 3 skip（`WindowsReal` 类）；Windows 上 POSIX 专属类 skip，`WindowsReal` 实跑：真实 `msvcrt` 跨进程锁冲突、`CREATE_NEW_PROCESS_GROUP` + `taskkill /T` 杀孙进程（以 `tasklist` 确认），`_compat_dirfd` 走模拟路径并与原生产物差分。**CI windows-latest 上已全部通过**（docs/13），本机复跑用于确认与 CI 一致。
 - `engine_import_smoke.py posix`：逐模块导入 `engine\tools\*.py`（第三方包用桩），box 上 80/80。Windows 上的 “posix” 模式其实就是真实 Windows 导入。
 
-注意：这两个脚本是针对仓库内 `engine\` 运行的；`test_engine_compat.py` 里有个别用例显式调用 POSIX 原语（如 `os.killpg`），在 Windows 上会被 skip 或失败——请如实回报。
+注意：这两个脚本是针对仓库内 `engine\` 运行的。
 
 ### S7 回报清单
 - [ ] 两个脚本的完整输出（失败用例的 traceback）
@@ -280,6 +278,7 @@ node dist\cli\port-cli.cjs codex-handshake C:\vc\bootstrap\codex\bin\codex.exe
 node dist\cli\port-cli.cjs run-bash "echo hi && uname -a && which python3"
 ```
 
+- Linux 对照（box 实测，`artifacts/linux-run/codex-handshake.json`）：`{"ok":true,"step":"codex-handshake","account":{"account":null,"requiresOpenaiAuth":true,"workspaceRouting":null},…,"ms":171}`。Windows 上 `account` 部分应完全相同。
 - `codex-handshake`：用临时 `CODEX_HOME` 启动 `codex app-server`（stdio JSON-RPC），发 `initialize` → 校验服务端版本（`assertCompatibleServer`）→ `account/read {refreshToken:false}`；结束时 win32 下用 `taskkill /T` 关闭（W9）。预期 `ok:true`，`account` 为未登录状态。不登录、不发起 turn。
 - `run-bash`：经 Git Bash 执行（W2）。若输出显示是 cmd 执行（`uname` 不存在），说明没找到 Git Bash。
 
@@ -296,7 +295,7 @@ cd C:\vc\repo\port
 npm run start
 ```
 
-预期：窗口显示 `window.videoclaw exposes 184 methods (expected 184).`；控制台（启动它的终端）打印 `[port] real (ported) handlers: …` 与 `[port] registered 157 handle + 3 on; fake-implemented: …`。点击 **Ping** 按钮：`bootstrapStatus`/`listClients`/`getAppUpdateState`/`voiceDictationStatus` 返回 fixture，`listSessions` 返回未实现错误（预期），`bootstrapRun` 返回 fixture（未开开关时）。
+预期：窗口显示 `window.videoclaw exposes 184 methods (expected 184).`；控制台（启动它的终端）打印 `[port] real (ported) handlers: …` 与 `[port] registered 157 handle + 3 on; fake-implemented: …`。点击 **Ping** 按钮：`bootstrapStatus`/`listClients`/`getAppUpdateState` 返回 fixture，`voiceDictationStatus` 与 `listSessions` 走真实移植实现（`listSessions` 读 `%APPDATA%\videoclaw-port\sessions.json`，不存在时返回空列表），`bootstrapRun` 返回 fixture（未开开关时）。
 
 ### S10 回报清单
 - [ ] 窗口截图
@@ -317,7 +316,11 @@ npm run start
 - `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1`：**PORT-NEW** 开关，使 `bootstrap:run` 走移植的 `BootstrapCore.runAll()`。
 - 此模式写入真实位置：引擎 → `%APPDATA%\videoclaw-port\engines\`，工作区 → `%USERPROFILE%\Videoclaw`（原版 `workspaceLeafForChannel("prod")`）。如不想污染，先跳过本步。
 
-点 Ping 后观察 `bootstrap:progress` 推送，预期依次：`engine → venv → remotion → hyperframes → workspace → env → doctor`，在 **doctor 步因 `gateway` 失败而结束**（`doctor failed → gateway: …`）。日志中应出现 `[port] PARTIAL writeWorkspace; NOT PORTED: …`、`[port] SKIPPED validateEngineSessionContext (NOT PORTED)`、`[port] SKIPPED assertInstalledEngineProductionContract (NOT PORTED)`。若 doctor 全绿（不应发生），激活阶段会以 `NOT PORTED: assertEngineMoneyCompatibility` 失败。
+点 Ping 后观察 `bootstrap:progress` 推送，预期依次：`engine → venv → remotion → hyperframes → workspace → env → doctor`，在 **doctor 步因 `gateway` 失败而结束**（`doctor failed → gateway: …`）。`validateEngineSessionContext`、生产契约（`assertInstalledEngineProductionContract`/`inspectProductionCompatible`）、`assertEngineMoneyCompatibility` 现已是从原版逐字生成的真实实现（docs/12 §3），不再出现 `SKIPPED … (NOT PORTED)`；`writeWorkspace` 仍为部分移植（`[port] PARTIAL writeWorkspace`）。
+
+可选：再加 **PORT-NEW** 开关 `set VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED=1`，则“唯一失败项为 gateway”的 doctor 报告被接受，继续激活（money 兼容检查 → 写 `engine-current.json`），`bootstrap:status` 变为 `ready:true`。这与 Linux 上 `tools/linux_shell_smoke.sh` 第 1 轮完全相同。
+
+无人值守版（与 Linux 冒烟同一脚本，PORT-NEW 开关 `VIDEOCLAW_PORT_SMOKE=1`，跑完自动退出并打印 `[smoke]` 行；Windows 下以 PowerShell 设置环境变量后执行 `npx electron .`）。第 2 轮 `editorRender:start` 需要 `sessions.json` 与合成目录 fixture，其写法见 `tools/linux_shell_smoke.sh`（目前只有 bash 版，Windows 等价 `.ps1` **未编写**——TODO，需在 Windows 上编写并验证，不在 box 上臆造）。
 
 ### S11 回报清单
 - [ ] 窗口日志区全部 `push bootstrap:progress` 行
@@ -335,9 +338,10 @@ npm run start
 | `os.killpg`/`setsid` 缺失 | 无进程组 | `_compat_proc.kill_process_group` → `taskkill /T /F` | 未实机（W1） |
 | `npm.cmd` spawn EINVAL | CVE-2024-27980 后 `.cmd` 需 shell | `npmInvocation` 用 `node.exe npm-cli.js` | 未实机（W3） |
 | hooks 检查不一致 | settings.json 指向 `.venv/bin/python` | `make_windows_engine.py` 改写为 `.venv/Scripts/python.exe` | 未实机 |
-| `editorRender:start` 返回 `unknown-session` | 会话层未移植 | 无（预期） | — |
-| `listSessions` 等 141 个通道报未实现 | 未移植 | 无（预期，docs/10） | — |
+| `msvcrt` 锁 / `taskkill /T` 行为不符 | — | `_compat_lock` / `_compat_proc` | **CI windows-latest 实测通过**（`WindowsReal`） |
+| `editorRender:start` 返回 `unknown-session` | `sessions.json` 中无此会话 | 会话注册表只读子集已移植（docs/12）；需要先有会话（创建会话未移植，冒烟用 fixture） | Linux 已验证 |
+| 约 140 个通道报未实现 | 未移植 | 无（预期，docs/10） | — |
 
 ## 14. 本轮之后
 
-把 S0–S11 的回报贴回后，按失败点分类修复（引擎兼容层 → docs/09；主进程 → docs/10），然后进入下一阶段：移植会话层（`engineSessionEnv` L9380、`validateEngineSessionContext` L4188、session host）、核实 `claude.exe` 名称并接入 claude-agent-sdk、处理剩余无 `.exe` 的主进程路径（L16293/L59694 库预览/海报）。
+把 S0–S11 的回报贴回后，按失败点分类修复（引擎兼容层 → docs/09；主进程 → docs/10），然后进入下一阶段：会话层其余部分（创建会话、session host / AgentHost 运行时、claude-agent-sdk 接入；`engineSessionEnv`/`validateEngineSessionContext` 已移植并在 Linux 验证）、处理剩余无 `.exe` 的主进程路径（L16293/L59694 库预览/海报）。

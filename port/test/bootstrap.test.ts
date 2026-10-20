@@ -76,7 +76,7 @@ test("BootstrapCore.runAll: full step machine with a recording runner (real tar,
   const real = B.createRunner();
   const run: B.Runner = async (cmd, args, opts) => {
     calls.push({ cmd, args, cwd: opts?.cwd, env: opts?.env });
-    if (cmd === "tar") return real(cmd, args, opts);
+    if (cmd === "tar" || /[\\/]tar\.exe$/i.test(cmd)) return real(cmd, args, opts); // win32: tarInvocation → %SystemRoot%\System32\tar.exe
     if (args.includes("--json")) return 'noise {"ok":true,"checks":{"ffmpeg":{"ok":true}}}';
     return "";
   };
