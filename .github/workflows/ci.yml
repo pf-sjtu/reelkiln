@@ -77,11 +77,9 @@ jobs:
         run: python tools/make_windows_engine.py "$RUNNER_TEMP/winbundle" | tee "$RUNNER_TEMP/winmanifest.json"
 
   linux-baseline:
-    name: "Linux baseline (real engine, uv sync + doctor + e2e render)"
+    name: "Linux baseline (real engine, uv sync + doctor + e2e render + Electron smoke)"
     runs-on: ubuntu-latest
     needs: [port]
-    env:
-      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -90,8 +88,8 @@ jobs:
           cache: npm
           cache-dependency-path: port/package-lock.json
       - uses: astral-sh/setup-uv@v6
-      - name: system ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: system ffmpeg + xvfb
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg xvfb
       - name: managed CPython 3.14.6
         run: uv python install 3.14.6
       - name: build port
@@ -101,6 +99,8 @@ jobs:
         env:
           OUT: ${{ runner.temp }}/linux-run
         run: bash tools/linux_baseline.sh "$RUNNER_TEMP/vc"
+      - name: "tools/linux_shell_smoke.sh (headless Electron: bootstrap:run + editorRender end-to-end)"
+        run: bash tools/linux_shell_smoke.sh "$RUNNER_TEMP/vc/bootstrap" "$RUNNER_TEMP/vc-shell-home" "$RUNNER_TEMP/linux-run/shell-smoke.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

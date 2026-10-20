@@ -4,10 +4,15 @@
 //   editorRender:start/cancel/state  — original L62405-62428 (EditorRenderController +
 //                                      utilityProcess editorRenderWorker.js, killGroup)
 //   bootstrap:run                    — original Bootstrap.runAll; ONLY when the PORT-NEW env
-//                                      var VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 is set. Expected to reach doctor and stop
-//                                      on the `gateway` check (no gatewayUrl/key in the port);
-//                                      past that, activation throws NOT PORTED
-//                                      assertEngineMoneyCompatibility.
+//                                      var VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 is set. Stops at doctor on
+//                                      the `gateway` check (no gatewayUrl/key in the port) unless the
+//                                      PORT-NEW VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED=1 accepts a report whose
+//                                      ONLY failure is `gateway`; activation then runs the ported
+//                                      assertEngineMoneyCompatibility (L6426) for real.
+//   session:list                     — original L61697 host.listSessions(); served by the read-only
+//                                      SessionRegistry over userData/sessions.json (no agent runtime).
+//   editorRender getSession          — original liveSession L62403 → SessionRegistry.liveSession;
+//   editorRender resolveEngine       — original resolveEditorRenderEngine + engineSessionEnv L9380.
 import { app, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -18,10 +23,20 @@ import { resolveEditorRenderEngine } from "./engine/engine-env";
 import { BootstrapCore, createRunner, notPortedHooks, resolveBundledEngineSource } from "./engine/bootstrap";
 import { ensureEngineCommandShims } from "./engine/command-shims";
 import { writeWorkspacePartial } from "./engine/workspace";
+import { engineSessionEnv, SessionRegistry } from "./engine/session";
+import { assertEngineMoneyCompatibility } from "./engine/money-compat.generated";
+import { validateEngineSessionContext } from "./engine/session-context.generated";
+import { assertInstalledEngineProductionContract, inspectInstalledEngineProductionContract } from "./engine/production-contract.generated";
 import { bootstrapTool, killTree, resolveBootstrapToolRoots } from "./platform";
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
+/** PORT-NEW env var: accept a doctor report whose only failing check is `gateway` (needs credentials). */
+export const PORT_ACCEPT_GATEWAY_RED_ENV = "VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED";
+export function onlyGatewayFailed(report: any): boolean {
+  const failing = Object.entries(report?.checks ?? {}).filter(([, c]: any) => !c.ok).map(([k]) => k);
+  return failing.length === 1 && failing[0] === "gateway";
+}
 
 type Handler = (...args: any[]) => unknown;
 
@@ -53,22 +68,30 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     },
     notPortedHooks({
       resolveEngineSource: async () => resolveBundledEngineSource({ resourcesPath: process.resourcesPath ?? "", env: process.env, appVersion: app.getVersion(), packaged: app.isPackaged }),
-      assertInstalledEngineProductionContract: () => log("[port] SKIPPED assertInstalledEngineProductionContract (NOT PORTED)"),
+      assertInstalledEngineProductionContract: (e) => assertInstalledEngineProductionContract(e),
+      inspectProductionCompatible: (e) => inspectInstalledEngineProductionContract(e).compatible,
       ensureEngineCommandShims: (e) => ensureEngineCommandShims(e),
       writeWorkspace: (e, ws) => { const r = writeWorkspacePartial(e, ws ?? workspaceRoot()); log(`[port] PARTIAL writeWorkspace; NOT PORTED: ${r.notPorted.join(", ")}`); },
-      validateEngineSessionContext: () => log("[port] SKIPPED validateEngineSessionContext (NOT PORTED)"),
+      validateEngineSessionContext: (e) => { validateEngineSessionContext(e); },
+      assertEngineMoneyCompatibility: (e) => assertEngineMoneyCompatibility(e),
+      ...(process.env[PORT_ACCEPT_GATEWAY_RED_ENV] === "1"
+        ? { doctorAccepts: (r: any) => { const ok = r.ok || onlyGatewayFailed(r); if (ok && !r.ok) log("[port] PORT-NEW: doctor accepted with only `gateway` red (needs credentials)"); return ok; } }
+        : {}),
     }),
     createRunner(),
     (p) => push("bootstrap:progress", p),
     (line) => log(`[setup] ${line}`),
   );
+  // AgentHost registry file: join(app.getPath("userData"), "sessions.json") (original L61106).
+  const registry = new SessionRegistry(join(app.getPath("userData"), "sessions.json"));
+  registry.load();
   const editorRender = new EditorRenderController({
-    getSession: () => undefined, // TODO: session host not ported → every start is "unknown-session"
+    getSession: (id) => registry.liveSession(id) as any,
     resolveEngine: () => resolveEditorRenderEngine({
       isPackaged: app.isPackaged,
       env: process.env,
       currentEngine: () => core.currentEngine(),
-      engineSessionEnv: () => { throw new Error("NOT PORTED: engineSessionEnv L9380"); },
+      engineSessionEnv: () => engineSessionEnv({ currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p) => core.enginePathEnv(p) }),
       workspaceRoot,
     }),
     forkWorker: forkEditorRenderWorker,
@@ -80,6 +103,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     "editorRender:start": (req: unknown) => editorRender.start(req as any),
     "editorRender:cancel": (requestId: unknown) => editorRender.cancel(requestId as string),
     "editorRender:state": () => editorRender.state(),
+    "session:list": () => registry.listSessions(),
   };
   if (process.env[PORT_REAL_BOOTSTRAP_ENV] === "1") handlers["bootstrap:run"] = () => core.runAll();
   return handlers;

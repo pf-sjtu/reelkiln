@@ -1,0 +1,154 @@
+// Session layer needed by editorRender and engine-spawning handlers.
+//  - engineSessionEnv (main/index.js L9380-9418): ported line-for-line with its module-level
+//    collaborators injected (currentEngine, workspaceRoot, enginePath_, configured gateway,
+//    studio bundle store). Both injected "configs" default to the ORIGINAL's unconfigured
+//    state: configuredGatewayEnv returns {} until configureEngineGatewaySession ran (L9372),
+//    studioBundleSessionEnv returns {} until configureStudioBundleStore ran (L8192).
+//  - SessionRegistry: READ-ONLY subset of AgentHost.loadRegistry (L35661-35830) +
+//    listSessions (L38348) + isDeleting (L39154) — the part the session-scoped handlers
+//    (editorRender/hfPreview/workflowSubmission `getSession`) consume. Not ported: the
+//    agent runtime, createSession (L38726), registry writes, beacons, title fallback from
+//    transcripts, retirePlanContract, healCodexPermissionMode, healSessionCwd, media recovery.
+import { createHash, randomUUID } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { isAbsolute, join } from "node:path";
+import { validateInstalledEngineSessionContext, SessionContextError } from "./session-context.generated";
+import { UV_PYTHON_POLICY_ENV } from "./bootstrap";
+
+export interface SessionEnvDeps {
+  currentEngine: () => { path: string; buildSha256?: string } | null;
+  workspaceRoot: () => string;
+  enginePathEnv: (enginePath: string) => string; // enginePath_ L9313
+  /** engineGatewaySessionConfig (L9332); undefined = not configured (original initial state). */
+  gatewaySessionConfig?: () => { gatewayUrl: string } | undefined;
+  /** processStore$1?.sessionEnv (L8192); undefined store = {} (original initial state). */
+  studioSessionEnv?: (gatewayUrl?: string) => Record<string, string> | undefined;
+}
+
+export function configuredGatewayEnv(d: SessionEnvDeps, gatewayKey?: string, gatewayUrlOverride?: string): Record<string, string> { // L9372
+  const cfg = d.gatewaySessionConfig?.();
+  if (!cfg) return {};
+  return {
+    VIDEOCLAW_GATEWAY_URL: gatewayUrlOverride?.replace(/\/+$/, "") ?? cfg.gatewayUrl,
+    ...(gatewayKey ? { VIDEOCLAW_API_KEY: gatewayKey } : {}),
+  };
+}
+
+export function engineSessionEnv(d: SessionEnvDeps, gatewayKey?: string, gatewayUrlOverride?: string): Record<string, string> { // L9380
+  const gatewayEnv = configuredGatewayEnv(d, gatewayKey, gatewayUrlOverride);
+  const studioEnv = d.studioSessionEnv?.(gatewayUrlOverride) ?? {};
+  const qaEnv = { VIDEOCLAW_FINAL_QA_AUTHORITY: "videoclaw.app-final-qa/v1" };
+  const eng = d.currentEngine();
+  if (!eng) return { ...gatewayEnv, ...studioEnv, ...qaEnv };
+  const ws = d.workspaceRoot();
+  const contextHashes = validateInstalledEngineSessionContext(eng.path, eng.buildSha256);
+  const buildSha256 = contextHashes.engineBuildSha256;
+  const problems: string[] = [];
+  let effectiveSettingsSha256: string | undefined;
+  try {
+    effectiveSettingsSha256 = createHash("sha256").update(readFileSync(join(ws, ".claude", "settings.json"))).digest("hex");
+  } catch {
+    problems.push("the effective workspace settings are missing or unreadable");
+  }
+  if (effectiveSettingsSha256 && effectiveSettingsSha256 !== contextHashes.engineSettings) {
+    problems.push("the effective workspace settings differ from the verified engine settings");
+  }
+  if (problems.length > 0) throw new SessionContextError(problems);
+  return {
+    ...gatewayEnv,
+    ...studioEnv,
+    ...qaEnv,
+    VIDEOCLAW_ENGINE: eng.path,
+    VIDEOCLAW_WORKSPACE: ws,
+    VIDEOCLAW_JOBS_DIR: join(ws, "jobs"),
+    VIDEOCLAW_CONTEXT_EPOCH: randomUUID(),
+    VIDEOCLAW_ENGINE_BUILD_SHA256: buildSha256,
+    VIDEOCLAW_EFFECTIVE_LAWS_SHA256: contextHashes.laws,
+    VIDEOCLAW_EFFECTIVE_PREFLIGHT_SHA256: contextHashes.preflightBlock,
+    VIDEOCLAW_EFFECTIVE_SETTINGS_SHA256: effectiveSettingsSha256!,
+    ...UV_PYTHON_POLICY_ENV,
+    PATH: d.enginePathEnv(eng.path),
+  };
+}
+
+// workbookContents chunk L141-144 (CLIENT_JOB_ID_RE / isClientJobId), verbatim.
+const CLIENT_JOB_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+export function isClientJobId(value: unknown): value is string {
+  return typeof value === "string" && CLIENT_JOB_ID_RE.test(value);
+}
+/** expandTilde$1 L34408. PORT: also `~\` on win32. */
+export function expandTilde(p: string, home = homedir(), plat: NodeJS.Platform = process.platform): string {
+  return plat === "win32" ? p.replace(/^~(?=$|[\\/])/, home) : p.replace(/^~(?=$|\/)/, home);
+}
+
+/** Fields loadRegistry strips from the persisted meta before exposing it (L35700-35722). */
+const PRIVATE_META_KEYS = ["postCompactRouteBarrier", "contextEpoch", "acceptedOperations", "claudeAllowanceExhausted", "claudeAllowanceTurnIds", "creditContinuation", "completedModelResults", "lateResultReports", "lateResultLines", "lateResultFailures", "sessionPlan", "sessionPlanDetails", "dismissedSessionPlan", "sessionPlanRequired", "pulseJourney", "pulseEligible", "mediaRecoveryNeeded", "mediaRecoveryIssue", "versionDone", "liveWork", "turnStartedAtMs", "pendingPermissionMode", "permissionModeSwitchFailed"];
+const NEW_VIDEO_TITLE_PLACEHOLDER_OLD = "New session";
+export const NEW_VIDEO_TITLE = "New video"; // L266
+
+export interface SessionMeta { sessionId: string; cwd: string; jobId?: string; clientId: string; status: string; title?: string; runtime?: string; createdAt?: number; sidebarOrder?: number; [k: string]: unknown }
+
+export class SessionRegistry {
+  sessions = new Map<string, { meta: SessionMeta }>();
+  clients: { clientId: string }[] = [];
+  constructor(readonly registryFile: string, private o: { now?: () => number } = {}) {}
+  /** loadRegistry L35661 (read-only subset; see header). Returns whether healing changed anything. */
+  load(): boolean {
+    this.sessions.clear();
+    let raw: any;
+    try {
+      raw = JSON.parse(readFileSync(this.registryFile, "utf-8"));
+    } catch {
+      this.clients = []; // original: [...DEFAULT_CLIENTS] + corrupt-copy + beacon + recoverOrphanSessions — NOT PORTED
+      return false;
+    }
+    const metas: any[] = Array.isArray(raw) ? raw : (raw.sessions ?? []);
+    this.clients = Array.isArray(raw) ? [] : (raw.clients ?? []);
+    let healedAny = false;
+    for (const meta of metas) {
+      if (!meta || typeof meta.sessionId !== "string") continue;
+      const interruptedFromStatus = meta.status === "running" || meta.status === "awaiting_permission" ? meta.status : undefined;
+      if (interruptedFromStatus) healedAny = true;
+      const publicMeta = { ...meta };
+      for (const k of PRIVATE_META_KEYS) delete publicMeta[k];
+      const healed: SessionMeta = {
+        ...publicMeta,
+        clientId: meta.clientId ?? "personal",
+        title: meta.title === NEW_VIDEO_TITLE_PLACEHOLDER_OLD ? NEW_VIDEO_TITLE : meta.title,
+        status: "idle",
+        ...(interruptedFromStatus ? { interruptedAtMs: (this.o.now ?? Date.now)(), interruptedFromStatus } : {}),
+      };
+      if (healed.jobId && !isClientJobId(healed.jobId)) { delete healed.jobId; healedAny = true; } // L35761
+      if ((healed as any).adoptCandidate?.jobId && !isClientJobId((healed as any).adoptCandidate.jobId)) { delete (healed as any).adoptCandidate; healedAny = true; }
+      if (healed.jobId && (healed.runtime ?? "local") === "local" && !existsSync(join(expandTilde(healed.cwd), "jobs", healed.jobId))) { // L35773
+        delete healed.jobId;
+        healedAny = true;
+      }
+      if (healed.jobId && (healed as any).adoptCandidate) { delete (healed as any).adoptCandidate; healedAny = true; } // L35823
+      this.sessions.set(meta.sessionId, { meta: healed });
+    }
+    return healedAny;
+  }
+  /** listSessions L38348: meta + liveWork snapshot + media recovery (NOT PORTED → [] / false). */
+  listSessions() {
+    const projectRank = new Map(this.clients.map((c, i) => [c.clientId, i]));
+    return [...this.sessions.values()]
+      .map((s) => ({ ...s.meta, liveWork: [] as unknown[], mediaRecoveryNeeded: false }))
+      .sort((a, b) => {
+        const projectDelta = (projectRank.get(a.clientId) ?? Number.MAX_SAFE_INTEGER) - (projectRank.get(b.clientId) ?? Number.MAX_SAFE_INTEGER);
+        if (projectDelta !== 0) return projectDelta;
+        const aOrder = a.sidebarOrder, bOrder = b.sidebarOrder;
+        if (aOrder !== undefined || bOrder !== undefined) {
+          if (aOrder === undefined) return 1;
+          if (bOrder === undefined) return -1;
+          if (aOrder !== bOrder) return aOrder - bOrder;
+        }
+        return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+      });
+  }
+  isDeleting(_sessionId: string): boolean { return false; } // L39154: deletions are not ported, so none is ever in flight
+  /** liveSession L62403 */
+  liveSession = (sessionId: string) => (this.isDeleting(sessionId) ? undefined : this.listSessions().find((s) => s.sessionId === sessionId));
+}
+void isAbsolute;

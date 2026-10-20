@@ -9,6 +9,9 @@ import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ip
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
 import { createRealHandlers } from "./real-backend";
+import { smokeScript } from "./smoke";
+
+const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1"; // PORT-NEW
 
 let win: BrowserWindow | null = null;
 const sendToRenderer = createRendererEmitter(() => win);
@@ -17,7 +20,10 @@ const backend = createFakeBackend(sendToRenderer, log);
 
 function registerIpc() {
   const { ipc } = trackIpcRequests(ipcMain);
-  const real = createRealHandlers(sendToRenderer, log);
+  const push = SMOKE
+    ? (ch: string, ...a: unknown[]) => { log(`[smoke] push ${ch} ${JSON.stringify(a).slice(0, 400)}`); return sendToRenderer(ch as any, ...(a as [])); }
+    : sendToRenderer;
+  const real = createRealHandlers(push as typeof sendToRenderer, log);
   for (const ch of INVOKE_CHANNELS) {
     const h = real[ch as InvokeChannel];
     ipc.handle(ch, (_e: unknown, ...args: unknown[]) => (h ? h(...args) : backend.invoke(ch as InvokeChannel, args)));
@@ -48,6 +54,25 @@ function createWindow() {
   });
   win = created;
   created.on("closed", () => { if (win === created) win = null; });
+  if (SMOKE) {
+    created.webContents.once("did-finish-load", async () => {
+      try {
+        const results = await created.webContents.executeJavaScript(smokeScript({
+          runBootstrap: process.env.VIDEOCLAW_PORT_REAL_BOOTSTRAP === "1",
+          session: process.env.VIDEOCLAW_PORT_SMOKE_SESSION,
+          job: process.env.VIDEOCLAW_PORT_SMOKE_JOB,
+          renderTimeoutMs: 10 * 60_000,
+        }));
+        for (const r of results) log(`[smoke] ${JSON.stringify(r).slice(0, 1500)}`);
+        const failed = results.filter((r: any) => !r.ok).map((r: any) => r.name);
+        log(`[smoke] DONE failed=${JSON.stringify(failed)}`);
+        app.exit(0);
+      } catch (e) {
+        log(`[smoke] ERROR ${String(e)}`);
+        app.exit(1);
+      }
+    });
+  }
   void created.loadURL(rendererEntry);
 }
 

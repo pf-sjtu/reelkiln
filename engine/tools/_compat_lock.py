@@ -56,7 +56,7 @@ except ImportError:  # pragma: no cover - Windows only
                 _at_byte_zero(fd, msvcrt.LK_NBLCK)
                 return
             except OSError as exc:
-                if exc.errno not in (errno.EACCES, errno.EDEADLOCK, errno.EAGAIN):
+                if exc.errno not in (errno.EACCES, getattr(errno, "EDEADLOCK", errno.EDEADLK), errno.EAGAIN):  # EDEADLOCK is absent on macOS
                     raise
                 if operation & LOCK_NB:
                     raise BlockingIOError(errno.EAGAIN, "lock is held by another process") from None

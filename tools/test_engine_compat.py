@@ -34,6 +34,7 @@ class FakeMsvcrt(types.ModuleType):
         if owner is not None and owner != fd: raise OSError(errno.EACCES, "Permission denied")
         self.held[key] = fd
 
+@unittest.skipUnless(os.name == "posix", "POSIX branch")
 class PosixLock(unittest.TestCase):
     def test_reexports_real_fcntl(self):
         import fcntl
@@ -91,6 +92,7 @@ class WindowsLockLogic(unittest.TestCase):
         self.assertGreaterEqual(time.monotonic() - t, 0.05)
         os.close(a); os.close(b)
 
+@unittest.skipUnless(os.name == "posix", "POSIX branch")
 class PosixProc(unittest.TestCase):
     def test_new_session_kwargs(self):
         self.assertEqual(load("_compat_proc").new_session_kwargs(), {"start_new_session": True})
@@ -107,6 +109,48 @@ class PosixProc(unittest.TestCase):
             except ProcessLookupError: break
             time.sleep(0.05)
         else: self.fail("grandchild survived")
+
+CHILD_TREE = r"""
+import subprocess, sys, time
+g = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+print(g.pid, flush=True)
+time.sleep(60)
+"""
+
+@unittest.skipUnless(os.name == "nt", "real Windows (CI windows-latest)")
+class WindowsReal(unittest.TestCase):
+    """The Windows branches on a REAL Windows host (GitHub Actions windows-latest)."""
+    def test_real_msvcrt_cross_process_contention(self):
+        m = load("_compat_lock")
+        self.assertEqual(m.flock.__module__, m.__name__)  # our shim, not fcntl
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "x.lock")
+            fd = os.open(p, os.O_CREAT | os.O_RDWR | getattr(os, "O_BINARY", 0), 0o600)
+            m.flock(fd, m.LOCK_EX | m.LOCK_NB)
+            code = ("import sys; sys.path.insert(0, %r); import _compat_lock as f, os\n"
+                    "fd=os.open(%r, os.O_RDWR)\ntry:\n f.flock(fd, f.LOCK_EX|f.LOCK_NB); print('got')\n"
+                    "except BlockingIOError: print('busy')") % (str(TOOLS), p)
+            out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+            self.assertEqual(out.stdout.strip(), "busy", out.stderr)
+            m.flock(fd, m.LOCK_UN)
+            out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+            self.assertEqual(out.stdout.strip(), "got", out.stderr)
+            os.close(fd)
+
+    def test_new_session_kwargs_is_new_process_group(self):
+        self.assertEqual(load("_compat_proc").new_session_kwargs(), {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP})
+
+    def test_kill_process_group_kills_descendants(self):
+        m = load("_compat_proc")
+        p = subprocess.Popen([sys.executable, "-c", CHILD_TREE], stdout=subprocess.PIPE, text=True, **m.new_session_kwargs())
+        grandchild = int(p.stdout.readline())
+        m.kill_process_group(p.pid)
+        p.wait(timeout=10)
+        for _ in range(100):
+            alive = subprocess.run(["tasklist", "/FI", f"PID eq {grandchild}", "/NH"], capture_output=True, text=True).stdout
+            if str(grandchild) not in alive: break
+            time.sleep(0.1)
+        else: self.fail("grandchild survived taskkill /T")
 
 class VenvPython(unittest.TestCase):
     def test_portable_engine_python_posix_unchanged(self):
@@ -140,7 +184,7 @@ class DirFdCompat(unittest.TestCase):
         out = subprocess.run([sys.executable, "-c", LOG_SCRIPT, str(TOOLS), str(job)], env=env, capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stderr)
         meta = __import__("json").loads(out.stdout)
-        self.assertEqual(meta["emulate"], emulate)
+        self.assertEqual(meta["emulate"], emulate or os.name == "nt")  # Windows always emulates
         files = sorted(str(p.relative_to(job)) for p in job.rglob("*"))
         events = [__import__("json").loads(l) for l in (job / "run.log.jsonl").read_text().splitlines()]
         norm = lambda s: s.replace(meta["ids"][1], "ID1")

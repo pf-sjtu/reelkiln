@@ -6,6 +6,7 @@
 //   node dist/cli/port-cli.cjs hyperframes <engineDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs shims <engineDir>
 //   node dist/cli/port-cli.cjs stage-workspace <engineDir> <workspaceDir>
+//   node dist/cli/port-cli.cjs engine-contracts <engineDir>
 //   node dist/cli/port-cli.cjs doctor <engineDir> <workspaceDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs codex-handshake <codexExe>
 //   node dist/cli/port-cli.cjs run-bash "<command>"
@@ -16,6 +17,9 @@ import { join } from "node:path";
 import { BootstrapCore, createRunner, notPortedHooks, resolveBundledEngineSource, type BootstrapEnv } from "../main/engine/bootstrap";
 import { ensureEngineCommandShims } from "../main/engine/command-shims";
 import { writeWorkspacePartial } from "../main/engine/workspace";
+import { validateEngineSessionContext } from "../main/engine/session-context.generated";
+import { assertEngineMoneyCompatibility, inspectEngineMoneyCompatibility } from "../main/engine/money-compat.generated";
+import { assertInstalledEngineProductionContract, inspectInstalledEngineProductionContract } from "../main/engine/production-contract.generated";
 import { CodexAppServerClient } from "../main/codex/app-server-client";
 import { runBash } from "../main/engine/run-bash";
 import { bootstrapTool } from "../main/platform";
@@ -35,8 +39,10 @@ function core(o: { roots: string[]; userData?: string; workspace?: string }) {
   };
   const hooks = notPortedHooks({
     resolveEngineSource: async () => resolveBundledEngineSource({ resourcesPath: "", env: { ...process.env, VIDEOCLAW_ENGINE_DIST: o.roots[0] }, appVersion: "0.0.40", packaged: false }),
-    assertInstalledEngineProductionContract: () => {},
-    validateEngineSessionContext: () => {},
+    assertInstalledEngineProductionContract: (e) => assertInstalledEngineProductionContract(e),
+    inspectProductionCompatible: (e) => inspectInstalledEngineProductionContract(e).compatible,
+    validateEngineSessionContext: (e) => { validateEngineSessionContext(e); },
+    assertEngineMoneyCompatibility: (e) => assertEngineMoneyCompatibility(e),
     ensureEngineCommandShims: (e) => ensureEngineCommandShims(e),
   });
   return new BootstrapCore(env, hooks, createRunner(), (p) => out({ progress: p }));
@@ -53,6 +59,8 @@ async function main() {
         return out({ ok: true, step: cmd, path, ms: Date.now() - t0 });
       }
       case "shims": ensureEngineCommandShims(a1); return out({ ok: true, step: cmd });
+      case "engine-contracts": // PORT-NEW: the three activation-time engine/app contracts, run for real
+        return out({ ok: true, step: cmd, sessionContext: validateEngineSessionContext(a1), production: inspectInstalledEngineProductionContract(a1), money: await inspectEngineMoneyCompatibility(a1) });
       case "stage-workspace": return out({ ok: true, step: cmd, ...writeWorkspacePartial(a1, a2) });
       case "venv": return out({ ok: true, step: cmd, detail: await core({ roots: a2 ? [a2] : [] }).ensureVenv(a1), ms: Date.now() - t0 });
       case "remotion": return out({ ok: true, step: cmd, detail: await core({ roots: a2 ? [a2] : [] }).ensureRemotion(a1), ms: Date.now() - t0 });

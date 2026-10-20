@@ -31,7 +31,7 @@ test("identity change → 73 / original message; stream error → 76 rethrows th
   assert.deepEqual(readdirSync(d), []);
 });
 
-test("differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes)", async (t) => {
+test("differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes)", { skip: process.platform !== "linux" && "the original script's linux branch needs GNU coreutils" }, async (t) => {
   const script = slice(lineOf(/^const RELATIVE_WRITER = String\.raw`/) + 1, lineOf(/^const RELATIVE_WRITER = String\.raw`/) + 54).replace(/`;$/, "");
   const runSh = (dir: string, ident: string, name: string, data: string) => new Promise<number>((resolve) => {
     const c = spawn("/bin/sh", ["-c", script, "videoclaw-relative-writer", ident, name, "linux", `.videoclaw-write-${Math.random()}`, "0"], { cwd: dir, env: { LANG: "C", PATH: "/usr/bin:/bin" }, stdio: ["pipe", "ignore", "pipe", "pipe"] });

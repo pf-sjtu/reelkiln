@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runBash, truncate, MAX_OUTPUT_CHARS } from "../src/main/engine/run-bash";
 
-const env = { cwd: process.cwd(), env: { PATH: process.env.PATH } as NodeJS.ProcessEnv };
+const env = { cwd: process.cwd(), env: { PATH: process.env.PATH, HOME: process.env.HOME } as NodeJS.ProcessEnv }; // HOME: macOS login profiles (brew shellenv) complain without it
 
 test("runBash: success / non-zero exit text identical to original strings", async () => {
   assert.deepEqual(await runBash({ command: "echo hi" }, env), { output: "hi\n", isError: false });
@@ -30,18 +30,21 @@ test("runBash: abort", async () => {
 test("runBash on win32 routes through the chosen shell + taskkill (mocked)", async () => {
   const calls: any[] = [];
   const { EventEmitter } = await import("node:events");
+  let child: any;
+  const keepAlive = setTimeout(() => {}, 5000); // the mocked child holds no real handle; keep the loop alive
   const r = runBash({ command: "x | tail", timeout: 30 }, {
     ...env,
     deps: {
       platform: "win32",
       shell: { file: "C:\\Git\\bin\\bash.exe", argsFor: (c) => ["-c", c], kind: "bash", degraded: false },
-      spawn: ((f: string, a: string[], o: any) => { calls.push({ f, a, detached: o.detached }); const c: any = new EventEmitter(); c.pid = 9; c.kill = () => {}; return c; }) as any,
-      killTree: (pid, sig) => { calls.push({ pid, sig }); return true; },
+      spawn: ((f: string, a: string[], o: any) => { calls.push({ f, a, detached: o.detached }); const c: any = new EventEmitter(); c.pid = 9; c.kill = () => {}; child = c; return c; }) as any,
+      killTree: (pid, sig) => { calls.push({ pid, sig }); setImmediate(() => child.emit("close", null, "SIGKILL")); return true; },
     },
   });
   assert.deepEqual((await r).isError, true);
   assert.deepEqual(calls[0], { f: "C:\\Git\\bin\\bash.exe", a: ["-c", "set -o pipefail\nx | tail"], detached: false });
   assert.deepEqual(calls[1], { pid: 9, sig: "SIGKILL" });
+  clearTimeout(keepAlive);
 });
 
 test("truncate keeps head+tail like the original", () => {

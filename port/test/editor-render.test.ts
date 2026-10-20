@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { mkdtempSync, mkdirSync, writeFileSync, appendFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, appendFileSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startEngineRender } from "../src/main/workers/editor-render-worker";
@@ -58,7 +58,7 @@ test("ported editor-render worker matches the shipped editorRenderWorker.js mess
 });
 
 function setupJob() {
-  const root = mkdtempSync(join(tmpdir(), "vc-er-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-er-"))); // macOS: /var → /private/var (controller realpaths the job)
   const cwd = join(root, "ws");
   const job = join(cwd, "jobs", "j1");
   mkdirSync(join(job, "hyperframes"), { recursive: true });

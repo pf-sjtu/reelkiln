@@ -1,0 +1,163 @@
+# Run 1 — real bootstrap via IPC (VIDEOCLAW_PORT_REAL_BOOTSTRAP=1, VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED=1), 2026-10-20 23:29:55 +08
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list, bootstrap:run
+[port] registered 157 handle + 3 on; fake-implemented: 13
+[setup] — setup run started —
+[smoke] push bootstrap:progress [{"step":"layout","status":"running"}]
+[setup] layout: running
+[smoke] push bootstrap:progress [{"step":"layout","status":"ok","detail":"engines=/workspace/vc-linux/home/.config/videoclaw-port/engines · workspace=/workspace/vc-linux/home/Videoclaw"}]
+[setup] layout: ok — engines=/workspace/vc-linux/home/.config/videoclaw-port/engines · workspace=/workspace/vc-linux/home/Videoclaw
+[smoke] push bootstrap:progress [{"step":"engine","status":"running"}]
+[setup] engine: running
+[smoke] push bootstrap:progress [{"step":"engine","status":"running","phase":"download"}]
+[smoke] push bootstrap:progress [{"step":"engine","status":"running","phase":"verify"}]
+[smoke] push bootstrap:progress [{"step":"engine","status":"running","phase":"unpack"}]
+[smoke] push bootstrap:progress [{"step":"engine","status":"ok","detail":"v0.1.57-rc7-15f8f2d → /workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d"}]
+[setup] engine: ok — v0.1.57-rc7-15f8f2d → /workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d
+[smoke] push bootstrap:progress [{"step":"venv","status":"running"}]
+[setup] venv: running
+[smoke] push bootstrap:progress [{"step":"venv","status":"ok","detail":"uv sync --frozen: venv ready"}]
+[setup] venv: ok — uv sync --frozen: venv ready
+[smoke] push bootstrap:progress [{"step":"remotion","status":"running"}]
+[setup] remotion: running
+[smoke] push bootstrap:progress [{"step":"remotion","status":"ok","detail":"npm ci + browser ensure"}]
+[setup] remotion: ok — npm ci + browser ensure
+[smoke] push bootstrap:progress [{"step":"hyperframes","status":"running"}]
+[setup] hyperframes: running
+[smoke] push bootstrap:progress [{"step":"hyperframes","status":"ok","detail":"npm ci: HyperFrames renderer/player ready"}]
+[setup] hyperframes: ok — npm ci: HyperFrames renderer/player ready
+[smoke] push bootstrap:progress [{"step":"workspace","status":"running"}]
+[setup] workspace: running
+[port] PARTIAL writeWorkspace; NOT PORTED: CLAUDE.md (workspaceClaudeMd/migrateWorkspaceClaudeMd), validateEngineSessionContext L4188, workspace symlink guards
+[smoke] push bootstrap:progress [{"step":"workspace","status":"ok","detail":"wired /workspace/vc-linux/home/Videoclaw → engine hooks"}]
+[setup] workspace: ok — wired /workspace/vc-linux/home/Videoclaw → engine hooks
+[smoke] push bootstrap:progress [{"step":"env","status":"running"}]
+[setup] env: running
+[smoke] push bootstrap:progress [{"step":"env","status":"ok","detail":".env scrubbed (gateway authority stays in the app process)"}]
+[setup] env: ok — .env scrubbed (gateway authority stays in the app process)
+[smoke] push bootstrap:progress [{"step":"doctor","status":"running"}]
+[setup] doctor: running
+[port] PORT-NEW: doctor accepted with only `gateway` red (needs credentials)
+[port] PARTIAL writeWorkspace; NOT PORTED: CLAUDE.md (workspaceClaudeMd/migrateWorkspaceClaudeMd), validateEngineSessionContext L4188, workspace symlink guards
+[smoke] push bootstrap:progress [{"step":"doctor","status":"ok","detail":"all green — engine activated"}]
+[setup] doctor: ok — all green — engine activated
+[smoke] {"name":"preload","ok":true,"value":184}
+[smoke] {"name":"media:voiceDictationStatus","ok":true,"ms":1,"value":{"available":false,"attach":false,"message":"Voice notes are unavailable in this build."}}
+[smoke] {"name":"session:list","ok":true,"ms":0,"value":[]}
+[smoke] {"name":"bootstrap:run","ok":true,"ms":20505,"value":{"ready":false,"engineVersion":"0.1.57-rc7-15f8f2d","enginePath":"/workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d","workspacePath":"/workspace/vc-linux/home/Videoclaw","doctor":{"ok":false,"engine":"/workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d","workspace":"/workspace/vc-linux/home/Videoclaw","checks":{"ffmpeg":{"ok":true,"detail":"/workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d/bin/ffmpeg · ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers","ms":69},"ffprobe":{"ok":true,"detail":"/workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d/bin/ffprobe · ffprobe version 7.1.5-0+deb13u1 Copyright (c) 2007-2026 the FFmpeg developers","ms":57},"node":{"ok":true,"detail":"/workspace/vc-linux/bootstrap/node/bin/node · v24.22.0","ms":5},"python venv":{"ok":true,"detail":"imports ok: PIL, numpy, scipy, requests, dotenv, elevenlabs, fontTools, openai","ms":1992},"yt-dlp":{"ok":true,"detail":"venv yt-dlp 2026.06.09","ms":723},"remotion":{"ok":true,"detail":"package.json + node_modules present (use --deep for a smoke render)","ms":0},"gateway":{"ok":false,"detail":"no VIDEOCLAW_API_KEY (env or engine .env)","fix":"enter the key in the app (AccountModal) — bootstrap writes .env","ms":0},"workspace":{"ok":true,"detail":"split · jobs=/workspace/vc-linux/home/Videoclaw/jobs","ms":0},"hoo
+[smoke] DONE failed=[]
+
+# Run 2 — editorRender end-to-end (session registry fixture + HyperFrames composition fixture)
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list
+[port] registered 157 handle + 3 on; fake-implemented: 13
+[smoke] push editorRender:event [{"kind":"progress","progress":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","phase":"queued"}}]
+[smoke] push editorRender:event [{"kind":"progress","progress":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","phase":"preparing"}}]
+[smoke] push editorRender:event [{"kind":"progress","progress":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","phase":"rendering"}}]
+[main-log] editor-render-log job=linux-hf-20261020-d4e5f6 · ◆  Linting composition/index.html
+◇  0 errors, 0 warnings
+◆  Checking composition
+[hyperframes] Using system Chrome at /usr/bin/google-chrome; HeadlessExperimental.beginFrame is unavailable in regular Chrome builds, so the perf-optimized capture path falls back to screenshot mode. Install chrome-headless-shell for the optimized path:
+  npx @puppeteer/browsers install chrome-headless-shell
+(Or set HYPERFRAMES_BROWSER_PATH to point at an existing chrome-headless-shell binary.)
+[hyperframes] browserGpuMode auto → software (WebGL unavailable)
+Lint
+  ◇ 0 errors, 0 warnings
+Runtime
+  ◇ 0 errors, 0 warnings
+Layout
+  ◇ 0 issues across 9 sample(s)
+Motion
+  ◇ 0 errors, 0 warnings
+Contrast
+  ◇ 5/5 text checks pass WCAG AA
+Snapshots
+  ◇ disabled
+◇  Check passed
+◆  Rendering hyperframes/.videoclaw-render-41cd09a827994a3ab85e282f48a1d003.html → /workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/.final_hyperframes.mp4.70ed21af.pending.mp4
+   30fps · standard · 2 workers
+   GPU: browser GPU (auto-detect)
+[?25l│
+◒  Downloading Chrome... 0% (128.3 KB / 114.8 MB)[1G[J◐  Downloading Chrome... 6% (8.0 MB / 114.8 MB)[1G[J◓  Downloading Chrome... 26% (30.3 MB / 114.8 MB)[1G[J◑  Downloading Chrome... 45% (52.3 MB / 114.8 MB)[1G[J◒  Downloading Chrome... 62% (72.3 MB / 114.8 MB)[1G[J◐  Downloading Chrome... 84% (97.0 MB / 114.8 MB)[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB)[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB)[1G[J◒  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◐  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◒  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◐  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB).[1G[J◒  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◐  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◒  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◐  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB)..[1G[J◒  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◐  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◒  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◐  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◓  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◑  Downloading Chrome... 100% (114.8 MB / 114.8 MB)...[1G[J◒  Downloading Chrome... 100% (114.8 MB / 11
+[?25h[INFO] [Render] Pipeline started {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","platform":"linux","arch":"x64","nodeVersion":"v24.22.0","fps":{"num":30,"den":1},"format":"mp4","quality":"standard","browserGpuMode":"auto","forceScreenshot":false,"protocolTimeout":300000,"browserTimeout":120000,"pageNavigationTimeout":60000,"playerReadyTimeout":45000}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"pipeline","status":"checkpoint","elapsedMs":4,"message":"started","format":"mp4","quality":"standard","browserGpuMode":"auto","forceScreenshot":false,"protocolTimeoutMs":300000,"pageNavigationTimeoutMs":60000,"playerReadyTimeoutMs":45000,"requestedWorkers":2}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"compile","status":"start","elapsedMs":5,"needsAlpha":false}
+  █░░░░░░░░░░░░░░░░░░░░░░░░  5%  Compiling composition
+[INFO] [Compiler] Embedded local font file: runtime/fonts/inter-variable.woff2 (47 KB → data URI)
+[INFO] [Compiler] Embedded local font file: runtime/fonts/jetbrains-mono-variable.woff2 (39 KB → data URI)
+[INFO] Compiled composition metadata {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","entryFile":".videoclaw-render-41cd09a827994a3ab85e282f48a1d003.html","staticDuration":2,"width":540,"height":960,"videoCount":0,"audioCount":0,"renderModeHints":{"recommendScreenshot":false,"reasons":[]}}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"compile","status":"end","elapsedMs":35,"durationMs":30,"needsAlpha":false}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"compile","status":"checkpoint","elapsedMs":35,"message":"composition metadata resolved","width":540,"height":960,"videoCount":0,"audioCount":0,"imageCount":0,"deviceScaleFactor":1,"forceScreenshot":false,"compositionHash":"79aca733cadcc5c8"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"browser_probe","status":"start","elapsedMs":35,"forceScreenshot":false,"stagePhase":"calibrating"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"browser_probe","status":"end","elapsedMs":38,"durationMs":2,"forceScreenshot":false,"stagePhase":"calibrating"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"browser_probe","status":"checkpoint","elapsedMs":38,"message":"duration resolved","durationSeconds":2,"totalFrames":60,"compositionHash":"79aca733cadcc5c8","beginFrameStalled":false}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"video_extract","status":"start","elapsedMs":38,"videoCount":0}
+  ██░░░░░░░░░░░░░░░░░░░░░░░  10%  Extracting video frames
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"video_extract","status":"end","elapsedMs":39,"durationMs":1,"videoCount":0}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"video_extract","status":"checkpoint","elapsedMs":40,"message":"frames resolved","videoCount":0,"extractedVideoCount":0,"totalFramesExtracted":0,"maxFramesPerVideo":0,"avgFramesPerExtractedVideo":null,"vfrPreflightCount":null,"vfrPreflightMs":null,"cacheHits":null,"cacheMisses":null,"transientRetries":null,"minVideoFrameCoverageRatio":null,"authoredTimedClipCount":2}
+[INFO] [Render] No HDR sources detected — rendering SDR {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"hdr_detection","status":"checkpoint","elapsedMs":40,"message":"resolved","requestedHdrMode":"auto","effectiveHdr":"sdr","nativeHdrVideoCount":0,"nativeHdrImageCount":0}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"audio_process","status":"start","elapsedMs":40,"audioCount":0}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"audio_process","status":"end","elapsedMs":40,"durationMs":0,"audioCount":0}
+  █████░░░░░░░░░░░░░░░░░░░░  20%  Processing audio tracks
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"file_server","status":"start","elapsedMs":40,"reused":false}
+  ██████░░░░░░░░░░░░░░░░░░░  25%  Starting frame capture
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"file_server","status":"end","elapsedMs":44,"durationMs":4}
+[hyperframes] browserGpuMode auto → software (WebGL unavailable)
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"capture_calibration","status":"checkpoint","elapsedMs":294,"message":"skipped","requestedWorkers":2,"totalFrames":60,"htmlInCanvasDetected":false,"lowMemoryMode":false,"deInversionEligible":false,"deParallelRouterEligible":false}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"worker_resolution","status":"checkpoint","elapsedMs":295,"message":"resolved","workerCount":2}
+[INFO] streaming-encode gate {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","enabled":false,"configFlag":true,"outputFormat":"mp4","workerCount":2,"durationSeconds":2,"maxDurationSeconds":240}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"capture_strategy","status":"checkpoint","elapsedMs":295,"message":"resolved","workerCount":2,"forceScreenshot":true,"captureBeyondViewport":null,"useStreamingEncode":false,"useLayeredComposite":false,"usePageSideCompositing":false,"hasHdrContent":false,"hasShaderTransitions":false,"isPngSequence":false}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"capture_disk","status":"start","elapsedMs":296,"stagePhase":"capturing","needsAlpha":false,"workerCount":2,"forceScreenshot":true,"totalFrames":60,"framesCompleted":0,"captureMode":"screenshot","captureOperation":"captureScreenshot"}
+[BrowserManager] Browser launched (HeadlessChrome/152.0.7928.2, screenshot, gl=--use-gl=angle --use-angle=swiftshader, headlessShell=true, platform=linux)
+[BrowserManager] Browser launched (HeadlessChrome/152.0.7928.2, screenshot, gl=--use-gl=angle --use-angle=swiftshader, headlessShell=true, platform=linux)
+[initSession:screenshot] page.goto start (1ms)
+[initSession:screenshot] page.goto start (0ms)
+[HyperFrames] render runtime fps [object Object]
+[initSession:screenshot] page.goto complete (95ms)
+[initSession:screenshot] GSAP proxy flush complete (97ms)
+[HyperFrames] render runtime fps [object Object]
+[initSession:screenshot] page.goto complete (94ms)
+[initSession:screenshot] GSAP proxy flush complete (96ms)
+[initSession:screenshot] pollHfReady complete (200ms)
+[initSession:screenshot] pollSubCompositionTimelines complete (ready) (202ms)
+[initSession:screenshot] applyVideoMetadataHints complete (202ms)
+[initSession:screenshot] media + fonts + tailwind ready (205ms)
+[initSession:screenshot] pollHfReady complete (199ms)
+[initSession:screenshot] pollSubCompositionTimelines complete (ready) (201ms)
+[initSession:screenshot] applyVideoMetadataHints complete (201ms)
+[initSession:screenshot] media + fonts + tailwind ready (202ms)
+[initSession:screenshot] static-frame dedup: 27/60 frame(s) reusable (45%, verified) (1368ms)
+[initSession:screenshot] static-frame dedup: 27/60 frame(s) reusable (45%, verified) (1374ms)
+  ████████████░░░░░░░░░░░░░  48%  Capturing frame 30/60 (2 workers)
+[static-dedup] reused 27/30 frame(s) (90%), est. ~1161ms saved (avg 43ms/frame)
+  █████████████████░░░░░░░░  70%  Capturing frame 60/60 (2 workers)
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"capture_disk","status":"end","elapsedMs":3136,"durationMs":2840,"stagePhase":"capturing","needsAlpha":false,"workerCount":2,"forceScreenshot":true,"totalFrames":60,"framesCompleted":60,"captureMode":"screenshot","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"encode","status":"start","elapsedMs":3136,"stagePhase":"capturing","hasAudio":false,"isPngSequence":false,"isGif":false,"chunkedEncode":false,"workerCount":2,"forceScreenshot":true,"totalFrames":60,"framesCompleted":60,"captureMode":"screenshot","captureOperation":"encode"}
+  ██████████████████░░░░░░░  75%  Encoding video
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"encode","status":"end","elapsedMs":3477,"durationMs":341,"stagePhase":"capturing","hasAudio":false,"isPngSequence":false,"isGif":false,"chunkedEncode":false,"workerCount":2,"forceScreenshot":true,"totalFrames":60,"framesCompleted":60,"captureMode":"screenshot","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"assemble","status":"start","elapsedMs":3478,"stagePhase":"capturing","hasAudio":false,"workerCount":2,"forceScreenshot":true,"totalFrames":60,"framesCompleted":60,"captureMode":"screenshot","captureOperation":"encode"}
+  ██████████████████████░░░  90%  Assembling final video
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"assemble","status":"end","elapsedMs":3547,"durationMs":69,"stagePhase":"capturing","hasAudio":false,"workerCount":2,"forceScreenshot":true,"totalFrames":60,"framesCompleted":60,"captureMode":"screenshot","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"96b3c3e7-b917-4cb0-90ed-eb701f736ae8","phase":"pipeline","status":"checkpoint","elapsedMs":3549,"message":"artifact validated","totalElapsedMs":3548}
+  █████████████████████████  100%  Render complete
+◇  /workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/.final_hyperframes.mp4.70ed21af.pending.mp4
+   58.5 KB · 2.0s video · rendered in 3.6s
+Job:         /workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6
+Composition: /workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/hyperframes/index.html (id=main, 540x960, 2.0s @ 30.0fps)
+Node:        v24.22.0
+  → hyperframes lint hyperframes
+  → hyperframes check hyperframes
+  → hyperframes render hyperframes → final_hyperframes.mp4 (workers=2, quality=standard)
+✓ HyperFrames render: /workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/final_hyperframes.mp4 (0MB · 540x960 · 2.0s @ 30.0fps)
+▶ WATCH → file:///workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/final_hyperframes.mp4
+[smoke] push editorRender:event [{"kind":"progress","progress":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","phase":"completed"}}]
+[smoke] push editorRender:event [{"kind":"completed","result":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","outputPath":"/workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/final_hyperframes.mp4","width":540,"height":960,"fps":30,"durationSeconds":2,"sizeBytes":59859,"hasAudio":false}}]
+[smoke] {"name":"preload","ok":true,"value":184}
+[smoke] {"name":"media:voiceDictationStatus","ok":true,"ms":1,"value":{"available":false,"attach":false,"message":"Voice notes are unavailable in this build."}}
+[smoke] {"name":"session:list","ok":true,"ms":1,"value":[{"sessionId":"11111111-2222-4333-8444-555555555555","title":"Linux smoke","cwd":"/workspace/vc-linux/home/Videoclaw","status":"idle","permissionMode":"auto","totalCostUsd":0,"createdAt":1792500000000,"clientId":"personal","agentHarness":"claude-code","jobId":"linux-hf-20261020-d4e5f6","liveWork":[],"mediaRecoveryNeeded":false}]}
+[smoke] {"name":"editorRender:start(bad job)","ok":true,"ms":0,"value":{"requestId":"smoke-0","accepted":false,"error":{"code":"job-mismatch","message":"That video isn't linked to this render.","retryable":false}}}
+[smoke] {"name":"editorRender:start","ok":true,"ms":12,"value":{"requestId":"smoke-1","accepted":true}}
+[smoke] {"name":"editorRender:state(running)","ok":true,"ms":1,"value":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","phase":"queued"}}
+[smoke] {"name":"editorRender:event(terminal)","ok":true,"value":{"kind":"completed","result":{"requestId":"smoke-1","jobId":"linux-hf-20261020-d4e5f6","outputPath":"/workspace/vc-linux/home/Videoclaw/jobs/linux-hf-20261020-d4e5f6/final_hyperframes.mp4","width":540,"height":960,"fps":30,"durationSeconds":2,"sizeBytes":59859,"hasAudio":false}}}
+[smoke] {"name":"editorRender:events","ok":true,"value":["progress","progress","progress","progress","completed"]}
+[smoke] {"name":"editorRender:state(after)","ok":true,"ms":1,"value":null}
+[smoke] DONE failed=[]

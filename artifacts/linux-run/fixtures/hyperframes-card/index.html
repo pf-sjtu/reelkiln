@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=540, height=960" />
+    <script src="runtime/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 540px; height: 960px; overflow: hidden; background: #0b1f4d; }
+      #title { position: absolute; left: 40px; right: 40px; top: 420px; color: #fff;
+               font: 700 56px sans-serif; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="2" data-width="540" data-height="960">
+      <div id="title" class="clip" data-start="0" data-duration="2" data-track-index="1">videoclaw linux</div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.from("#title", { opacity: 0, y: -60, duration: 1 }, 0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

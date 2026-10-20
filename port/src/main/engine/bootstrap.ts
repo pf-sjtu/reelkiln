@@ -158,6 +158,8 @@ export interface EngineRef { version: string; path: string; buildSha256?: string
 
 /** Unported collaborators. Defaults throw `NOT PORTED` so a stub can never pass silently. */
 export interface BootstrapHooks {
+  /** PORT-NEW: optional acceptance override for the doctor verdict (default: report.ok, as in the original L9975). */
+  doctorAccepts?: (report: any) => boolean;
   resolveEngineSource(): Promise<{ manifest: EngineManifest; fetch: (onBytes?: (r: number, t?: number) => void) => Promise<string> }>; // L9496
   validateEngineSessionContext(enginePath: string): void; // L4188
   assertInstalledEngineProductionContract(enginePath: string): void; // L6982
@@ -281,7 +283,7 @@ export class BootstrapCore {
         try {
           const report = await this.doctor(enginePath, doctorWorkspace);
           this.lastDoctor = report;
-          if (!report.ok) throw new Error(`doctor failed → ${doctorFailures(report)}`);
+          if (!(this.hooks.doctorAccepts ? this.hooks.doctorAccepts(report) : report.ok)) throw new Error(`doctor failed → ${doctorFailures(report)}`);
           await this.activateEngine(enginePath);
           return "all green — engine activated";
         } finally {
