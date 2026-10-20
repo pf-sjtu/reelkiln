@@ -139,7 +139,8 @@ jobs:
         env:
           OUT: ${{ runner.temp }}\windows-run
         run: |
-          export PATH="/c/ProgramData/chocolatey/bin:$PATH"
+          # the real binaries, not chocolatey shims (shims resolve their target relative to themselves)
+          export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
           bash tools/windows_runbook.sh "$RUNNER_TEMP/vc"
       - uses: actions/upload-artifact@v4
         if: always()
