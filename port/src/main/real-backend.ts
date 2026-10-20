@@ -4,9 +4,10 @@
 //   editorRender:start/cancel/state  — original L62405-62428 (EditorRenderController +
 //                                      utilityProcess editorRenderWorker.js, killGroup)
 //   bootstrap:run                    — original Bootstrap.runAll; ONLY when the PORT-NEW env
-//                                      var VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 is set. Expected to run
-//                                      through doctor, then fail at activation:
-//                                      NOT PORTED assertEngineMoneyCompatibility.
+//                                      var VIDEOCLAW_PORT_REAL_BOOTSTRAP=1 is set. Expected to reach doctor and stop
+//                                      on the `gateway` check (no gatewayUrl/key in the port);
+//                                      past that, activation throws NOT PORTED
+//                                      assertEngineMoneyCompatibility.
 import { app, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";

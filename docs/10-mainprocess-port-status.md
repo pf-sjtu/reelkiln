@@ -9,7 +9,7 @@
 | 类别 | 数量 | 通道 |
 |---|---|---|
 | **真实移植（ported-real）** | 4 | `editorRender:start` / `editorRender:cancel` / `editorRender:state`（EditorRenderController + utilityProcess worker，L62405-62428）、`media:voiceDictationStatus`（原算法；Windows 下无 helper → 原版文案） |
-| **真实移植，需开关** | 1 | `bootstrap:run` —— 仅当 PORT-NEW 环境变量 `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时走 `BootstrapCore.runAll()`；`workspace` 步使用部分移植的 `writeWorkspacePartial`（`src/main/engine/workspace.ts`），预期跑完 doctor 后在激活阶段以 `NOT PORTED: assertEngineMoneyCompatibility` 失败（见 §3） |
+| **真实移植，需开关** | 1 | `bootstrap:run` —— 仅当 PORT-NEW 环境变量 `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时走 `BootstrapCore.runAll()`；`workspace` 步使用部分移植的 `writeWorkspacePartial`（`src/main/engine/workspace.ts`），预期一路跑到 `doctor` 步：因移植版未设置 `gatewayUrl`（原版 L9704 给 doctor 注入 `VIDEOCLAW_GATEWAY_URL` 与占位 key `vcs_doctor_no_authority`），doctor 的 `gateway` 检查必为红，runAll 在此以 `doctor failed → gateway: …` 结束；理想结果是“只有 gateway 红”（见 §3 与 docs/08）。即使通过 doctor，激活阶段也会以 `NOT PORTED: assertEngineMoneyCompatibility` 失败 |
 | **fixture 假实现（fake）** | 12 | `bootstrap:status`、`bootstrap:run`（默认）、`client:list`、`client:create`、`settings:get`、`app:restart`、`engine:pendingToast`、`hfPreview:available`、`feedback:discard`、`engine:codexHandoffOffer`、`job:get`、`app:update:state`（值来自 qaFixtures / 主进程 fallback，带行号） |
 | **未实现（stub → `undefined` + 日志）** | 141 | 其余全部（4 + 12 + 141 = 157） |
 | send（`permission:respond` / `permission:shown` / `quit:rendererState`） | 3 | 仅记录日志 |
