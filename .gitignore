@@ -15,3 +15,6 @@ artifacts/rea/analyze-javascript-application.json
 port/dist/
 port/dist-test/
 port/*.tsbuildinfo
+# Python bytecode
+__pycache__/
+*.pyc
