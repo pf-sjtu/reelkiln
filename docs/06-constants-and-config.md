@@ -6,7 +6,7 @@
 
 | 常量 | 值 | 位置 |
 |---|---|---|
-| `applicationChannel()` | 恒返回 `"prod"`（`const raw = "prod"`） | M L9171 |
+| `applicationChannel()` | 恒返回 `"prod"`（`const raw = "prod"`） | M L9172 |
 | `MANAGED_DEVELOPMENT` | `false` | S L19 |
 | `PROD_GATEWAY_URL` | `"https://videoclaw-gw-650303209435.us-central1.run.app"` | S L20 |
 | `STAGING_GATEWAY_URL` | `""` | S L21 |
@@ -26,16 +26,16 @@
 ## 2. 更新通道（electron-updater）
 
 - 通道只有 `"latest"` 与 `"nightly"`（`createUpdatePreferences.set` 中硬校验，M L2196）。
-- `selectedUpdateChannel`：仅当偏好为 nightly、偏好记录的 `gatewayUrl` 与当前一致、`userId` 一致、且 `canUseNightlyUpdates(account)`（已登录、active、capabilities 含 `nightly_updates`，S L167）时为 `nightly`，否则 `latest`（M L2174）。
+- `selectedUpdateChannel`：仅当偏好为 nightly、偏好记录的 `gatewayUrl` 与当前一致、`userId` 一致、且 `canUseNightlyUpdates(account)`（已登录、active、capabilities 含 `nightly_updates`，S L167）时为 `nightly`，否则 `latest`（M L2173）。
 - `releaseChannel(version)`：semver prerelease 首段为 `nightly` → nightly，否则 latest（M L2220）。
-- 驱动配置（M L2259-2269）：`autoDownload=false`、`autoInstallOnAppQuit=false`、`allowPrerelease=true`、`allowDowngrade=false`、`disableDifferentialDownload=true`、`setFeedURL({provider:"generic", url: "${gatewayUrl}/v1/app/updates/${channel}/"})`。
+- 驱动配置（M L2260-2269）：`autoDownload=false`、`autoInstallOnAppQuit=false`、`allowPrerelease=true`、`allowDowngrade=false`、`disableDifferentialDownload=true`、`setFeedURL({provider:"generic", url: "${gatewayUrl}/v1/app/updates/${channel}/"})`。
 - 版本检查 `GET ${gatewayUrl}/v1/app/latest[?channel=nightly]`（M L55940）；`RECHECK_MS = 4h`、`UPDATE_RETRY_MS = 60s`、`REQUEST_TIMEOUT_MS = 15s`（M L55918-55920）。
 
 ## 3. 文案/语气守卫
 
 - `BANNED_USER_FACING_VOCABULARY = ["workflow","molecule","taste pack","tenant","job","pipeline","reading set"]`（S L4129）。
 - `VOICE_GUARD`（S L4138 起，模板字符串，嵌入上面的词表 `join(" · ")`）：追加到 agent 系统提示的"Videoclaw app voice"段落。要点（原文意译）：不得提及其他客户/租户/品牌；不得泄露 key/token/.env/凭据路径/供应商与模型路由；进度叙述以视频为中心；付费或长任务开始前先写一句可见说明（不含时间/价格）；用 `call_model` 自选模型时用 `search_models` 标题（含版本）称呼该模型，且不得说出托管服务/模型 id/自身模型；不得提及 workflow/recipe/laws/specs/chunks/skills/reading set 等内部概念；不得使用 mux/demux/transcode/codec/EDL/stems/chroma/alpha/"w1""b4" 等术语；产出可看资产时给出 markdown 链接路径。**移植时必须逐字复制**（见源文件，含换行）。
-- 其它 agent 提示常量：`ENGINE_TOOL_LAUNCHER`（M L840）、`ENGINE_PIPE_RULE`（M L842）、`EXECUTION_CONTRACT_MARKER = "<!-- videoclaw-execution-contract:3 -->"`（M L9573）、`CODEX_VIDEO_INSTRUCTIONS`（M L24690）、`CODEX_TOOL_MAPPING`（M L24740）、`HOUSE_FOOTER_*`（M L31975 附近）、`PROJECT_MEMORY_GUIDANCE`（M L845）、`WORKFLOW_INDEX_TOKEN_BUDGET = 2e3`（M L31930 附近）。
+- 其它 agent 提示常量：`ENGINE_TOOL_LAUNCHER`（M L840）、`ENGINE_PIPE_RULE`（M L842）、`EXECUTION_CONTRACT_MARKER = "<!-- videoclaw-execution-contract:3 -->"`（M L9573）、`CODEX_VIDEO_INSTRUCTIONS`（M L24690）、`CODEX_TOOL_MAPPING`（M L24740）、`HOUSE_FOOTER_*`（M L31985 起）、`PROJECT_MEMORY_GUIDANCE`（M L845）、`WORKFLOW_INDEX_TOKEN_BUDGET = 2e3`（M L31932）。
 - `ENGINE_LINES` / `SYNTH_VOICE_MODE_LINES`（P L246-302，S 中同名）：引擎工具名 → 用户可见进度文案。
 
 ## 4. 素材入口 / 文件上限
@@ -64,7 +64,7 @@
 | `PDF_READ_TIMEOUT_MS` | `3e4`；stdout 上限 `PDF_MAX_TEXT_CHARS * 6 + 64 * 1024` | M L56908-56910 |
 | `CLIPBOARD_IMAGE_MAX_BYTES` / `_MAX_PIXELS` | `64 * 1024 * 1024` / `32 * 1024 * 1024` | S L885-886 |
 | `VOICE_NOTE_MAX_BYTES` / `VOICE_NOTE_MAX_SECONDS` / `VOICE_NOTE_RATE` | `2 * 1024 * 1024` / `120` / `48e3` | M L282-283, L10512 |
-| `MAX_PROJECT_TEXT_BYTES` | 1 MB（错误文案 "exceeds the 1 MB authoring limit"） | M L2745 附近 |
+| `MAX_PROJECT_TEXT_BYTES` | 1 MB（错误文案 "exceeds the 1 MB authoring limit"） | M L2555 |
 | HyperFrames 策略 | `MAX_POLICY_FILE_BYTES=8MiB`, `MAX_POLICY_FILES=128`, `MAX_POLICY_TOTAL_BYTES=16MiB`, `MAX_RUNTIME_FILES=256`, `MAX_RUNTIME_TOTAL_BYTES=32MiB`, `REQUIRED_RUNTIME_FILES=["gsap.min.js","fonts/fonts.css"]` | hyperframesPolicyWorker L11-16 |
 
 ## 5. Agent 运行时 / 模型
@@ -95,11 +95,11 @@
 - `URL_PULL_MAXIMUM_CENTS = 162`；`URL_PULL_TOOLS = {pull_video, acquire_footage}`（M L15758-15759）。
 - `BILLED_MEDIA_BY_KEY = { lipsync_footage:"--audio", "mint_video:edit":"--video", "mint_video:reenact":"--driver-video", "mint_video:genjutsu":"--video" }`（P L814）。
 - `GATEWAY_PREPAID_CREDIT_REFUSAL = "not enough prepaid credit; top up to continue"`（S L4247）。
-- `keyMeterFrom()`：`topupMinUsd` 默认 5，`topupMaxUsd` 默认 500（S L131-132）。
+- `keyMeterFrom()`：`topupMinUsd` 默认 5，`topupMaxUsd` 默认 500（S L136-137）。
 - 命令守卫词表：`CURL_HEADS=["curl","curlie"]`、`NESTED_CURL_LAUNCHERS=[exec,find,parallel,setsid,stdbuf,timeout,watch,xargs]`、`PROVIDER_READ_ONLY_HEADS`（37 个只读命令，含 `ffprobe`）、`CURL_BODY_FLAGS`、`CURL_METHOD_FLAGS`、`CURL_READ_METHODS=["GET","HEAD","OPTIONS"]`（P L666-813 / S）。`EXEC_HOOK_ENV_RE`（S L2180）拒绝 `LESSOPEN|LESSCLOSE|BASH_ENV|ENV|PYTHONSTARTUP|PYTHONINSPECT|NODE_OPTIONS|PERL5OPT|RUBYOPT|LD_PRELOAD|DYLD_INSERT_LIBRARIES=` 前缀。
 
 ## 7. 进程环境策略（详见 02 §4.4）
-`UV_PYTHON_POLICY_ENV = { UV_PYTHON_PREFERENCE: "only-managed" }`（M L7145）；`AGENT_STARTUP_ENV_DENYLIST`（M L16003）；`COMMAND_BROKER_AMBIENT_ALLOWLIST` / `COMMAND_BROKER_ENGINE_ALLOWLIST` / `GUARDED_SPEND_AUTHORITY_ALLOWLIST`（M L16044-16074）；`NETWORK_PASSTHROUGH`（M L22727）；`CLAUDEAI_CONNECTORS_OFF = { ENABLE_CLAUDEAI_MCP_SERVERS: "0" }`；`CLAUDE_CODE_NO_SELF_STARTING_WORK = { CLAUDE_CODE_DISABLE_CRON: "1", CLAUDE_CODE_DISABLE_WORKFLOWS: "1" }`（M L22736-22740）；`EXTRA_PATHS = [~/.local/bin, /opt/homebrew/bin, /usr/local/bin, ~/.cargo/bin]`（M L9322）；`ENGINE_COMMAND_SHIMS = ["python3","python","pip3","pip","git"]`（M L7199）。
+`UV_PYTHON_POLICY_ENV = { UV_PYTHON_PREFERENCE: "only-managed" }`（M L7145）；`AGENT_STARTUP_ENV_DENYLIST`（M L16004）；`COMMAND_BROKER_AMBIENT_ALLOWLIST` / `COMMAND_BROKER_ENGINE_ALLOWLIST` / `GUARDED_SPEND_AUTHORITY_ALLOWLIST`（M L16044-16074；GUARDED 在 L16071）；`NETWORK_PASSTHROUGH`（M L22727）；`CLAUDEAI_CONNECTORS_OFF = { ENABLE_CLAUDEAI_MCP_SERVERS: "0" }`；`CLAUDE_CODE_NO_SELF_STARTING_WORK = { CLAUDE_CODE_DISABLE_CRON: "1", CLAUDE_CODE_DISABLE_WORKFLOWS: "1" }`（M L22736-22740）；`EXTRA_PATHS = [~/.local/bin, /opt/homebrew/bin, /usr/local/bin, ~/.cargo/bin]`（M L9322）；`ENGINE_COMMAND_SHIMS = ["python3","python","pip3","pip","git"]`（M L7203）。
 
 ## 8. 重启 / 退出码
 `STAGING_FLIGHT_RESTART_EXIT_CODE = 86`、`MANAGED_DEV_RESTART_EXIT_CODE = 75`、`RESTART_SCHEMA = "videoclaw.flight-restart-request/v1"`（M L53844-53849）。
