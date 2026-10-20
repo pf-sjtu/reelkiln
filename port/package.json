@@ -1,0 +1,21 @@
+{
+  "name": "videoclaw-port",
+  "version": "0.0.40-port.0",
+  "private": true,
+  "description": "Windows port scaffold of Videoclaw 0.0.40 (faithful IPC/process model, fake backend)",
+  "main": "dist/main/index.cjs",
+  "scripts": {
+    "gen": "node tools/gen-ipc-contract.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "bundle": "node tools/build.mjs",
+    "build": "npm run gen && npm run typecheck && npm run bundle",
+    "test": "node tools/build.mjs --tests && node --test \"dist-test/*.test.cjs\"",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "electron": "42.11.9",
+    "esbuild": "^0.28.2",
+    "typescript": "~5.9.3"
+  }
+}
