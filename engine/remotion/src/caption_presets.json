@@ -1,0 +1,79 @@
+{
+  "tiktok": {
+    "font_family": "Inter",
+    "weight": 600,
+    "color": "#FFFFFF",
+    "active_word_color": "#FFFFFF",
+    "transform": "none",
+    "background": "rgba(0,0,0,0.82)",
+    "font_size_ratio": 0.03,
+    "vertical_anchor_ratio": 0.72,
+    "letter_spacing": "-0.005em"
+  },
+  "clean": {
+    "font_family": "Manrope",
+    "weight": 400,
+    "color": "#FFFFFF",
+    "active_word_color": "#FFFFFF",
+    "transform": "none",
+    "outline_width_px": 0,
+    "font_size_ratio": 0.026,
+    "vertical_anchor_ratio": 0.72,
+    "letter_spacing": "-0.02em"
+  },
+  "mono": {
+    "font_family": "JetBrains Mono",
+    "weight": 500,
+    "color": "#EAEAEA",
+    "active_word_color": "#EAEAEA",
+    "transform": "lowercase",
+    "background": "rgba(0,0,0,0.80)",
+    "font_size_ratio": 0.024,
+    "vertical_anchor_ratio": 0.72,
+    "letter_spacing": "0em"
+  },
+  "highlighter": {
+    "font_family": "Inter",
+    "weight": 700,
+    "color": "#FFFFFF",
+    "active_word_color": "#96cade",
+    "active_word_text_color": "#FFFFFF",
+    "highlight_mode": "box",
+    "transform": "none",
+    "font_size_ratio": 0.03,
+    "vertical_anchor_ratio": 0.72
+  },
+  "editorial": {
+    "font_family": "Playfair Display Italic",
+    "weight": 400,
+    "color": "#FFFFFF",
+    "active_word_color": "#FFFFFF",
+    "transform": "none",
+    "outline_width_px": 0,
+    "font_size_ratio": 0.034,
+    "vertical_anchor_ratio": 0.72,
+    "letter_spacing": "0em"
+  },
+  "handwritten": {
+    "font_family": "Caveat",
+    "weight": 700,
+    "color": "#FFFFFF",
+    "active_word_color": "#F0E3A0",
+    "transform": "none",
+    "outline_width_px": 0,
+    "font_size_ratio": 0.044,
+    "vertical_anchor_ratio": 0.72
+  },
+  "josephchin": {
+    "font_family": "DePixelKlein",
+    "weight": 400,
+    "color": "#FFFFFF",
+    "active_word_color": "#FFFFFF",
+    "transform": "uppercase",
+    "outline_width_px": 0,
+    "font_size_ratio": 0.0219,
+    "vertical_anchor_ratio": 0.55,
+    "letter_spacing": "1.5px",
+    "line_height": 1.0
+  }
+}

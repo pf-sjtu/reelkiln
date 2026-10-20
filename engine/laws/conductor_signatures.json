@@ -1,0 +1,30 @@
+{
+  "version": "1.4.1",
+  "note": "Conductor fast-path signatures — SHIPPED ENGINE CONTENT, versioned like the laws (laws/README.md is the app↔engine contract). The app's conductor (apps/desktop/src/main/conductor.ts) loads this from $VIDEOCLAW_ENGINE/laws/conductor_signatures.json and runs each `pattern` (with `flags`) over the assistant turn's user-facing prose. A match whose `contextGuard` holds injects `hint` as an invisible bracketed preamble so the agent self-corrects on its next turn. `maxFiresPerSession` caps repeats per signature; the conductor also caps <=1 injection/turn and <=3/session globally. contextGuard values the conductor understands: \"\" / \"none\" (always), \"url-in-last-user-msg\", \"imperative-ask-in-last-user-msg\". Unknown guards fail closed (do not fire). Hints are agent-facing (never rendered to the user) so they may name real tools.",
+  "signatures": [
+    {
+      "id": "capability-denial.link-pull",
+      "pattern": "can'?t (pull|access|get|grab|download|open|reach|retrieve|fetch|load)|cannot (pull|access|get|grab|download|open|reach|retrieve|fetch|load)|couldn'?t (pull|access|get|grab|download|fetch|retrieve)|blocked from my end|block(s|ed) it from my end|(instagram|tiktok|the platform|the site|the link) (blocks|won'?t let|doesn'?t (let|allow)|prevents|walls off)|unable to (pull|access|grab|download|retrieve|get|fetch|open)|no way (for me )?to (pull|access|grab|get|fetch|download)|i can'?t (directly )?(pull|access|grab|get|download|fetch|open)|don'?t have (a way|access|the ability|any way) to (pull|access|grab|get|fetch|open|download|reach)",
+      "flags": "i",
+      "contextGuard": "url-in-last-user-msg",
+      "hint": "You have the tooling to pull a pasted link — you declined something you can actually do. Reach for pull_video and RUN it now: --mode pull fetches a single link through the gateway-selected route (yt-dlp or metered Apify); --mode enumerate bulk-pulls a whole Instagram/TikTok profile via the Apify route that gets past the login-wall. Never say you can't before the tool has been tried. Only if a real fetch actually fails do you say so plainly and offer the drop-the-file fallback.",
+      "maxFiresPerSession": 1
+    },
+    {
+      "id": "meta-narration.self-reference",
+      "pattern": "my (instructions?|guidelines?|directives?)|system prompts?|system reminders?|i'?m (instructed|directed|required|programmed|supposed|told) to|i (was|have been) (told|instructed) to|i'?ve been (told|instructed) to|as per (my|the) (instructions?|guidelines?|rules?)|per my (instructions?|guidelines?)|check in with you (per|as|because)|my (rules|laws) (say|tell|require)",
+      "flags": "i",
+      "contextGuard": "none",
+      "hint": "You just narrated your own machinery to the user — instructions, prompts, rules, reminders are backstage and the user must never hear they exist (laws §9). If something you carry tells you to do a thing, just DO it, in producer voice, as your own call. Rewrite without the meta line, and keep it short: what happened, what you need from them, what's next — nothing else.",
+      "maxFiresPerSession": 2
+    },
+    {
+      "id": "spend-ask.prose-double-ask",
+      "pattern": "(?:(?:ready|ok(?:ay)?) to|shall i|want me to) spend[^.!?\\n]{0,60}\\$\\s?\\d|\\$\\s?\\d[^?\\n]{0,120}\\b(?:(?:ready|ok(?:ay)?) to|shall i|want me to) spend\\b|\\$\\s?\\d[^?\\n]{0,80}\\b(?:go ahead|green-?\\s?light|approve|shall i (?:run|fire|kick|proceed)|want me to (?:run|fire|proceed))\\b[^?\\n]{0,15}\\?",
+      "flags": "i",
+      "contextGuard": "none",
+      "hint": "Spending permission is owned by the current host and gateway, never by the engine's creative plan. If the user asks what work may cost, use a side-effect-free authoritative quote for the exact operation; quoting neither sets a budget nor authorizes execution. Preserve structured in-flight reservations and spend-limit results without guessing. If the host or gateway reports an exhausted cap, adapt with a lower-scope option such as reusing media or reducing generated count, duration, or quality, explain the creative trade-off, and let the host decide whether any higher ceiling is authorized. Never name backend vendors in user-facing prose, or any model you did not choose with call_model — describe the production role.",
+      "maxFiresPerSession": 2
+    }
+  ]
+}

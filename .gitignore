@@ -1,0 +1,12 @@
+# Large shipped binaries (provenance tracked via artifacts/manifests/*.sha256)
+*.dmg
+*.tar.gz
+*.asar
+**/node_modules/
+bootstrap/codex/bin/
+bootstrap/node/
+*.node
+ffmpeg
+ffprobe
+uv
+voice-dictation

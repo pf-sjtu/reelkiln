@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${VIDEOCLAW_ENGINE:-$CLAUDE_PROJECT_DIR}/.claude/hooks/preflight.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__device__bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${VIDEOCLAW_ENGINE:-$CLAUDE_PROJECT_DIR}/.venv/bin/python\" \"${VIDEOCLAW_ENGINE:-$CLAUDE_PROJECT_DIR}/.claude/hooks/production_guard.py\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${VIDEOCLAW_ENGINE:-$CLAUDE_PROJECT_DIR}/.venv/bin/python\" \"${VIDEOCLAW_ENGINE:-$CLAUDE_PROJECT_DIR}/tools/qa_gate.py\" --hook"
+          }
+        ]
+      }
+    ]
+  }
+}

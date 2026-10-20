@@ -1,0 +1,16 @@
+/* Frozen, offline @font-face for videoclaw HyperFrames compositions.
+   Variable fonts (Latin) — weight axis 100–900. OFL-1.1. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url("./inter-variable.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: block;
+  src: url("./jetbrains-mono-variable.woff2") format("woff2");
+}

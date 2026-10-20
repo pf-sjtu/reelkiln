@@ -1,0 +1,10 @@
+# electron-builder — STAGING DMG (issue #21). Coexists with the prod install:
+# distinct appId/productName → separate userData dir (also forced in main via
+# app.setPath, the load-bearing guard). Deep-extends the prod config; only the
+# identity + artifact name change. Build: npm run package:staging.
+extends: ./electron-builder.yml
+appId: com.videoclaw.app.staging
+productName: Videoclaw Staging
+artifactName: Videoclaw-Staging-${version}-${arch}.${ext}
+dmg:
+  artifactName: Videoclaw-Staging-${version}-${arch}.dmg

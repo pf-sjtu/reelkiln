@@ -1,0 +1,25 @@
+{
+  "name": "@videoclaw/desktop",
+  "version": "0.0.40",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.281",
+    "@fontsource/dm-mono": "^5.2.7",
+    "@fontsource/figtree": "^5.3.0",
+    "@videoclaw/shared": "*",
+    "electron-updater": "^6.8.9",
+    "lucide-react": "^1.24.0",
+    "posthog-js": "^1.417.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "semver": "^7.7.4",
+    "tar": "7.5.22",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "yauzl": "3.4.0",
+    "zod": "^4.4.3"
+  }
+}

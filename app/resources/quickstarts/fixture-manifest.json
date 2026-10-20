@@ -1,0 +1,13 @@
+{
+  "assets": {
+    "09c7e52889be1e322abe2d58cd3a41e761bf454f2f06214dca2b78a8a18e593e": "assets/09c7e52889be1e322abe2d58cd3a41e761bf454f2f06214dca2b78a8a18e593e.svg",
+    "202fcc4242e4e0b80cfb0ddd9542f49d226e0067ef800c9b0f46ab871bc02da5": "assets/202fcc4242e4e0b80cfb0ddd9542f49d226e0067ef800c9b0f46ab871bc02da5.svg",
+    "31dfae47acf8a4f3283f604a8ede6966cd8deab834257106fccf3478ed0d510e": "assets/31dfae47acf8a4f3283f604a8ede6966cd8deab834257106fccf3478ed0d510e.svg",
+    "4b05d3153a44c41e9aa374bc499261214f5a8f11c89a1cfba156db5a99fa192b": "assets/4b05d3153a44c41e9aa374bc499261214f5a8f11c89a1cfba156db5a99fa192b.svg",
+    "5e262f16f31c70c83a201486b63ae91c4f129b0d8289b5e9c8207357370a581e": "assets/5e262f16f31c70c83a201486b63ae91c4f129b0d8289b5e9c8207357370a581e.svg",
+    "7110b91d9a51f899125ceaf4c3cd39f0c2907dab016ccb5d9a86ff037fcedc7c": "assets/7110b91d9a51f899125ceaf4c3cd39f0c2907dab016ccb5d9a86ff037fcedc7c.svg"
+  },
+  "catalog_sha256": "ab227565c177046e0889bdcf6d88f79a42ca07edfe9e4b59abda1663d10661fb",
+  "schema": "videoclaw.starter-local-fixture/v1",
+  "source_repository": "INFR-Organisation/videoclaw-workflows"
+}

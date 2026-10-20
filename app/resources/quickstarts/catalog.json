@@ -1,0 +1,235 @@
+{
+  "schema": "videoclaw.starter-catalog/v1",
+  "starters": [
+    {
+      "id": "starter.founder-camera-story",
+      "version": "0.1.0",
+      "title": "Founder camera story",
+      "summary": "Turn a founder's real point of view into a direct-to-camera short with purposeful proof, readable captions, and one earned call to action.",
+      "status": "pilot",
+      "category": "founder-story",
+      "tags": [
+        "talking-head",
+        "product-story",
+        "social-short",
+        "consented-clone"
+      ],
+      "prompt": "Hey, I want to make a short founder-led video in the same broad format as these references: a direct, human opening; a clear problem-to-insight story; and visual proof that keeps the pace moving without making the result feel overproduced.\n\nPlease inspect the attached core examples and the supporting material available for this starter. Work out what makes the format successful—especially the opening delivery, how the presenter and supporting footage alternate, how captions stay readable without covering the face, and how the ending turns the story into one clear action. Treat the original social posts as inspiration only, and use the VideoClaw examples to understand what a possible finished result can look like. Do not copy anyone's wording, identity, footage, or brand.\n\nBefore making anything, ask me what I actually want to say, who the video is for, what context the viewer needs, and what I want them to do at the end. This format may need me or another approved person on camera and may benefit from a usable voice clone. If you do not already have the right footage, clean voice recordings, or permission to use that person's likeness and voice, ask me to provide them and complete the normal consent step. Also ask for any product footage, screenshots, logos, proof, music direction, brand information, or CTA details that would make the story specific and credible.\n\nOnce you understand the message and have the necessary inputs, show me the proposed script and production plan, explain which references informed which creative choices, and give me the expected spend before starting paid generation. Keep the plan adaptable: if my own footage is already good, use it rather than regenerating it; if a clone is unnecessary, do not create one.",
+      "prompt_sha256": "c13b050fb54fc206c827f0bc554384fb66de17c31fb01f4e72f5fd104eed2855",
+      "creative_notes_markdown": "# Founder camera story\n\n## What this starter teaches\n\n- Open with a specific tension or confession, not a generic topic label.\n- Keep the presenter visually stable and safely framed; supporting proof should clarify the story rather than decorate it.\n- Use captions as a reading aid. They should never cover a face or drift into platform controls.\n- Build toward one concrete action. The ending should feel earned by the story, not pasted on as an ad.\n\n## Adaptation boundaries\n\nThe social references demonstrate format and pacing only. Their footage, creator identity, wording, logos, and distinctive expression are not production inputs. The VideoClaw outputs are owned examples that can be attached in the localhost fixture and used as possible-result references. A real catalog resolves larger originals through authenticated, time-limited asset access.",
+      "creative_notes_sha256": "7db5a9fe8310d7a3a01ea4d7f1debb949669c6ee096cde3440bbc63ad53376eb",
+      "core_reference_ids": [
+        "vc-warm-open",
+        "vc-proof-cutaway"
+      ],
+      "references": [
+        {
+          "id": "apten-founder-video",
+          "source_type": "social_reference",
+          "role": "inspiration",
+          "title": "Apten founder video",
+          "contribution": "Shows how a founder can establish the product, audience, and credibility quickly without a theatrical setup.",
+          "delivery": "link_only",
+          "attribution": {
+            "source": "Apten",
+            "platform": "youtube",
+            "public_url": "https://www.youtube.com/watch?v=VYM-lvMI5QY"
+          },
+          "preview": {
+            "id": "founder-social-confession-preview",
+            "sha256": "7110b91d9a51f899125ceaf4c3cd39f0c2907dab016ccb5d9a86ff037fcedc7c",
+            "uri": "gs://videoclaw-catalog-assets/sha256/71/10b91d9a51f899125ceaf4c3cd39f0c2907dab016ccb5d9a86ff037fcedc7c",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 580,
+            "rights": "generated-test-fixture",
+            "provenance": "VideoClaw local catalog preview; not the source post thumbnail."
+          },
+          "local_fixture_path": "starters/founder-camera-story/assets/social-confession.svg",
+          "rights": {
+            "classification": "public-link-only",
+            "attachable": false,
+            "provenance": "Public YouTube link retained for attribution and user-directed viewing only."
+          }
+        },
+        {
+          "id": "omnara-launch-video",
+          "source_type": "social_reference",
+          "role": "inspiration",
+          "title": "Omnara product launch",
+          "contribution": "Demonstrates a brisk alternation between a human explanation, product proof, and a clear launch payoff.",
+          "delivery": "link_only",
+          "attribution": {
+            "source": "Represent Studio / Omnara",
+            "platform": "youtube",
+            "public_url": "https://www.youtube.com/watch?v=KZtW9FWqqio"
+          },
+          "preview": {
+            "id": "founder-social-proof-preview",
+            "sha256": "09c7e52889be1e322abe2d58cd3a41e761bf454f2f06214dca2b78a8a18e593e",
+            "uri": "gs://videoclaw-catalog-assets/sha256/09/c7e52889be1e322abe2d58cd3a41e761bf454f2f06214dca2b78a8a18e593e",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 841,
+            "rights": "generated-test-fixture",
+            "provenance": "VideoClaw local catalog preview; not the source post thumbnail."
+          },
+          "local_fixture_path": "starters/founder-camera-story/assets/social-proof.svg",
+          "rights": {
+            "classification": "public-link-only",
+            "attachable": false,
+            "provenance": "Public YouTube link retained for attribution and user-directed viewing only."
+          }
+        },
+        {
+          "id": "founder-fundraising-gems",
+          "source_type": "social_reference",
+          "role": "inspiration",
+          "title": "Founder interview gems",
+          "contribution": "Shows the value of extracting one candid, specific insight from a longer founder conversation.",
+          "delivery": "link_only",
+          "attribution": {
+            "source": "@omooretweets",
+            "platform": "x",
+            "public_url": "https://x.com/omooretweets/status/2080333669097746536"
+          },
+          "preview": {
+            "id": "founder-social-cta-preview",
+            "sha256": "5e262f16f31c70c83a201486b63ae91c4f129b0d8289b5e9c8207357370a581e",
+            "uri": "gs://videoclaw-catalog-assets/sha256/5e/262f16f31c70c83a201486b63ae91c4f129b0d8289b5e9c8207357370a581e",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 518,
+            "rights": "generated-test-fixture",
+            "provenance": "VideoClaw local catalog preview; not the source post thumbnail."
+          },
+          "local_fixture_path": "starters/founder-camera-story/assets/social-cta.svg",
+          "rights": {
+            "classification": "public-link-only",
+            "attachable": false,
+            "provenance": "Public X link retained for attribution and user-directed viewing only."
+          }
+        },
+        {
+          "id": "vc-warm-open",
+          "source_type": "videoclaw_output",
+          "role": "possible_result",
+          "title": "Warm founder opening",
+          "contribution": "Demonstrates a stable presenter frame, restrained type, and a human first sentence with room to breathe.",
+          "delivery": "core_agent_reference",
+          "attribution": {
+            "source": "VideoClaw team",
+            "platform": "videoclaw"
+          },
+          "preview": {
+            "id": "founder-vc-warm-preview",
+            "sha256": "4b05d3153a44c41e9aa374bc499261214f5a8f11c89a1cfba156db5a99fa192b",
+            "uri": "gs://videoclaw-catalog-assets/sha256/4b/05d3153a44c41e9aa374bc499261214f5a8f11c89a1cfba156db5a99fa192b",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 779,
+            "rights": "owned",
+            "provenance": "VideoClaw-owned illustrative localhost output fixture."
+          },
+          "production_asset": {
+            "id": "founder-vc-warm-core",
+            "sha256": "4b05d3153a44c41e9aa374bc499261214f5a8f11c89a1cfba156db5a99fa192b",
+            "uri": "gs://videoclaw-catalog-assets/sha256/4b/05d3153a44c41e9aa374bc499261214f5a8f11c89a1cfba156db5a99fa192b",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 779,
+            "rights": "owned",
+            "provenance": "VideoClaw-owned illustrative localhost output fixture."
+          },
+          "local_fixture_path": "starters/founder-camera-story/assets/videoclaw-warm.svg",
+          "rights": {
+            "classification": "owned",
+            "attachable": true,
+            "provenance": "Authored in the VideoClaw workflows repository for local integration testing."
+          }
+        },
+        {
+          "id": "vc-proof-cutaway",
+          "source_type": "videoclaw_output",
+          "role": "possible_result",
+          "title": "Evidence-led cutaway",
+          "contribution": "Demonstrates how a proof insert can interrupt the talking head without losing the story or visual hierarchy.",
+          "delivery": "core_agent_reference",
+          "attribution": {
+            "source": "VideoClaw team",
+            "platform": "videoclaw"
+          },
+          "preview": {
+            "id": "founder-vc-evidence-preview",
+            "sha256": "202fcc4242e4e0b80cfb0ddd9542f49d226e0067ef800c9b0f46ab871bc02da5",
+            "uri": "gs://videoclaw-catalog-assets/sha256/20/2fcc4242e4e0b80cfb0ddd9542f49d226e0067ef800c9b0f46ab871bc02da5",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 742,
+            "rights": "owned",
+            "provenance": "VideoClaw-owned illustrative localhost output fixture."
+          },
+          "production_asset": {
+            "id": "founder-vc-evidence-core",
+            "sha256": "202fcc4242e4e0b80cfb0ddd9542f49d226e0067ef800c9b0f46ab871bc02da5",
+            "uri": "gs://videoclaw-catalog-assets/sha256/20/2fcc4242e4e0b80cfb0ddd9542f49d226e0067ef800c9b0f46ab871bc02da5",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 742,
+            "rights": "owned",
+            "provenance": "VideoClaw-owned illustrative localhost output fixture."
+          },
+          "local_fixture_path": "starters/founder-camera-story/assets/videoclaw-evidence.svg",
+          "rights": {
+            "classification": "owned",
+            "attachable": true,
+            "provenance": "Authored in the VideoClaw workflows repository for local integration testing."
+          }
+        },
+        {
+          "id": "vc-clean-endcard",
+          "source_type": "videoclaw_output",
+          "role": "possible_result",
+          "title": "Clean action end card",
+          "contribution": "Demonstrates a complete ending with one readable promise and one action rather than a crowded recap.",
+          "delivery": "supporting_reference",
+          "attribution": {
+            "source": "VideoClaw team",
+            "platform": "videoclaw"
+          },
+          "preview": {
+            "id": "founder-vc-endcard-preview",
+            "sha256": "31dfae47acf8a4f3283f604a8ede6966cd8deab834257106fccf3478ed0d510e",
+            "uri": "gs://videoclaw-catalog-assets/sha256/31/dfae47acf8a4f3283f604a8ede6966cd8deab834257106fccf3478ed0d510e",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 759,
+            "rights": "owned",
+            "provenance": "VideoClaw-owned illustrative localhost output fixture."
+          },
+          "production_asset": {
+            "id": "founder-vc-endcard-supporting",
+            "sha256": "31dfae47acf8a4f3283f604a8ede6966cd8deab834257106fccf3478ed0d510e",
+            "uri": "gs://videoclaw-catalog-assets/sha256/31/dfae47acf8a4f3283f604a8ede6966cd8deab834257106fccf3478ed0d510e",
+            "mime_type": "image/svg+xml",
+            "size_bytes": 759,
+            "rights": "owned",
+            "provenance": "VideoClaw-owned illustrative localhost output fixture."
+          },
+          "local_fixture_path": "starters/founder-camera-story/assets/videoclaw-endcard.svg",
+          "rights": {
+            "classification": "owned",
+            "attachable": true,
+            "provenance": "Authored in the VideoClaw workflows repository for local integration testing."
+          }
+        }
+      ],
+      "advisory_workflows": [
+        "workflow.consented-creator-clone",
+        "workflow.founder-product-launch-film",
+        "workflow.safe-social-delivery"
+      ],
+      "provenance": {
+        "source_repository": "INFR-Organisation/videoclaw-workflows",
+        "source_path": "starters/founder-camera-story",
+        "authors": [
+          "VideoClaw team"
+        ]
+      }
+    }
+  ],
+  "generation": "local-ab227565c177046e",
+  "catalog_sha256": "ab227565c177046e0889bdcf6d88f79a42ca07edfe9e4b59abda1663d10661fb"
+}

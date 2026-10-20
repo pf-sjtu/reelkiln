@@ -1,0 +1,33 @@
+[project]
+name = "videoclaw"
+version = "0.1.0"
+description = "Standalone video content generation toolkit (avatar reels, carousels, a-roll lipsync, episode pipeline). Self-contained — depends on nothing outside this repo."
+requires-python = ">=3.11"
+dependencies = [
+    # Core HTTP + config
+    "requests>=2.31.0",
+    "python-dotenv>=1.2.0",  # honours PYTHON_DOTENV_DISABLED (1.2.0+)
+    # Image / video frame work (face envelopes, preflight, bbox, b-roll crop)
+    "pillow>=10.0.0",
+    "opencv-python>=4.9.0",
+    "numpy>=1.26.0",
+    "scipy>=1.14,<2",
+    "mediapipe>=0.10.9",
+    # Model / API SDKs
+    "replicate>=1.0.0", # temporary raw/dev + pre-migration job compatibility
+    "openai>=1.40.0", # OpenRouter (preflight LLM) + embeddings
+    "elevenlabs>=2.0.0", # Scribe v2 transcription + TTS
+    "fal-client>=0.5.0", # sync-3 lipsync (aroll.py — preferred a-roll path)
+    # Outlier research (local Postgres corpus, search_outliers.py)
+    "psycopg2-binary>=2.9.9",
+    # YouTube needs the version-matched challenge scripts from the default extra.
+    "yt-dlp[default]>=2026.6.9",
+    "chromadb>=1.5.9",
+    "google-genai>=2.10.0",
+    "pillow-heif>=1.4.0",
+    "scipy>=1.14,<2",
+]
+
+# Tools are flat scripts under tools/, run as `uv run python tools/<x>.py` from
+# the repo root. They are NOT an installed package; each adds its own dir to
+# sys.path so `from job import ...` / `from _paths import ...` resolve as siblings.

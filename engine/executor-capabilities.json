@@ -1,0 +1,14 @@
+{
+  "schema": "videoclaw.executor-capabilities/v1",
+  "executor_api": "videoclaw-executor/v1",
+  "capabilities": [
+    "audio.speech/transcribe@1",
+    "audio.synth/reference@1",
+    "media.acquire/meta-ads@1",
+    "operations.recover/accepted-media@1",
+    "output.review/full@1",
+    "timeline.compose/render@1",
+    "video.mint/keyframe@1",
+    "video.mint/reenact@1"
+  ]
+}

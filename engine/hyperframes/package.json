@@ -1,0 +1,17 @@
+{
+  "name": "videoclaw-hyperframes",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local, self-hosted HyperFrames render layer for videoclaw (spike / additive to Remotion — Remotion stays the shipping default). See docs/hyperframes.md.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "check": "hyperframes check",
+    "render": "hyperframes render",
+    "doctor": "hyperframes doctor"
+  },
+  "dependencies": {
+    "hyperframes": "0.7.90"
+  }
+}

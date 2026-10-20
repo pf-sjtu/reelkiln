@@ -1,0 +1,27 @@
+{
+  "name": "agent-remotion",
+  "version": "1.0.0",
+  "description": "Shared Remotion project for the video generation pipeline. All per-job data is passed in via input props at render time.",
+  "private": true,
+  "scripts": {
+    "start": "remotion studio src/index.ts",
+    "build": "remotion bundle src/index.ts",
+    "render": "remotion render src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@remotion/captions": "4.0.505",
+    "@remotion/cli": "4.0.505",
+    "@remotion/google-fonts": "4.0.505",
+    "@remotion/media": "4.0.505",
+    "@remotion/transitions": "4.0.505",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.505",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.0",
+    "typescript": "5.6.3"
+  }
+}
