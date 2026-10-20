@@ -27,14 +27,38 @@ def rewrite_settings(text: str) -> str:
         raise SystemExit(f"expected 2 hook commands using /.venv/bin/python, found {n}")
     return text.replace("/.venv/bin/python", "/.venv/Scripts/python.exe")
 
+def materialize_symlink_placeholders(stage: Path) -> list[str]:
+    """The engine has ONE symlink (remotion/public/sfx -> ../../sfx_library, git mode 120000).
+    copytree(symlinks=False) already dereferences it on POSIX. On a Windows checkout with
+    core.symlinks=false git writes a tiny text file holding the link target instead; replace
+    such placeholders with a real copy of the target directory so the tarball never contains
+    a symlink (bsdtar on Windows cannot create one without Developer Mode/admin)."""
+    done = []
+    for f in sorted(stage.rglob("*")):
+        if not f.is_file() or f.is_symlink() or f.stat().st_size > 256:
+            continue
+        try:
+            target = f.read_text(encoding="utf-8").strip()
+        except (UnicodeDecodeError, OSError):
+            continue
+        if not target or "\n" in target or target.startswith("/"):
+            continue
+        resolved = (f.parent / target).resolve()
+        if resolved.is_dir() and stage.resolve() in resolved.parents:
+            f.unlink()
+            shutil.copytree(resolved, f)
+            done.append(str(f.relative_to(stage)))
+    return done
+
 def build(engine: Path, manifest_in: Path, out: Path) -> dict:
-    manifest = json.loads(manifest_in.read_text())
+    manifest = json.loads(manifest_in.read_bytes().decode("utf-8"))
     mtime = 0
     with tempfile.TemporaryDirectory() as td:
         stage = Path(td) / "engine"
         shutil.copytree(engine, stage, ignore=shutil.ignore_patterns("__pycache__", ".venv", "node_modules", "bin"))
+        materialize_symlink_placeholders(stage)
         s = stage / ".claude" / "settings.json"
-        s.write_text(rewrite_settings(s.read_text()))
+        s.write_bytes(rewrite_settings(s.read_bytes().decode("utf-8")).encode("utf-8"))  # bytes: no CRLF/codepage translation on Windows
         name = f"engine-{manifest['version']}-win.tar.gz"
         out.mkdir(parents=True, exist_ok=True)
         raw = io.BytesIO()
@@ -52,7 +76,7 @@ def build(engine: Path, manifest_in: Path, out: Path) -> dict:
         (out / name).write_bytes(data.getvalue())
     # `variant` is left untouched (the app never reads it — grep "variant" in main/index.js).
     manifest.update({"file": name, "sha256": hashlib.sha256(data.getvalue()).hexdigest()})
-    (out / "engine.manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (out / "engine.manifest.json").write_bytes((json.dumps(manifest, indent=2) + "\n").encode("utf-8"))
     return manifest
 
 if __name__ == "__main__":

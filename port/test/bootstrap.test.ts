@@ -138,3 +138,14 @@ test("resolveEditorRenderEngine mirrors the original branches", () => {
   assert.equal(w.executable, "C:\\eng\\bin\\uv.exe");
   assert.equal(absCwd("~\\a", "win32", "C:\\h"), "C:\\h\\a");
 });
+
+import { claudeCodeExecutable, resolveCodexExecutable } from "../src/main/engine/engine-env";
+test("claude / codex executable resolution (original order; win32 suffix)", () => {
+  assert.equal(claudeCodeExecutable({ isPackaged: false, appPath: "/x" }), "claude");
+  assert.equal(claudeCodeExecutable({ isPackaged: true, appPath: "/A/Resources/app.asar", platform: "darwin", arch: "arm64" }), "/A/Resources/app.asar.unpacked/node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/claude");
+  assert.equal(claudeCodeExecutable({ isPackaged: true, appPath: "C:\\V\\resources\\app.asar", platform: "win32", arch: "x64" }), "C:\\V\\resources\\app.asar.unpacked\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe");
+  assert.equal(resolveCodexExecutable({ env: { VIDEOCLAW_CODEX_BIN: " C:\\c\\codex.exe " }, platform: "win32" }), "C:\\c\\codex.exe");
+  assert.equal(resolveCodexExecutable({ env: {}, resourcesPath: "C:\\r", exists: () => true, platform: "win32" }), "C:\\r\\bootstrap\\codex\\bin\\codex.exe");
+  assert.equal(resolveCodexExecutable({ env: {}, resourcesPath: "/r", exists: () => false, platform: "darwin" }), "codex");
+  assert.throws(() => resolveCodexExecutable({ env: {}, requireBundled: true, exists: () => false }), /The packaged Codex runtime is unavailable/);
+});

@@ -51,3 +51,30 @@ export function resolveEditorRenderEngine(d: ResolveEngineDeps): { root: string;
   const bundledUv = pm.join(root, "bin", exeName("uv", p));
   return { root, executable: exists(bundledUv) ? bundledUv : "uv", env: { ...env, ...UV_PYTHON_POLICY_ENV } };
 }
+
+/** claudeCodeExecutable (L22710-22719). Original joins `.../claude-agent-sdk-${platform}-${arch}/claude`
+ *  with NO extension; dev (unpackaged) returns bare "claude". PORT: exeName on win32.
+ *  TODO(verify on Windows): file name inside @anthropic-ai/claude-agent-sdk-win32-x64@0.3.281 —
+ *  not in the macOS bundle; `claude.exe` assumed. */
+export function claudeCodeExecutable(o: { isPackaged: boolean; appPath: string; platform?: Plat; arch?: string }): string {
+  const p = o.platform ?? process.platform;
+  if (!o.isPackaged) return "claude";
+  return pathMod(p).join(o.appPath.replace("app.asar", "app.asar.unpacked"), "node_modules", "@anthropic-ai", `claude-agent-sdk-${p}-${o.arch ?? process.arch}`, exeName("claude", p));
+}
+
+/** resolveCodexExecutable (L23422-23446) minus devStagedCodexRoots. ORIGINAL env var
+ *  VIDEOCLAW_CODEX_BIN is honoured exactly as in the bundle. PORT: `codex.exe` on win32. */
+export function resolveCodexExecutable(o: { explicit?: string; env: NodeJS.ProcessEnv; resourcesPath?: string; requireBundled?: boolean; exists?: (p: string) => boolean; platform?: Plat }): string {
+  const p = o.platform ?? process.platform;
+  const exists = o.exists ?? existsSync;
+  const bundled = o.resourcesPath ? pathMod(p).join(o.resourcesPath, "bootstrap", "codex", "bin", exeName("codex", p)) : undefined;
+  if (o.requireBundled) {
+    if (!bundled || !exists(bundled)) throw new Error("The packaged Codex runtime is unavailable. Reinstall VideoClaw.");
+    return bundled;
+  }
+  if (o.explicit) return o.explicit;
+  const devOverride = o.env.VIDEOCLAW_CODEX_BIN?.trim();
+  if (devOverride) return devOverride;
+  if (bundled && exists(bundled)) return bundled;
+  return "codex";
+}

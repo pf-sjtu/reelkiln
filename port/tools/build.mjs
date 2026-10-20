@@ -15,6 +15,8 @@ if (process.argv.includes("--tests")) {
   await build({ ...common, entryPoints: { "main/index": "src/main/index.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   // utilityProcess worker (original out/main/editorRenderWorker.js)
   await build({ ...common, entryPoints: { "main/editorRenderWorker": "src/main/workers/editor-render-worker.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
+  // PORT-NEW verification CLI (no Electron): dist/cli/port-cli.cjs
+  await build({ ...common, entryPoints: { "cli/port-cli": "src/cli/port-cli.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   await build({ ...common, entryPoints: { "preload/index": "src/preload/index.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   await build({ ...common, entryPoints: { "renderer/renderer": "src/renderer/renderer.ts" }, outdir: "dist", platform: "browser", format: "iife", target: "chrome120" });
   mkdirSync(join(root, "dist/renderer"), { recursive: true });

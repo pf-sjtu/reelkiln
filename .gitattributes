@@ -1,0 +1,4 @@
+# Engine + bootstrap files are byte-exact inputs (hashes, hook commands, sh scripts):
+# never convert line endings on checkout (Windows core.autocrlf).
+engine/** -text
+bootstrap/** -text
