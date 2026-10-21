@@ -5,6 +5,8 @@
 
 ## 0. 已验证 / 未验证（2026-10-21 第三轮“真实 Claude Agent SDK 端到端”后，box，Node 24.22 / Electron 42.11.9）
 
+> **第五轮（docs/18）**：electron-builder 打包（Linux AppImage + deb 已构建并在 box 上启动冒烟；打包后 SDK 从 `resources/claude-agent-sdk` 自动发现、node:sqlite 正常、打包二进制里真实 agent 回合 1 次成功；Windows nsis / macOS dmg 仅配置，未验证）；renderer 新增正式 **Settings** 页 LLM 路由选择器（状态徽章、不可用原因、经原版 `settings:set` 持久化、`port:llm:routesChanged` 推送 + 焦点刷新）。`npm test` **177/177**。
+>
 > **第四轮（docs/17）**：结构化输出（helper `structuredOutput: native|tool|off`，OpenAI `response_format` 透传 / Responses `text.format` / Anthropic `output_config.format`；MiniMax 用强制工具调用，实测 12/12）、gate proxy 结构化输出模拟、SDK 自动发现 + `npm run agent-sdk:install`、PORT-NEW `port:llm:routes` 路由列表 IPC + stub renderer 选择器。`npm test` **165/165**。
 >
 > 第三轮详见 **docs/16**：官方 `@anthropic-ai/claude-agent-sdk@0.3.305`（内置 Linux 原生 `claude` 2.1.305）经本框架路由对 MiniMax **真实跑通**一问一答 + Bash 工具往返；发现并处理了并发/结构化输出/key 暴露三个问题（gate proxy + `agentCompat`）。
@@ -184,7 +186,7 @@ providers 文件路径：环境变量 **`VIDEOCLAW_LLM_PROVIDERS_FILE`**（设�
 
 **第三轮已补上的部分**：`sessionAgentRuntime()`（= `sessionRuntimeConfig()` + 可选 gate proxy）+ `agent-sdk.ts`（运行时加载 SDK、原版打包布局的 `claude` 路径、最小 `query()` 选项、单轮 `runAgentTurn`），经 `llm-agent-smoke` 对 MiniMax 真实跑通，见 docs/16。
 
-**仍延后（及原因）**：原版 `query()` 的完整选项与 AgentHost 会话/权限/hooks/MCP 体系（未移植）；AgentHost 的会话生命周期与 `onLlmRouteChanged` 的 runtime teardown；CredentialStore（gateway key 库）；Claude Code 登录探测；设置 UI 的 provider 选择器（renderer 未移植）。这些接入时把 `sessionAgentRuntime()` 的 `env`/`model` 原样传给 `query()`，子进程退出后调用 `close()`。
+**仍延后（及原因）**：原版 `query()` 的完整选项与 AgentHost 会话/权限/hooks/MCP 体系（未移植）；AgentHost 的会话生命周期与 `onLlmRouteChanged` 的 runtime teardown；CredentialStore（gateway key 库）；Claude Code 登录探测；~~设置 UI 的 provider 选择器~~（第五轮：port renderer 的 Settings 页已有，docs/18 §5；原版完整设置页仍未移植）。这些接入时把 `sessionAgentRuntime()` 的 `env`/`model` 原样传给 `query()`，子进程退出后调用 `close()`。
 
 ### 3.5 生产加固
 

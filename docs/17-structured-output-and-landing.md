@@ -108,7 +108,7 @@ CLAUDE_CONFIG_DIR/projects/…jsonl: {"type":"ai-title","aiTitle":"Surfing cats"
   找不到时 `SDK_UNAVAILABLE` 报错信息里给出安装命令和全部查找路径。
 - 原生 `claude` 仍由 `claudeCodeExecutableFor()` 在 SDK 旁边找 `claude-agent-sdk-<platform>-<arch>[-musl]/claude[.exe]`，`VIDEOCLAW_CLAUDE_CODE_EXECUTABLE` 可覆盖。
 - 新 CLI：`node dist/cli/port-cli.cjs agent-sdk-check`（离线：发现来源、版本、是否等于 pin、原生二进制路径）。
-- **打包建议（未实施，未验证）**：electron-builder `extraResources: [{from:"vendor/claude-agent-sdk", to:"claude-agent-sdk"}]`（命中第 4 条），或把 SDK 放进 app 依赖并 `asarUnpack: ["node_modules/@anthropic-ai/**"]`（命中第 3 条，与原版一致）。
+- ~~打包建议（未实施，未验证）~~ → **第五轮已实施（docs/18 §2）**：采用 `extraResources`（`<sdkDir>/node_modules` → `resources/claude-agent-sdk/node_modules`，命中第 4 条）；Linux AppImage/deb 实测发现来源为 `resources`。
 
 ## 5. LLM 路由选择 IPC / UI
 
@@ -123,7 +123,7 @@ CLAUDE_CONFIG_DIR/projects/…jsonl: {"type":"ai-title","aiTitle":"Surfing cats"
   configError?: string }              // providers 文件加载失败时（此时只列 preset）
 ```
 - **选择仍走原版 `settings:set`**：`window.videoclaw.setSettings({ llmRoute })`（`rendererWritableSettingsPatch` 校验，未注册的名字被丢弃），变化时触发原有 `onLlmRouteChanged` 钩子。
-- port 的 renderer 只是 stub：已加一个最小 `<select>`（缺 key 的 provider 置灰；非 Anthropic 协议标注“helper calls only”），切换后重新拉取列表。真正的设置页 UI 仍待原版 renderer 移植。
+- ~~port 的 renderer 只是 stub：已加一个最小 `<select>`~~ → **第五轮**：正式 Settings 页（状态徽章、不可用原因、单选、拒绝检测、`port:llm:routesChanged` 推送 + 焦点/可见性刷新、About this build），调试 `<select>` 已移除，见 docs/18 §5。原版完整设置页仍待 React renderer 移植。
 - LLM runtime 启动失败（假 settings 后端）时 `port:llm:routes` 返回 `{current:"claude-code", routes:[], configError:"LLM runtime not running …"}`。
 - Electron 冒烟（`VIDEOCLAW_PORT_SMOKE=1`）新增记录 `port:llm:routes` 和 selector 的选项。
 
@@ -143,6 +143,6 @@ CLAUDE_CONFIG_DIR/projects/…jsonl: {"type":"ai-title","aiTitle":"Surfing cats"
 - `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS=1` 下 Claude Code 的回退：只在一个样本里看到标题请求仍返回 JSON（靠提示词），未系统测试。
 - MiniMax 原生 v2 + `MiniMax-Text-01` 的 `response_format` 只测 1 次且未遵守 schema；未作为路径。
 - OpenAI / Anthropic 官方端点在 `native` 模式下的真实行为未测（只有 mock 单测），Responses `text.format` 的 `json_object` 写法依 OpenAI 公开文档实现。
-- SDK 打包：electron-builder 配置未实施；Windows/macOS 原生二进制、`--os/--cpu` 交叉安装未实测；SDK 许可证允许随应用分发与否需要确认。
-- 路由选择：只有 stub renderer 的 `<select>`；页面加载后若别处修改了路由，selector 不会自动刷新（无推送事件）；`problem` 提示文案未本地化。
+- SDK 打包：~~electron-builder 配置未实施~~（第五轮已实施，Linux 已验证，docs/18）；Windows/macOS 原生二进制未运行（`--os/--cpu` 交叉安装与进包布局已验证）；SDK 许可证允许随应用分发与否需要确认。
+- 路由选择：~~只有 stub `<select>`、无推送~~（第五轮：Settings 页 + `port:llm:routesChanged`，docs/18 §5）；提示文案仍未本地化。
 - 共享 key：本轮所有真实请求都串行，但与 Pageway 管线同时使用时有一次 OpenAI 端点请求耗时 36 s、两次 agent 冒烟合计 189 s（推测上游排队/重试），未深入。
