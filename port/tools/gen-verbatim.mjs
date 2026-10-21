@@ -707,6 +707,31 @@ export const SPECS = [
     subs: [],
     exports: ["RECORDED_CLAUDE_EFFORT_MODELS", "RECORDED_CLAUDE_NO_EFFORT_MODELS", "claudeEffortSupportKnown", "claudeReasoningEffortChoices", "CLAUDE_MODEL_EVIDENCE", "CLAUDE_ROUTE_LABELS", "claudeModelEvidence", "claudeRouteQualification", "isQualifiedClaudeRoute", "isRecommendedClaudeRoute", "claudeRouteDiagnostic", "canonicalClaudeModelId", "partitionDiscoveredClaudeModels", "claudeModelUnavailableDiagnostic", "claudeModelVerdict"],
   },
+  // docs/29: the ORIGINAL telemetry/feedback Outbox (L57833-58716) + its delivery executors (telemetry senders
+  // L19708-19864, feedback senders L57393-57545) and journal validators (L57546-57832). Delivered to the
+  // configured gateway — on a self-hosted gateway that is the local shim's disk sinks (no external send).
+  {
+    out: "src/main/telemetry/outbox.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";',
+      'import { readFile, rename, writeFile } from "node:fs/promises";',
+      'import { dirname, join } from "node:path";',
+      'import { redact } from "../feedback/feedback.generated";',
+      'import { recordMainLog } from "../feedback/feedback-env";',
+    ],
+    slices: () => [
+      sliceUntil("main", /^const PATH_REDACTIONS = \[$/, /^const EXCEPTION_PROPERTY_KEYS = \[$/),
+      slice("main", /^function safeExceptionText\(raw, max = EXCEPTION_MESSAGE_MAX\) \{$/, /^}$/),
+      slice("main", /^const KEY_ID_DOMAIN = "videoclaw-alpha-consent-key\/v1\\0";$/, /^}$/, /^function alphaConsentKeyId\(/),
+      slice("main", /^const SCREENSHOT_MAX_BYTES = /, /^const SCREENSHOT_MAX_BYTES = /),
+      sliceUntil("main", /^const TELEMETRY_REQUEST_TIMEOUT_MS = /, /^const JOB_ID_RE\$1 = /),
+      sliceUntil("main", /^async function sendBlockedFeedback\(/, /^class Outbox \{$/),
+      slice("main", /^class Outbox \{$/, /^}$/),
+    ],
+    subs: [],
+    exports: ["sendSessionEntries", "sendSessionIndex", "sendBeaconNow", "sendFeedback", "authorityFor", "authoritiesMatch", "isOutboxItem", "Outbox"],
+  },
 ];
 
 export function render(spec) {

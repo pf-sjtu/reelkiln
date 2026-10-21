@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { createLogger, setLoggerForTests } from "../src/main/llm/logger";
 import { resetProviderGatesForTests } from "../src/main/llm/retry";
 import { LocalGatewayShim, keyIdFor, SHIM_HEADER } from "../src/main/gateway/local-gateway-shim";
+import { priceTable } from "../src/main/gateway/pricing";
 import { CredentialStore } from "../src/main/account/local-reset-env";
 import { AccountService, portResolveAuthPool } from "../src/main/account/account-service";
 import { gatewayChannels } from "../src/main/gateway/gateway-channels";
@@ -48,7 +49,7 @@ async function shimHarness(o: { monthUsd?: number | null; reply?: Parameters<typ
   silent(); resetProviderGatesForTests();
   const root = mkdtempSync(join(tmpdir(), "vc-shim-"));
   const up = fakeUpstream(o.reply ?? (() => ({ text: "[\"Bold captions, no music\"]", input: 1000, output: 500 })));
-  const shim = new LocalGatewayShim({ dir: join(root, "local-gateway"), provider: () => mm(), fetchImpl: up.fetchImpl, monthUsd: o.monthUsd === undefined ? 5 : o.monthUsd });
+  const shim = new LocalGatewayShim({ dir: join(root, "local-gateway"), provider: () => mm(), fetchImpl: up.fetchImpl, monthUsd: o.monthUsd === undefined ? 5 : o.monthUsd, price: priceTable({ env: {}, catalog: null }), appVersion: "0.0.40-port.0" });
   const url = await shim.start();
   return { root, shim, url, up, cleanup: async () => { await shim.close(); rmSync(root, { recursive: true, force: true }); } };
 }
@@ -98,7 +99,7 @@ test("local gateway shim: key plane (/v1/me = keyMeterFrom body, id = sha256(key
 });
 
 test("local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mapped, MiniMax key only), metered (JSON + SSE usage), ceiling → 402, top-up restores", async () => {
-  const h = await shimHarness({ monthUsd: 0.001 });
+  const h = await shimHarness({ monthUsd: 0.0008 });
   try {
     const { key } = h.shim.issueKey();
     const send = (body: any) => fetch(`${h.url}/anthropic/v1/messages`, { method: "POST", headers: { authorization: `Bearer ${key}`, "content-type": "application/json", "anthropic-version": "2023-06-01" }, body: JSON.stringify(body) });
@@ -110,7 +111,8 @@ test("local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mappe
     let led = h.shim.snapshot();
     assert.equal(led.entries.length, 1);
     assert.deepEqual([led.entries[0].inputTokens, led.entries[0].outputTokens], [1000, 500]);
-    assert.equal(led.entries[0].usd, (1000 * 0.3 + 500 * 1.2) / 1e6); // 0.0009 at the local table
+    assert.equal(led.entries[0].usd, (1000 * 0.15 + 500 * 0.6) / 1e6); // 0.00045 at MiniMax-M3.1-Flash (docs/29 §1)
+    assert.equal(led.entries[0].pricing.source, "minimax-fallback/2026-10");
     assert.equal(led.entries[0].model, "claude-haiku-4-5-20251001");
     // SSE: usage read from message_start / message_delta while bytes pass through
     const r2 = await send({ model: "MiniMax-M3", stream: true, max_tokens: 64, messages: [{ role: "user", content: "hi" }] });
@@ -119,15 +121,15 @@ test("local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mappe
     assert.equal(led.entries[1].upstreamModel, "MiniMax-M3");
     assert.deepEqual([led.entries[1].inputTokens, led.entries[1].outputTokens], [1000, 500]);
     const meter: any = h.shim.meter();
-    assert.equal(meter.spend_this_month_usd, 0.0018);
-    assert.equal(meter.available_credit_usd, 0, "the 0.001 USD monthly grant is used up (overspend floors at 0)");
+    assert.equal(meter.spend_this_month_usd, 0.0009);
+    assert.equal(meter.available_credit_usd, 0, "the 0.0008 USD monthly grant is used up (overspend floors at 0)");
     const r3 = await send({ model: "claude-haiku-4-5-20251001", max_tokens: 8, messages: [{ role: "user", content: "hi" }] });
     assert.equal(r3.status, 402);
     assert.equal(((await r3.json()) as any).error.type, "billing_error");
     assert.equal(h.up.seen.length, 2, "a refused call never reaches MiniMax");
     assert.equal(h.shim.snapshot().refusals.length, 1);
     h.shim.topUp(1);
-    assert.equal((h.shim.meter() as any).available_credit_usd, 0.9992, "top-up pays the 0.0008 overspend first");
+    assert.equal((h.shim.meter() as any).available_credit_usd, 0.9999, "top-up pays the 0.0001 overspend first");
     assert.equal((await send({ model: "claude-haiku-4-5-20251001", max_tokens: 8, messages: [{ role: "user", content: "hi" }] })).status, 200);
     assert.equal(h.shim.snapshot().entries.length, 3);
     // unlimited account: available null (keyMeterFrom's "no grant ceiling")

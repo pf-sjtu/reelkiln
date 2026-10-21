@@ -422,7 +422,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       if (localGatewayEnabled()) {
         const shimPort = localGatewayPort();
         const shimUrl = `http://127.0.0.1:${shimPort}`;
-        const shim = new LocalGatewayShim({ dir: join(userDataDir, "local-gateway"), provider: () => minimaxConfig(), port: shimPort, monthUsd: localGatewayMonthUsd(), log });
+        const shim = new LocalGatewayShim({ dir: join(userDataDir, "local-gateway"), provider: () => minimaxConfig(), port: shimPort, monthUsd: localGatewayMonthUsd(), log, appVersion: app.getVersion() });
         // PORT-NEW: this process opens on the self-hosted gateway, and a first launch provisions its vc_ key
         // into the vault (the key the user would otherwise paste under "I already have an alpha key")
         if (String(llm.settings.get().gatewayUrl ?? "").replace(/\/+$/, "") !== shimUrl) llm.settings.patch({ gatewayUrl: shimUrl });

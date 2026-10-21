@@ -22,8 +22,18 @@
 //                                            identity token to a non-official gateway (resolveAuthPool → no pool,
 //                                            AccountAuth.assertTrustedGateway L54xxx), so a self-hosted gateway is
 //                                            reached ONLY through the `vc_` key plane, exactly like a custom gateway.
+//   docs/29 additions (local sinks — persisted under <dir>/sinks, never sent anywhere else):
+//   POST /v1/feedback, /v1/feedback/blocked  sendFeedback / sendBlockedFeedback L57394-57537 (+ signed screenshot PUT)
+//   POST /v1/telemetry/beacon, sessions/{id}/entries, jobs/{id}/log, jobs/{id}/final(+PUT,/complete),
+//   PUT  /v1/telemetry/sessions/{id}/index   the Outbox delivery executors L19708-19830
+//   GET  /v1/app/latest                       startUpdateCheck L55921: the release feed for THIS build (always
+//                                            "current" — the shim never offers a newer build); nightly → 404
+//   POST /v1/uploads (+ tokenised PUT)        engine _gateway.upload: reference bytes land on local disk
+//   POST /v1/{paid tool}                      mint_image / embed / mint_video / …: refused 422 not_submitted —
+//                                            the MiniMax backend has no faithful equivalent (docs/29 §4)
 // Anything else → 404. No request is ever forwarded with the shim key; MiniMax sees only its own key.
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { costUsd, priceTable, type ModelPrice } from "./pricing";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -47,14 +57,14 @@ export const keyIdFor = (key: string) => createHash("sha256").update(key.trim())
 /** CredentialStore.keyHint L4874 shape. */
 export const keyHintFor = (key: string) => `${key.slice(0, 7)}…${key.slice(-4)}`;
 
-/** The local price table (USD per million tokens). NOT MiniMax's invoice: a deterministic local rate the
- *  ledger meters with, recorded on every entry so a later change never rewrites history. */
-export const DEFAULT_PRICING = { inputPerMTokUsd: 0.3, outputPerMTokUsd: 1.2, source: "port-local-table/v1" } as const;
+/** docs/29 §1: the ledger charges PER MODEL (gateway/pricing.ts: env override → models.dev → MiniMax fallback);
+ *  this is only the table identifier recorded in the ledger header. */
+export const PRICING_TABLE_ID = "port-per-model/v2";
 /** quoteProject: cents per paid-tool call (local table; unknown tools are quoted at the default). */
 export const TOOL_QUOTE_CENTS: Record<string, number> = { model_call: 1, mint_image: 4, mint_video: 50, audio_enhance: 2, media_pull: 0 };
 export const DEFAULT_TOOL_QUOTE_CENTS = 5;
 
-export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; status: number; pricing: { inputPerMTokUsd: number; outputPerMTokUsd: number; source: string } }
+export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number; status: number; pricing: ModelPrice }
 export interface Ledger {
   schema: typeof LEDGER_SCHEMA;
   account: { id: string; name: string; createdAt: number };
@@ -67,7 +77,10 @@ export interface Ledger {
   spendAuthorities: Record<string, { mode: string; ceilingUsd: number | null; updatedAt: number }>;
   budgets: Record<string, { ceilingUsd: number; updatedAt: number }>;
   quotes: Array<{ at: number; jobId: string; totalCents: number }>;
-  pricing: { inputPerMTokUsd: number; outputPerMTokUsd: number; source: string };
+  /** the table identifier (per-entry prices live on each entry). Pre-docs/29 ledgers carry the old flat table here. */
+  pricing: { table: string } | { inputPerMTokUsd: number; outputPerMTokUsd: number; source: string };
+  /** docs/29: per-job scoped capabilities issued by credentialsForBudgetedTools (library lease / sheet build) */
+  sinks?: Record<string, number>;
 }
 const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
 const monthKey = (ms: number) => new Date(ms).toISOString().slice(0, 7); // UTC calendar month
@@ -77,7 +90,7 @@ export function emptyLedger(now: number, monthUsd: number | null): Ledger {
     schema: LEDGER_SCHEMA,
     account: { id: `acct_local_${randomBytes(6).toString("hex")}`, name: "Local studio (self-hosted)", createdAt: now },
     keys: [], limits: { monthUsd, totalUsd: null }, topupBalanceUsd: 0, topups: [], entries: [], refusals: [],
-    spendAuthorities: {}, budgets: {}, quotes: [], pricing: { ...DEFAULT_PRICING },
+    spendAuthorities: {}, budgets: {}, quotes: [], pricing: { table: PRICING_TABLE_ID },
   };
 }
 
@@ -90,6 +103,10 @@ export interface ShimOptions {
   fetchImpl?: typeof fetch;
   monthUsd?: number | null;
   log?: (line: string) => void;
+  /** docs/29: per-model price resolver (default: gateway/pricing.ts priceTable()) */
+  price?: (model: string) => ModelPrice;
+  /** docs/29: the version THIS build reports (GET /v1/app/latest answers it as current) */
+  appVersion?: string;
 }
 
 export class LocalGatewayShim {
@@ -97,9 +114,15 @@ export class LocalGatewayShim {
   private ledger: Ledger;
   private readonly file: string;
   url = "";
+  private readonly price: (model: string) => ModelPrice;
+  readonly sinkDir: string;
+  /** tokenised unauthenticated PUT targets (signed-URL stand-ins): token → where the bytes go + what they must be */
+  private readonly putTargets = new Map<string, { file: string; size?: number; sha256?: string; md5Base64?: string; contentType?: string; onDone?: () => void }>();
   constructor(private readonly o: ShimOptions) {
     mkdirSync(o.dir, { recursive: true });
     this.file = join(o.dir, "ledger.json");
+    this.sinkDir = join(o.dir, "sinks");
+    this.price = o.price ?? priceTable();
     this.ledger = this.load();
   }
   private now() { return (this.o.now ?? Date.now)(); }
@@ -184,9 +207,11 @@ export class LocalGatewayShim {
     };
   }
   available(): number | null { return this.meter().available_credit_usd as number | null; }
+  /** The price the ledger charges `model` at (docs/29 §1). */
+  priceFor(model: string): ModelPrice { return this.price(model); }
   charge(e: Omit<LedgerEntry, "id" | "at" | "usd" | "pricing">): LedgerEntry {
-    const p = this.ledger.pricing;
-    const usd = round6((e.inputTokens * p.inputPerMTokUsd + e.outputTokens * p.outputPerMTokUsd) / 1e6);
+    const p = this.price(e.upstreamModel);
+    const usd = costUsd(p, e);
     const entry: LedgerEntry = { id: `spend_${randomBytes(6).toString("hex")}`, at: this.now(), usd, pricing: { ...p }, ...e };
     this.ledger.entries.push(entry);
     this.write();
@@ -204,7 +229,7 @@ export class LocalGatewayShim {
     this.ledger.quotes.push({ at: this.now(), jobId, totalCents: planned + reserve });
     if (this.ledger.quotes.length > 200) this.ledger.quotes.splice(0, this.ledger.quotes.length - 200);
     this.write();
-    return { job_id: jobId, items: rows, planned_total_cents: planned, reserve_cents: reserve, total_cents: planned + reserve, pricing: "port-local-table/v1" };
+    return { job_id: jobId, items: rows, planned_total_cents: planned, reserve_cents: reserve, total_cents: planned + reserve, pricing: "port-local-quote-table/v1" };
   }
 
   // ── HTTP ────────────────────────────────────────────────────────────────
@@ -234,6 +259,11 @@ export class LocalGatewayShim {
       req.resume();
       return this.json(res, 404, { error: "account-plane-not-offered", message: "This self-hosted Videoclaw gateway has no account sign-in. Use its vc_ key." });
     }
+    // ── docs/29 unauthenticated surfaces (exactly the ones the original calls without a key) ──
+    let m0: RegExpExecArray | null;
+    if (method === "PUT" && (m0 = /^\/v1\/sinks\/put\/([0-9a-f]{48})$/.exec(path))) return this.sinkPut(req, res, m0[1]);
+    if (method === "POST" && path === "/v1/feedback/blocked") return this.feedbackSink(req, res, null, true); // sendBlockedFeedback: no authorization header
+    if (method === "GET" && path === "/v1/app/latest") { req.resume(); return this.appLatest(res, url.searchParams.get("channel")); } // startUpdateCheck: no authorization on the latest channel
     const auth = typeof req.headers.authorization === "string" ? /^Bearer\s+(.+)$/i.exec(req.headers.authorization.trim())?.[1] : undefined;
     const key = this.authenticate(auth ?? (typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined));
     if (!key) { req.resume(); return this.json(res, 401, { error: "invalid key" }); }
@@ -276,8 +306,110 @@ export class LocalGatewayShim {
       return this.json(res, 200, { job_id: jobId, ceiling_usd: ceiling });
     }
     if (method === "POST" && path === "/anthropic/v1/messages") return this.messages(req, res, key.id);
+    // ── docs/29: local sinks + upload intake + paid-tool refusal ──
+    if (method === "POST" && path === "/v1/feedback") return this.feedbackSink(req, res, key.id, false);
+    if ((m = /^\/v1\/telemetry\/(beacon|sessions\/([A-Za-z0-9._:-]{1,160})\/(entries|index)|jobs\/([A-Za-z0-9._-]{1,160})\/(log|final|final\/complete))$/.exec(path))) {
+      const expected = m[3] === "index" ? "PUT" : "POST";
+      if (method === expected) return this.telemetrySink(req, res, key.id, m);
+    }
+    if (method === "POST" && path === "/v1/uploads") return this.uploadIntake(req, res, key.id);
+    if (method === "POST" && (m = /^\/v1\/(mint_image|mint_video|embed|audio\/enhance|media\/pull|synth_voice|lipsync_footage|llm|model_call|qa_video|enumerate_profile|harness\/review|[a-z][a-z0-9_]{1,63})$/.exec(path))) {
+      req.resume();
+      return this.paidToolRefusal(res, m[1]);
+    }
     req.resume();
     return this.json(res, 404, { error: "not offered by the self-hosted gateway", path });
+  }
+
+  // ── docs/29: local sinks ───────────────────────────────────────────────
+  private sinkFile(kind: string, name: string): string {
+    const dir = join(this.sinkDir, kind);
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    return join(dir, name.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 160));
+  }
+  private stamp() { return `${new Date(this.now()).toISOString().replace(/[:.]/g, "-")}-${randomBytes(4).toString("hex")}`; }
+  private record(kind: string) { (this.ledger.sinks ??= {})[kind] = (this.ledger.sinks[kind] ?? 0) + 1; this.write(); }
+  private putUrl(target: { file: string; size?: number; sha256?: string; md5Base64?: string; contentType?: string; onDone?: () => void }): string {
+    const token = randomBytes(24).toString("hex");
+    this.putTargets.set(token, target);
+    return `${this.url}/v1/sinks/put/${token}`;
+  }
+  /** The signed-URL stand-in: one PUT per token, exact length / sha256 / md5 when the issuer bound them. */
+  private async sinkPut(req: IncomingMessage, res: ServerResponse, token: string): Promise<void> {
+    const t = this.putTargets.get(token);
+    if (!t) { req.resume(); return this.json(res, 404, { error: "unknown upload" }); }
+    let bytes: Buffer;
+    try { bytes = await this.body(req, 2 * 1024 * 1024 * 1024); } catch { return this.json(res, 413, { error: "too large" }); }
+    if (t.size !== undefined && bytes.length !== t.size) return this.json(res, 400, { error: "length mismatch" });
+    if (t.sha256 && createHash("sha256").update(bytes).digest("hex") !== t.sha256) return this.json(res, 400, { error: "sha256 mismatch" });
+    if (t.md5Base64 && createHash("md5").update(bytes).digest("base64") !== t.md5Base64) return this.json(res, 400, { error: "md5 mismatch" });
+    this.putTargets.delete(token);
+    writeFileSync(t.file, bytes, { mode: 0o600 });
+    t.onDone?.();
+    res.writeHead(200, { [SHIM_HEADER]: "1" }); res.end();
+  }
+  /** POST /v1/feedback (+ /blocked): the report lands in sinks/feedback/<reportId>.json; a screenshot gets a
+   *  tokenised PUT bound to the exact bytes the app declared (sendFeedback L57509-57536). */
+  private async feedbackSink(req: IncomingMessage, res: ServerResponse, keyId: string | null, blocked: boolean): Promise<void> {
+    let b: any; try { b = JSON.parse((await this.body(req, 64 * 1024 * 1024)).toString("utf8")); } catch { return this.json(res, 400, { error: "invalid json" }); }
+    if (!b || typeof b !== "object" || Array.isArray(b)) return this.json(res, 400, { error: "invalid report" });
+    const id = typeof b.reportId === "string" && /^[A-Za-z0-9._-]{1,128}$/.test(b.reportId) ? b.reportId : this.stamp();
+    const file = this.sinkFile(blocked ? "feedback-blocked" : "feedback", `${id}.json`);
+    writeFileSync(file, JSON.stringify({ receivedAt: new Date(this.now()).toISOString(), keyId, blocked, report: b }, null, 1), { mode: 0o600 });
+    this.record(blocked ? "feedback-blocked" : "feedback");
+    if (!blocked && b.screenshot === true && Number.isSafeInteger(b.screenshotBytes) && typeof b.screenshotSha256 === "string") {
+      const putUrl = this.putUrl({ file: this.sinkFile("feedback", `${id}.png`), size: b.screenshotBytes, sha256: b.screenshotSha256, onDone: () => this.record("feedback-screenshot") });
+      return this.json(res, 200, { ok: true, reportId: id, screenshotPutUrl: putUrl, screenshotPutHeaders: { "Content-Type": "image/png", "Content-Length": String(b.screenshotBytes), "x-goog-content-sha256": b.screenshotSha256 } });
+    }
+    return this.json(res, 200, { ok: true, reportId: id });
+  }
+  /** /v1/telemetry/*: each delivery is appended to sinks/telemetry/<kind>.jsonl (session index = latest per id);
+   *  a final-video upload gets a tokenised PUT bound to the declared size/sha256, completed by final/complete. */
+  private async telemetrySink(req: IncomingMessage, res: ServerResponse, keyId: string, m: RegExpExecArray): Promise<void> {
+    let b: any; try { b = JSON.parse((await this.body(req, 64 * 1024 * 1024)).toString("utf8") || "{}"); } catch { return this.json(res, 400, { error: "invalid json" }); }
+    const kind = m[1] === "beacon" ? "beacon" : m[3] ? `session-${m[3]}` : `job-${m[5].replace("/", "-")}`;
+    const subject = m[2] ?? m[4] ?? null;
+    if (kind === "job-final") {
+      const objectName = `final-${subject}-${this.stamp()}.mp4`;
+      const putUrl = this.putUrl({ file: this.sinkFile("telemetry-final", objectName), size: Number.isSafeInteger(b?.bytes) ? b.bytes : undefined, sha256: typeof b?.sha256 === "string" ? b.sha256 : undefined });
+      this.appendSink(kind, { keyId, subject, declared: { contentType: b?.contentType, bytes: b?.bytes, sha256: b?.sha256 }, object: objectName });
+      return this.json(res, 200, { putUrl, contentType: typeof b?.contentType === "string" ? b.contentType : "video/mp4", object: objectName });
+    }
+    this.appendSink(kind, { keyId, subject, body: b });
+    return this.json(res, 200, { ok: true });
+  }
+  private appendSink(kind: string, row: Record<string, unknown>) {
+    const file = this.sinkFile("telemetry", `${kind}.jsonl`);
+    writeFileSync(file, `${JSON.stringify({ at: new Date(this.now()).toISOString(), ...row })}\n`, { flag: "a", mode: 0o600 });
+    this.record(kind);
+  }
+  /** GET /v1/app/latest (startUpdateCheck L55921): this self-hosted gateway publishes exactly the build that is
+   *  running — the check answers {kind:"current"}. Nightly needs an invited account the shim never has → 404. */
+  private appLatest(res: ServerResponse, channel: string | null) {
+    if (channel === "nightly") return this.json(res, 404, { error: "nightly channel is not offered by the self-hosted gateway" });
+    const v = this.o.appVersion;
+    if (!v) return this.json(res, 404, { error: "no release feed configured" });
+    return this.json(res, 200, { version: v, minSupported: v, autoUpdate: false, notes: "Self-hosted Videoclaw port build (no newer release is published by this gateway).", self_hosted: true });
+  }
+  /** POST /v1/uploads (engine _gateway.upload): the bytes go to sinks/uploads via a tokenised PUT bound to the
+   *  declared size + md5 (the ticket contract backend#292). */
+  private async uploadIntake(req: IncomingMessage, res: ServerResponse, keyId: string): Promise<void> {
+    let b: any; try { b = JSON.parse((await this.body(req)).toString("utf8")); } catch { return this.json(res, 400, { error: "invalid json" }); }
+    if (typeof b?.filename !== "string" || !Number.isSafeInteger(b?.size_bytes) || b.size_bytes < 0) return this.json(res, 400, { error: "filename and size_bytes required" });
+    const uploadId = `up_${randomBytes(12).toString("hex")}`;
+    const contentType = typeof b.content_type === "string" ? b.content_type : "application/octet-stream";
+    const put_url = this.putUrl({ file: this.sinkFile("uploads", `${uploadId}-${b.filename}`), size: b.size_bytes, md5Base64: typeof b.md5_base64 === "string" ? b.md5_base64 : undefined, onDone: () => this.record("upload") });
+    this.appendSink("upload-ticket", { keyId, uploadId, filename: b.filename, size: b.size_bytes });
+    return this.json(res, 200, { upload_id: uploadId, put_url, headers: { "Content-Type": contentType } });
+  }
+  /** Paid generation tools: the MiniMax backend has no faithful equivalent of the gateway's paid tools
+   *  (mint_image = multi-reference nano-banana-2/edit, embed = Gemini multimodal embedding space, …; docs/29 §4),
+   *  so every one is refused BEFORE anything is reserved or submitted (`not_submitted: true` → the engine's
+   *  GatewayNotSubmittedError: nothing charged, never retried as accepted work). */
+  private paidToolRefusal(res: ServerResponse, tool: string) {
+    this.appendSink("paid-refusal", { tool });
+    res.writeHead(422, { "content-type": "application/json", [SHIM_HEADER]: "1", "x-should-retry": "false" });
+    res.end(JSON.stringify({ detail: { code: "TOOL_NOT_OFFERED", message: `This self-hosted Videoclaw gateway does not offer ${tool}: its model backend (MiniMax) has no equivalent for this paid tool. Nothing was charged.`, retryable: false, not_submitted: true } }));
   }
 
   /** /anthropic/v1/messages → MiniMax, metered. Credit is checked BEFORE the call (402 when exhausted); the
@@ -302,7 +434,13 @@ export class LocalGatewayShim {
     const stream = body?.stream === true;
     const doFetch = this.o.fetchImpl ?? fetch;
     const gate = providerGate(p.gateKey ?? p.name, p.maxConcurrency);
-    let inputTokens = 0, outputTokens = 0, status = 0;
+    let inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, cacheWriteTokens = 0, status = 0;
+    const usageIn = (u: any) => {
+      if (!u || typeof u !== "object") return;
+      inputTokens = Number(u.input_tokens ?? 0) || inputTokens;
+      cacheReadTokens = Number(u.cache_read_input_tokens ?? 0) || cacheReadTokens;
+      cacheWriteTokens = Number(u.cache_creation_input_tokens ?? 0) || cacheWriteTokens;
+    };
     await gate.run(async () => {
       const upstream = await withMiniMaxRetry(() => doFetch(`${p.baseUrl.replace(/\/+$/, "")}/v1/messages`, {
         method: "POST",
@@ -323,19 +461,19 @@ export class LocalGatewayShim {
             if (!line.startsWith("data:")) continue;
             try {
               const ev = JSON.parse(line.slice(5).trim());
-              if (ev?.type === "message_start") inputTokens = Number(ev.message?.usage?.input_tokens ?? 0) || inputTokens;
-              if (ev?.type === "message_delta") outputTokens = Number(ev.usage?.output_tokens ?? 0) || outputTokens;
+              if (ev?.type === "message_start") usageIn(ev.message?.usage);
+              if (ev?.type === "message_delta") { outputTokens = Number(ev.usage?.output_tokens ?? 0) || outputTokens; usageIn({ ...ev.usage, output_tokens: undefined }); }
             } catch {}
           }
         }
         res.end();
       } else {
         const text = await upstream.text();
-        try { const j = JSON.parse(text); inputTokens = Number(j?.usage?.input_tokens ?? 0) || 0; outputTokens = Number(j?.usage?.output_tokens ?? 0) || 0; } catch {}
+        try { const j = JSON.parse(text); usageIn(j?.usage); outputTokens = Number(j?.usage?.output_tokens ?? 0) || 0; } catch {}
         res.end(text);
       }
     });
-    if (status >= 200 && status < 300) this.charge({ kind: "model_call", keyId, model: requested || upstreamModel, upstreamModel, inputTokens, outputTokens, status });
+    if (status >= 200 && status < 300) this.charge({ kind: "model_call", keyId, model: requested || upstreamModel, upstreamModel, inputTokens, outputTokens, ...(cacheReadTokens ? { cacheReadTokens } : {}), ...(cacheWriteTokens ? { cacheWriteTokens } : {}), status });
   }
 }
 
