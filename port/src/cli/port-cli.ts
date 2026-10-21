@@ -10,6 +10,8 @@
 //   node dist/cli/port-cli.cjs doctor <engineDir> <workspaceDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs codex-handshake <codexExe>
 //   node dist/cli/port-cli.cjs run-bash "<command>"
+//   node dist/cli/port-cli.cjs minimax-config          (offline; key shown only as configured:true/false)
+//   VIDEOCLAW_MINIMAX_LIVE=1 node dist/cli/port-cli.cjs minimax-ping   (ONE real request via the ported helper path)
 // Every subcommand prints one JSON line `{ok, step, ...}` so results can be pasted back.
 import { mkdtempSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -23,6 +25,8 @@ import { assertInstalledEngineProductionContract, inspectInstalledEngineProducti
 import { CodexAppServerClient } from "../main/codex/app-server-client";
 import { runBash } from "../main/engine/run-bash";
 import { bootstrapTool } from "../main/platform";
+import { describeMiniMaxConfig, minimaxConfig } from "../main/llm/minimax";
+import { anthropicMessages, resolveHelperCreds } from "../main/llm/llm-route";
 
 const [, , cmd, a1, a2, a3] = process.argv;
 const out = (o: Record<string, unknown>) => console.log(JSON.stringify(o));
@@ -84,6 +88,14 @@ async function main() {
       case "run-bash": {
         const r = await runBash({ command: a1 }, { cwd: process.cwd(), env: process.env });
         return out({ ok: !r.isError, step: cmd, output: r.output.slice(-2000) });
+      }
+      case "minimax-config": return out({ ok: true, step: cmd, minimax: describeMiniMaxConfig(minimaxConfig()) });
+      case "minimax-ping": { // PORT-NEW live check; explicit opt-in so CI/tests never hit MiniMax
+        if (process.env.VIDEOCLAW_MINIMAX_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_MINIMAX_LIVE=1 to make a real MiniMax request" });
+        const creds = resolveHelperCreds({ llmRoute: "minimax", gatewayUrl: "" });
+        if (!creds) return out({ ok: false, step: cmd, error: "MINIMAX_API_KEY is not set" });
+        const r = await anthropicMessages(creds, { max_tokens: 256, messages: [{ role: "user", content: a1 || "Say hello in one short sentence." }] }, { timeoutMs: 60_000 });
+        return out({ ok: r.ok, step: cmd, minimax: describeMiniMaxConfig(minimaxConfig()), result: r, ms: Date.now() - t0 });
       }
       default:
         out({ ok: false, error: `unknown subcommand ${cmd}` });

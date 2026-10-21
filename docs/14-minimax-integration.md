@@ -1,7 +1,28 @@
 # 14 · MiniMax（MiniMax-M3.1-Flash）接入方案
 
-> 状态：调研 + 方案（尚未改代码）。日期：2026-10-21。
+> 状态：方案 (a) 已在 `port/` 落地（`port/src/main/llm/`），真实 key 冒烟已通过（见 §0）。日期：2026-10-21。
 > 本文 **不含任何密钥**。密钥只通过环境变量 `MINIMAX_API_KEY` 提供，禁止写入文件 / 日志 / git。
+
+## 0. 已验证 / 未验证（2026-10-21，box 上用真实 `MINIMAX_API_KEY`）
+
+**已验证（真实请求，均为单次、并发 1）**
+
+| 项 | 结果 |
+| --- | --- |
+| Base URL | **`https://api.minimaxi.com/anthropic`** → `POST /v1/messages` **HTTP 200**（第一个候选即成功，按约定未再请求 `api.minimax.cn` / `api.minimax.io`） |
+| 鉴权头 | **`x-api-key: $MINIMAX_API_KEY`** → 200；**`Authorization: Bearer $MINIMAX_API_KEY`** → 200（两者均可；Claude Agent SDK 的 `ANTHROPIC_AUTH_TOKEN` 走的就是 Bearer） |
+| 必需头 | `anthropic-version: 2023-06-01` + `content-type: application/json`（未测不带 version 的情况） |
+| 模型 | `model: "MiniMax-M3.1-Flash"` 被接受，响应 `model` 字段回显同名；`type:"message"`、`role:"assistant"`、`stop_reason:"end_turn"`、`usage`（含 `cache_read_input_tokens`）字段齐全 |
+| thinking | **不传 `thinking` 参数时，响应只有 `text` 块，没有 `thinking` 块**（output_tokens=3）；显式传 `thinking: {type:"enabled", budget_tokens:1024}` 时返回标准 `thinking` 块（含 `signature`）+ `text` 块，`usage.output_tokens_details.thinking_tokens` 有值。→ “强制 thinking” 至少在响应层面不一定可见，§2.1 的说法需修正为“可能在服务端隐式进行/不回传” |
+| port 代码路径 | `VIDEOCLAW_MINIMAX_LIVE=1 node port/dist/cli/port-cli.cjs minimax-ping`（走 `resolveHelperCreds` + `anthropicMessages` + 并发闸门/退避包装）→ `{ok:true, text:"Hello!"}` |
+
+**未验证**
+
+- [ ] `api.minimax.cn/anthropic`、`api.minimax.io/anthropic` 是否接受同一把 key（第一个候选已 200，按“单 URL 单请求、不轰炸”约定未测）。
+- [ ] Claude Agent SDK / `claude` CLI 指向 MiniMax 的端到端会话（工具调用、流式、`anthropic-beta` 头、prompt cache、subagent/haiku 后台请求）——box 上只有 darwin-arm64 的 `claude` 二进制，无法在 Linux 运行。
+- [ ] 真实 429/529 时的响应形态与 `retry-after` 头（退避逻辑仅用 mock 测试）。
+- [ ] `output_config.effort` 各档位、`thinking: disabled` → 400 的说法（本次未测）。
+- [ ] 图片输入、2000px/4.5MB 超限报错；`createLocalRuntime` 本体与 UI 选择器尚未移植到 port（见 §9）。
 
 ## 1. 结论速览
 
@@ -9,10 +30,10 @@
 | --- | --- |
 | 模型 ID | `MiniMax-M3.1-Flash`（大小写敏感；"minimax-m3.1-flash" 是真实模型，官方 ID 即此写法）。同系列另有 `MiniMax-M3` |
 | 主协议（采用） | **Anthropic Messages API 兼容**：`POST {BASE}/v1/messages` |
-| Base URL（中国站，团队给定） | `https://api.minimaxi.com/anthropic` |
+| Base URL（中国站，团队给定） | `https://api.minimaxi.com/anthropic`（**2026-10-21 真实 key 验证 200**，默认值） |
 | 其他官方 Base URL | 中国站文档现写 `https://api.minimax.cn/anthropic`；国际站 `https://api.minimax.io/anthropic`（三者 2026-10-21 实测均在线，未带 key 返回 401） |
 | 备用协议 | OpenAI 兼容 `POST {host}/v1/chat/completions`、OpenAI Responses 兼容（同一 key） |
-| 鉴权 | `x-api-key: $MINIMAX_API_KEY` 或 `Authorization: Bearer $MINIMAX_API_KEY`；**不需要 GroupId** |
+| 鉴权 | `x-api-key: $MINIMAX_API_KEY` 或 `Authorization: Bearer $MINIMAX_API_KEY`（**两者均已验证 200**）；**不需要 GroupId** |
 | 能力 | 文本 + 图片输入（官方另支持视频理解）、强制开启 thinking（不可关闭）、1M 上下文、最多 512K 输出 token、工具调用 |
 | **不支持** | **图片生成（文生图）**。M3.1-Flash 只“看图”不“出图”；出图需另接 MiniMax Image Generation 接口（独立模型/端点，见 §6） |
 | 环境变量 | `MINIMAX_API_KEY`（必需）；`MINIMAX_BASE_URL`（可选，默认 `https://api.minimaxi.com/anthropic`）；`MINIMAX_MODEL`（可选，默认 `MiniMax-M3.1-Flash`）；`MINIMAX_MAX_CONCURRENCY`（可选，默认 1） |
@@ -180,8 +201,19 @@ curl https://api.minimaxi.com/anthropic/v1/messages \
 
 ## 8. 待验证项（拿到授权后用真实 key 冒烟）
 
-- [ ] `api.minimaxi.com/anthropic`（团队给定）vs 文档当前写法 `api.minimax.cn/anthropic` 是否同一账号体系、是否都接受该 key。
+- [x] `api.minimaxi.com/anthropic` 接受该 key（x-api-key 与 Bearer 均 200）。`api.minimax.cn` / `api.minimax.io` 未测（见 §0）。
 - [ ] Claude Agent SDK（claude CLI）指向 MiniMax 后：工具调用、流式、`thinking` 块、prompt cache、`--replay-user-messages` 是否正常；是否有不兼容的 `anthropic-beta` 头导致 400。
 - [ ] Claude Code effort 级别 → MiniMax `output_config.effort` 的实际映射。
 - [ ] 图片 2000px / 4.5MB 限制的超限报错形态。
 - [ ] 文生图需求是否存在：如需要，另行接入 MiniMax Image Generation（`POST /v1/image_generation`，模型如 `image-01`，官方 10 RPM），不属于 M3.1-Flash。
+
+## 9. port 实现（方案 a，已落地）
+
+| 文件 | 内容 |
+| --- | --- |
+| `port/src/main/llm/minimax.ts` | PORT-NEW：`MINIMAX_DEFAULT_BASE_URL`/`MINIMAX_DEFAULT_MODEL`、`minimaxConfig(env)`（`MINIMAX_API_KEY` 必需；`MINIMAX_BASE_URL`/`MINIMAX_MODEL`/`MINIMAX_MAX_CONCURRENCY` 可选，并发钳制到 1..2）、`describeMiniMaxConfig`（只输出 configured:true/false，不回显 key）、`minimaxClaudeRuntimeEnv`（`ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN` + 全部模型别名 → MINIMAX_MODEL + 独立 `CLAUDE_CONFIG_DIR`，不带 gateway 的 `ANTHROPIC_CUSTOM_HEADERS`）、`ConcurrencyLimiter` + 进程级 `minimaxGate`、`withMiniMaxRetry`（429/529/`1002` 指数退避 2s→4s→8s→16s→32s + 抖动，优先 `retry-after`，最多 5 次；401/403/`1004`/`1008` 不重试 → `PROVIDER_CREDENTIAL_MISCONFIGURED`） |
+| `port/src/main/llm/llm-route.ts` | 原版逐行移植（差分测试对照 `app/reconstructed`）：`resolvedLlmRoute`、settings `llmRoute` 校验、`AGENT_STARTUP_ENV_DENYLIST`/`sanitizedAgentEnv`、`createLocalRuntime` 的 sdkEnv 预处理（`claudeSdkBaseEnv`）、gateway env 分支（`claudeRouteEnv`）、`resolveHelperCreds`、`anthropicMessages`；每处新增 `"minimax"` 兄弟分支。`sanitizedAgentEnv` 会剥掉 `MINIMAX_API_KEY`，因此 key 从**未清洗**的 env 读取后以 `ANTHROPIC_AUTH_TOKEN` 显式注入子进程。辅助调用对 minimax 强制 `body.model = MINIMAX_MODEL` 并经过闸门 + 退避 |
+| `port/src/cli/port-cli.ts` | `minimax-config`（离线）/ `minimax-ping`（需 `VIDEOCLAW_MINIMAX_LIVE=1`，单次真实请求） |
+| `port/test/minimax.test.ts` | 10 个测试，全部用本地 mock HTTP 服务，不访问真实 API |
+
+尚未接入：port 里还没有 `createLocalRuntime` / `AgentHost.sessionModel` / UI 路由选择器本体（原版这些模块尚未移植），接入时把 `claudeSdkBaseEnv()` + `engineEnv` + `claudeRouteEnv()` 按原顺序展开、`sessionModel` 用 `defaultSessionModel()` 即可；`ipc-contract.ts` 是生成文件，`PublicSettings.llmRoute` 仍为 `unknown`，未改。

@@ -21,3 +21,4 @@ npm run start      # electron .  → stub renderer listing window.videoclaw (184
 | `src/main/fake-backend.ts` | QA-fixture-derived fake (qaFixtures-E0ox5qGv.js), rest = logged stubs |
 | `src/main/platform/` | macOS→Windows platform abstraction (tested) |
 | `src/renderer/` | smoke-test page |
+| `src/main/llm/` | PORT-NEW MiniMax route (docs/14 方案 a): llmRoute "minimax", sanitizedAgentEnv/resolveHelperCreds/anthropicMessages ports, concurrency gate + 429/529 backoff |
