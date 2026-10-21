@@ -306,7 +306,8 @@ test("logger: secret-named fields and registered secret values are redacted ever
 
 test("shipped example providers file validates; settings type accepts provider routes", () => {
   const r = loadProviderRegistry({ file: join(process.cwd(), "config/llm-providers.example.json"), env: {} });
-  assert.deepEqual(r.names(), ["minimax", "my-anthropic-proxy", "deepseek", "azure-openai"]);
+  assert.deepEqual(r.names(), ["minimax", "minimax-openai", "my-anthropic-proxy", "deepseek", "azure-openai"]);
+  assert.equal(r.get("minimax-openai")!.chatMaxTokensField, "max_completion_tokens"); // verified live 2026-10-21 (docs/15 §0)
   assert.equal(r.get("minimax")!.agentEffort, "medium");
   assert.equal(r.get("minimax")!.baseUrl, "https://api.minimaxi.com/anthropic");
   assert.deepEqual(r.get("azure-openai")!.auth, { scheme: "header", header: "api-key", prefix: "" });

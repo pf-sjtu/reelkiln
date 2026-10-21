@@ -12,7 +12,7 @@
 //   node dist/cli/port-cli.cjs run-bash "<command>"
 //   node dist/cli/port-cli.cjs llm-providers           (offline; registered providers, keys only as configured:true/false)
 //   node dist/cli/port-cli.cjs llm-providers-validate [file]   (strict pre-deploy check of a providers file; exit 1 if invalid)
-//   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt]   (ONE real request via the generic helper path)
+//   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt] [image.png]   (ONE real request via the main-process route service)
 //   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
 //   node dist/cli/port-cli.cjs sqlite-check            (node:sqlite capability: runtime, SQLite version, minimums)
 //   node dist/cli/port-cli.cjs models-list [--provider ID] [--search Q] [--limit N]
@@ -34,7 +34,7 @@ import { CodexAppServerClient } from "../main/codex/app-server-client";
 import { runBash } from "../main/engine/run-bash";
 import { bootstrapTool } from "../main/platform";
 import { describeMiniMaxConfig, minimaxConfig } from "../main/llm/minimax";
-import { anthropicMessages, helperCredsForProvider } from "../main/llm/llm-route";
+import { LlmRouteService } from "../main/llm/route-service";
 import { describeProvider, getProviderRegistry, loadProviderRegistry, PROVIDERS_FILE_ENV } from "../main/llm/provider-registry";
 import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
 import { checkSqliteCapability } from "../main/models-dev/sqlite";
@@ -127,8 +127,18 @@ async function main() {
         if (!live) return out({ ok: false, step: cmd, error: `set VIDEOCLAW_LLM_LIVE=1 to make a real request` });
         if (!name) return out({ ok: false, step: cmd, error: "usage: llm-ping <provider> [prompt]" });
         const p = getProviderRegistry().resolveOrThrow(name);
-        const r = await anthropicMessages(helperCredsForProvider(p), { max_tokens: 256, messages: [{ role: "user", content: prompt || "Say hello in one short sentence." }] }, { timeoutMs: p.timeoutMs });
-        return out({ ok: r.ok, step: cmd, provider: describeProvider(p), result: r, ms: Date.now() - t0 });
+        // a3 (llm-ping only): optional image file → sent as an Anthropic image block, i.e. through the
+        // same anthropic→provider-protocol content conversion the app uses (docs/15 §3.3)
+        const image = cmd === "llm-ping" && a3 ? readFileSync(a3).toString("base64") : undefined;
+        const mediaType = a3 && /\.jpe?g$/i.test(a3) ? "image/jpeg" : "image/png";
+        const content = image
+          ? [{ type: "text", text: prompt || "Describe this image in one short sentence." }, { type: "image", source: { type: "base64", media_type: mediaType, data: image } }]
+          : prompt || "Say hello in one short sentence.";
+        // Through the main-process route service (a video pinned to this provider), not a side path.
+        const service = new LlmRouteService({ settings: () => ({ gatewayUrl: "", llmRoute: name }), profileDir: () => tmpdir() });
+        const r = await service.sessionHelperComplete({ llmRoute: name }, { max_tokens: 512, messages: [{ role: "user", content }] }, { timeoutMs: p.timeoutMs, deadlineMs: 180_000 });
+        const result = r.ok ? { ok: true, text: r.text.slice(0, 400), chars: r.text.length } : r;
+        return out({ ok: r.ok, step: cmd, provider: describeProvider(p), image: image ? { bytes: Buffer.from(image, "base64").length, mediaType } : undefined, result, ms: Date.now() - t0 });
       }
       default:
         out({ ok: false, error: `unknown subcommand ${cmd}` });
