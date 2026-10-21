@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
-import { createRealHandlers, finishPendingLocalReset, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
+import { createRealHandlers, ipcTracking, finishPendingLocalReset, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
 import { VCMEDIA_SCHEME } from "./media/media.generated";
 import { handleVcmedia } from "./media/media-ipc";
 import { smokeScript } from "./smoke";
@@ -45,7 +45,8 @@ const log = (m: string) => console.log(m);
 const backend = createFakeBackend(sendToRenderer, log);
 
 function registerIpc() {
-  const { ipc } = trackIpcRequests(ipcMain);
+  const { ipc, pendingExcept } = trackIpcRequests(ipcMain);
+  ipcTracking.pendingExcept = pendingExcept;
   const record = (ch: string, a: unknown[]) => {
     if (!EVENT_LOG || !/^(session:event|session:changed|permission:request)$/.test(ch)) return;
     try { appendFileSync(EVENT_LOG, redactText(JSON.stringify({ t: new Date().toISOString(), ch, payload: a[0] })) + "\n"); } catch {}

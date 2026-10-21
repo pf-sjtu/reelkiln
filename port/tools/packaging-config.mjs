@@ -77,7 +77,10 @@ export function builderConfig(o) {
     npmRebuild: false,
     nodeGypRebuild: false,
     buildDependenciesFromSource: false,
-    publish: null,
+    // docs/33 M16 T3: a generic publish target so electron-builder writes resources/app-update.yml
+    // (updaterCacheDirName) — electron-updater's download helper reads it even when createAppUpdater sets the feed
+    // URL itself (L2257 setFeedURL `${gateway}/v1/app/updates/${channel}/`). Nothing is uploaded (publish: "never").
+    publish: [{ provider: "generic", url: "https://videoclaw-gw-650303209435.us-central1.run.app/v1/app/updates/latest/" }],
     linux: {
       target: p.os === "linux" ? p.targets.map((t) => ({ target: t, arch: [o.arch] })) : undefined,
       category: "AudioVideo",

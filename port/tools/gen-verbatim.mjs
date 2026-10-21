@@ -857,6 +857,30 @@ export const SPECS = [
     exports: ["selectedUpdateChannel", "createUpdatePreferences", "releaseChannel", "startUpdateCheck"],
   },
   {
+    // docs/33 M16 T3: the in-app updater (createAppUpdater L2223) over electron-updater + quiesceForUpdate (L2433).
+    out: "src/main/update/app-updater.generated.ts",
+    imports: [
+      'import semver from "semver";',
+      'import { releaseChannel } from "./update-check.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function createAppUpdater\(options\) \{$/, /^}$/),
+      slice("main", /^function quiesceForUpdate\(ipc, channels, windows\) \{$/, /^}$/),
+    ],
+    subs: [],
+    exports: ["createAppUpdater", "quiesceForUpdate"],
+  },
+  {
+    // docs/33 M16 T3: the quit/restart coordinator (assessQuit L56360, QuitCoordinator L56419) — Restart to update.
+    out: "src/main/quit/quit-coordinator.generated.ts",
+    imports: [],
+    slices: () => [
+      sliceUntil("main", /^const INTERRUPTING = /, /^const START_TIMEOUT_MS = /),
+    ],
+    subs: [],
+    exports: ["INTERRUPTING", "videoTitles", "blockerLine", "assessQuit", "QUIT_BUTTON_INDEX", "quitDialogOptions", "QuitCoordinator"],
+  },
+  {
     // docs/29: CharacterSheetBuilder (L19216) — the engine dry-run plan + gateway quote and the paid build
     // (engine tools/build_character_sheet.py → POST /v1/mint_image through the scoped gateway capability)
     out: "src/main/characters/character-sheet.generated.ts",

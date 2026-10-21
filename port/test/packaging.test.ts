@@ -22,7 +22,7 @@ test("builderConfig (linux): asar app = dist + package.json only; SDK as extraRe
   assert.deepEqual(c.extraResources.map((e: any) => [e.from, e.to]), [["/v/sdk/node_modules", `${SDK_RESOURCE_DIR}/node_modules`]]);
   assert.equal(c.npmRebuild, false, "no native addons (node:sqlite is builtin)");
   assert.notEqual(c.productName, "Videoclaw", "separate userData from the original app");
-  assert.equal(c.publish, null);
+  assert.deepEqual(c.publish, [{ provider: "generic", url: "https://videoclaw-gw-650303209435.us-central1.run.app/v1/app/updates/latest/" }]); // docs/33: app-update.yml for electron-updater
   assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1" }).extraResources, []);
   // docs/21 M1: the unmodified original renderer ships as resources/renderer-original
   assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1", originalRendererDir: "/r/app/out/renderer" }).extraResources.map((e: any) => [e.from, e.to]), [["/r/app/out/renderer", "renderer-original"]]);

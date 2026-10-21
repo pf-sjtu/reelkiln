@@ -35,7 +35,7 @@
 //   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
 //   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
 //   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
-import { app, BrowserWindow, dialog, nativeImage, session as electronSession, shell, systemPreferences, utilityProcess } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, session as electronSession, shell, systemPreferences, utilityProcess } from "electron";
 import { appendFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -97,6 +97,10 @@ import { AgentGatewayProxy } from "./gateway/agent-gateway-proxy";
 import { Outbox } from "./telemetry/outbox.generated";
 import { sessionIndexProjection } from "./telemetry/session-index.generated";
 import { createUpdatePreferences, selectedUpdateChannel, startUpdateCheck } from "./update/update-check.generated";
+import { createAppUpdater, quiesceForUpdate } from "./update/app-updater.generated";
+import { QuitCoordinator, quitDialogOptions, QUIT_BUTTON_INDEX, videoTitles } from "./quit/quit-coordinator.generated";
+import { PROD_GATEWAY_URL } from "./settings/settings-store";
+import { INVOKE_CHANNELS, SEND_CHANNELS } from "../shared/ipc-contract";
 import { configureSheetEnv } from "./characters/sheet-env";
 import { CharacterSheetBuilder } from "./characters/character-sheet.generated";
 import { voiceTools } from "./attachments/voice-tools";
@@ -122,6 +126,13 @@ export const mediaRoots: { chatMediaRoot: (sessionId: string) => string | null }
 export const PORT_AGENT_ENGINE_ENV = "VIDEOCLAW_PORT_AGENT_ENGINE";
 /** Real handlers for ORIGINAL send (ipc.on) channels; index.ts routes them. */
 export const sendHandlers: Partial<Record<string, Handler>> = {};
+/** trackIpcRequests().pendingExcept (L2429) — index.ts binds it before createRealHandlers (installBlocker L62552). */
+export const ipcTracking: { pendingExcept: (channel: string) => boolean } = { pendingExcept: () => false };
+/** PORT-NEW harness seam (docs/33 M16 T3): a local HTTPS release feed standing in for the release gateway. The
+ *  original enables in-app updates only for an installed Mac build on its trusted https gateway (L2227-2231); with
+ *  this env set, that gate is evaluated as platform "darwin" against the harness feed, and electron-updater's real
+ *  Linux driver (AppImageUpdater) does the check / download / quitAndInstall. Never set in normal runs. */
+export const PORT_UPDATE_HARNESS_ENV = "VIDEOCLAW_PORT_UPDATE_HARNESS_GATEWAY";
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
@@ -316,8 +327,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     exposeCharacter: (c: any) => { if (c) exposeCharacters(mediaCapabilities as any, [c]); return c; }, // L60422
     log,
   };
+  let latestLocal: ReturnType<typeof localChannelHandlers> | null = null;
   const bindLocal = (host?: AgentHost) => {
-    const local = localChannelHandlers({ ...localDeps, host });
+    const local = localChannelHandlers({ ...localDeps, host }); latestLocal = local;
     Object.assign(handlers, local.invoke);
     Object.assign(sendHandlers, local.send);
   };
@@ -654,32 +666,139 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         const c: any = characterStore.list(cwd).find((x: any) => x.slug === slug && x.state === "pending");
         return c ? { slug: c.slug, name: c.name, dir: c.dir } : null;
       };
-      // updates (L62572-62600): preferences always; the release-feed check only against the self-hosted gateway
-      let currentUpdateInfo: unknown = null;
-      const updateSettings = () => ({ ...llm.settings.get(), gatewayUrl: accountService.activeSettings().gatewayUrl });
-      let updateChecker: { checkNow(): Promise<unknown>; invalidate(): void; stop(): void } | null = null;
+      // updates (L62529-62600): createAppUpdater (darwin + packaged + trusted https release gateway only, so
+      // "disabled" on Linux exactly like the original) + preferences + the release-feed check (self-hosted gateway,
+      // or the PORT-NEW harness feed — see PORT_UPDATE_HARNESS_ENV).
+      let currentUpdateInfo: any = null;
+      const harnessFeed = String(process.env[PORT_UPDATE_HARNESS_ENV] ?? "").replace(/\/+$/, "") || null;
+      if (harnessFeed) log(`[port] UPDATE HARNESS: release gateway = ${harnessFeed} (PORT-NEW harness seam; darwin gate evaluated as darwin)`);
+      const updateGateway = () => harnessFeed ?? accountService.activeSettings().gatewayUrl;
+      const updateSettings = () => ({ ...llm.settings.get(), gatewayUrl: updateGateway() });
+      const updateChannel = () => selectedUpdateChannel(updateSettings(), accountService.account) as "nightly" | "latest";
+      let updateChecker: { checkNow(): Promise<any>; invalidate(): void; stop(): void } | null = null;
+      let updateShutdownStarted = false;
+      // readQuitState (L62681). PORT adaptations: workingSessionIds = sessions with status "running"; the composer
+      // attachment drafts / active voice transcription counters are not tracked by the port host (0 / false).
+      const readQuitState = () => {
+        const sessions: any[] = h.listSessions() as any[];
+        const renderer: any = BrowserWindow.getAllWindows().some((w) => !w.isDestroyed()) ? latestLocal?.quitState() ?? null : null;
+        const working = sessions.filter((x) => x.status === "running").map((x) => x.sessionId);
+        const pending: any[] = h.listPendingInteractions() as any[];
+        const awaiting = sessions.filter((x) => x.status === "awaiting_permission");
+        const titleOf = new Map(sessions.map((x) => [x.sessionId, x.title ?? ""]));
+        return {
+          runningTurns: working.length,
+          pendingInteractions: Math.max(pending.length, awaiting.length),
+          renderActive: editorRender.state() != null,
+          previewActive: hfPreview.activeJobId() !== undefined,
+          recordingVoice: renderer?.recordingVoice === true,
+          transcribingVoice: false,
+          unsentDraft: renderer?.unsentDraft === true,
+          stagedAttachments: 0,
+          copyingAttachments: 0,
+          videos: {
+            working: videoTitles(working, titleOf),
+            waiting: videoTitles([...pending.map((row) => row.request?.sessionId || undefined), ...awaiting.map((x) => x.sessionId)], titleOf),
+            copying: videoTitles([], titleOf),
+          },
+        };
+      };
+      let appUpdater: any = null;
+      // quitCoordinator (L62722) — the "update" purpose (Restart to update). PORT gap: before-quit (plain Cmd+Q)
+      // is not routed through it yet.
+      const quitCoordinator: any = new QuitCoordinator({
+        readState: readQuitState,
+        beginInstall: () => appUpdater?.beginInstall() === true,
+        confirm: async (assessment: any) => {
+          const parent = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed()) ?? null;
+          if (parent) { if (parent.isMinimized()) parent.restore(); parent.focus(); }
+          const options = quitDialogOptions(assessment) as any;
+          const { response } = parent ? await dialog.showMessageBox(parent, options) : await dialog.showMessageBox(options);
+          return response === QUIT_BUTTON_INDEX;
+        },
+        beginShutdown: (purpose: string) => {
+          log(`[port] quit: begin shutdown (${purpose})`);
+          if (purpose === "update") {
+            updateShutdownStarted = true;
+            quiesceForUpdate(ipcMain, [...INVOKE_CHANNELS, ...SEND_CHANNELS], BrowserWindow.getAllWindows());
+          }
+          h.closeAll();
+          try { editorRender.shutdown?.(); } catch {}
+          try { hfPreview.shutdown(); } catch {}
+          try { m12.proxy?.close(); } catch {}
+          void Promise.resolve((m12.outbox as any)?.stop?.())
+            .catch((err: unknown) => console.error("outbox shutdown failed", err))
+            .finally(() => {
+              quitCoordinator.shutdownSettled();
+              if (!appUpdater?.finishInstall()) app.quit();
+            });
+        },
+        log: (message: string) => log(`[quit] ${message}`),
+      });
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const electronUpdater = require("electron-updater");
+      appUpdater = createAppUpdater({
+        driver: electronUpdater.autoUpdater,
+        channel: updateChannel,
+        requestHeaders: async (channel: string) => {
+          if (channel !== "nightly") return {};
+          throw new Error("Nightly access is unavailable."); // the port has no signed-in account (canUseNightlyUpdates false)
+        },
+        currentVersion: app.getVersion(),
+        gatewayUrl: updateGateway(),
+        trustedGatewayUrl: harnessFeed ?? PROD_GATEWAY_URL, // defaultGatewayUrlForChannel(CHANNEL)
+        packaged: app.isPackaged,
+        platform: harnessFeed ? "darwin" : process.platform,
+        publish: (state: unknown) => push("app:update:state-changed", state),
+        installBlocker: () =>
+          updateChannel() === "nightly"
+            ? { message: "Nightly access is unavailable.", offerInstaller: false }
+            : ipcTracking.pendingExcept("app:update:install")
+              ? { message: "Wait for the current request to finish, then restart to update.", offerInstaller: true }
+              : quitCoordinator.currentPhase() !== "idle"
+                ? { message: "Videoclaw is already closing.", offerInstaller: true }
+                : null,
+        beginQuit: () => { quitCoordinator.requestQuit("update"); },
+        recoverInstall: () => {
+          log("[update] Native installation failed; reopening the current app after orderly shutdown.");
+          app.relaunch();
+          app.quit();
+        },
+      });
       const updatePreferences: any = createUpdatePreferences({
         settings: updateSettings,
         account: () => accountService.account,
         refreshAccount: () => accountService.resolveAccount(),
         save: (preference: unknown) => { llm.settings.patch({ updateChannelPreference: preference }); },
-        canSwitch: () => false, // appUpdater (createAppUpdater) is darwin-only → canSwitchChannel() never true
-        invalidate: () => updateChecker?.invalidate(),
+        canSwitch: () => appUpdater?.canSwitchChannel() === true,
+        invalidate: () => { appUpdater?.invalidate(); if (!currentUpdateInfo?.blocked) { currentUpdateInfo = null; push("app:update", null); } updateChecker?.invalidate(); }, // invalidateAppUpdate L60478 (clearUpdateNotice)
         installedVersion: app.getVersion(),
       });
-      if (m12.shimUrl) {
+      if (m12.shimUrl || harnessFeed) {
         void shimReady.then(() => {
           updateChecker = startUpdateCheck({
             currentVersion: app.getVersion(),
-            channel: () => selectedUpdateChannel(updateSettings(), accountService.account) as "nightly" | "latest", // updateChannel
-            settings: () => accountService.activeSettings(),
+            channel: updateChannel,
+            settings: () => ({ ...accountService.activeSettings(), gatewayUrl: updateGateway() }),
             onTick: () => {}, // bootstrap.checkForEngineUpdate (engine re-check cadence) — not ported
-            onInfo: (info: unknown) => { currentUpdateInfo = info; push("app:update", info); },
+            onInfo: (info: any) => { currentUpdateInfo = info; appUpdater?.observeRelease(info); push("app:update", info); },
             onClear: () => { currentUpdateInfo = null; push("app:update", null); },
           });
           app.on("will-quit", () => updateChecker?.stop());
         });
       }
+      // L61341-61369
+      handlers["app:update:state"] = () => appUpdater?.state() ?? { status: "disabled", version: null, percent: null, message: "Updates are starting." };
+      const refreshInstallRelease = async () => {
+        const result = await updateChecker?.checkNow();
+        if (!result || result.kind === "failed") { appUpdater?.checkFailed(); return false; }
+        if (result.kind === "current") { appUpdater?.observeRelease(null); return false; }
+        return result.info.autoUpdate === true;
+      };
+      handlers["app:update:download"] = async () =>
+        (await refreshInstallRelease()) && currentUpdateInfo ? appUpdater?.download(currentUpdateInfo.version) : appUpdater?.state();
+      handlers["app:update:install"] = async () => ((await refreshInstallRelease()) ? appUpdater?.install() : appUpdater?.state());
+      void updateShutdownStarted;
       handlers["app:update:get"] = () => currentUpdateInfo; // L61329
       const credentialsVault: any = credentials;
       Object.assign(handlers, remainingChannels({

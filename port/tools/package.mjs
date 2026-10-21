@@ -47,7 +47,7 @@ if (!args.includes("--no-sdk")) {
 const outDir = resolve(root, opt("out") ?? "release");
 const originalRendererDir = join(root, "..", "app", "out", "renderer");
 const quickstartsDir = join(root, "..", "app", "resources", "quickstarts");
-const config = builderConfig({ platform, arch, sdkDir, version: pkg.version, outDir, originalRendererDir: existsSync(join(originalRendererDir, "index.html")) ? originalRendererDir : null, quickstartsDir: existsSync(join(quickstartsDir, "catalog.json")) ? quickstartsDir : null });
+const config = builderConfig({ platform, arch, sdkDir, version: opt("version") ?? pkg.version, outDir, originalRendererDir: existsSync(join(originalRendererDir, "index.html")) ? originalRendererDir : null, quickstartsDir: existsSync(join(quickstartsDir, "catalog.json")) ? quickstartsDir : null });
 const targetsArg = opt("targets");
 if (targetsArg) config[platform].target = targetsArg.split(",").map((t) => ({ target: t, arch: [arch] }));
 
