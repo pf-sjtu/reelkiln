@@ -3,6 +3,7 @@
 //   invoke session:send(sessionId, request)        → host.sendMessage(sessionId, req) (original L61772)
 //   invoke session:interrupt(sessionId, reason)    → host.interrupt(sessionId, reason) (original L61780)
 //   invoke session:list()                          → sessions.json (read-only registry) + host sessions
+//   invoke session:history(sessionId)              → host.getHistory(sessionId)        (original L61747; docs/24)
 //   push   session:event {sessionId, event}        (original emitter L61049)
 //   push   session:changed <SessionMeta[]>         (original emit.sessionsChanged(listSessions()))
 import type { InvokeChannel } from "../../shared/ipc-contract";
@@ -23,11 +24,12 @@ export function agentHostEmit(push: Push, allSessions: () => unknown[]): AgentHo
     sessionsChanged: () => { push("session:changed", allSessions()); },
   };
 }
-export function agentIpcHandlers(host: Pick<AgentHost, "createSession" | "sendMessage" | "interrupt">, allSessions: () => unknown[]): Partial<Record<InvokeChannel, (...a: any[]) => unknown>> {
+export function agentIpcHandlers(host: Pick<AgentHost, "createSession" | "sendMessage" | "interrupt" | "getHistory">, allSessions: () => unknown[]): Partial<Record<InvokeChannel, (...a: any[]) => unknown>> {
   return {
     "session:create": (req: unknown) => host.createSession((req && typeof req === "object" ? req : {}) as any),
     "session:send": (sessionId: unknown, request: unknown) => host.sendMessage(String(sessionId), request as any),
     "session:interrupt": (sessionId: unknown, reason: unknown) => host.interrupt(String(sessionId), reason === undefined ? undefined : String(reason)),
     "session:list": () => allSessions(),
+    "session:history": (sessionId: unknown) => host.getHistory(String(sessionId)), // noteSessionOpened (L61748) NOT PORTED
   };
 }

@@ -228,7 +228,57 @@ export const SPECS = [
       slice("main", /^const PNG_SIGNATURE = /, /^}$/, /^class ComposerAttachmentStore \{/),
     ],
     subs: [],
-    exports: ["voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFileTo", "friendlyCopyError", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
+    exports: ["voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFile", "streamCopyFileTo", "HEIC_RE$1", "convertHeicToJpg", "friendlyCopyError", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
+  },
+  {
+    // docs/24 (B): characters:list (L61860) → host.listCharacters → the ORIGINAL CharacterStore (L11564-11792).
+    out: "src/main/characters/character-store.generated.ts",
+    imports: [
+      'import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";',
+      'import { join, resolve } from "node:path";',
+      'import { assetKind } from "../attachments/asset-kinds.generated";',
+      'import { convertHeicToJpg, HEIC_RE$1, streamCopyFile } from "../attachments/composer-attachments.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const META = "meta\.json";$/, /^}$/, /^class CharacterStore \{/),
+    ],
+    subs: [],
+    exports: ["META", "SHEET", "REFS", "PENDING", "CharacterStore"],
+  },
+  {
+    // docs/24 (C1): quickstart:catalog (L61215) → the ORIGINAL QuickstartCatalogStore (L30772) with its
+    // validation (validateRawCatalog / validateRoot), latency ring and channel verifier (L30375-31373),
+    // canonicalStudioJson (L1213) and the build-channel gateway helpers (workbookContents chunk).
+    out: "src/main/quickstart/quickstart-catalog.generated.ts",
+    imports: [
+      'import { createHash, createPublicKey, verify } from "node:crypto";',
+      'import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";',
+      'import { dirname, join, resolve } from "node:path";',
+      'import { isDeepStrictEqual } from "node:util";',
+    ],
+    slices: () => [
+      slice("wb", /^const PROD_GATEWAY_URL = /, /^const STAGING_GATEWAY_URL = /),
+      slice("wb", /^const normalizeGatewayUrl = /, /^const normalizeGatewayUrl = /),
+      slice("wb", /^function envForGatewayUrl\(/, /^}$/),
+      slice("main", /^function canonicalStudioJson\(value\) \{/, /^}$/),
+      slice("main", /^const QUICKSTART_RENDERER_LATENCY_STAGES = \[/, /^}$/, /^class QuickstartCatalogStore \{/),
+    ],
+    subs: [],
+    exports: ["envForGatewayUrl", "recordQuickstartLatency", "beginQuickstartLatency", "measureQuickstartLatency", "quickstartLatencySnapshot", "quickstartLatencyMark", "validateRawCatalog", "validateRoot", "sameQuickstartCatalogView", "QuickstartCatalogStore"],
+  },
+  {
+    // docs/24 (C2): session titles — NEW_VIDEO_TITLE (L266), redact (L1966-1994), sessionTitleText (L22987),
+    // fallbackSessionTitle (L34758). proposeSessionTitle (L23002) itself is claude-code-only (see session-title.ts).
+    out: "src/main/agent/session-title.generated.ts",
+    imports: ['import { deriveTitle } from "./session-assembly.generated";'],
+    slices: () => [
+      slice("main", /^const NEW_VIDEO_TITLE = "New video";$/, /^const NEW_VIDEO_TITLE = /),
+      slice("main", /^const REDACTIONS = \[$/, /^}$/, /^function redact\(serialized\) \{/),
+      slice("main", /^function sessionTitleText\(text2\) \{/, /^}$/),
+      slice("main", /^function fallbackSessionTitle\(text2\) \{/, /^}$/),
+    ],
+    subs: [],
+    exports: ["NEW_VIDEO_TITLE", "REDACTIONS", "redact", "sessionTitleText", "fallbackSessionTitle"],
   },
 ];
 

@@ -26,6 +26,8 @@ test("builderConfig (linux): asar app = dist + package.json only; SDK as extraRe
   assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1" }).extraResources, []);
   // docs/21 M1: the unmodified original renderer ships as resources/renderer-original
   assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1", originalRendererDir: "/r/app/out/renderer" }).extraResources.map((e: any) => [e.from, e.to]), [["/r/app/out/renderer", "renderer-original"]]);
+  // docs/24: the shipped bundled Quickstart catalog → resources/quickstarts (original candidate root L61021)
+  assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1", quickstartsDir: "/r/app/resources/quickstarts" }).extraResources.map((e: any) => [e.from, e.to]), [["/r/app/resources/quickstarts", "quickstarts"]]);
   assert.throws(() => builderConfig({ platform: "beos" as any, arch: "x64", version: "1" }));
 });
 

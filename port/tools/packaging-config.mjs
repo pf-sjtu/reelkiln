@@ -48,6 +48,7 @@ export function sdkResourceFilter(os, arch) {
  *   null = package WITHOUT the SDK (agent path then needs VIDEOCLAW_CLAUDE_AGENT_SDK / ~/.videoclaw).
  *   originalRendererDir (docs/21 M1) = the shipped, unmodified app/out/renderer → resources/renderer-original
  *   (the window's default page, see src/main/renderer-entry.ts).
+ *   quickstartsDir (docs/24) = the shipped app/resources/quickstarts → resources/quickstarts.
  */
 export function builderConfig(o) {
   const p = PLATFORMS[o.platform];
@@ -55,6 +56,9 @@ export function builderConfig(o) {
   const extraResources = [
     ...(o.sdkDir ? [{ from: `${o.sdkDir}/node_modules`, to: `${SDK_RESOURCE_DIR}/node_modules`, filter: sdkResourceFilter(p.os, o.arch) }] : []),
     ...(o.originalRendererDir ? [{ from: o.originalRendererDir, to: ORIGINAL_RENDERER_RESOURCE_DIR, filter: ["**/*", "!**/*.map"] }] : []),
+    // docs/24: the shipped bundled Quickstart catalog (app/resources/quickstarts) → resources/quickstarts,
+    // the original QuickstartCatalogStore candidate root join(process.resourcesPath, "quickstarts") (L61021)
+    ...(o.quickstartsDir ? [{ from: o.quickstartsDir, to: "quickstarts" }] : []),
   ];
   return {
     appId: "com.videoclaw.port",

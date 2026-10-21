@@ -29,7 +29,9 @@
 // docs/21 M2 added engine sessions, job binding, permission cards, sessions.json; docs/22 M3/M4 add
 //   the original VersionStore + JobWatchers (job snapshots, versions, approve/finalize) and the
 //   ComposerAttachmentStore (stage → materialize on Send).
-// DEFERRED: display transcript / session:history, resume, spend gates, titles, studio MCP,
+// docs/24: session titles (fallback naming verbatim + PORT-NEW provider-route proposal, session-title.ts)
+//   and session:history (the original's no-SDK-transcript branch → []; transcript replay NOT PORTED).
+// DEFERRED: display transcript / SDK history replay, resume, spend gates, studio MCP,
 //   steer/queued turns, retry, setModel/setPermissionMode, materials ledger, done-accounting.
 import { randomUUID } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
@@ -46,6 +48,8 @@ import {
   makeEngineCanUseTool, makeEngineHooks, prepareEngineSpawn, providerRouteHint, sniffJobIds,
   type CanUseToolResult, type EnginePolicyHost, type EngineSessionDeps, type PermissionRequest,
 } from "./engine-session";
+import { fallbackSessionTitle, NEW_VIDEO_TITLE } from "./session-title.generated";
+import { PORT_PROVIDER_TITLES_ENV, proposeProviderSessionTitle, type HelperComplete } from "./session-title";
 
 export type SessionStatus = "idle" | "running" | "awaiting_permission" | "error";
 export interface AgentSessionMeta {
@@ -93,6 +97,9 @@ export interface AgentHostRouteService {
   newSessionLlmRoute(o?: { runtime?: string; agentHarness?: string }): LlmRouteId | undefined;
   llmRouteReadiness(meta?: SessionMetaLike): Promise<Record<string, unknown> | undefined>;
   sessionAgentRuntime(meta: SessionMetaLike): Promise<AgentRuntimeHandle>;
+  /** docs/24: the video's resolved route (L40823) and a helper call on its behalf (title proposal). */
+  sessionLlmRoute?(meta: SessionMetaLike): LlmRouteId;
+  sessionHelperComplete?(meta: SessionMetaLike | undefined, body: Record<string, unknown>, opts: { timeoutMs: number; deadlineMs?: number; signal?: AbortSignal }): ReturnType<HelperComplete>;
 }
 export interface AgentHostDeps {
   emit: AgentHostEmit;
@@ -114,6 +121,8 @@ export interface AgentHostDeps {
    *  engine env + assembled session context + project hooks + the original permission model, Bash
    *  open, first-message job binding. Unset = the docs/19 confined read-only chat. */
   engine?: EngineSessionDeps;
+  /** docs/24: PORT-NEW provider-route title proposals (default on; VIDEOCLAW_PORT_PROVIDER_TITLES=0 disables). */
+  providerTitles?: boolean;
   /** docs/21 M2: persist the host's session metas (sessions.json writeRegistry L36199). */
   persist?: (rows: Array<Record<string, unknown>>) => void;
   /** docs/22 M3/M4: the registry directory (original dirname(registryFile) = userData). When set
@@ -156,6 +165,9 @@ interface Session {
   /** pinSessionContextEpoch: one context epoch per video (persisted). */
   contextEpoch?: string;
   lastUserText?: string;
+  /** nameSession / cancelSessionTitle (L41772-41805). */
+  titleRequest?: AbortController;
+  titleCancellation?: number;
 }
 interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void }
 
@@ -308,6 +320,15 @@ export class AgentHost {
     if (req.clientTurnId && store && store.checkTurn(sessionId, req.clientTurnId, req.text, req.attachmentIds) === "duplicate") return { submitted: true, duplicate: true, attachmentIds: [...req.attachmentIds] };
     if (req.clientTurnId && s.clientTurns.has(req.clientTurnId)) return { submitted: true, duplicate: true, attachmentIds: [...req.attachmentIds] };
     if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(sessionId)) throw new ComposerDeliveryError("This video is still working. Wait for the reply or press Stop.");
+    // L41460-41476: the first text (or first attachment's name) names the video before delivery
+    const hasText2 = Boolean(req.text.trim());
+    const firstAttachmentName = !hasText2 && store ? store.list(sessionId, req.clientTurnId).find((a: any) => req.attachmentIds.includes(a.id))?.name : undefined;
+    const canName = (!s.meta.titleOrigin && s.meta.title === NEW_VIDEO_TITLE) || (hasText2 && s.meta.titleOrigin === "attachment");
+    if (canName && !req.text.startsWith("✅") && (hasText2 || firstAttachmentName)) {
+      const titleSource = hasText2 ? req.text : fallbackSessionTitle(firstAttachmentName) === NEW_VIDEO_TITLE ? "Attached file" : firstAttachmentName;
+      this.nameSession(s, titleSource, false, hasText2 ? "fallback" : "attachment");
+    }
+    const titleCancellation = s.titleCancellation;
     const limit = this.d.maxConcurrentTurns ?? 1;
     if (this.activeTurns() >= limit) throw new ComposerDeliveryError(`Another video is still working (this port runs ${limit} agent turn${limit === 1 ? "" : "s"} at a time). Wait for it or press Stop there.`);
     // claim the turn slot before any await so two concurrent sends cannot both pass the gate
@@ -370,8 +391,59 @@ export class AgentHost {
     (s.turnTimer as any).unref?.();
     rt.queue.push({ type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() });
     rt.wake?.(); rt.wake = null;
+    // L41757-41763: once delivered, a fallback/attachment title may be replaced by a proposed one
+    if (req.text.trim() && (s.meta.titleOrigin === "fallback" || s.meta.titleOrigin === "attachment") && !req.text.startsWith("✅")) {
+      this.nameSession(s, req.text, titleCancellation === s.titleCancellation);
+    }
     if (useStore) { try { store.markTurnSubmitted(sessionId, req.clientTurnId, req.text, req.attachmentIds); } catch (e) { this.log.warn("agent.attachments.mark_submitted_failed", { sessionId, error: e }); } } // L41715
     return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] };
+  }
+
+  /** cancelSessionTitle (L41772). */
+  cancelSessionTitle(s: Session): void { s.titleCancellation = (s.titleCancellation ?? 0) + 1; s.titleRequest?.abort(); }
+  /** nameSession (L41776). The original requests a title only for route "claude-code" (+ subscription
+   *  login, local runtime, claude-code harness); the port does the same request for PORT-NEW provider
+   *  routes instead (session-title.ts) — claude-code proposals are NOT PORTED (no login probe). */
+  private nameSession(s: Session, text2: string, mayRequest: boolean, origin: "fallback" | "attachment" = "fallback"): void {
+    const fallback = fallbackSessionTitle(text2);
+    if ((!s.meta.titleOrigin && s.meta.title === NEW_VIDEO_TITLE) || (s.meta.titleOrigin === "attachment" && origin === "fallback")) {
+      s.meta.title = fallback;
+      s.meta.titleOrigin = origin;
+      this.d.emit.sessionsChanged(this.listSessions());
+      this.saveRegistry();
+    }
+    const route = this.d.service.sessionLlmRoute?.({ llmRoute: s.meta.llmRoute, agentHarness: "claude-code" }) ?? s.meta.llmRoute;
+    const providerRoute = typeof route === "string" && route !== "claude-code" && route !== "gateway";
+    if (!mayRequest || s.meta.titleOrigin !== "fallback" || s.meta.title !== fallback || this.sessions.get(s.meta.sessionId) !== s
+      || (s.meta.agentHarness ?? "claude-code") !== "claude-code" || !providerRoute || this.d.providerTitles === false || !this.d.service.sessionHelperComplete) return;
+    const controller = new AbortController();
+    s.titleRequest = controller;
+    const meta: SessionMetaLike = { llmRoute: s.meta.llmRoute, agentHarness: "claude-code" };
+    this.log.info("agent.title.request", { sessionId: s.meta.sessionId, llmRoute: route });
+    void proposeProviderSessionTitle(text2, controller, (body, opts) => this.d.service.sessionHelperComplete!(meta, body, opts))
+      .then(({ title, reason }) => {
+        if (!title || controller.signal.aborted || this.sessions.get(s.meta.sessionId) !== s || s.meta.titleOrigin !== "fallback" || s.meta.title !== fallback) {
+          this.log.info("agent.title.kept_fallback", { sessionId: s.meta.sessionId, reason: reason ?? (title ? "superseded" : "no title") });
+          return;
+        }
+        s.meta.title = title;
+        s.meta.titleOrigin = "automatic";
+        this.saveRegistry();
+        this.d.emit.sessionsChanged(this.listSessions());
+        this.log.info("agent.title.automatic", { sessionId: s.meta.sessionId, chars: title.length });
+      })
+      .finally(() => { if (s.titleRequest === controller) s.titleRequest = undefined; });
+  }
+  /** getHistory (L43698) — docs/24 (B). The port keeps no display transcript and starts every runtime
+   *  without a persisted SDK session (meta.sdkSessionId is never set), so every video takes the
+   *  original's `!s.meta.sdkSessionId` branch: historyToEvents([], <empty display index>) = [].
+   *  NOT PORTED: display-transcript + SDK/Codex transcript replay, restoreFailedTurn/restoreHistoryState,
+   *  publishMaterials. Unknown ids throw like mustGet (L51008). */
+  async getHistory(sessionId: string): Promise<SessionEvent[]> {
+    const s = this.mustGet(sessionId);
+    if (!s.meta.sdkSessionId) return [];
+    this.log.warn("agent.history.replay_not_ported", { sessionId });
+    return [];
   }
 
   private loadSdk() { return (this.sdk ??= this.d.loadSdk().catch((e) => { this.sdk = undefined; throw e; })); }
@@ -621,9 +693,14 @@ export class AgentHost {
     // else → deny ("Denied by user" when no message). docs/23: found by the M5 UI-e2e (the card's answer
     // was being turned into a deny).
     const input = pending.request.input as Record<string, unknown>;
-    if (response?.behavior === "answers") pending.resolve({ behavior: "allow", updatedInput: { ...input, answers: response.answers } });
-    else if (response?.behavior === "allow") pending.resolve({ behavior: "allow", updatedInput: input });
-    else pending.resolve({ behavior: "deny", message: response?.message ?? "Denied by user" });
+    let decision: CanUseToolResult;
+    if (response?.behavior === "answers") decision = { behavior: "allow", updatedInput: { ...input, answers: response.answers } };
+    else if (response?.behavior === "allow") decision = { behavior: "allow", updatedInput: input };
+    else decision = { behavior: "deny", message: response?.message ?? "Denied by user" };
+    // docs/24: what canUseTool hands back to the SDK (shape only — no answer text is logged)
+    const answers = response?.behavior === "answers" && response.answers && typeof response.answers === "object" ? Object.keys(response.answers as object).length : 0;
+    this.log.info("agent.permission.decision", { sessionId: pending.sessionId, requestId, tool: pending.request.toolName, behavior: decision.behavior, answers });
+    pending.resolve(decision);
   }
   /** listPendingInteractions (L38511) → interaction:replayPending. */
   listPendingInteractions(): Array<{ kind: "permission"; request: PermissionRequest; order: number }> {

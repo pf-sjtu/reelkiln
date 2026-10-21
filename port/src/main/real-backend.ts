@@ -32,6 +32,9 @@
 //   file:saveItemAs / file:revealItem / file:openPath. docs/22 M4: intake:pickFiles,
 //   attachment:stage/list/ownership/remove/retry/destination (+ push attachment:changed) → the
 //   verbatim ComposerAttachmentStore (attachments/composer-attachments.generated.ts).
+//   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
+//   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
+//   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
 import { app, dialog, shell, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -56,6 +59,20 @@ import { claudeCodeExecutableFor, loadClaudeAgentSdk } from "./llm/agent-sdk";
 import { accountSnapshot, bootstrapStatus, replayPendingInteractions, workflowSubmitEligibility } from "./home-boot";
 import type { EngineSessionDeps } from "./agent/engine-session";
 import { createMediaCapabilities, exposeJobSnapshot, fileIpcHandlers, smokeDialog } from "./media/media-ipc";
+import { CharacterStore } from "./characters/character-store.generated";
+import { createQuickstartCatalog } from "./quickstart/quickstart-ipc";
+import { PORT_PROVIDER_TITLES_ENV } from "./agent/session-title";
+
+/** exposeCharacters (L60415): grant each character's sheet + refs to vcmedia. */
+export function exposeCharacters<T extends { sheetPath?: string; refs: string[] }>(media: { grant(p: string, s: string): boolean; grantMany(p: string[], s: string): void }, characters: T[]): T[] {
+  for (const character of characters) {
+    media.grant(character.sheetPath ?? "", "character");
+    media.grantMany(character.refs, "character");
+  }
+  return characters;
+}
+/** absCwd (L60293). */
+export const absCwd = (cwd: string) => cwd.replace(/^~(?=$|\/)/, homedir());
 
 /** docs/22 M3: the main-process media capability registry (original L60408) behind vcmedia://. */
 export const mediaCapabilities = createMediaCapabilities();
@@ -145,6 +162,11 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     killGroup: (pgid) => { try { killTree(pgid, "SIGKILL"); } catch {} }, // original: process.kill(-pgid,"SIGKILL")
     log: (kind, detail) => log(`[main-log] ${kind} ${detail}`),
   });
+  const characterStore = new CharacterStore(); // AgentHost.characterStore (L35028)
+  const quickstart = createQuickstartCatalog({
+    packaged: app.isPackaged, env: process.env, resourcesPath: process.resourcesPath ?? "", appPath: app.getAppPath(), userData: app.getPath("userData"),
+    grant: (p, s) => mediaCapabilities.grant(p, s), push, log: (kind, detail) => log(`[main-log] ${kind} ${detail}`),
+  });
   let registryTimer: ReturnType<typeof setTimeout> | null = null;
   let pendingRows: () => Array<Record<string, unknown>> = () => [];
   const saveRegistry = () => { // saveRegistry L36125: 250 ms debounce
@@ -165,6 +187,10 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     "client:list": () => registry.listClients(),
     "client:create": (name: unknown) => registry.createClient(name, saveRegistry),
     "interaction:replayPending": () => undefined,
+    // docs/24 (B): host.listCharacters(absCwd(cwd)) = characterStore.list (L45016)
+    "characters:list": (cwd: unknown) => exposeCharacters(mediaCapabilities as any, characterStore.list(absCwd(cwd as string))),
+    // docs/24 (C1): original L61215 over the bundled catalog
+    "quickstart:catalog": () => quickstart.handlers["quickstart:catalog"](),
     // docs/22 M3/M4: file:* + intake:pickFiles (original L61917-62001, L62157)
     ...(fileIpcHandlers({
       dialog: smokeDialog({ showSaveDialog: (o) => dialog.showSaveDialog(o), showOpenDialog: (o) => dialog.showOpenDialog(o as any) }, process.env, log),
@@ -217,6 +243,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         service: llm.service,
         loadSdk: async () => { const l = await loadClaudeAgentSdk(); log(`[port] Claude Agent SDK ${l.version} from ${l.source}`); return { sdk: l.sdk, version: l.version, executable: claudeCodeExecutableFor(l.packageDir) }; },
         sessionsRoot: join(app.getPath("userData"), "agent-sessions"),
+        providerTitles: process.env[PORT_PROVIDER_TITLES_ENV] !== "0",
         tools: agentToolsFromEnv(process.env[PORT_AGENT_TOOLS_ENV]),
         // PORT-NEW: VIDEOCLAW_PORT_TURN_TIMEOUT_MS overrides the per-turn safety net (engine default 20 min)
         ...(Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) > 0 ? { turnTimeoutMs: Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) } : {}),
