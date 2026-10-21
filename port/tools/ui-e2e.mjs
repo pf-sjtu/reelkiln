@@ -32,9 +32,11 @@ const CDP_PORT = Number(opt("--port", "9351"));
 const PROJECT = opt("--project", "S1 UI e2e");
 const TURN_TIMEOUT_MS = Number(opt("--turn-timeout-ms", String(26 * 60_000)));
 const ATTACH_VIA = opt("--attach-via", "drop"); // drop | picker
-const STOP_AFTER = opt("--stop-after"); // e.g. "attach" for a $0 UI check without sending
+const STOP_AFTER = opt("--stop-after"); // "attach" ($0 UI check) | "quickstart" | "card" (stop once an answered question card is acknowledged)
 const ANSWER_CARD = !argv.includes("--no-answer-card");
 const TASTE_WAIT_MS = Number(opt("--taste-wait-ms", String(6 * 60_000)));
+const CHECK_QUICKSTART = argv.includes("--check-quickstart"); // docs/24: open the original Quickstarts gallery after home
+const TITLE_WAIT_MS = Number(opt("--title-wait-ms", String(90_000)));
 if (!opt("--run") || !opt("--engine-home")) { console.error("usage: ui-e2e.mjs --run RUN_DIR --engine-home SRC_HOME [--appimage PATH]"); process.exit(2); }
 if (!process.env.MINIMAX_API_KEY) { console.error("MINIMAX_API_KEY not set"); process.exit(2); }
 if (existsSync(RUN)) { console.error(`${RUN} exists; use a fresh dir`); process.exit(2); }
@@ -45,7 +47,9 @@ mkdirSync(UD, { recursive: true }); mkdirSync(SHOTS, { recursive: true }); mkdir
 cpSync(join(SRC, ".config", "videoclaw-port", "engine-current.json"), join(UD, "engine-current.json"));
 for (const d of [".cache", ".local", ".npm"]) if (existsSync(join(SRC, d))) execFileSync("cp", ["-al", join(SRC, d), RUN]);
 execFileSync("bash", [join(REPO, "tools", "accept_fixtures.sh"), IN], { stdio: "ignore" });
-const BRIEF = "我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.5–2.5 s；只用 music.mp3 做音轨（不要素材原声）；不要字幕、不要叠加、不要任何付费工具。渲染成片。";
+const BRIEF_DEFAULT = "我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.5–2.5 s；只用 music.mp3 做音轨（不要素材原声）；不要字幕、不要叠加、不要任何付费工具。渲染成片。";
+// docs/24: --brief-file overrides the S1 brief (e.g. a brief that makes the agent ask an AskUserQuestion first)
+const BRIEF = opt("--brief-file") ? readFileSync(resolve(opt("--brief-file")), "utf8").trim() : BRIEF_DEFAULT;
 const FILES = ["clip_a.mp4", "clip_b.mp4", "clip_c.mp4", "music.mp3"].map((f) => join(IN, f));
 
 const LOG = join(OUT, "cdp-log.jsonl");
@@ -76,9 +80,10 @@ let exited = false; child.on("exit", (c) => { exited = true; say(`app exited ${c
 const target = await waitForPageTarget(CDP_PORT, { timeoutMs: 120_000, match: (t) => t.type === "page" && /(app\/out\/renderer|renderer-original)\/index\.html$/.test(t.url) });
 const cdp = await Cdp.connect(target.webSocketDebuggerUrl, (o) => log(o));
 await cdp.send("Page.enable"); await cdp.send("Runtime.enable");
-const consoleErrors = [];
-cdp.on("Runtime.consoleAPICalled", (p) => { if (p.type === "error") consoleErrors.push(p.args.map((a) => a.value ?? a.description).join(" ").slice(0, 300)); });
-cdp.on("Runtime.exceptionThrown", (p) => consoleErrors.push(String(p.exceptionDetails?.exception?.description ?? p.exceptionDetails?.text).slice(0, 300)));
+const consoleErrors = []; const consoleFull = [];
+const CONSOLE_LOG = join(OUT, "console.jsonl"); // docs/24: every renderer console error / exception, untruncated
+cdp.on("Runtime.consoleAPICalled", (p) => { if (p.type === "error") { const m = p.args.map((a) => a.value ?? a.description).join(" "); consoleErrors.push(m.slice(0, 300)); consoleFull.push(m); appendFileSync(CONSOLE_LOG, JSON.stringify({ t: Date.now() - t0, kind: "console.error", text: m }) + "\n"); } });
+cdp.on("Runtime.exceptionThrown", (p) => { const m = String(p.exceptionDetails?.exception?.description ?? p.exceptionDetails?.text); consoleErrors.push(m.slice(0, 300)); consoleFull.push(m); appendFileSync(CONSOLE_LOG, JSON.stringify({ t: Date.now() - t0, kind: "exception", text: m, url: p.exceptionDetails?.url, line: p.exceptionDetails?.lineNumber }) + "\n"); });
 say(`page target ${target.url}`);
 
 // ---- read-only DOM helpers -------------------------------------------------------------------
@@ -112,7 +117,54 @@ async function click(desc, selector, o = {}) {
 const sessions = () => readJson(join(UD, "sessions.json")) ?? { sessions: [], clients: [] };
 const events = () => { try { return readFileSync(join(OUT, "events.jsonl"), "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)); } catch { return []; } };
 
-const summary = { started: new Date().toISOString(), mode: APPIMAGE ? "AppImage" : "dev", steps, driven: [], notDriven: [], fallbacksToIpc: [] };
+// ---- docs/24 (A): the original AskUserQuestion card, answered like a user ---------------------
+/** first .q-option of every question, then the real "Answer" (.q-submit) — all real mouse events. */
+async function answerQuestionCard(phase) {
+  if (!ANSWER_CARD || !(await find(".question-card .q-submit"))) return null;
+  const n = summary.questionCards.length + 1;
+  await shot(`${phase === "taste" ? "09a" : "05q"}-question-card-${n}`);
+  const nq = await cdp.eval(`document.querySelectorAll(".question-card .question").length`);
+  const picked = [];
+  for (let i = 0; i < nq; i++) {
+    const o = await cdp.eval(`(() => { const q = document.querySelectorAll(".question-card .question")[${i}]; const b = q && q.querySelector(".q-option"); if (!b) return null; b.scrollIntoView({ block: "nearest" }); const r = b.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height, label: b.innerText.trim().slice(0, 60) }; })()`);
+    if (!o) continue;
+    const p = center(o); log({ action: "click", desc: `question ${i + 1} first option`, at: p, element: o });
+    await mouseClick(cdp, p.x, p.y); picked.push(o.label); await sleep(300);
+  }
+  await shot(`${phase === "taste" ? "09b" : "05r"}-question-card-${n}-selected`);
+  const reqEv = [...events()].reverse().find((e) => e.ch === "permission:request" && e.payload?.sessionId === sid && e.payload?.toolName === "AskUserQuestion");
+  await click("question card Answer", ".question-card .q-submit");
+  if (!summary.driven.some((d) => /AskUserQuestion card/.test(d.element))) drove("AskUserQuestion card (.question-card): first .q-option per question + 'Answer' (.q-submit)", "click");
+  const card = { phase, questions: nq, picked, atMs: Date.now(), requestId: reqEv?.payload?.requestId ?? null, toolUseId: reqEv?.payload?.toolUseId ?? null };
+  summary.questionCards.push(card);
+  say(`answered question card ${n} (${phase}) ${JSON.stringify(picked)}`);
+  return card;
+}
+/** Was the answer received as allow+answers (not a decline)? Events after the click + main's decision line. */
+function answerVerdict(card) {
+  const after = events().filter((e) => e.ch === "session:event" && e.payload?.sessionId === sid && Date.parse(e.t) >= card.atMs - 2000).map((e) => ({ t: e.t, ...e.payload.event }));
+  const toolEnd = after.find((e) => e.kind === "tool_end" && e.toolUseId === card.toolUseId);
+  const resolved = after.find((e) => e.kind === "permission_resolved" && e.requestId === card.requestId);
+  const texts = after.filter((e) => e.kind === "thinking" || e.kind === "assistant_text").map((e) => String(e.text));
+  const DECLINE = /declin|denied by user|user (?:has )?(?:rejected|dismissed)|拒绝|没有回答|未回答/i;
+  const declinedMentioned = texts.some((t) => DECLINE.test(t));
+  const pickedLabelsEchoed = card.picked.filter((l) => texts.some((t) => t.includes(l.split("\n")[0].slice(0, 24))));
+  const decisions = [...readFileSync(mainLog, "utf8").matchAll(/^\{[^\n]*"event":"agent\.permission\.decision"[^\n]*$/gm)].map((m) => JSON.parse(m[0])).filter((d) => d.requestId === card.requestId);
+  const decision = decisions.pop() ?? null;
+  return {
+    permissionResolved: !!resolved, toolEnd: toolEnd ? { isError: toolEnd.isError, terminal: toolEnd.terminal } : null,
+    mainDecision: decision && { behavior: decision.behavior, answers: decision.answers, tool: decision.tool },
+    declinedMentioned, pickedLabelsEchoed, textsAfter: texts.length, firstTextsAfter: texts.slice(0, 3).map((t) => t.slice(0, 500)),
+    accepted: !!resolved && !!toolEnd && toolEnd.isError === false && !declinedMentioned && decision?.behavior === "allow" && decision?.answers > 0,
+  };
+}
+async function settleVerdict(card, ms = 180_000) { // wait for the tool_end + the agent's next words (or the turn's end)
+  const ts = Date.now(); let v;
+  while (Date.now() - ts < ms) { v = answerVerdict(card); const done = events().some((e) => e.ch === "session:event" && e.payload?.sessionId === sid && Date.parse(e.t) >= card.atMs && e.payload.event?.kind === "result"); if ((v.toolEnd && v.textsAfter > 0) || done) break; await sleep(1500); }
+  card.verdict = answerVerdict(card); say(`answer verdict ${JSON.stringify(card.verdict).slice(0, 700)}`); return card.verdict;
+}
+
+const summary = { started: new Date().toISOString(), mode: APPIMAGE ? "AppImage" : "dev", steps, driven: [], notDriven: [], fallbacksToIpc: [], questionCards: [] };
 const drove = (el, how) => summary.driven.push({ element: el, how });
 let sid = null, jobId = null;
 try {
@@ -123,6 +175,16 @@ try {
   await shot("01-home");
   const homeText = await bodyText();
   verdict("home", /What are we making today\?/.test(homeText) && /New video/.test(homeText) && !/Welcome to Videoclaw/.test(homeText), { composer: !!(await find("textarea.new-video-composer")) });
+  if (CHECK_QUICKSTART) {
+    // docs/24 (C1): sidebar "Quickstarts" → original gallery → quickstart:catalog; "Loading Quickstarts…" must give way to cards
+    await click("sidebar Quickstarts", "button.quickstart-entry"); drove("sidebar 'Quickstarts' (button.quickstart-entry)", "click → original quickstart:catalog");
+    const card = await waitFor("quickstart cards (or the error card)", async () => (await find(".qs-gallery .qs-card")) ?? (await find(".qs-state-card")), { timeoutMs: 20_000 }).catch(() => null);
+    await sleep(800);
+    await shot("01b-quickstarts");
+    const qs = await cdp.eval(`(() => ({ loading: !!document.querySelector(".qs-loading"), error: (document.querySelector(".qs-state-card")||{}).innerText || null, cards: [...document.querySelectorAll(".qs-gallery .qs-card")].map((c) => (c.querySelector("h3,h2,.qs-card-title")||c).innerText.split("\\n")[0].slice(0, 80)), images: document.querySelectorAll(".qs-gallery img").length, filters: [...document.querySelectorAll(".qs-filters button")].map((b) => b.innerText.trim()).slice(0, 12) }))()`);
+    verdict("quickstart_catalog", !!card && !qs.loading && !qs.error && qs.cards.length > 0, qs);
+    if (STOP_AFTER === "quickstart") throw Object.assign(new Error("stop-after quickstart"), { planned: true });
+  }
 
   // 2. project + video ------------------------------------------------------------------------
   await click("Projects + (Create project)", "button.new-client"); drove("sidebar 'Create project' + (button.new-client)", "click");
@@ -166,7 +228,7 @@ try {
   await shot("04-brief-typed");
   await click("Send", "button.send-btn"); drove("composer Send (button.send-btn)", "click");
   const tSend = Date.now();
-  await waitFor("brief bubble in transcript", async () => (await bodyText()).includes("6.5 秒的竖屏"), { timeoutMs: 30_000 });
+  await waitFor("brief bubble in transcript", async () => (await bodyText()).includes(BRIEF.slice(0, 12)), { timeoutMs: 30_000 });
   verdict("brief_send", typed === BRIEF, { typedMatches: typed === BRIEF });
 
   // 5. stream ---------------------------------------------------------------------------------
@@ -182,6 +244,12 @@ try {
       log({ controlsDuringTurn });
     }
     if (result) break;
+    const card = await answerQuestionCard("main");
+    if (card) {
+      await settleVerdict(card);
+      verdict(`question_card_${summary.questionCards.length}`, card.verdict.accepted, card.verdict);
+      if (STOP_AFTER === "card") throw Object.assign(new Error("stop-after card"), { planned: true });
+    }
     await sleep(2000);
   }
   if (!result) throw new Error("turn timeout");
@@ -189,6 +257,13 @@ try {
   await sleep(2000);
   await shot("05b-turn-done");
   jobId = sessions().sessions.find((s) => s.sessionId === sid)?.jobId ?? null;
+  // docs/24 (C2): the video's title — fallback right after Send (original nameSession), then the proposed one
+  const titleRow = await waitFor("proposed title (titleOrigin automatic)", async () => { const r = sessions().sessions.find((x) => x.sessionId === sid); return r?.titleOrigin === "automatic" ? r : null; }, { timeoutMs: TITLE_WAIT_MS }).catch(() => sessions().sessions.find((x) => x.sessionId === sid));
+  const titleInSidebar = titleRow?.title ? await cdp.eval(`[...document.querySelectorAll("aside, nav, .sidebar, [class*=sidebar]")].some((e) => (e.innerText || "").includes(${JSON.stringify(String(titleRow.title).slice(0, 30))}))`) : false;
+  const titleChanges = events().filter((e) => e.ch === "session:changed").map((e) => (e.payload || []).find((m) => m.sessionId === sid)).filter(Boolean).map((m) => `${m.titleOrigin ?? "-"}:${m.title}`).filter((v, i, a) => a.indexOf(v) === i);
+  summary.title = { title: titleRow?.title, titleOrigin: titleRow?.titleOrigin ?? null, notNewVideo: !!titleRow?.title && titleRow.title !== "New video", inSidebarDom: titleInSidebar, sequence: titleChanges };
+  say(`title ${JSON.stringify(summary.title)}`);
+  await shot("05c-title");
   verdict("stream", !!result && !result.isError, { turnS: Math.round((Date.now() - tSend) / 1000), toolStarts: evs.filter((e) => e.kind === "tool_start").length, textDeltas: evs.filter((e) => e.kind === "text_delta").length, domTextChanges: growth, numTurns: result.numTurns, isError: result.isError, jobId, controlsDuringTurn });
 
   // 6. play in the original Output panel player -----------------------------------------------
@@ -239,30 +314,23 @@ try {
     if (tasteResult || (!tasteStarted && Date.now() - tTaste > 20_000)) break;
     // the taste-capture turn ends in the original AskUserQuestion card (.question-card): answer it from
     // the UI like a user — first option of every question, then "Answer" (permission:respond).
-    if (ANSWER_CARD && !summary.tasteCapture.cardAnswered && await find(".question-card .q-submit")) {
-      await shot("09a-question-card");
-      const nq = await cdp.eval(`document.querySelectorAll(".question-card .question").length`);
-      const picked = [];
-      for (let i = 0; i < nq; i++) {
-        const o = await cdp.eval(`(() => { const q = document.querySelectorAll(".question-card .question")[${i}]; const b = q && q.querySelector(".q-option"); if (!b) return null; b.scrollIntoView({ block: "nearest" }); const r = b.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height, label: b.innerText.trim().slice(0, 60) }; })()`);
-        if (!o) continue;
-        const p = center(o); log({ action: "click", desc: `question ${i + 1} first option`, at: p, element: o });
-        await mouseClick(cdp, p.x, p.y); picked.push(o.label); await sleep(300);
-      }
-      await click("question card Answer", ".question-card .q-submit"); drove("AskUserQuestion card (.question-card): first .q-option per question + 'Answer' (.q-submit)", "click");
-      summary.tasteCapture.cardAnswered = { questions: nq, picked };
-      say(`answered question card ${JSON.stringify(picked)}`);
+    if (!summary.tasteCapture.cardAnswered) {
+      const card = await answerQuestionCard("taste");
+      if (card) { summary.tasteCapture.cardAnswered = { questions: card.questions, picked: card.picked }; summary.tasteCapture.answerVerdict = await settleVerdict(card); verdict("taste_question_card", card.verdict.accepted, card.verdict); if (STOP_AFTER === "card") break; }
     }
     await sleep(2000);
   }
   await shot("09-after-taste-turn");
-  Object.assign(summary.tasteCapture, { started: tasteStarted, finished: !!tasteResult, isError: tasteResult?.isError ?? null, waitedS: Math.round((Date.now() - tTaste) / 1000), endedBy: tasteResult ? "result" : tasteStarted ? "app quit (teardown) after --taste-wait-ms" : "not started" });
-  say(`taste-capture ${JSON.stringify(summary.tasteCapture)}`);
+  Object.assign(summary.tasteCapture, { started: tasteStarted, finished: !!tasteResult, isError: tasteResult?.isError ?? null, waitedS: Math.round((Date.now() - tTaste) / 1000), endedBy: tasteResult ? "result" : summary.tasteCapture.cardAnswered && STOP_AFTER === "card" ? "stop-after card (answer acknowledged)" : tasteStarted ? "app quit (teardown) after --taste-wait-ms" : "not started" });
+  say(`taste-capture ${JSON.stringify(summary.tasteCapture).slice(0, 800)}`);
 } catch (e) {
   if (e?.planned) say(String(e.message)); else { summary.error = String(e?.stack ?? e); say(`ERROR ${summary.error}`); }
   try { await shot("99-error"); } catch {}
 } finally {
   summary.sessionId = sid; summary.jobId = jobId; summary.consoleErrors = consoleErrors.slice(0, 20);
+  // docs/24 (B): the two TypeErrors every M5 run hit (original bundle lines)
+  summary.consoleErrorCount = consoleErrors.length;
+  summary.knownTypeErrors = { "index-D5K1mOs0.js:31748": consoleFull.filter((m) => /index-D5K1mOs0\.js:31748/.test(m)).length, "index-D5K1mOs0.js:39778": consoleFull.filter((m) => /index-D5K1mOs0\.js:39778/.test(m)).length };
   summary.notDriven = [
     { what: "LLM route selection", why: "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)" },
     { what: "native GTK save dialog of file:saveItemAs", why: "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real" },

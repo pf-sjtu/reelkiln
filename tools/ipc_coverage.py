@@ -4,6 +4,8 @@
 Reads artifacts/manifests/ipc-channels.json (machine-extracted from the original bundle) and
 greps the port sources for handler/push registrations. Categories:
   real      - served by a ported/PORT-NEW real implementation (real-backend / llm-runtime / agent-ipc / media-ipc)
+  real-partial - real handler with the original's return shape, but only some original branches ported
+                 (listed in PARTIAL below with the reason; docs/24)
   real-env  - real only when a PORT-NEW env var is set (bootstrap:run), fake fixture otherwise
   fixture   - fake-backend.ts returns a canned value copied from the original QA fixtures
   stub      - registered but returns undefined / only logs (NOT IMPLEMENTED)
@@ -21,6 +23,8 @@ key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
 assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
 real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts")))
 real_env = {"bootstrap:run"}
+# docs/24: session:history serves the original's no-SDK-transcript branch ([]); transcript replay is NOT PORTED
+PARTIAL = {"session:history": "no display/SDK transcript replay (historyToEvents over [] only)"}
 fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()
 for f in (R / "port/src/main").rglob("*.ts"):
@@ -31,6 +35,7 @@ for c in chans:
     if d == "M→R": cat = "push-real" if ch in pushes else "push-none"
     elif d == "—": cat = "local"
     elif ch in real_env: cat = "real-env"
+    elif ch in real and ch in PARTIAL: cat = "real-partial"
     elif ch in real: cat = "real"
     elif ch in fixture: cat = "fixture"
     else: cat = "stub"
@@ -44,4 +49,4 @@ for r in rows: g.setdefault(r["channel"].split(":")[0], []).append(r)
 for k, v in g.items():
     cnt = collections.Counter(r["category"] for r in v)
     print(f"{k}\t{len(v)}\t" + ", ".join(f"{a}={b}" for a, b in sorted(cnt.items())) + "\t" +
-          " ".join(r["channel"].split(":", 1)[1] for r in v if r["category"] in ("real", "real-env", "fixture", "push-real")))
+          " ".join(r["channel"].split(":", 1)[1] for r in v if r["category"] in ("real", "real-partial", "real-env", "fixture", "push-real")))
