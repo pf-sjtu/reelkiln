@@ -132,6 +132,8 @@ export const ipcTracking: { pendingExcept: (channel: string) => boolean } = { pe
  *  original enables in-app updates only for an installed Mac build on its trusted https gateway (L2227-2231); with
  *  this env set, that gate is evaluated as platform "darwin" against the harness feed, and electron-updater's real
  *  Linux driver (AppImageUpdater) does the check / download / quitAndInstall. Never set in normal runs. */
+/** quitCoordinator hooks for index.ts: before-quit (L62758) and powerMonitor "shutdown" (L62757). */
+export const quitHooks: { requestQuit?: () => string; noteNonInteractive?: (source: string) => void } = {};
 export const PORT_UPDATE_HARNESS_ENV = "VIDEOCLAW_PORT_UPDATE_HARNESS_GATEWAY";
 
 /** PORT-NEW env var (not in the original bundle). */
@@ -704,8 +706,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         };
       };
       let appUpdater: any = null;
-      // quitCoordinator (L62722) — the "update" purpose (Restart to update). PORT gap: before-quit (plain Cmd+Q)
-      // is not routed through it yet.
+      // quitCoordinator (L62722): Restart to update AND every before-quit (index.ts → quitHooks, L62758-62760).
       const quitCoordinator: any = new QuitCoordinator({
         readState: readQuitState,
         beginInstall: () => appUpdater?.beginInstall() === true,
@@ -735,6 +736,8 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         },
         log: (message: string) => log(`[quit] ${message}`),
       });
+      quitHooks.requestQuit = () => quitCoordinator.requestQuit();
+      quitHooks.noteNonInteractive = (source: string) => quitCoordinator.noteNonInteractive(source);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const electronUpdater = require("electron-updater");
       appUpdater = createAppUpdater({

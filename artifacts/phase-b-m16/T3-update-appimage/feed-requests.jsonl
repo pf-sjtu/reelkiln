@@ -1,0 +1,7 @@
+{"t":"2026-10-21T22:36:21.895Z","method":"GET","path":"/v1/app/latest","query":"","range":null,"ua":"node","status":200}
+{"t":"2026-10-21T22:36:25.647Z","method":"GET","path":"/v1/app/latest","query":"","range":null,"ua":"node","status":200}
+{"t":"2026-10-21T22:36:25.656Z","method":"GET","path":"/v1/app/updates/latest/latest-linux.yml","query":"?noCache=1k5g9nj5i","range":null,"ua":"electron-builder","status":200,"bytes":425}
+{"t":"2026-10-21T22:36:25.663Z","method":"GET","path":"/v1/app/updates/latest/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage","query":"","range":null,"ua":"electron-builder","status":200,"bytes":298045284}
+{"t":"2026-10-21T22:36:32.764Z","path":"/v1/app/updates/latest/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage","done":true,"sent":298045284,"ms":7101}
+{"t":"2026-10-21T22:36:35.442Z","method":"GET","path":"/v1/app/latest","query":"","range":null,"ua":"node","status":200}
+{"t":"2026-10-21T22:36:41.229Z","method":"GET","path":"/v1/app/latest","query":"","range":null,"ua":"node","status":200}

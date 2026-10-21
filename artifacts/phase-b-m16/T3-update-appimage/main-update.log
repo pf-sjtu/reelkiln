@@ -1,0 +1,29 @@
+[port] UPDATE HARNESS: release gateway = https://127.0.0.1:47811 (PORT-NEW harness seam; darwin gate evaluated as darwin)
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list, account:snapshot, app:update:get, workflowSubmit:eligibility, bootstrap:status, client:list, client:create, interaction:replayPending, characters:list, quickstart:catalog, quickstart:mark, quick
+[smoke] push app:update [{"version":"0.0.41-port.0","minSupported":"0.0.1","autoUpdate":true,"notes":"M16 harness release: a newer port build served from the box.","blocked":false,"currentVersion":"0.0.40-port.0"}]
+{"ts":"2026-10-21T22:36:22.399Z","level":"info","event":"models_dev.sync","component":"models-dev-sync","status":"updated","providers":232,"models":9202,"durationMs":620}
+[port] models.dev catalog updated: 232 providers / 9202 models
+[smoke] push app:update [{"version":"0.0.41-port.0","minSupported":"0.0.1","autoUpdate":true,"notes":"M16 harness release: a newer port build served from the box.","blocked":false,"currentVersion":"0.0.40-port.0"}]
+[smoke] push app:update:state-changed [{"status":"checking","version":"0.0.41-port.0","percent":null,"message":null,"installBlocked":false}]
+Checking for update
+Found version 0.0.41-port.0 (url: Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage)
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":0,"message":null,"installBlocked":false}]
+Downloading update from Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage
+updater cache dir: /tmp/m16upd/run6/.cache/videoclaw-port-updater
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":14,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":28,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":42,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":56,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":71,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":85,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":99,"message":null,"installBlocked":false}]
+[smoke] push app:update:state-changed [{"status":"downloading","version":"0.0.41-port.0","percent":100,"message":null,"installBlocked":false}]
+New version 0.0.41-port.0 has been downloaded to /tmp/m16upd/run6/.cache/videoclaw-port-updater/pending/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage
+[smoke] push app:update:state-changed [{"status":"downloaded","version":"0.0.41-port.0","percent":100,"message":null,"installBlocked":false}]
+[smoke] push app:update [{"version":"0.0.41-port.0","minSupported":"0.0.1","autoUpdate":true,"notes":"M16 harness release: a newer port build served from the box.","blocked":false,"currentVersion":"0.0.40-port.0"}]
+[smoke] push app:update [{"version":"0.0.41-port.0","minSupported":"0.0.1","autoUpdate":true,"notes":"M16 harness release: a newer port build served from the box.","blocked":false,"currentVersion":"0.0.40-port.0"}]
+[smoke] push app:update:state-changed [{"status":"installing","version":"0.0.41-port.0","percent":100,"message":null,"installBlocked":false}]
+[port] quit: begin shutdown (update)
+Install on explicit quitAndInstall
+Install: isSilent: false, isForceRunAfter: true
+Executing: /tmp/m16upd/run6/apps/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage with args: 

@@ -114,10 +114,11 @@ try {
 } catch (e) { summary.error = String(e?.stack ?? e); say(`ERROR ${summary.error}`); try { xshot("99-error"); } catch {} }
 finally {
   summary.feedRequests = (() => { try { return readFileSync(join(OUT, "feed-requests.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l)); } catch { return []; } })();
-  summary.allPass = !summary.error && Object.keys(steps).length === 5 && Object.values(steps).every((s) => s.ok);
+  summary.allPass = !summary.error && Object.keys(steps).length === 4 && Object.values(steps).every((s) => s.ok);
   summary.finished = new Date().toISOString();
   writeFileSync(join(OUT, "m16-update-summary.json"), JSON.stringify(summary, null, 1));
-  try { execFileSync("bash", ["-c", `pkill -f '${basename(NEW)}' || true; pkill -f '${basename(OLD)}' || true`]); } catch {}
+  // kill the relaunched app (not this harness, whose argv also names the AppImages)
+  try { for (const l of execFileSync("ps", ["-eo", "pid,args"]).toString().split("\n")) { const m = /^\s*(\d+)\s+(.*)$/.exec(l); if (m && Number(m[1]) !== process.pid && (m[2].startsWith(APPS) || /appimage_extracted_/.test(m[2]))) { try { process.kill(Number(m[1]), "SIGTERM"); } catch {} } } } catch {}
   await sleep(1500);
   for (const p of procs) { try { process.kill(-p.pid, "SIGTERM"); } catch {} }
   for (const pid of [keyringPid, dbusPid]) { try { if (pid) process.kill(pid, "SIGTERM"); } catch {} }

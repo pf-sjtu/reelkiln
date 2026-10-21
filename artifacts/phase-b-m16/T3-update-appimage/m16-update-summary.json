@@ -1,0 +1,262 @@
+{
+ "feed": "FAKE UPSTREAM (labelled): local HTTPS release gateway tools/m16-update-feed.mjs on the box",
+ "harnessInputs": [
+  "own Xvfb",
+  "own dbus session + gnome-keyring-daemon (unlocked login keyring) so safeStorage works for the packaged build",
+  "--password-store=gnome-libsecret",
+  "NODE_EXTRA_CA_CERTS=feed cert",
+  "--ignore-certificate-errors",
+  "VIDEOCLAW_PORT_UPDATE_HARNESS_GATEWAY"
+ ],
+ "started": "2026-10-21T22:36:14.468Z",
+ "steps": {
+  "announce": {
+   "ok": true,
+   "row": {
+    "x": 125.5,
+    "y": 720.6015625,
+    "label": "Update now",
+    "disabled": false
+   },
+   "info": {
+    "version": "0.0.41-port.0",
+    "minSupported": "0.0.1",
+    "autoUpdate": true,
+    "notes": "M16 harness release: a newer port build served from the box.",
+    "blocked": false,
+    "currentVersion": "0.0.40-port.0"
+   },
+   "state": {
+    "status": "idle",
+    "version": null,
+    "percent": null,
+    "message": null
+   }
+  },
+  "download": {
+   "ok": true,
+   "labels": [
+    "Downloading 0%",
+    "Downloading 14%",
+    "Downloading 28%",
+    "Downloading 42%",
+    "Downloading 56%",
+    "Downloading 71%",
+    "Downloading 85%",
+    "Restart to update"
+   ],
+   "state": {
+    "status": "downloaded",
+    "version": "0.0.41-port.0",
+    "percent": 100,
+    "message": null,
+    "installBlocked": false
+   },
+   "pending": [
+    "Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+    "update-info.json"
+   ],
+   "pendingSha": "220a60fa436bfe7d",
+   "ipc": [
+    {
+     "ch": "app:update:state",
+     "real": true,
+     "ok": true,
+     "result": "{\"status\":\"idle\",\"version\":null,\"percent\":null,\"message\":null}"
+    },
+    {
+     "ch": "app:update:download",
+     "real": true,
+     "ok": true,
+     "result": "{\"status\":\"downloaded\",\"version\":\"0.0.41-port.0\",\"percent\":100,\"message\":null,\"installBlocked\":false}"
+    },
+    {
+     "ch": "app:update:state",
+     "real": true,
+     "ok": true,
+     "result": "{\"status\":\"downloaded\",\"version\":\"0.0.41-port.0\",\"percent\":100,\"message\":null,\"installBlocked\":false}"
+    }
+   ]
+  },
+  "restart_dialog_cancel": {
+   "ok": true,
+   "dialogSeen": true,
+   "state": {
+    "status": "downloaded",
+    "version": "0.0.41-port.0",
+    "percent": 100,
+    "message": null,
+    "installBlocked": false
+   },
+   "oldStillRunning": true
+  },
+  "quit_and_install_relaunch": {
+   "ok": true,
+   "oldExited": {
+    "code": 0,
+    "signal": null,
+    "at": 26992
+   },
+   "appsDir": [
+    {
+     "f": "Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+     "sha256": "220a60fa436bfe7d"
+    }
+   ],
+   "relaunched": [
+    "1781802 0 /tmp/m16upd/run6/apps/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage"
+   ],
+   "extractedVersions": [
+    {
+     "dir": "appimage_extracted_4d2adb4cc6f070fbf617e438b21202fd",
+     "version": "0.0.41-port.0"
+    }
+   ],
+   "ipcChannelsAfterRestart": [
+    "quickstart:catalog"
+   ],
+   "mainLog": [
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/32x32/apps/videoclaw-port.png",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/48x48",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/48x48/apps",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/48x48/apps/videoclaw-port.png",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/64x64",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/64x64/apps",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/64x64/apps/videoclaw-port.png",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/v8_context_snapshot.bin",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/videoclaw-port",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/videoclaw-port.desktop",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/videoclaw-port.png",
+    "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/vk_swiftshader_icd.json"
+   ]
+  }
+ },
+ "old": {
+  "file": "Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage",
+  "sha256": "46b499d6b64d0745",
+  "bytes": 298045261
+ },
+ "new": {
+  "file": "Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+  "version": "0.0.41-port.0",
+  "sha256": "220a60fa436bfe7d",
+  "bytes": 298045284
+ },
+ "feedStart": {
+  "feed": "https://127.0.0.1:47811",
+  "version": "0.0.41-port.0",
+  "artifact": "Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+  "size": 298045284,
+  "sha512": "ExxqIHKU6+5Qvy9Q"
+ },
+ "secretService": {
+  "dbus": "private session bus",
+  "keyringStarted": false
+ },
+ "after": {
+  "oldExited": {
+   "code": 0,
+   "signal": null,
+   "at": 26992
+  },
+  "appsDir": [
+   {
+    "f": "Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+    "sha256": "220a60fa436bfe7d"
+   }
+  ],
+  "relaunched": [
+   "1781802 0 /tmp/m16upd/run6/apps/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage"
+  ],
+  "extractedVersions": [
+   {
+    "dir": "appimage_extracted_4d2adb4cc6f070fbf617e438b21202fd",
+    "version": "0.0.41-port.0"
+   }
+  ],
+  "ipcChannelsAfterRestart": [
+   "quickstart:catalog"
+  ],
+  "mainLog": [
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/32x32/apps/videoclaw-port.png",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/48x48",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/48x48/apps",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/48x48/apps/videoclaw-port.png",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/64x64",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/64x64/apps",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/usr/share/icons/hicolor/64x64/apps/videoclaw-port.png",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/v8_context_snapshot.bin",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/videoclaw-port",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/videoclaw-port.desktop",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/videoclaw-port.png",
+   "/tmp/appimage_extracted_26e48f69a119e2295911a99cd2df5805/vk_swiftshader_icd.json"
+  ]
+ },
+ "feedRequests": [
+  {
+   "t": "2026-10-21T22:36:21.895Z",
+   "method": "GET",
+   "path": "/v1/app/latest",
+   "query": "",
+   "range": null,
+   "ua": "node",
+   "status": 200
+  },
+  {
+   "t": "2026-10-21T22:36:25.647Z",
+   "method": "GET",
+   "path": "/v1/app/latest",
+   "query": "",
+   "range": null,
+   "ua": "node",
+   "status": 200
+  },
+  {
+   "t": "2026-10-21T22:36:25.656Z",
+   "method": "GET",
+   "path": "/v1/app/updates/latest/latest-linux.yml",
+   "query": "?noCache=1k5g9nj5i",
+   "range": null,
+   "ua": "electron-builder",
+   "status": 200,
+   "bytes": 425
+  },
+  {
+   "t": "2026-10-21T22:36:25.663Z",
+   "method": "GET",
+   "path": "/v1/app/updates/latest/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+   "query": "",
+   "range": null,
+   "ua": "electron-builder",
+   "status": 200,
+   "bytes": 298045284
+  },
+  {
+   "t": "2026-10-21T22:36:32.764Z",
+   "path": "/v1/app/updates/latest/Videoclaw-Port-0.0.41-port.0-linux-x86_64.AppImage",
+   "done": true,
+   "sent": 298045284,
+   "ms": 7101
+  },
+  {
+   "t": "2026-10-21T22:36:35.442Z",
+   "method": "GET",
+   "path": "/v1/app/latest",
+   "query": "",
+   "range": null,
+   "ua": "node",
+   "status": 200
+  },
+  {
+   "t": "2026-10-21T22:36:41.229Z",
+   "method": "GET",
+   "path": "/v1/app/latest",
+   "query": "",
+   "range": null,
+   "ua": "node",
+   "status": 200
+  }
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T22:36:57.916Z"
+}

@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
-import { createRealHandlers, ipcTracking, finishPendingLocalReset, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
+import { createRealHandlers, ipcTracking, quitHooks, finishPendingLocalReset, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
 import { VCMEDIA_SCHEME } from "./media/media.generated";
 import { handleVcmedia } from "./media/media-ipc";
 import { smokeScript } from "./smoke";
@@ -168,3 +168,6 @@ app.whenReady().then(async () => {
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
+// L62757-62760: the OS session ending is non-interactive; every quit goes through the QuitCoordinator
+app.whenReady().then(() => { try { require("electron").powerMonitor.on("shutdown", () => quitHooks.noteNonInteractive?.("power-monitor")); } catch {} });
+app.on("before-quit", (event) => { if (quitHooks.requestQuit?.() === "defer") event.preventDefault(); });
