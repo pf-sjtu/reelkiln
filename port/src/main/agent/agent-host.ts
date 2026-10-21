@@ -46,6 +46,7 @@ import { normalizeSpendCeilingUsd } from "../spend/spend-wb.generated";
 import { resolveJobDir } from "../engine/job-boundary";
 import { attachmentContextLines, ComposerAttachmentStore, composerTurnMessageUuid } from "../attachments/composer-attachments.generated";
 import type { LlmRouteId } from "../../shared/llm-types";
+import { ClaudeCodeController, type ClaudeCodeDeps } from "./claude-code";
 import { minimalAgentOptions, type ClaudeAgentSdkLike, type AgentQuery } from "../llm/agent-sdk";
 import { getLogger, redact, redactText, registerSecret, type Logger } from "../llm/logger";
 import type { SessionMetaLike } from "../llm/route-service";
@@ -167,6 +168,9 @@ export interface AgentHostDeps {
   jobBusyProbe?: (jobId: string) => boolean;
   /** docs/27: the Codex harness (agentHarness "codex-app-server"), backed by MiniMax through the gate proxy. */
   codex?: AgentHostCodexDeps;
+  /** docs/28: the Claude Code login + catalog seams (claude-code.ts). Absent → the controller still runs with
+   *  the PORT defaults (no login probe, connect refused) and an empty model source. */
+  claude?: Pick<ClaudeCodeDeps, "available" | "connector" | "modelSource" | "catalogTimeoutMs">;
 }
 export interface AgentHostCodexDeps {
   /** settings.get() — agentHarness / codexProvider / codexModel (resolvedAgentHarness L324) */
@@ -281,8 +285,15 @@ export class AgentHost {
   private quickstartResume?: (meta: AgentSessionMeta) => boolean;
   /** docs/27: the Codex-route half of the original AgentHost (codex-host.ts). */
   readonly codex?: CodexRouteController;
+  /** docs/28: the Claude Code half (claude-code.ts). */
+  readonly claude: ClaudeCodeController;
   constructor(private readonly d: AgentHostDeps) {
     this.log = (d.logger ?? getLogger()).child({ component: "agent-host" });
+    this.claude = new ClaudeCodeController({
+      ...(d.claude ?? { modelSource: { identity: async () => ({ key: "none", signedIn: false }), discover: async () => ({ models: [] }) } }),
+      sessions: () => this.sessions.values() as any,
+      sessionLlmRoute: (meta: any) => this.d.service.sessionLlmRoute?.({ llmRoute: meta.llmRoute, agentHarness: "claude-code" }) ?? meta.llmRoute ?? "claude-code",
+    });
     if (d.codex) {
       const c = d.codex;
       this.codex = new CodexRouteController({
@@ -430,8 +441,9 @@ export class AgentHost {
   /** createSession (L38726) slice: id, cwd, route pin, status idle, session:changed. docs/26: the
    *  continuation branch (continueFromSessionId → same cwd/route/client, "· continued", adoptCandidate),
    *  Quickstart provenance (meta.quickstart), sidebarOrder at the top of the project, internal sessionId. */
-  createSession(req: { title?: string; clientId?: string; permissionMode?: string; continueFromSessionId?: string } = {}, quickstart?: Record<string, unknown>, internal?: { sessionId?: string; deferJobAdoption?: boolean }): AgentSessionMeta {
+  createSession(req: { title?: string; clientId?: string; permissionMode?: string; continueFromSessionId?: string } = {}, quickstart?: Record<string, unknown>, internal?: { sessionId?: string; deferJobAdoption?: boolean; providerMigration?: { agentHarness: "codex-app-server" | "claude-code"; codexProvider?: string; llmRoute?: string } }): AgentSessionMeta {
     const sessionId = internal?.sessionId ?? randomUUID();
+    const migration = internal?.providerMigration; // L38756
     const continued = req?.continueFromSessionId ? this.sessions.get(req.continueFromSessionId) : undefined;
     if (req?.continueFromSessionId && !continued) throw new Error("The conversation to continue no longer exists.");
     const priorContinuation = continued ? this.completedContinuation(continued) : undefined;
@@ -455,15 +467,15 @@ export class AgentHost {
     }
     // createSession L38755-38800: the harness + Codex account slot + model pin of a new video
     const codexSettings = this.d.codex?.settings() ?? {};
-    const agentHarness = continued ? (continued.meta.agentHarness ?? "claude-code") : (this.codex ? resolvedAgentHarness(codexSettings) : "claude-code");
-    const codexProvider = continued ? ((continued.meta.codexProvider as string | undefined) ?? DEFAULT_CODEX_PROVIDER) : resolvedCodexProvider(codexSettings);
-    const codexModelOverride = agentHarness === "codex-app-server" ? (continued ? (continued.meta.modelOverride as string | undefined) : this.codex!.accountCodexModel(codexProvider)) : undefined;
+    const agentHarness = migration ? migration.agentHarness : continued ? (continued.meta.agentHarness ?? "claude-code") : (this.codex ? resolvedAgentHarness(codexSettings) : "claude-code");
+    const codexProvider = migration ? (migration.codexProvider ?? DEFAULT_CODEX_PROVIDER) : continued ? ((continued.meta.codexProvider as string | undefined) ?? DEFAULT_CODEX_PROVIDER) : resolvedCodexProvider(codexSettings);
+    const codexModelOverride = agentHarness === "codex-app-server" ? (continued && !migration ? (continued.meta.modelOverride as string | undefined) : this.codex?.accountCodexModel(codexProvider)) : undefined;
     if (agentHarness === "codex-app-server") {
       if (!this.codex) throw new Error("Codex is unavailable right now.");
       this.codex.assertEnabled();
       if (codexProvider !== "chatgpt" && !isQualifiedCodexRoute(codexProvider, codexModelOverride, this.codex.evidence)) throw new Error((codexRouteDiagnostic as any)(codexProvider, codexModelOverride, this.codex.evidence));
     }
-    const llmRoute = agentHarness !== "claude-code" ? undefined : continued ? continued.meta.llmRoute : this.d.service.newSessionLlmRoute({});
+    const llmRoute = agentHarness !== "claude-code" ? undefined : migration?.llmRoute ?? (continued && !migration ? continued.meta.llmRoute : this.d.service.newSessionLlmRoute({}));
     const clientId = continued?.meta.clientId ?? (typeof req?.clientId === "string" ? req.clientId : "personal");
     const existingSidebarOrders = [...this.sessions.values()].filter((o) => o.meta.clientId === clientId).map((o) => o.meta.sidebarOrder as number | undefined).filter((order): order is number => order !== undefined);
     const sidebarOrder = existingSidebarOrders.length ? Math.min(...existingSidebarOrders) - 1 : undefined;
@@ -1852,6 +1864,40 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     } catch {}
   }
   /** codexDisconnectImpact L52416: Codex videos with a live runtime mid-turn. */
+  /** codexHandoffOffer (L52172): may this blocked local Claude video continue on Codex (MiniMax-backed)? */
+  async codexHandoffOffer(sessionId: string): Promise<Record<string, unknown>> {
+    const s = this.sessions.get(sessionId);
+    if (!s || ((s.meta.runtime as string | undefined) ?? "local") !== "local" || (s.meta.agentHarness ?? "claude-code") !== "claude-code") {
+      return { available: false, reason: "not-applicable", message: "This video is not running on Claude Code." };
+    }
+    const prior = this.completedContinuation(s);
+    if (prior && !(prior.meta.agentHarness === "codex-app-server" && ((prior.meta.codexProvider as string | undefined) ?? DEFAULT_CODEX_PROVIDER) === "chatgpt")) {
+      return { available: false, reason: "already-continued", message: "This video already continues in another chat." };
+    }
+    if (!this.codex) return { available: false, reason: "unavailable", message: "Codex is unavailable right now." };
+    const gate = this.codex.runtimeGate();
+    if (!gate.enabled) return { available: false, reason: "unavailable", message: gate.message };
+    const status: any = await this.codex.status();
+    if (!status.available) return { available: false, reason: "unavailable", message: status.recovery ?? "Codex runtime unavailable" };
+    if (!status.authenticated) return { available: false, reason: "unauthenticated", message: "Connect ChatGPT to continue this video with Codex." };
+    const model = this.codex.accountCodexModel("chatgpt");
+    const refusal2 = await this.codex.routeRefusal({ agentHarness: "codex-app-server", codexProvider: "chatgpt", modelOverride: model });
+    if (refusal2) return { available: false, reason: "no-validated-model", message: refusal2 };
+    return { available: true, ...(model ? { model } : {}) };
+  }
+  /** continueOnCodex (L52242): a NEW continuation of the video on the Codex harness; the source is untouched. */
+  async continueOnCodex(sessionId: string, clientActionId: string): Promise<AgentSessionMeta> {
+    if (!String(clientActionId ?? "").trim()) throw new Error("Missing continuation action id.");
+    const offer: any = await this.codexHandoffOffer(sessionId);
+    if (!offer.available) throw new Error(offer.message);
+    const src = this.mustGet(sessionId);
+    const existing = this.completedContinuation(src);
+    if (existing) return existing.meta;
+    const meta = this.createSession({ continueFromSessionId: sessionId }, undefined, { providerMigration: { agentHarness: "codex-app-server", codexProvider: "chatgpt" } });
+    // outbox beacon "codex-handoff" (no outbox in the port) → main log
+    this.log.info("agent.codex_handoff", { from: sessionId, to: meta.sessionId, model: meta.modelOverride ?? "runtime-default" });
+    return meta;
+  }
   codexRunningVideoCount(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.agentHarness === "codex-app-server" && s.runtime && (s.meta.status === "running" || s.meta.status === "awaiting_permission")) n++; return n; }
   /** retireCodexRuntimes (runCodexDisconnect L52467): tear down every Codex runtime; returns how many were mid-turn. */
   retireCodexRuntimes(): number {

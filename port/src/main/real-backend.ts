@@ -80,6 +80,12 @@ import { configureFeedbackEnv, recordMainLog } from "./feedback/feedback-env";
 import { HyperframesPreviewController, validateInPolicyWorker } from "./hyperframes/hf-preview.generated";
 import { LocalResetController, LocalResetRecoveryError, LOCAL_RESET_MARKER, runPendingLocalReset } from "./account/local-reset.generated";
 import { CredentialStore } from "./account/local-reset-env";
+import { AccountService } from "./account/account-service";
+import { gatewayChannels } from "./gateway/gateway-channels";
+import { LocalGatewayShim, localGatewayEnabled, localGatewayMonthUsd, localGatewayPort } from "./gateway/local-gateway-shim";
+import { minimaxConfig } from "./llm/minimax";
+import { registerSecret } from "./llm/logger";
+import { miniMaxClaudeModelSource } from "./agent/claude-code";
 import { purgeExpiredProjectTrash } from "./jobs/project-trash.generated";
 
 /** exposeCharacters (L60415): grant each character's sheet + refs to vcmedia. */
@@ -408,6 +414,33 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       });
       Object.assign(handlers, llm.handlers);
       Object.assign(portHandlers, llm.portHandlers);
+      // ── docs/28: the local gateway + billing shim (opt-in VIDEOCLAW_PORT_LOCAL_GATEWAY=1) and the account /
+      // gateway-key / billing channels over the verbatim CredentialStore + resolveAccountSnapshot ──
+      const userDataDir = app.getPath("userData");
+      const credentials = new CredentialStore({ file: join(userDataDir, "credentials.dat"), packaged: app.isPackaged, log: (line: string) => recordMainLog("credentials", line) } as any);
+      let shimReady: Promise<unknown> = Promise.resolve();
+      if (localGatewayEnabled()) {
+        const shimPort = localGatewayPort();
+        const shimUrl = `http://127.0.0.1:${shimPort}`;
+        const shim = new LocalGatewayShim({ dir: join(userDataDir, "local-gateway"), provider: () => minimaxConfig(), port: shimPort, monthUsd: localGatewayMonthUsd(), log });
+        // PORT-NEW: this process opens on the self-hosted gateway, and a first launch provisions its vc_ key
+        // into the vault (the key the user would otherwise paste under "I already have an alpha key")
+        if (String(llm.settings.get().gatewayUrl ?? "").replace(/\/+$/, "") !== shimUrl) llm.settings.patch({ gatewayUrl: shimUrl });
+        const existing = credentials.activeKey(shimUrl);
+        if (existing) registerSecret(existing);
+        else { const issued = shim.issueKey(); registerSecret(issued.key); credentials.setActiveKey(shimUrl, issued.key); log(`[port] local gateway: issued key ${issued.hint} for the self-hosted account`); }
+        shimReady = shim.start().then((url) => log(`[port] local gateway shim listening on ${url}`), (e) => log(`[port] local gateway shim failed to start: ${e instanceof Error ? e.message : String(e)}`));
+        app.on("will-quit", () => { void shim.close(); });
+      }
+      const accountService = new AccountService({
+        settings: llm.settings as any, credentials: credentials as any, openedGatewayUrl: String(llm.settings.get().gatewayUrl ?? ""),
+        packaged: app.isPackaged, appVersion: app.getVersion(), push: (ch, ...a) => { push(ch, ...a); },
+        openExternal: guardedShell.openExternal, stopAuthenticatedWork: () => { (host as any)?.stopAuthenticatedWork?.(); },
+      });
+      void shimReady.then(() => accountService.resolveAccount()).catch(() => {}); // `void resolveAccount()` at launch (L60955)
+      for (const [ch, fn] of Object.entries(gatewayChannels(accountService, { userData: userDataDir }))) {
+        (handlers as any)[ch] = async (...a: unknown[]) => { await shimReady; return fn(...a); };
+      }
       const allSessions = () => [...(registry.listSessions() as any[]), ...(host?.listSessions() ?? [])];
       const engineMode = process.env[PORT_AGENT_ENGINE_ENV] !== "0" && !!core.currentEngine();
       const sessionEnvDeps = { currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p: string) => core.enginePathEnv(p) };
@@ -462,6 +495,8 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
           appVersion: app.getVersion(),
           provider: () => resolveMiniMaxCodexProvider(),
         },
+        // docs/28: the Claude Code half — no login probe / login child (PORT defaults); catalog = MiniMax
+        claude: { modelSource: miniMaxClaudeModelSource(() => resolveMiniMaxCodexProvider()) },
         // PORT-NEW: VIDEOCLAW_PORT_TURN_TIMEOUT_MS overrides the per-turn safety net (engine default 20 min)
         ...(Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) > 0 ? { turnTimeoutMs: Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) } : {}),
       });

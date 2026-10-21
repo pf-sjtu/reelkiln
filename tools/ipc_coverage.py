@@ -21,7 +21,7 @@ chans = json.loads((R / "artifacts/manifests/ipc-channels.json").read_text())
 src = lambda p: (R / "port/src/main" / p).read_text()
 key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
 assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
-real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts"))) | set(key_re.findall(src("codex/codex-channels.ts")))
+real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts"))) | set(key_re.findall(src("codex/codex-channels.ts"))) | set(key_re.findall(src("account/account-service.ts"))) | set(key_re.findall(src("gateway/gateway-channels.ts")))
 real_env = {"bootstrap:run"}
 # docs/24 → docs/25: session:history now replays the display transcript + SDK transcript (real).
 # docs/25 real-partial: original handler shape, some original branches not ported (reason given).
@@ -40,6 +40,17 @@ PARTIAL = {
     "engine:codexConnectCancel": "PORT substitute (docs/27): nothing to cancel (no login flow) — original {ok:true} shape",
     "engine:codexDisconnectChatGpt": "PORT substitute (docs/27): retires live Codex runtimes, then ok:false — the MiniMax credential is MINIMAX_API_KEY (env), not an app login",
     "session:retry": "spend gate / Claude-terms recovery / restoreFailedTurn after an app restart not ported",
+    # docs/28: managed sign-in (Google PKCE / Identity Platform email link / ID-token account plane) is not ported —
+    # the auth pool is "unconfigured" (prod/staging, PORT) or verbatim (local → unconfigured, custom → untrusted);
+    # these run the original bodies up to the original's own pool refusal (exactly the original on a self-hosted gateway)
+    **{c: "(b) managed videoclaw.com sign-in not ported → the original's unconfigured/untrusted-pool refusal only (docs/28)" for c in (
+        "account:signInGoogle", "account:signInEmail", "account:resendEmail", "account:cancelSignIn", "account:consent",
+        "account:ensureAccess", "account:mintKey", "account:claimKey")},
+    "account:signOut": "original body; no managed session can exist; host.stopAuthenticatedWork not ported (docs/28)",
+    "gateway:topup": "self-hosted shim account has no hosted checkout → the original's 503 'Checkout is unavailable' branch; credit is added to the local ledger by the owner (docs/28)",
+    "engine:claudeModels": "PORT substitute model source: MiniMax GET /v1/models (no Claude Code CLI) through the ORIGINAL partition + evidence ledger (docs/28)",
+    **{c: "USER DIRECTIVE (docs/28): no real Claude subscription — no `claude auth status` probe / login child → the original's not-connected branches only" for c in (
+        "engine:claudeCodeStatus", "engine:claudeCodeConnect", "engine:claudeCodeConnectCancel", "engine:claudeCodeSignOutImpact", "engine:claudeCodeSignOut")},
 }
 fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()

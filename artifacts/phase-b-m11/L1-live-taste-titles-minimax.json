@@ -1,0 +1,42 @@
+{
+ "at": "2026-10-21T12:49:39.176Z",
+ "shimUrl": "http://127.0.0.1:36221",
+ "accountStep": "ready",
+ "legacyKeyOnly": true,
+ "storedKeyIdMatches": true,
+ "titles": [
+  {
+   "text": "字幕要粗体，背景不要加音乐",
+   "title": "Bold captions, no music"
+  },
+  {
+   "text": "旁白一律用我自己录的声音",
+   "title": "Always use my real voice"
+  }
+ ],
+ "ms": 3188,
+ "ledgerEntry": {
+  "kind": "model_call",
+  "model": "claude-haiku-4-5-20251001",
+  "upstreamModel": "MiniMax-M3.1-Flash",
+  "inputTokens": 340,
+  "outputTokens": 93,
+  "usd": 0.000214,
+  "status": 200,
+  "pricing": {
+   "inputPerMTokUsd": 0.3,
+   "outputPerMTokUsd": 1.2,
+   "source": "port-local-table/v1"
+  }
+ },
+ "meterBefore": {
+  "spend_this_month_usd": 0,
+  "available_credit_usd": 5
+ },
+ "meterAfter": {
+  "spend_this_month_usd": 0.000214,
+  "available_credit_usd": 4.999786
+ },
+ "cachedSecondCall": true,
+ "entriesAfterSecondCall": 0
+}

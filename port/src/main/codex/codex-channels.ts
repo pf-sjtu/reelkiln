@@ -25,5 +25,17 @@ export function codexChannels(host: AgentHost): Record<string, (...args: any[]) 
       const status = c ? await c.status() : { available: false, authenticated: false, recovery: unavailable };
       return { ok: false, stoppedVideos, status, error: "Codex in this build runs on MiniMax, not a ChatGPT sign-in. Remove MINIMAX_API_KEY from the environment to disconnect it." };
     },
+    // docs/28: the Claude Code login channels (L61603-61607) — the original bodies over claude-code.ts, whose
+    // login probe / login child are the PORT "never a real Claude subscription" seams.
+    "engine:claudeCodeStatus": () => host.claude.status(),
+    "engine:claudeCodeConnect": () => host.claude.connect(),
+    "engine:claudeCodeConnectCancel": () => { host.claude.cancelConnect(); },
+    "engine:claudeCodeSignOutImpact": () => host.claude.signOutImpact(),
+    "engine:claudeCodeSignOut": () => host.claude.signOutClaudeCode(),
+    // docs/28: claudeModels L61659 → host.claudeModels(true) (MiniMax model source)
+    "engine:claudeModels": () => host.claude.models(true),
+    // docs/28: codexHandoffOffer / continueOnCodex L61660-61663
+    "engine:codexHandoffOffer": (sessionId: unknown) => host.codexHandoffOffer(String(sessionId ?? "")),
+    "engine:continueOnCodex": (sessionId: unknown, clientActionId: unknown) => host.continueOnCodex(String(sessionId ?? ""), String(clientActionId ?? "")),
   };
 }

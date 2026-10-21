@@ -634,6 +634,79 @@ export const SPECS = [
     subs: [],
     exports: ["DEFAULT_ELIGIBLE_ROUTE_LEVELS", "agentRouteId", "AGENT_ROUTE_EVIDENCE", "codexRouteEvidence", "codexRouteQualification", "isQualifiedCodexRoute", "recommendedCodexReasoningEffort", "codexEffortDiagnostic", "resolveCodexReasoningEffort", "CODEX_CONTAINMENT", "CODEX_HOST_APPROVAL", "resolveCodexContainment", "CODEX_PROVIDER_LABELS", "codexRouteDiagnostic", "resolveCodexRuntimeDefault", "isDiscoveredCodexModel", "codexModelUnavailableDiagnostic", "codexModelUnverifiedDiagnostic", "codexModelVerdict", "codexPinRefusal", "partitionDiscoveredCodexModels"],
   },
+  // docs/28: the gateway-key CredentialStore (main L4526-5050). safeStorage comes from ../account/safe-storage
+  // (Electron's when running in Electron, an "unavailable" stand-in under node:test — unpackaged builds may
+  // then persist in the clear, exactly as the original's canPersistNew() allows).
+  {
+    out: "src/main/account/credential-store.generated.ts",
+    imports: [
+      'import { randomBytes } from "node:crypto";',
+      'import { chmodSync, constants, copyFileSync, lstatSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";',
+      'import { dirname } from "node:path";',
+      'import { safeStorage } from "./safe-storage";',
+    ],
+    slices: () => [
+      slice("wb", /^const UNREADABLE_VAULT_COPY = /, /^const INSECURE_STORAGE_COPY = /),
+      slice("main", /^const emptyVault = /, /^}$/, /^class CredentialStore \{/),
+    ],
+    subs: [],
+    exports: ["UNREADABLE_VAULT_COPY", "INSECURE_STORAGE_COPY", "emptyVault", "CredentialStoreError", "CredentialStore"],
+  },
+  // docs/28: the account / gateway-key / billing contract the original runs against cfg.gatewayUrl — the
+  // gateway-URL classification + auth-pool resolution (wb L20-332), the key meter + top-up + manual key write +
+  // resolveAccountSnapshot (main L55293-55519), verifyKeyAt (L60601), signInFailure / mintFailureReason (L60857).
+  {
+    out: "src/main/account/account-gateway.generated.ts",
+    imports: [
+      'import { buildAccountSnapshot } from "../account-snapshot.generated";',
+      'import { recordMainLog } from "../feedback/feedback-env";',
+      'import { classifyError, sanitizeErrorText } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      slice("wb", /^const PROD_GATEWAY_URL = /, /^const STAGING_GATEWAY_URL = /),
+      slice("wb", /^const normalizeGatewayUrl = /, /^}$/, /^function pinGatewaySettings\(/),
+      slice("wb", /^function envForGatewayUrl\(/, /^}$/),
+      slice("wb", /^function switchGatewayKeys\(/, /^const ANTHROPIC_PASSTHROUGH_PATH = /),
+      slice("wb", /^function generationBlockedByAccount\(/, /^const ACCOUNT_BLOCKED_COPY = /),
+      slice("wb", /^const MANAGED_KEY_MANUAL_WRITE_COPY = /, /^};$/, /^const SIGN_IN_UNAVAILABLE_COPY = /),
+      slice("wb", /^const SUPPORT_EMAIL = /, /^const ACCOUNT_DISABLED_COPY = /),
+      slice("main", /^class AccountAuthError extends Error \{/, /^const SESSION_CHANGED_COPY = /),
+      slice("main", /^const BILLING_TIMEOUT_MS = /, /^}$/, /^async function resolveAccountSnapshot\(/),
+      slice("main", /^async function verifyKeyAt\(/, /^}$/),
+      slice("main", /^function signInFailure\(/, /^}$/, /^function mintFailureReason\(/),
+    ],
+    subs: [],
+    exports: ["PROD_GATEWAY_URL", "STAGING_GATEWAY_URL", "normalizeGatewayUrl", "pinGatewaySettings", "envForGatewayUrl", "switchGatewayKeys", "KEY_METER_PATH", "topupSessionPath", "keyMeterFrom", "ANTHROPIC_PASSTHROUGH_PATH", "generationBlockedByAccount", "accountGateEnforced", "paidWorkBlockedFor", "ACCOUNT_BLOCKED_COPY", "MANAGED_KEY_MANUAL_WRITE_COPY", "manualKeyWriteRefusal", "SIGN_OUT_NOT_PERSISTED_COPY", "resolveAuthPool", "SIGN_IN_UNAVAILABLE_COPY", "SUPPORT_EMAIL", "ACCOUNT_DISABLED_COPY", "AccountAuthError", "NETWORK_COPY", "SESSION_CHANGED_COPY", "BILLING_TIMEOUT_MS", "boundedBillingFetch", "loadKeyMeter", "startTopUp", "ManualKeyWriteRefused", "applyManualKeyWrite", "REVOKED_COPY", "resolveAccountSnapshot", "verifyKeyAt", "signInFailure", "mintFailureReason"],
+  },
+  // docs/28: taste:titles — TasteTitleStore (main L55810-55920) over the helper-LLM creds resolveHelperCreds
+  // (L22342) + anthropicMessages (L22357); tasteTitleKey / sanitizeTasteTitle (L656-686).
+  {
+    out: "src/main/taste/taste-titles.generated.ts",
+    imports: [
+      'import { mkdirSync, readFileSync, writeFileSync } from "node:fs";',
+      'import { dirname } from "node:path";',
+    ],
+    slices: () => [
+      slice("main", /^const DEFAULT_LLM_ROUTE = /, /^}$/),
+      slice("main", /^function tasteTitleKey\(/, /^}$/, /^function sanitizeTasteTitle\(/),
+      slice("main", /^const ANTHROPIC_VERSION = /, /^}$/, /^async function anthropicMessages\(/),
+      sliceUntil("main", /^const TITLE_MODEL = /, /^const RECHECK_MS = /),
+    ],
+    subs: [],
+    exports: ["DEFAULT_LLM_ROUTE", "resolvedLlmRoute", "tasteTitleKey", "TASTE_TITLE_BANNED", "sanitizeTasteTitle", "ANTHROPIC_VERSION", "resolveHelperCreds", "sessionHelperCreds", "anthropicMessages", "TITLE_MODEL", "MAX_BATCH", "TITLE_SYSTEM", "extractJsonArray", "TasteTitleStore"],
+  },
+  // docs/28: the Claude-route model evidence ledger + catalog partition (wb L955-966, L1104-1354) that
+  // claudeModels (main L51353) / discoverClaudeModels (L51528) consult.
+  {
+    out: "src/main/agent/claude-routes.generated.ts",
+    imports: ['import { agentRouteId } from "../codex/codex-routes.generated";'],
+    slices: () => [
+      slice("wb", /^const RECORDED_CLAUDE_EFFORT_MODELS = /, /^}$/, /^function claudeReasoningEffortChoices\(/),
+      slice("wb", /^const CLAUDE_CLI_TURN = /, /^}$/, /^function claudeModelVerdict\(/),
+    ],
+    subs: [],
+    exports: ["RECORDED_CLAUDE_EFFORT_MODELS", "RECORDED_CLAUDE_NO_EFFORT_MODELS", "claudeEffortSupportKnown", "claudeReasoningEffortChoices", "CLAUDE_MODEL_EVIDENCE", "CLAUDE_ROUTE_LABELS", "claudeModelEvidence", "claudeRouteQualification", "isQualifiedClaudeRoute", "isRecommendedClaudeRoute", "claudeRouteDiagnostic", "canonicalClaudeModelId", "partitionDiscoveredClaudeModels", "claudeModelUnavailableDiagnostic", "claudeModelVerdict"],
+  },
 ];
 
 export function render(spec) {

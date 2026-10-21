@@ -1,0 +1,108 @@
+{
+ "phase": "account",
+ "started": "2026-10-21T12:49:21.546Z",
+ "steps": {
+  "account_identity": {
+   "ok": true,
+   "domAccount": "Account\nVideoclaw account\nNot signed in — running on your alpha key\nUpdates\nLoading update settings…\n\nReceive releases selected for general use.\n\nThis Mac\nReset VideoClaw on this Mac…\n\nPermanently removes local projects and chats, then restarts. Your account and cloud data stay.",
+   "snapshot": {
+    "step": "ready",
+    "legacyKeyOnly": true,
+    "hasStoredKey": true,
+    "storedKeyId": "eb7229ca53b7…",
+    "storedKeyInvalid": false,
+    "signInUnavailableReason": "unconfigured",
+    "loaded": true
+   },
+   "ledgerKeyIdPrefix": "eb7229ca53b7…"
+  },
+  "billing_meter": {
+   "ok": true,
+   "domBilling": "Billing & credits\nGeneration credit\n$5.00 available\nGet more credits\n$0.00 used this month\nMonthly grant: $5.00 remaining\nVideoclaw key\nSave\n\nA key is connected. Videoclaw stores it encrypted in your Mac’s keychain and never shows it again — paste a new one here to replace it.",
+   "meter": {
+    "name": "Local studio (self-hosted)",
+    "spentUsd": 0,
+    "limitUsd": 5,
+    "limitTotalUsd": null,
+    "spentTotalUsd": 0,
+    "topupBalanceUsd": 0,
+    "reservedUsd": 0,
+    "availableUsd": 5,
+    "effectiveLimitUsd": 5,
+    "topupMinUsd": 5,
+    "topupMaxUsd": 500
+   },
+   "ledgerSpentUsd": 0,
+   "ledgerEntries": 0
+  },
+  "topup_unavailable": {
+   "ok": true,
+   "args": "[25]",
+   "result": {
+    "ok": false,
+    "error": "Checkout is unavailable right now. Try again in a moment."
+   },
+   "dom": "Billing & credits\nGeneration credit\n$5.00 available\nGet more credits\n$0.00 used this month\nMonthly grant: $5.00 remaining\n$\nContinue\nCancel\n\nMin $5, max $500. $1 buys $1 of generation. Opens in your browser — Videoclaw never sees your card. Top-ups are non-refundable.\n\nCheckout is unavailable right now. Try again in a moment.\n\nVideoclaw key\nSave\n\nA key is connected. Videoclaw stores it encrypted i",
+   "ledgerTopups": 0
+  },
+  "claude_code_status": {
+   "ok": true,
+   "calls": 1,
+   "results": [
+    "{\"available\":false}"
+   ],
+   "domAgent": "Agent & models\nAgent for new videos\nClaude Code\nThe established VideoClaw agent, using Claude Code’s official local runtime.\nClick to connect your Claude Code plan\nCodex\nOpenAI’s coding agent, with VideoClaw’s video tools and approval controls.\nUnavailable in this build\n\nCodex in this build runs on MiniMax — set MINIMAX_API_KEY in the environment to use it.\n\nCheck agent accounts again\n\nApplies to new videos. Existing videos keep their original agent so conversation history stays intact.\n\nLanguag"
+  }
+ },
+ "landing": "home",
+ "ledgerAtLaunch": {
+  "schema": "videoclaw-port.local-gateway-ledger/v1",
+  "keys": [
+   {
+    "id": "eb7229ca53b7…",
+    "hint": "vc_2716…0d39",
+    "revoked": false
+   }
+  ],
+  "limits": {
+   "monthUsd": 5,
+   "totalUsd": null
+  },
+  "entries": 0,
+  "topupBalanceUsd": 0
+ },
+ "ledgerAtEnd": {
+  "entries": [],
+  "refusals": 0,
+  "topups": 0,
+  "limits": {
+   "monthUsd": 5,
+   "totalUsd": null
+  }
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "app:update:preferences",
+  "bootstrap:status",
+  "client:list",
+  "engine:agentProviderKeyStatus",
+  "engine:claudeCodeStatus",
+  "engine:codexStatus",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "gateway:topup",
+  "interaction:replayPending",
+  "memory:read",
+  "quickstart:catalog",
+  "session:list",
+  "settings:get",
+  "taste:list",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T12:49:28.797Z"
+}

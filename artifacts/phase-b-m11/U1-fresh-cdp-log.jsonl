@@ -1,0 +1,33 @@
+{"t":648,"cdp":"Page.enable","params":{}}
+{"t":738,"cdp":"Runtime.enable","params":{}}
+{"t":2052,"note":"landing home"}
+{"t":2150,"action":"click","desc":"profile button","selector":"button.profile-button","at":{"x":126,"y":778},"element":{"hitOk":true,"hit":"SPAN.profile-copy","x":9,"y":756,"width":233,"height":44,"label":"Your account\nLocal studio"}}
+{"t":2150,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":778}}
+{"t":2168,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":2170,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":2582,"action":"click","desc":"Settings","selector":"button[role='menuitem']","at":{"x":126,"y":609},"element":{"hitOk":true,"hit":"BUTTON.","x":16,"y":594.40625,"width":219,"height":30,"label":"Settings"}}
+{"t":2582,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":609}}
+{"t":2584,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":609,"button":"left","clickCount":1}}
+{"t":2586,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":609,"button":"left","clickCount":1}}
+{"t":3544,"note":"STEP account_identity: PASS {\"domAccount\":\"Account\\nVideoclaw account\\nNot signed in — running on your alpha key\\nUpdates\\nLoading update settings…\\n\\nReceive releases selected for general use.\\n\\nThis Mac\\nReset VideoClaw on this Mac…\\n\\nPermanently removes local projects and chats, then restarts. Your account and cloud data stay.\",\"snapshot\":{\"step\":\"ready\",\"legacyKeyOnly\":true,\"hasStoredKey\":true,\"storedKeyId\":\"eb7229ca53b7…\",\"storedKeyInvalid\":false,\"signInUnavailableReason\":\"unconfigured\",\"loaded\":true},\"ledgerKeyIdPrefix\":\"eb7229ca53b7…\"}"}
+{"t":3551,"action":"click","desc":"Billing & credits nav","selector":"button","at":{"x":283,"y":222},"element":{"hitOk":true,"hit":"BUTTON.","x":193,"y":205,"width":180,"height":33,"label":"Billing & credits"}}
+{"t":3551,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":283,"y":222}}
+{"t":3568,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":283,"y":222,"button":"left","clickCount":1}}
+{"t":3569,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":283,"y":222,"button":"left","clickCount":1}}
+{"t":5457,"note":"STEP billing_meter: PASS {\"domBilling\":\"Billing & credits\\nGeneration credit\\n$5.00 available\\nGet more credits\\n$0.00 used this month\\nMonthly grant: $5.00 remaining\\nVideoclaw key\\nSave\\n\\nA key is connected. Videoclaw stores it encrypted in your Mac’s keychain and never shows it again — paste a new one here to replace it.\",\"meter\":{\"name\":\"Local studio (self-hosted)\",\"spentUsd\":0,\"limitUsd\":5,\"limitTotalUsd\":null,\"spentTotalUsd\":0,\"topupBalanceUsd\":0,\"reservedUsd\":0,\"availableUsd\":5,\"effectiveLimitUsd\":5,\"topupMinUsd\":5,\"topupMaxUsd\":500},\"ledgerSpentUsd\":0,\"ledgerEntries\":0}"}
+{"t":5461,"action":"click","desc":"Get more credits","selector":"button.am-credit-cta","at":{"x":989,"y":397},"element":{"hitOk":true,"hit":"BUTTON.am-credit-cta","x":916.296875,"y":378.140625,"width":145.703125,"height":37,"label":"Get more credits"}}
+{"t":5461,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":989,"y":397}}
+{"t":5468,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":989,"y":397,"button":"left","clickCount":1}}
+{"t":5469,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":989,"y":397,"button":"left","clickCount":1}}
+{"t":6159,"action":"click","desc":"Continue","selector":"button.am-save","at":{"x":961,"y":459},"element":{"hitOk":true,"hit":"BUTTON.am-save","x":916.359375,"y":442.140625,"width":88.484375,"height":33,"label":"Continue"}}
+{"t":6159,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":961,"y":459}}
+{"t":6167,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":961,"y":459,"button":"left","clickCount":1}}
+{"t":6171,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":961,"y":459,"button":"left","clickCount":1}}
+{"t":7060,"note":"STEP topup_unavailable: PASS {\"args\":\"[25]\",\"result\":{\"ok\":false,\"error\":\"Checkout is unavailable right now. Try again in a moment.\"},\"dom\":\"Billing & credits\\nGeneration credit\\n$5.00 available\\nGet more credits\\n$0.00 used this month\\nMonthly grant: $5.00 remaining\\n$\\nContinue\\nCancel\\n\\nMin $5, max $500. $1 buys $1 of generation. Opens in your browser — Videoclaw never sees your card. Top-ups are non-refundable.\\n\\nCheckout is unavailable right now. Try again in a moment.\\n\\nVideoclaw key\\nSave\\n\\nA key is connected. Videoclaw stores it encrypted i\",\"ledgerTopups\":0}"}
+{"t":7064,"action":"click","desc":"Agent & models nav","selector":"button","at":{"x":283,"y":186},"element":{"hitOk":true,"hit":"BUTTON.","x":193,"y":169,"width":180,"height":33,"label":"Agent & models"}}
+{"t":7064,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":283,"y":186}}
+{"t":7068,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":283,"y":186,"button":"left","clickCount":1}}
+{"t":7069,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":283,"y":186,"button":"left","clickCount":1}}
+{"t":8078,"note":"STEP claude_code_status: PASS {\"calls\":1,\"results\":[\"{\\\"available\\\":false}\"],\"domAgent\":\"Agent & models\\nAgent for new videos\\nClaude Code\\nThe established VideoClaw agent, using Claude Code’s official local runtime.\\nClick to connect your Claude Code plan\\nCodex\\nOpenAI’s coding agent, with VideoClaw’s video tools and approval controls.\\nUnavailable in this build\\n\\nCodex in this build runs on MiniMax — set MINIMAX_API_KEY in the environment to use it.\\n\\nCheck agent accounts again\\n\\nApplies to new videos. Existing videos keep their original agent so conversation history stays intact.\\n\\nLanguag\"}"}
+{"t":8163,"note":"app exited 0"}
+{"t":8401,"note":"DONE allPass=true steps=account_identity:ok billing_meter:ok topup_unavailable:ok claude_code_status:ok"}

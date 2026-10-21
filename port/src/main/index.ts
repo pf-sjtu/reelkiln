@@ -28,7 +28,8 @@ const EVENT_LOG = process.env.VIDEOCLAW_PORT_EVENT_LOG;
 /** PORT-NEW docs/26: evidence of which invoke channels the ORIGINAL renderer called (UI-e2e). One redacted
  *  JSONL row per call: channel, real/fake, outcome, ms and a short redacted shape of the args/result. */
 const IPC_LOG = process.env.VIDEOCLAW_PORT_IPC_LOG;
-function shapeOf(v: unknown): string { try { return redactText(JSON.stringify(v, (_k, x) => (x instanceof ArrayBuffer || ArrayBuffer.isView(x) ? `<bytes ${(x as ArrayBuffer).byteLength}>` : x)) ?? "undefined").slice(0, 300); } catch { return "<unserializable>"; } }
+const IPC_LOG_MAX = Math.max(300, Number(process.env.VIDEOCLAW_PORT_IPC_LOG_MAX) || 300); // PORT-NEW docs/28: longer rows for evidence
+function shapeOf(v: unknown): string { try { return redactText(JSON.stringify(v, (_k, x) => (x instanceof ArrayBuffer || ArrayBuffer.isView(x) ? `<bytes ${(x as ArrayBuffer).byteLength}>` : x)) ?? "undefined").slice(0, IPC_LOG_MAX); } catch { return "<unserializable>"; } }
 async function logInvoke(ch: string, real: boolean, args: unknown[], run: (a: unknown[]) => unknown): Promise<unknown> {
   const t0 = Date.now();
   const row = (o: Record<string, unknown>) => { try { appendFileSync(IPC_LOG!, JSON.stringify({ t: new Date().toISOString(), ch, real, ms: Date.now() - t0, args: shapeOf(args), ...o }) + "\n"); } catch {} };

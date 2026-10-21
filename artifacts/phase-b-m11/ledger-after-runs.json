@@ -1,0 +1,55 @@
+{
+ "schema": "videoclaw-port.local-gateway-ledger/v1",
+ "account": {
+  "id": "acct_local_13a62c310868",
+  "name": "Local studio (self-hosted)",
+  "createdAt": 1792586821824
+ },
+ "keys": [
+  {
+   "id": "eb7229ca53b73ff4d44d281a4529357e0a8946fa30b50c1a19933de6b040524f",
+   "hint": "vc_2716…0d39",
+   "createdAt": 1792586821825
+  },
+  {
+   "id": "3b292e7ad0d0fa07145d42f72f5fb56be3756c5be5cf70443c1d349d84e0073f",
+   "hint": "vc_8e4d…6c82",
+   "createdAt": 1792586975948,
+   "revokedAt": 1792586979177
+  }
+ ],
+ "limits": {
+  "monthUsd": 5,
+  "totalUsd": null
+ },
+ "topupBalanceUsd": 0,
+ "topups": [],
+ "entries": [
+  {
+   "id": "spend_894923cecb0f",
+   "at": 1792586979174,
+   "usd": 0.000214,
+   "pricing": {
+    "inputPerMTokUsd": 0.3,
+    "outputPerMTokUsd": 1.2,
+    "source": "port-local-table/v1"
+   },
+   "kind": "model_call",
+   "keyId": "3b292e7ad0d0fa07145d42f72f5fb56be3756c5be5cf70443c1d349d84e0073f",
+   "model": "claude-haiku-4-5-20251001",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 340,
+   "outputTokens": 93,
+   "status": 200
+  }
+ ],
+ "refusals": [],
+ "spendAuthorities": {},
+ "budgets": {},
+ "quotes": [],
+ "pricing": {
+  "inputPerMTokUsd": 0.3,
+  "outputPerMTokUsd": 1.2,
+  "source": "port-local-table/v1"
+ }
+}
