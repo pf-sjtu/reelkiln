@@ -351,7 +351,7 @@ export const SPECS = [
       slice("main", /^function imagePathOf\(name, input\)/, /^}$/, /^function isRealUserText\(/),
     ],
     subs: [],
-    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText", "providerMessage", "providerFailureKind", "providerCapabilityLabel", "QUOTA_EXHAUSTED", "isRuntimeAuthFailure", "appendDisplayAsk", "appendDisplayPreference"],
+    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText", "providerMessage", "providerFailureKind", "providerCapabilityLabel", "QUOTA_EXHAUSTED", "isRuntimeAuthFailure", "appendDisplayAsk", "appendDisplayPreference", "PROVIDER_REFUSAL_KINDS", "PROVIDER_TEXT_UNSAFE", "MAX_PROVIDER_REASON", "MAX_PROVIDER_NEXT_STEP", "safeProviderText", "isProviderPolicyRefusalMessage", "isLateResultLine", "validCost", "validProviderText", "appendDisplayLateResult", "lateResultKey"],
   },
 
   {
@@ -898,6 +898,33 @@ export const SPECS = [
     ],
     subs: [],
     exports: ["LIMITED_ACCOUNT_URLS", "modelAccountLimit", "modelAccountLimitPresentation"],
+  },
+  {
+    // docs/33 (M16): the ORIGINAL operation-journal helpers the accepted-operation collector reads
+    // (readOperationJournal / unfinishedDestinations / newlyDeliveredPaths / operationUploadIds L18381-18838),
+    // the busy-collector lock wrapper (BUSY_COLLECTOR / busyCollectorArgs), late-result report copy
+    // (lateResultReportNote / recoveredMediaNote), collectorResult, and the saved-operation / late-result
+    // registry validators (modelCompletionSchema … restoredLateResultFailures L34089-34284).
+    out: "src/main/agent/operation-journal.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { closeSync, constants, fstatSync, lstatSync, openSync, readFileSync, readdirSync, realpathSync } from "node:fs";',
+      'import { isAbsolute, join, relative, resolve, sep } from "node:path";',
+      'import { isDeepStrictEqual } from "node:util";',
+      'import { z } from "zod";',
+      'import { isClientJobId } from "../engine/session";',
+      'import { redact } from "./session-title.generated";',
+      'import { PROVIDER_REFUSAL_KINDS, PROVIDER_TEXT_UNSAFE, MAX_PROVIDER_REASON, MAX_PROVIDER_NEXT_STEP, safeProviderText, isProviderPolicyRefusalMessage, isLateResultLine, validCost, validProviderText } from "./history.generated";',
+    ],
+    slices: () => [
+      sliceUntil("main", /^const UNSAFE_RUNS = new RegExp\(/, /^function payloadOf\(message\) \{$/),
+      sliceUntil("main", /^const modelCompletionSchema = z\.object\(\{$/, /^const LATE_RESULT_OUTCOMES = /),
+      sliceUntil("main", /^function realJobPath\(jobPath\) \{$/, /^function retirePlanContract\(meta\) \{$/),
+    ],
+    subs: [],
+    exports: ["providerReason", "generationModelLabel", "isTerminalStatus", "operationUploadIds", "readOperationJournal", "unfinishedDestinations", "newlyDeliveredPaths", "recoveredMediaNote", "lateResultReportNote", "collectorResult", "BUSY_COLLECTION_LOCK_WAIT_S", "BUSY_COLLECTOR", "busyCollectorArgs",
+      "modelCompletionSchema", "collectedResultSchema", "OPEN_TOOL_OWNERSHIP_MARGIN_MS", "REPORT_ONLY_TURN_REFUSAL", "MAX_PENDING_OPERATIONS", "LATE_RESULT_COALESCE_MAX_MS", "missingRecoveryTool", "savedGatewayOperations", "restoredGatewayOperations", "restoredLateResultReports",
+      "realJobPath", "restoredLateResultLines", "restoredLateResultFailures"],
   },
 ];
 

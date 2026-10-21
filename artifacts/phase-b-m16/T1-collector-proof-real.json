@@ -1,0 +1,131 @@
+{
+ "mode": "real",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "scenarios": {
+  "late-arrival": {
+   "engineExit": "killed (SIGKILL)",
+   "statusBefore": "idle",
+   "shimOperation": {
+    "status": "succeeded",
+    "costUsd": 0.001584
+   },
+   "collectorStarts": [
+    {
+     "busy": false,
+     "wrapper": "plain",
+     "collectorOwned": 0,
+     "deferPublication": false
+    }
+   ],
+   "collected": [
+    {
+     "status": "succeeded",
+     "complete": true,
+     "busy": false
+    }
+   ],
+   "collectorPasses": 1,
+   "rowsLeft": [],
+   "lateResultLines": [
+    {
+     "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e",
+     "outcome": "arrived",
+     "tool": "model_call",
+     "model": "minimax/speech-2.8-turbo",
+     "files": [
+      "incoming/model-f9c1c2e28051b1a138c4c52c765bbed6.mp3"
+     ],
+     "costUsd": 0.001584
+    }
+   ],
+   "liveLateResultEvents": [
+    {
+     "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e",
+     "outcome": "arrived",
+     "tool": "model_call",
+     "model": "minimax/speech-2.8-turbo",
+     "files": [
+      "incoming/model-f9c1c2e28051b1a138c4c52c765bbed6.mp3"
+     ],
+     "costUsd": 0.001584
+    }
+   ],
+   "reportTurn": {
+    "displayTexts": [],
+    "notePrefix": "[APP NOTE, not from the user; do not quote it] A result the user already paid for arrived after the step that bought it had ended: jobs/m16-la-mvinczfh/incoming/model-f9c1c2e28051b1a138c4c52c765bbed6.mp3. This is a short report-only turn. In one or two sentences, tell the user it arrived and where it is. Do not generate, re-run, download or re-import anything, and start no paid work in this turn; the app refuses paid",
+    "hasCompletedResults": true
+   },
+   "spendDuringReport": {
+    "allowed": false,
+    "status": 403,
+    "reason": "This turn only reports a result that already arrived, so it cannot start new production work. Nothing was submitted or charged. Tell the user where the result is and wait for their reply."
+   },
+   "statusDuringReport": "running",
+   "reportTurnSettled": true,
+   "lateResultReportsLeft": null,
+   "incoming": [
+    {
+     "file": "model-f9c1c2e28051b1a138c4c52c765bbed6.mp3",
+     "bytes": 98484,
+     "sha256": "c3331867afed2681"
+    }
+   ],
+   "paidEntriesAdded": 1,
+   "pass": true
+  }
+ },
+ "sessionEventKinds": [
+  "late_result",
+  "status"
+ ],
+ "ledger": {
+  "paidTool": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "usd": 0.001584,
+    "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e"
+   }
+  ],
+  "unsettledExposure": [],
+  "totalPaidUsd": 0.001584
+ },
+ "hostEvents": [
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.collector_started",
+   "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e",
+   "busy": false,
+   "wrapper": "plain",
+   "collectorOwned": 0
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e",
+   "status": "succeeded",
+   "complete": true,
+   "busy": false
+  },
+  {
+   "event": "agent.paid.late_result_line",
+   "operationId": "bb3097e9-932a-4f32-bf21-ca5f2a6f759e",
+   "outcome": "arrived"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.beacon.late-result-report",
+   "detail": "session=8ee8a999-c89b-4b0c-a096-45e4578a1c2c operations=bb3097e9-932a-4f32-bf21-ca5f2a6f759e"
+  },
+  {
+   "event": "agent.paid.report_turn_settled",
+   "status": "idle"
+  }
+ ]
+}
