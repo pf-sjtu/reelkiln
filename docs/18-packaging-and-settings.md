@@ -18,6 +18,7 @@
 | Windows nsis 安装包 | ❌ box 上无法生成 | electron-builder 在 Linux 上生成 nsis 需要 `wine`（`spawn wine ENOENT`）；未安装 wine |
 | macOS `.app` 目录布局（arm64） | ⚠️ 只构建、未运行 | `--platform mac --arch arm64 --targets dir` 成功（"skipped macOS application code signing: supported only on macOS"）；`Contents/Resources/claude-agent-sdk/…/claude-agent-sdk-darwin-arm64/claude` 就位 |
 | macOS dmg | ❌ 未尝试/无法验证 | dmg、签名、公证需要 macOS |
+| **（第六轮）打包 AppImage GUI 内从 UI 发起真实 agent 回合 + Stop** | ✅（1 次，extract-and-run） | docs/19 §0；`artifacts/agent-ui-run/appimage-*`。本轮 FUSE 直跑失败（`fusermount` 缺失，仅 `fusermount3`），未改系统 |
 | 设置页 LLM 路由选择器 | ✅ | 单测 5 个 + dev Electron 冒烟 + 打包产物冒烟（真实点击单选 → `settings:get` 持久化 → push 收到 → 页面重渲染 → 恢复）+ 截图人工检查 |
 
 ## 1. 打包方案
@@ -91,7 +92,7 @@ npm run package:smoke -- release/*.AppImage release/*.deb [--live]   # 启动冒
 - **刷新时机**：主进程推送 **`port:llm:routesChanged`**（PORT-NEW；生效路由变化或 providers 文件热重载/SIGHUP 时，携带最新 `LlmRoutesView`，相同内容去重）、窗口 `focus`、`visibilitychange → visible`、手动 Refresh。
 - **About this build**：新的 PORT-NEW `port:diagnostics` —— 版本/是否打包/Electron/Node/平台、SDK 发现结果（来源、版本、是否等于 pin、`claude` 路径或错误）、node:sqlite、userData 路径。
 - 桥：`window.videoclawPort` 增加 `diagnostics()`、`onLlmRoutesChanged(cb) → unsubscribe`；原版 184 方法的 `window.videoclaw` 未改（忠实性测试仍通过）。
-- **与完整原版设置页的差距**（原版设置 UI 在尚未移植的 React bundle 里）：账户/登录、gateway key 管理（CredentialStore 未移植）、Codex harness/provider/model、更新渠道、遥测与使用分享同意、alpha consent、语音、主题/本地化等；路由切换后原版会经 `AgentHost.onLlmRouteChanged` 拆掉运行中的 runtime（未移植，本页文案只说“对新视频生效”）；文案为英文、未本地化；在 UI 里编辑 providers 文件 / 输入 key 未实现（key 只走环境变量，刻意不在渲染进程出现）。
+- **与完整原版设置页的差距**（原版设置 UI 在尚未移植的 React bundle 里）：账户/登录、gateway key 管理（CredentialStore 未移植）、Codex harness/provider/model、更新渠道、遥测与使用分享同意、alpha consent、语音、主题/本地化等；路由切换后原版会经 `AgentHost.onLlmRouteChanged` 拆掉运行中的 runtime（第六轮已接上最小 AgentHost，docs/19；本页文案仍只说“对新视频生效”——已有视频保持其固定路由）；文案为英文、未本地化；在 UI 里编辑 providers 文件 / 输入 key 未实现（key 只走环境变量，刻意不在渲染进程出现）。
 
 ## 6. Windows / macOS 注意事项（全部未验证）
 
@@ -110,7 +111,7 @@ npm run package:smoke -- release/*.AppImage release/*.deb [--live]   # 启动冒
 - Windows nsis / macOS dmg：只有配置（及目录布局构建），从未安装或运行；签名、公证、SmartScreen/Gatekeeper 全未处理。
 - deb 未通过 `dpkg -i`/`apt` 真正安装（只解包运行）；依赖列表手写（GTK3/NSS 等常规 Electron 依赖），未在干净系统上验证；未用 sandbox（`--no-sandbox`）运行。
 - AppImage 在本 box 需要额外系统配置（libfuse2、fusermount 软链接、/etc/mtab）；其它发行版行为未测。
-- 真实 agent 回合是在打包二进制的 **node 模式**（CLI）里跑的；GUI 主进程里还没有“发起会话”的入口（AgentHost 未移植），所以 GUI 内只验证了“能发现 SDK + 原生二进制”。
+- ~~真实 agent 回合是在打包二进制的 **node 模式**（CLI）里跑的；GUI 主进程里还没有“发起会话”的入口~~ → 第六轮：打包 AppImage 的 GUI 里从 Agent 页真实跑通工具回合 + Stop（docs/19 §0）。注意本轮 AppImage FUSE 直跑失败（`fusermount` 不存在，只有 `fusermount3`），用的是 `APPIMAGE_EXTRACT_AND_RUN=1`。
 - 包体 ≈ 200–255 MB（压缩），一半以上是 `claude` 原生二进制；SDK 再分发许可未确认。
 - 打包时 SDK 版本固定为 pin（0.3.305）；升级 pin 需重新 `agent-sdk:install` 并重测 MiniMax 兼容性。
 - 桌面环境启动时环境变量（provider key、工具路径）可能拿不到；未做“在设置页里配置 key”的功能。

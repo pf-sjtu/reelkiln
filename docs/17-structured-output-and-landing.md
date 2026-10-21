@@ -137,6 +137,8 @@ CLAUDE_CONFIG_DIR/projects/…jsonl: {"type":"ai-title","aiTitle":"Surfing cats"
 - 提交：`ea71e2f`（helper 结构化输出）、`0f6aec0`（proxy 模拟 + preset）、`767d897`（SDK 自动发现 + 安装脚本）、`1880eb4`（路由选择 IPC/UI）、本文档提交。
 
 ## 8. 未验证 / 风险
+
+> 第六轮（docs/19）：gate proxy（含结构化输出模拟）现在也由 UI 发起的 AgentHost 会话使用（`gateProxy:true`、`maxConcurrency:1`）；MiniMax preset 开着 `disableNonessentialTraffic`（标题等旁路请求预计不发），本轮也没有记录 proxy 的 `structuredEmulated` 计数，所以**未确认** UI 会话中是否走到了模拟路径。
 - 强制工具调用的 **schema 遵守是“模型行为”而非服务端约束**：12/12 有效，但不是保证（没有 `strict` 语义）；调用方仍应 `JSON.parse` + 校验。复杂 schema（深嵌套、大量必填、`oneOf`）、超长输出、`max_tokens` 不足时的截断表现未测。
 - tool 模式下若调用方本身也传了 tools，会被追加并强制调用 `structured_output`，原有工具不会被调用（helper 场景目前没有这种调用方）。
 - gate proxy 模拟只覆盖 **无工具** 的 `output_config.format` 请求；Claude Code 其它可能用到结构化输出的路径（除标题外）未枚举；Claude Code 版本升级后请求形状可能变化。

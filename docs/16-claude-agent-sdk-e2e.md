@@ -110,7 +110,7 @@ env 名取自 Claude Code 2.1.305 二进制中的字符串，前三个已实测�
 ## 5. 仍延后
 
 - 原版 `createLocalRuntime` 的完整选项：流式输入（`prompt: inputStream()`）、`resume` / `sessionStore` / `enableFileCheckpointing`、`replay-user-messages`、project 设置 + 签名校验的 hooks、studio MCP 服务器、`adaptClaudeCodeCanUseTool` 权限适配与 UI、`allowedTools/disallowedTools` 产品清单、`autoCompact` 设置、`effort` 选项。
-- AgentHost 会话生命周期（spawn/teardown、路由变更时 teardown、并发会话管理）、Claude Code 登录探测（`claude-code` 路由 readiness）、CredentialStore。
+- ~~AgentHost 会话生命周期（spawn/teardown、路由变更时 teardown、并发会话管理）~~ → 第六轮最小版本已移植并从 UI 真实跑通（docs/19）；仍延后：Claude Code 登录探测（`claude-code` 路由 readiness）、CredentialStore。
 - ~~SDK 需手动设置 `VIDEOCLAW_CLAUDE_AGENT_SDK`~~ → 第四轮：自动发现 + `npm run agent-sdk:install`（docs/17 §4）；~~electron-builder 打包配置仍未做~~ → 第五轮：SDK + 原生 `claude` 作为 extraResources 进包（`resources/claude-agent-sdk`），Linux 打包产物中已真实跑通一次 agent 回合（docs/18 §2–3）。
 - 每个 proxy token 会登记进进程级脱敏集合且不移除（每会话 69 字节，长时间运行的轻微增长）。
 
@@ -119,5 +119,7 @@ env 名取自 Claude Code 2.1.305 二进制中的字符串，前三个已实测�
 **已验证**：Linux 上官方 SDK 0.3.305 + 原生 claude 2.1.305 正常运行；Node 24.22 与 Electron 42.11.9 均可加载 SDK 并跑通；经 `sessionRuntimeConfig()`/`sessionAgentRuntime()` 的 env/model 驱动真实 agent 对 MiniMax Anthropic 兼容端点完成一问一答、Bash 工具往返、canUseTool 允许/拒绝两条路径；gate proxy 下 `maxInflight` 始终为 1（含故意打开标题请求时的串行化）；子进程 env 不含 provider key（Bash 实测）；输出与日志中 key 出现 0 次；不兼容 #1-#3 的处理实测有效。
 
 **第四轮更新**：结构化输出改为 proxy 模拟并真实验证（docs/17）；SDK 自动发现真实验证（不设 env，`source:"vendor"`）。
+
+**第六轮补充（docs/19）**：同一条 env/model/gate proxy 路径已由主进程 AgentHost 以**流式输入**（一个会话一个长寿 `query()`）驱动，并从 Electron UI（dev + 打包 AppImage）真实完成 Glob 工具回合与 Stop 中断；`query.interrupt()` 在真实 Claude Code 2.1.305 上及时 ack。
 
 **未验证**：`disableStructuredOutputs` 下 Claude Code 的回退行为（仅 1 个样本）；`disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的实际效果；子 agent（`Agent` 工具）、长对话自动压缩、图片输入经真实 Claude Code → MiniMax；`x-api-key` / `header` 鉴权方案经真实 Claude Code（只有 mock + proxy 单测）；Windows / macOS 原生二进制（第五轮只验证了交叉安装与进包布局，未运行，docs/18 §6）；多个视频同时运行时的实际排队时延；MiniMax 真实 429/529 下 Claude Code 自身的重试与我们闸门的叠加效果。

@@ -5,6 +5,8 @@
 
 ## 0. 已验证 / 未验证（2026-10-21 第三轮“真实 Claude Agent SDK 端到端”后，box，Node 24.22 / Electron 42.11.9）
 
+> **第六轮（docs/19）**：最小 **AgentHost**（主进程会话生命周期）接在原版 IPC 契约上（`session:create` / `session:send` / `session:interrupt` + push `session:event` / `session:changed`）：每个视频一个流式输入 `query()`，经 `sessionAgentRuntime()`（gate proxy 并发 1 + key 隔离 + 结构化输出模拟）；Stop / interrupt ack 超时 teardown / 路由切换 teardown / host 级 1 回合闸门；renderer 新增 **Agent** 页。**从 UI 真实跑通** MiniMax 工具回合（Glob）+ Stop：dev 模式与打包 AppImage 各 1 次。`npm test` **190/190**。
+>
 > **第五轮（docs/18）**：electron-builder 打包（Linux AppImage + deb 已构建并在 box 上启动冒烟；打包后 SDK 从 `resources/claude-agent-sdk` 自动发现、node:sqlite 正常、打包二进制里真实 agent 回合 1 次成功；Windows nsis / macOS dmg 仅配置，未验证）；renderer 新增正式 **Settings** 页 LLM 路由选择器（状态徽章、不可用原因、经原版 `settings:set` 持久化、`port:llm:routesChanged` 推送 + 焦点刷新）。`npm test` **177/177**。
 >
 > **第四轮（docs/17）**：结构化输出（helper `structuredOutput: native|tool|off`，OpenAI `response_format` 透传 / Responses `text.format` / Anthropic `output_config.format`；MiniMax 用强制工具调用，实测 12/12）、gate proxy 结构化输出模拟、SDK 自动发现 + `npm run agent-sdk:install`、PORT-NEW `port:llm:routes` 路由列表 IPC + stub renderer 选择器。`npm test` **165/165**。
@@ -29,7 +31,7 @@
 
 **未验证 / 风险**
 
-- [x] ~~Claude Agent SDK `query()` 从未真实拉起~~ → **第三轮已真实跑通**（docs/16）。仍延后：原版 `createLocalRuntime` 的完整选项（流式输入、resume、hooks、studio MCP、权限适配/UI、session store）、AgentHost 会话生命周期；SDK 不是 port 的 npm 依赖；第四轮起自动发现（`npm run agent-sdk:install` → `port/vendor/`，或打包布局 / env，docs/17 §4）。
+- [x] ~~Claude Agent SDK `query()` 从未真实拉起~~ → **第三轮已真实跑通**（docs/16）。仍延后：原版 `createLocalRuntime` 的完整选项（resume、hooks、studio MCP、权限适配/UI、session store）；~~AgentHost 会话生命周期~~（第六轮：最小 AgentHost + 流式输入 + UI 真实回合，docs/19）；SDK 不是 port 的 npm 依赖；第四轮起自动发现（`npm run agent-sdk:install` → `port/vendor/`，或打包布局 / env，docs/17 §4）。
 - [ ] `agentCompat` 中 `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的效果未实测（MiniMax 不需要）；`disableStructuredOutputs` 下 Claude Code 的回退行为只看到 1 个样本（docs/17 §8）。MiniMax preset 已改用 `emulateStructuredOutputs`（真实验证，docs/17 §3）。
 - [ ] `openai-responses` 协议从未对任何真实端点发过请求（只有 mock）；`openai-chat-completions` 只对 MiniMax 的兼容端点实测过，未对 OpenAI/OpenRouter/DeepSeek 实测。
 - [ ] 多模态：PDF（`file`/`input_file`）、URL 图片、tool_use/tool_result 的转换只按公开 schema + mock 测试；真实端点只验证了 base64 PNG → chat `image_url`。
@@ -179,14 +181,14 @@ providers 文件路径：环境变量 **`VIDEOCLAW_LLM_PROVIDERS_FILE`**（设�
 | IPC（既有契约，未新增 channel） | 实现 |
 | --- | --- |
 | `settings:get` | 原版 `Settings`（L5291）移植，`userData/settings.json`，原子写、0600 |
-| `settings:set` | 原版 L61680：`rendererWritableSettingsPatch` → `patch` → 有效路由变化时触发 route-changed 钩子（AgentHost 的 runtime teardown 未移植，只记日志）。PORT-NEW：未注册的 provider 名从 patch 中剔除 |
+| `settings:set` | 原版 L61680：`rendererWritableSettingsPatch` → `patch` → 有效路由变化时触发 route-changed 钩子（第六轮起调用最小 AgentHost 的 `onLlmRouteChanged()` 拆 runtime，docs/19 §2）。PORT-NEW：未注册的 provider 名从 patch 中剔除 |
 | `engine:llmRouteReadiness` | 原版 L51052 + provider 分支：`provider-unavailable` / `provider-key-missing`（附 env 名）/ `provider-protocol-unsupported`；gateway → ready；claude-code → `undefined`（登录探测未移植） |
 
 `LlmRouteService` 移植了 AgentHost 中决定“谁付费”的部分：`newSessionLlmRoute`（L38769，新视频固定当前路由）、`sessionLlmRoute`（L40823，PORT-NEW：固定的 provider 名即使暂时未注册也保持 → fail-closed）、`sessionHelperKind`/`sessionHelperCreds`（provider 视频的 helper 请求走该 provider）、`sessionModel`（L40865，provider 默认用其 model）、`sessionHelperComplete`、`localRuntimeEnv`/`sessionRuntimeConfig`（`createLocalRuntime` L23214-23330 的完整 `options.env`：`sanitizedAgentEnv` 之后显式注入 base URL + token/header + 5 个别名 + 隔离 `CLAUDE_CONFIG_DIR=userData/engine-profile` + 原版的 connectors-off / no-self-starting-work 等）。
 
 **第三轮已补上的部分**：`sessionAgentRuntime()`（= `sessionRuntimeConfig()` + 可选 gate proxy）+ `agent-sdk.ts`（运行时加载 SDK、原版打包布局的 `claude` 路径、最小 `query()` 选项、单轮 `runAgentTurn`），经 `llm-agent-smoke` 对 MiniMax 真实跑通，见 docs/16。
 
-**仍延后（及原因）**：原版 `query()` 的完整选项与 AgentHost 会话/权限/hooks/MCP 体系（未移植）；AgentHost 的会话生命周期与 `onLlmRouteChanged` 的 runtime teardown；CredentialStore（gateway key 库）；Claude Code 登录探测；~~设置 UI 的 provider 选择器~~（第五轮：port renderer 的 Settings 页已有，docs/18 §5；原版完整设置页仍未移植）。这些接入时把 `sessionAgentRuntime()` 的 `env`/`model` 原样传给 `query()`，子进程退出后调用 `close()`。
+**仍延后（及原因）**：原版 `query()` 的完整选项与 AgentHost 会话/权限/hooks/MCP 体系（未移植）；~~AgentHost 的会话生命周期与 `onLlmRouteChanged` 的 runtime teardown~~（第六轮最小版本，docs/19；持久化/权限/MCP 仍延后）；CredentialStore（gateway key 库）；Claude Code 登录探测；~~设置 UI 的 provider 选择器~~（第五轮：port renderer 的 Settings 页已有，docs/18 §5；原版完整设置页仍未移植）。这些接入时把 `sessionAgentRuntime()` 的 `env`/`model` 原样传给 `query()`，子进程退出后调用 `close()`。
 
 ### 3.5 生产加固
 
