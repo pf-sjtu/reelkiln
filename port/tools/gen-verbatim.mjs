@@ -881,6 +881,14 @@ export const SPECS = [
     exports: ["INTERRUPTING", "videoTitles", "blockerLine", "assessQuit", "QUIT_BUTTON_INDEX", "quitDialogOptions", "QuitCoordinator"],
   },
   {
+    // docs/33 M16 T4: alpha consent (L5156-5274) — per-key consent records + the durable alpha-consent beacon.
+    out: "src/main/account/alpha-consent.generated.ts",
+    imports: ['import { createHash } from "node:crypto";'],
+    slices: () => [sliceUntil("main", /^const KEY_ID_DOMAIN = "videoclaw-alpha-consent-key\/v1\\0";$/, /^const APP_SETTINGS_KEYS = \[$/)],
+    subs: [],
+    exports: ["alphaConsentGatewayScope", "alphaConsentKeyId", "normalizedAlphaConsentRecords", "activeAlphaConsentAt", "activeAlphaConsentComplete", "verificationMatchesActiveKey", "AlphaConsentCoordinator"],
+  },
+  {
     // docs/29: CharacterSheetBuilder (L19216) — the engine dry-run plan + gateway quote and the paid build
     // (engine tools/build_character_sheet.py → POST /v1/mint_image through the scoped gateway capability)
     out: "src/main/characters/character-sheet.generated.ts",

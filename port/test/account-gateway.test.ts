@@ -148,8 +148,13 @@ async function accountHarness(o: { reply?: Parameters<typeof fakeUpstream>[0]; e
   const pushes: any[] = [];
   const opened: string[] = [];
   const service = new AccountService({ settings, credentials: credentials as any, openedGatewayUrl: h.url, packaged: false, appVersion: "0.0.40", env: o.env ?? {}, push: (ch, ...a) => { pushes.push({ ch, a }); }, openExternal: async (u) => { opened.push(u); } });
+  // docs/33 M16 T4: the launch ordering real-backend uses — AlphaConsentCoordinator records the self-hosted key's
+  // consent and queues its durable beacon before the first resolveAccount
+  const beacons: any[] = [];
+  service.attachAlphaConsent(async (b) => { beacons.push(b); }, () => {});
+  await service.ensureActiveAlphaConsent();
   const ch = gatewayChannels(service, { userData: ud }); // the helper call goes over real loopback HTTP to the shim
-  return { ...h, ud, settings, credentials, issued, service, ch, pushes, opened };
+  return { ...h, ud, settings, credentials, issued, service, ch, pushes, opened, beacons };
 }
 
 test("account channels over the shim: snapshot ready (legacy key, storedKeyId = shim id), verify, meter, top-up branch, saveGatewayKey, switchGateway, revoked key", async () => {

@@ -1,0 +1,43 @@
+{
+ "note": "FAKE-LLM run (fresh profile, ui-e2e-m16-voice --only V2); evidence of AlphaConsentCoordinator at launch",
+ "settingsConsent": {
+  "telemetry": true,
+  "alphaConsentsByKey": {
+   "959ea5117fda19db2638122c2f8b599aa84603013d284c904aca3852b44e182d": {
+    "acceptedAt": 1792622512517,
+    "beaconQueuedAt": 1792622512523
+   }
+  }
+ },
+ "ipcFirstRows": [
+  {
+   "ch": "settings:get",
+   "ok": true,
+   "result": "{\"gatewayUrl\":\"http://127.0.0.1:47733\",\"telemetry\":true,\"llmRoute\":\"gateway\",\"llmRouteAcknowledgedAt\":1792622512491,\"alphaConsentsByKey\":{\"959ea5117fda19db2638122c2f8b599aa84603013d284c904aca3852b44e182d\":{\"acceptedAt\":1792622512517,\"beaconQueuedAt\":1792622512523}}}"
+  },
+  {
+   "ch": "account:snapshot",
+   "ok": true,
+   "result": "{\"loaded\":true,\"signInAvailable\":false,\"signInUnavailableReason\":\"unconfigured\",\"signedIn\":false,\"account\":null,\"hasStoredKey\":true,\"storedKeyId\":\"<id>\",\"storedKeyInvalid\":false,\"verifyingKey\":false,\"pendingKey\":false,\"secureStorageUnavailable\":true,\"credentialVaultUnreadable\":false,\"accountUnavailable\":false,\"legacyKeyOnly\":true,\"account"
+  },
+  {
+   "ch": "account:snapshot",
+   "ok": true,
+   "result": "{\"loaded\":true,\"signInAvailable\":false,\"signInUnavailableReason\":\"unconfigured\",\"signedIn\":false,\"account\":null,\"hasStoredKey\":true,\"storedKeyId\":\"<id>\",\"storedKeyInvalid\":false,\"verifyingKey\":false,\"pendingKey\":false,\"secureStorageUnavailable\":true,\"credentialVaultUnreadable\":false,\"accountUnavailable\":false,\"legacyKeyOnly\":true,\"account"
+  },
+  {
+   "ch": "settings:get",
+   "ok": true,
+   "result": "{\"gatewayUrl\":\"http://127.0.0.1:47733\",\"telemetry\":true,\"llmRoute\":\"gateway\",\"llmRouteAcknowledgedAt\":1792622512491,\"alphaConsentsByKey\":{\"959ea5117fda19db2638122c2f8b599aa84603013d284c904aca3852b44e182d\":{\"acceptedAt\":1792622512517,\"beaconQueuedAt\":1792622512523}}}"
+  }
+ ],
+ "shimBeaconSink": [
+  {
+   "at": "2026-10-21T22:41:52.586Z",
+   "body": {
+    "kind": "alpha-consent",
+    "detail": "consent_id=959ea5117fda19db2638122c2f8b599aa84603013d284c904aca3852b44e182d; accepted_at=2026-10-21T22:41:52.517Z"
+   }
+  }
+ ]
+}

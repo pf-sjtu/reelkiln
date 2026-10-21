@@ -23,6 +23,7 @@ import {
 } from "./account-gateway.generated";
 import { accountSnapshot as localStudioSnapshot, PORT_ACCOUNT_GATE_ENV } from "../home-boot";
 import { ALPHA_TERMS_VERSION } from "../account-snapshot.generated";
+import { activeAlphaConsentAt, activeAlphaConsentComplete, alphaConsentKeyId, AlphaConsentCoordinator, verificationMatchesActiveKey } from "./alpha-consent.generated";
 
 type Obj = Record<string, any>;
 type Handler = (...a: any[]) => unknown;
@@ -129,16 +130,46 @@ export class AccountService {
     for (const u of new Set([url, this.opened])) { const k = keyFor(u); if (k) keys[u] = k; else delete keys[u]; }
     return { ...s, gatewayKey: keyFor(url), gatewayKeys: keys };
   }
-  /** activeSettings (L60918) — pinned to the opened gateway. PORT: alpha consent is the local-studio policy
-   *  (AlphaConsentCoordinator / beacon outbox not ported) unless VIDEOCLAW_PORT_ACCOUNT_GATE=1. */
+  /** activeSettings (L60918) — pinned to the opened gateway; alphaConsentAt = activeAlphaConsentAt(pinned) (L60932):
+   *  set only once the per-key consent record's durable beacon is queued (AlphaConsentCoordinator, docs/33 M16 T4). */
   activeSettings(): Obj {
     const current = this.resolvedSettings();
     const pinned = pinGatewaySettings(this.opened, current.gatewayKeys?.[this.opened] || undefined, current);
     return {
       ...pinned,
       accountSignedInOnce: this.d.credentials.hasSignedInOnce(this.opened) || (this.d.settings.legacySignedInOnceFor?.(this.opened) ?? false),
-      alphaConsentAt: current.alphaConsentAt ?? (this.localStudio() && pinned.gatewayKey ? "port-local-studio" : undefined),
+      alphaConsentAt: activeAlphaConsentAt(pinned),
     };
+  }
+  private alphaConsent: any = null;
+  private flushOutbox: () => void = () => {};
+  /** L60960-60969: the coordinator over activeSettings + settings.patchDurable, beacons into the durable outbox. */
+  attachAlphaConsent(enqueueDurableBeacon: (beacon: Obj) => Promise<unknown>, flush: () => void): void {
+    const consentSettings = { get: () => this.activeSettings(), patchDurable: (update: Obj) => { (this.d.settings as any).patchDurable(update); return this.activeSettings(); } };
+    this.alphaConsent = new AlphaConsentCoordinator(consentSettings, enqueueDurableBeacon);
+    this.flushOutbox = flush;
+  }
+  /** ensureActiveAlphaConsent (L60970) */
+  async ensureActiveAlphaConsent(verified?: Obj): Promise<Obj> {
+    let current = this.activeSettings();
+    if (!current.gatewayKey || !current.telemetry) return current;
+    if (activeAlphaConsentComplete(current)) { void this.flushOutbox(); return current; }
+    if (!this.alphaConsent) return current; // PORT: no outbox (non-loopback gateway) → nothing can carry the beacon
+    const expected = { gatewayUrl: current.gatewayUrl, keyId: alphaConsentKeyId(current.gatewayKey.trim(), current.gatewayUrl) };
+    const check = verified ?? { ...(await this.verifyKey(current.gatewayUrl, current.gatewayKey)), gatewayUrl: expected.gatewayUrl, keyId: expected.keyId };
+    current = this.activeSettings();
+    if (!verificationMatchesActiveKey(current, check)) return current;
+    const next = await this.alphaConsent.ensureVerifiedActiveKey(check);
+    void this.flushOutbox();
+    return next;
+  }
+  /** reconcileUsageSharing (L60992) */
+  async reconcileUsageSharing(): Promise<void> {
+    const next = this.activeSettings();
+    if (!next.gatewayKey || !next.telemetry) return;
+    const verify2: any = await this.verifyKey(next.gatewayUrl, next.gatewayKey);
+    if (!verify2.ok) return;
+    await this.ensureActiveAlphaConsent({ ok: true, gatewayUrl: next.gatewayUrl, keyId: alphaConsentKeyId(next.gatewayKey.trim(), next.gatewayUrl) });
   }
   paidWorkBlocked(): boolean { // L60847
     return paidWorkBlockedFor(this.account, { packaged: this.d.packaged, channel: "prod", managedDevelopment: false });

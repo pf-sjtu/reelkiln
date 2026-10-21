@@ -384,10 +384,11 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     },
     patchSettings: (patch: any) => { m12.settings?.patch(patch); },
     blockedReason: () => (m12.account ? String(m12.account.account.step ?? "signed-out") : "signed-out"),
-    // #378 (L62334): durable consent record; reconcileUsageSharing's alpha-consent half is the local-studio policy
+    // #378 (L62329-62337): durable usage-sharing record, then reconcileUsageSharing (alpha consent + beacon)
     grantUsageSharing: async () => {
       const already = m12.account?.activeSettings().usageSharingConsentAt;
-      m12.settings?.patch({ telemetry: true, usageSharingConsentAt: already ?? Date.now() });
+      (m12.settings as any)?.patchDurable?.({ telemetry: true, usageSharingConsentAt: already ?? Date.now() });
+      await m12.account?.reconcileUsageSharing();
     },
   });
   feedback.sweep();
@@ -488,7 +489,14 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         packaged: app.isPackaged, appVersion: app.getVersion(), push: (ch, ...a) => { push(ch, ...a); },
         openExternal: guardedShell.openExternal, stopAuthenticatedWork: () => { (host as any)?.stopAuthenticatedWork?.(); },
       });
-      void shimReady.then(() => accountService.resolveAccount()).catch(() => {}); // `void resolveAccount()` at launch (L60955)
+      // `void resolveAccount()` at launch (L60955). PORT ordering: the self-hosted key is issued by this process, so
+      // its alpha consent (L60970, telemetry on + verified key) is reconciled first — the original's legacy key-only
+      // installs already carried the record from an earlier launch.
+      void shimReady.then(() => accountService.ensureActiveAlphaConsent().catch((err) => console.error("alpha consent reconciliation failed", err))).then(() => accountService.resolveAccount()).catch(() => {});
+      // settings:get (L61321) / settings:set (L61680): alpha consent + usage sharing reconciliation
+      const baseGet = handlers["settings:get"]!; const baseSet = handlers["settings:set"]!;
+      handlers["settings:get"] = async () => { try { await accountService.ensureActiveAlphaConsent(); } catch (err) { console.error("alpha consent reconciliation failed", err); } return baseGet(); };
+      handlers["settings:set"] = async (patch: unknown) => { await baseSet(patch); await accountService.reconcileUsageSharing(); return baseGet(); };
       m12.account = accountService;
       m12.settings = llm.settings as any;
       // docs/29: outbox (L60953) + AgentGatewayProxy (L61003) — only against the self-hosted loopback gateway,
@@ -500,6 +508,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         const outbox: any = new (Outbox as any)(join(userDataDir, "outbox.json"), () => accountService.activeSettings());
         outbox.start();
         m12.outbox = outbox;
+        accountService.attachAlphaConsent((beacon) => outbox.enqueueDurable("beacon", { ...beacon }), () => { void outbox.flush(); }); // L60967
         app.on("will-quit", () => { try { outbox.stop(); } catch {} });
         const openedKey = accountService.activeSettings().gatewayKey;
         if (openedKey) {

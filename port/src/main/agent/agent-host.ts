@@ -56,6 +56,7 @@ import { minimalAgentOptions, type ClaudeAgentSdkLike, type AgentQuery } from ".
 import { getLogger, redact, redactText, registerSecret, type Logger } from "../llm/logger";
 import type { SessionMetaLike } from "../llm/route-service";
 import { isClientJobId } from "../engine/session";
+type GatewaySpendPolicy = { kind: "capped"; ceilingUsd: number } | { kind: "unlimited_for_video" } | { kind: "ask_each" };
 import type { AgentGatewayProxy, GatewaySessionPolicy } from "../gateway/agent-gateway-proxy";
 import { isAnthropicPassthroughPath, isUnknownCostQuote, SPEND_POLICY_CONFLICT_MESSAGE } from "../gateway/agent-gateway-proxy";
 import { sanitizedAgentEnv } from "../llm/llm-route";
@@ -1046,6 +1047,8 @@ export class AgentHost {
       const planState = this.plans ? this.plans.restoredSessionPlan(row) : {}; // restoredSessionPlan L36986 (public meta strips the plan, L35717)
       // loadRegistry L35850-35857: a restart drops recovery backoff/parking marks; late-result rows are re-validated
       if ("acceptedOperations" in meta) (meta as any).acceptedOperations = restoredGatewayOperations((meta as any).acceptedOperations);
+      // L35785-35791: a reset mark survives only for the video's own, valid client job
+      if ((meta as any).gatewaySpendPolicyResetJobId && (!isClientJobId((meta as any).gatewaySpendPolicyResetJobId) || (meta as any).gatewaySpendPolicyResetJobId !== (meta as any).jobId)) delete (meta as any).gatewaySpendPolicyResetJobId;
       for (const [k, restore] of [["lateResultReports", restoredLateResultReports], ["lateResultLines", restoredLateResultLines], ["lateResultFailures", restoredLateResultFailures]] as const) {
         if (k in meta) { const v = restore((meta as any)[k]); if (v) (meta as any)[k] = v; else delete (meta as any)[k]; }
       }
@@ -1193,6 +1196,15 @@ export class AgentHost {
           try { ensureJobDir(s.meta.cwd, jobId); } catch (e: any) { throw new ComposerDeliveryError(redactText(String(e?.message ?? e))); }
           this.commitBind(s, jobId, "first-message", false);
         }
+        // L41566-41584: the saved policy reaches the gateway before the turn can quote against it
+        await this.enqueueSpendPolicyUpdate(sessionId, async () => {
+          if (this.sessions.get(sessionId) !== s) return;
+          const policy = this.spendBudgets.snapshot(sessionId).policy;
+          const localSubscription = this.usesMacClaudeLogin(s);
+          if ((policy !== "ask_each" && !(policy === "unlimited_for_video" && localSubscription && s.meta.permissionMode !== "bypassPermissions")) || (s.meta as any).gatewaySpendPolicyResetJobId === s.meta.jobId) {
+            await this.materializeGatewaySpendPolicy(s);
+          }
+        });
         // L41588-41612: materialize every attachment into its destination, in order
         const materialized: any[] = [];
         if (req.attachmentIds.length) {
@@ -2391,7 +2403,12 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       this.retireWatcher(priorOwner.meta.sessionId);
       this.log.info("agent.job.transferred", { jobId, from: priorOwner.meta.sessionId, to: sessionId });
     }
+    (s.meta as any).gatewaySpendPolicyResetJobId = jobId; // L47920
     this.commitBind(s, jobId, "adopt", true);
+    void this.enqueueSpendPolicyUpdate(sessionId, async () => {
+      if (this.sessions.get(sessionId) !== s || s.meta.jobId !== jobId) return;
+      await this.materializeGatewaySpendPolicy(s);
+    }).catch((e) => this.log.warn("agent.spend.materialize_failed", { sessionId, jobId, error: e }));
     return s.meta;
   }
   /** startContinuationChat (L38972) — session:startContinuation: the finalized video's job moves into a new
@@ -2835,16 +2852,68 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     this.spendPolicyQueues.set(sessionId, next.catch(() => {}));
     return next;
   }
-  /** materializeGatewaySpendPolicy (L47123): install the saved policy on the gateway before quoting against it. */
+  /** Test seam mirroring the original's `gatewaySpendPolicyWriter` field (L47083). */
+  gatewaySpendPolicyWriter: ((jobId: string, policy: GatewaySpendPolicy) => Promise<void>) | null = null;
+  private readonly gatewaySpendPolicyUpdates = new Map<string, Promise<void>>();
+  /** usesMacClaudeLogin (L51109) */
+  private usesMacClaudeLogin(s: Session): boolean {
+    const m: any = s.meta;
+    const route = this.d.service.sessionLlmRoute?.({ llmRoute: m.llmRoute, agentHarness: "claude-code" }) ?? m.llmRoute;
+    return (m.runtime ?? "local") === "local" && (m.agentHarness ?? "claude-code") === "claude-code" && route === "claude-code";
+  }
+  /** putGatewaySpendPolicy (L47055): one write per job at a time; materialized keys for the job are invalidated
+   *  before, during and after the write. */
+  private async putGatewaySpendPolicy(jobId: string, policy: GatewaySpendPolicy): Promise<void> {
+    this.invalidateMaterializedSpendPolicies(jobId);
+    const wait = this.gatewaySpendPolicyUpdates.get(jobId)?.then(() => undefined, () => undefined) ?? Promise.resolve();
+    const update = wait.then(async () => {
+      this.invalidateMaterializedSpendPolicies(jobId);
+      await this.writeGatewaySpendPolicy(jobId, policy);
+      this.invalidateMaterializedSpendPolicies(jobId);
+    });
+    this.gatewaySpendPolicyUpdates.set(jobId, update);
+    const cleanup = () => { if (this.gatewaySpendPolicyUpdates.get(jobId) === update) this.gatewaySpendPolicyUpdates.delete(jobId); };
+    void update.then(cleanup, cleanup);
+    return update;
+  }
+  /** invalidateMaterializedSpendPolicies (L47075) */
+  private invalidateMaterializedSpendPolicies(jobId: string): void {
+    const prefix = `${jobId}:`;
+    for (const [sessionId, key] of this.materializedSpendPolicies) if (key.startsWith(prefix)) this.materializedSpendPolicies.delete(sessionId);
+  }
+  /** writeGatewaySpendPolicy (L47081): the writer seam, else the agent gateway proxy, else a direct PUT
+   *  /v1/spend-authorities/{job} with the active gateway key. PORT: authenticatedWorkPaused is not modelled. */
+  private async writeGatewaySpendPolicy(jobId: string, policy: GatewaySpendPolicy): Promise<void> {
+    if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
+    if (this.gatewaySpendPolicyWriter) { await this.gatewaySpendPolicyWriter(jobId, policy); return; }
+    const proxy = this.d.agentGatewayProxy?.();
+    if (proxy?.setSessionSpendPolicy) { await proxy.setSessionSpendPolicy(jobId, policy as any); return; }
+    const cfg = this.d.gatewaySettings?.() ?? {};
+    if (!cfg.gatewayKey) return;
+    const body = policy.kind === "capped" ? { mode: "capped", ceiling_usd: policy.ceilingUsd.toFixed(2) } : policy.kind === "unlimited_for_video" ? { mode: "unlimited" } : { mode: "per_operation" };
+    const response = await fetch(`${String(cfg.gatewayUrl ?? "").replace(/\/+$/, "")}/v1/spend-authorities/${encodeURIComponent(jobId)}`, {
+      method: "PUT", headers: { authorization: `Bearer ${cfg.gatewayKey}`, "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(1e4),
+    });
+    if (!response.ok) throw new Error(`The gateway could not update this video's spending policy (HTTP ${response.status}).`);
+  }
+  /** spendPolicyMaterializationKey (L47120) */
+  private spendPolicyMaterializationKey(jobId: string, snapshot2: { policy: string; ceilingUsd?: number }): string {
+    return `${jobId}:${snapshot2.policy}:${snapshot2.ceilingUsd ?? ""}`;
+  }
+  /** materializeGatewaySpendPolicy (L47123): install the saved policy on the gateway before quoting against it;
+   *  an adopted job (gatewaySpendPolicyResetJobId) is always re-written, and the mark clears once it lands. */
   private async materializeGatewaySpendPolicy(s: Session): Promise<void> {
     const jobId = s.meta.jobId;
-    const proxy = this.d.agentGatewayProxy?.();
-    if (!jobId || !proxy) return;
+    if (!jobId) return;
+    const meta: any = s.meta;
     const snapshot2 = this.spendBudgets.snapshot(s.meta.sessionId);
-    const key = `${jobId}:${snapshot2.policy}:${snapshot2.ceilingUsd ?? ""}`;
-    if (this.materializedSpendPolicies.get(s.meta.sessionId) === key) return;
-    await proxy.setSessionSpendPolicy(jobId, snapshot2.policy === "capped" ? { kind: "capped", ceilingUsd: snapshot2.ceilingUsd } : snapshot2.policy === "unlimited_for_video" ? { kind: "unlimited_for_video" } : { kind: "ask_each" });
-    this.materializedSpendPolicies.set(s.meta.sessionId, key);
+    const key = this.spendPolicyMaterializationKey(jobId, snapshot2);
+    if (meta.gatewaySpendPolicyResetJobId !== jobId && this.materializedSpendPolicies.get(s.meta.sessionId) === key) return;
+    await this.putGatewaySpendPolicy(jobId, snapshot2.policy === "capped" ? { kind: "capped", ceilingUsd: snapshot2.ceilingUsd as number } : snapshot2.policy === "unlimited_for_video" ? { kind: "unlimited_for_video" } : { kind: "ask_each" });
+    if (this.sessions.get(s.meta.sessionId)?.meta.jobId === jobId && this.spendPolicyMaterializationKey(jobId, this.spendBudgets.snapshot(s.meta.sessionId)) === key) {
+      this.materializedSpendPolicies.set(s.meta.sessionId, key);
+      if (meta.gatewaySpendPolicyResetJobId === jobId) { delete meta.gatewaySpendPolicyResetJobId; this.saveRegistry(); }
+    }
   }
   /** agentGatewayPolicy (L39649). */
   agentGatewayPolicy(s: Session): GatewaySessionPolicy {
@@ -2880,8 +2949,8 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       diagnostic: { appVersion: this.d.codex?.appVersion, engineVersion: this.d.engineVersion?.() },
       prepareSpend: (jobId, signal) => this.enqueueSpendPolicyUpdate(sessionId, async () => {
         if (signal.aborted || this.sessions.get(sessionId) !== s || s.meta.jobId !== jobId) throw new Error("This paid operation is no longer current.");
-        // L39731: an ask_each video keeps the gateway's per_operation authority (installed by installSpendPolicy)
-        if (this.spendBudgets.snapshot(sessionId).policy !== "ask_each") await this.materializeGatewaySpendPolicy(s);
+        // L39731-39737: an ask_each video keeps the gateway's per_operation authority unless the job was just adopted
+        if (this.spendBudgets.snapshot(sessionId).policy !== "ask_each" || (s.meta as any).gatewaySpendPolicyResetJobId === jobId) await this.materializeGatewaySpendPolicy(s);
       }),
       authorizeSpend: (request2, signal) => this.authorizeGatewaySpend(s, request2, signal),
       finishSpend: (reservationId) => {
@@ -3296,22 +3365,19 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       await this.installSpendPolicy(sessionId, { kind: "capped", ceilingUsd: Math.max(ceilingUsd, snapshot2.policy === "capped" ? (snapshot2.ceilingUsd ?? 0) : 0) });
     });
   }
-  /** installSpendPolicy (L47018) + putGatewaySpendPolicy / writeGatewaySpendPolicy (L47053-47121) via the proxy. */
+  /** installSpendPolicy (L47018) over putGatewaySpendPolicy (L47055). */
   private async installSpendPolicy(sessionId: string, policy: { kind: "capped"; ceilingUsd: number } | { kind: "unlimited_for_video" } | { kind: "ask_each" }): Promise<any> {
     const session2 = this.mustGet(sessionId);
     const jobId = session2.meta.jobId;
-    if (jobId) {
-      if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
-      const proxy = this.d.agentGatewayProxy?.();
-      this.materializedSpendPolicies.delete(sessionId);
-      if (proxy) await proxy.setSessionSpendPolicy(jobId, policy as any);
-    }
+    if (jobId) await this.putGatewaySpendPolicy(jobId, policy);
     const current = this.sessions.get(sessionId);
     if (!current || current.meta.jobId !== jobId) throw new Error("This video changed while its spending policy was being updated.");
     const snapshot2 = policy.kind === "capped" ? this.spendBudgets.setCeiling(sessionId, policy.ceilingUsd).snapshot
       : policy.kind === "unlimited_for_video" ? this.spendBudgets.setUnlimited(sessionId) : this.spendBudgets.setAskEach(sessionId);
-    if (jobId) this.materializedSpendPolicies.set(sessionId, `${jobId}:${snapshot2.policy}:${snapshot2.ceilingUsd ?? ""}`);
-    else this.materializedSpendPolicies.delete(sessionId);
+    if (jobId) {
+      this.materializedSpendPolicies.set(sessionId, this.spendPolicyMaterializationKey(jobId, snapshot2));
+      if ((session2.meta as any).gatewaySpendPolicyResetJobId === jobId) { delete (session2.meta as any).gatewaySpendPolicyResetJobId; this.saveRegistry(); }
+    } else this.materializedSpendPolicies.delete(sessionId);
     this.log.info("agent.spend.policy_installed", { sessionId, jobId, policy: policy.kind, ceilingUsd: (policy as any).ceilingUsd });
     return snapshot2;
   }
