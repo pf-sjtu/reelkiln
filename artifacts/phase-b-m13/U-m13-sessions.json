@@ -1,0 +1,92 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "817f418e-8301-4aca-a5ee-f7c6714f96fd",
+   "title": "做一个10秒竖屏咖啡倒入的短视频。现在只做方案：直接调用 propose_session_plan 工具一次（context 写简短说明；fallback 里…",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.012076,
+   "createdAt": 1792594652750,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "gateway",
+   "titleOrigin": "fallback",
+   "jobId": "10-propose-session-plan-context-fallback-20261021-817f41",
+   "sdkSessionId": "d8fb96e0-7b41-41f0-bcd7-970e0ce5064f",
+   "contextEpoch": "941a292b-1a7f-483f-879c-235a9f45977a",
+   "sessionPlan": {
+    "version": 1,
+    "id": "21130c92-3450-41bd-9531-8f79c29176f7",
+    "revision": 1,
+    "binding": {
+     "gatewayUrl": "http://127.0.0.1:47721",
+     "canonicalKeyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+     "clientId": "personal",
+     "jobId": "10-propose-session-plan-context-fallback-20261021-817f41"
+    },
+    "sourceTurnId": "677ecf66-0003-5322-82c9-deb23d213482",
+    "phase": "accepted",
+    "text": "10 秒竖屏特写：暖光下的咖啡倒入。镜头一从杯口微距起，浓缩缓缓注入，奶泡翻涌；镜头二落到拉花成形与升腾热气收尾。无旁白，只有一段轻快的音乐床，结尾定格在杯面。",
+    "canvas": {
+     "width": 1080,
+     "height": 1920,
+     "previewAspectRatio": "9:16"
+    },
+    "shots": [
+     {
+      "description": "微距特写，镜头从杯口斜上方缓推：深色浓缩液细细落入白瓷杯，奶泡翻涌形成漩涡，暖侧逆光勾出液体边缘。纯画面，无旁白。"
+     },
+     {
+      "description": "镜头下移并稳住：奶泡在杯面铺开成叶形拉花，细热气缓缓升腾，背景暖光虚化。音乐床在最后一拍收住，画面定格。"
+     }
+    ],
+    "budget": {
+     "spentCents": null,
+     "heldCents": 0
+    },
+    "decision": {
+     "action": "build",
+     "clientActionId": "f6cfc79c-4c80-4a12-865c-2c253807a5a7",
+     "text": "Build it."
+    },
+    "references": [],
+    "simpleFallback": true,
+    "brief": "10秒竖屏咖啡倒入短片。默认设定（用户未指定，供确认）：无旁白，仅一段轻快爵士/Lo-fi 音乐床；竖版 9:16，1080x1920；两段特写——奶泡/浓缩倒入杯中，再落到拉花与热气收尾；字幕：无。"
+   },
+   "sessionPlanDetails": {
+    "id": "21130c92-3450-41bd-9531-8f79c29176f7",
+    "revision": 1,
+    "title": "晨间一杯 · 咖啡倒入",
+    "videoSeconds": 10,
+    "shots": [
+     {
+      "label": "倒入瞬间",
+      "seconds": 5
+     },
+     {
+      "label": "拉花收尾",
+      "seconds": 5
+     }
+    ],
+    "paidOperations": [
+     {
+      "tool": "mint_video",
+      "role": "keyframe",
+      "count": 2,
+      "seconds": 5
+     }
+    ],
+    "storyboard": true
+   },
+   "sessionPlanRequired": true
+  }
+ ],
+ "trashWorkspaces": []
+}

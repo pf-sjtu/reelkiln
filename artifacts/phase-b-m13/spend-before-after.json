@@ -1,0 +1,64 @@
+{
+ "before_M12_d2ce307": {
+  "chip": "$0.05 spent",
+  "chipSource": "SDK result total_cost_usd 0.0526 (Claude sonnet price estimate) — docs/29 §4",
+  "ledgerUsd": 0.00394251,
+  "ledgerEntries": 2,
+  "ledgerPriceSources": [
+   "minimax-fallback/2026-10"
+  ]
+ },
+ "after_M13_r6": {
+  "chip": "$0.02 spent",
+  "expectedChip": "$0.02 spent",
+  "reasoningRow": "0.01",
+  "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\nUnlimited for this video · account limits still apply",
+  "metaTotalCostUsd": 0.012076,
+  "ledgerUsd": 0.012075942,
+  "ledgerEntries": 10,
+  "entrySources": [
+   "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+  ],
+  "meteredTotalUsd": 0.012075941,
+  "sdkEstimateUsd": 0.1354338,
+  "perResult": [
+   {
+    "meteredTotalUsd": 0.006554845,
+    "ledgerUsdThen": 0.006554845,
+    "sdkEstimateUsd": 0.08596600000000001
+   },
+   {
+    "meteredTotalUsd": 0.007548131,
+    "ledgerUsdThen": 0.007547976,
+    "sdkEstimateUsd": 0.09688400000000001
+   },
+   {
+    "meteredTotalUsd": 0.010595033,
+    "ledgerUsdThen": 0.010595009,
+    "sdkEstimateUsd": 0.12358750000000002
+   },
+   {
+    "meteredTotalUsd": 0.012075941,
+    "ledgerUsdThen": 0.012075942,
+    "sdkEstimateUsd": 0.1354338
+   }
+  ],
+  "displayedEqualsLedger": true,
+  "pricingLog": [
+   "[port] models.dev catalog updated: 232 providers / 9168 models",
+   "[port] pricing: MiniMax-M3.1-Flash priced from models.dev:minimax-cn/MiniMax-M3.1-Flash (USD/MTok in 0.1494 out 0.5976 cacheRead 0.0149 cacheWrite -)"
+  ]
+ },
+ "interim_r4_before_trueup": {
+  "chip": "$0.11 spent",
+  "expectedChip": "$0.11 spent",
+  "ledgerUsd": 0.10897007300000001,
+  "ledgerEntries": 47,
+  "entrySources": [
+   "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+  ],
+  "meteredTotalUsd": 0.052595638,
+  "sdkEstimateUsd": 0.5287938999999998,
+  "note": "interim run of the interrupted executor (85d44c6 + WIP, before trueUpGatewayReasoning): a 242 s interrupted Build-it turn; meta.totalCostUsd (source of the 'Videoclaw gateway reasoning' row) stayed at the SDK-modelUsage-metered $0.0526 while the per-job ledger (same models.dev price) was $0.109 and the chip showed $0.11. The breakdown popover was not captured in that run."
+ }
+}

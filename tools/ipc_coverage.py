@@ -31,7 +31,6 @@ PARTIAL = {
     "characters:voices:list": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",
     "characters:voice:approve": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",
     "characters:voice:remove": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",
-    "input:respond": "(b) no request_input card can exist: the studio MCP (request_input) comes from the gateway studio bundle",
     "media:discardVoice": "(c) voiceDictations only fill through transcribeVoice (macOS on-device helper)",
     "attachment:voiceNote": "(c) the background on-device transcript (macOS voice-dictation helper) is not available",
     "feedback:capture": "(b) no gateway key → blockedRoute: no screenshot, consentRequired (the original's key-less branch)",
@@ -53,14 +52,15 @@ PARTIAL = {
         "engine:claudeCodeStatus", "engine:claudeCodeConnect", "engine:claudeCodeConnectCancel", "engine:claudeCodeSignOutImpact", "engine:claudeCodeSignOut")},
     # docs/29 (M12): the last category-(b) channels — original bodies; the branch that needs a hosted service ends in the
     # original's own refusal / unavailable answer
-    **{c: "(b) session plans are created only by the studio-MCP propose_session_plan (not ported) → read null / choose+retry 'missing'" for c in (
-        "sessionPlan:read", "sessionPlan:choose", "sessionPlan:retry")},
+    # docs/30 (M13): studio MCP ported → sessionPlan:read / retry / input:respond are real (read + input:respond CDP-verified
+    # on the original renderer: plan card, rights card; retry is node:test-only)
+    "sessionPlan:choose": "Build it / Change it / dismiss are the original body (CDP-verified Build it); Show me a preview dispatches the original preview turn, but preview_session_shot (paid preview) is not ported",
     "outbox:authoritySnapshot": "outbox exists only against the self-hosted loopback gateway (never posts to the production gateway)",
     "telemetry:bindReplay": "durable session-index enqueue only with telemetry on; delivered to the shim's local sinks",
     "feedback:submit": "delivered through the outbox to the self-hosted shim (/v1/feedback + screenshot sink), not to Videoclaw support",
     "feedback:grantUsageSharing": "AlphaConsentCoordinator not ported → reconcileUsageSharing = local-studio consent",
-    "library:sync": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax has no equivalent)",
-    "library:search": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax has no equivalent)",
+    "library:sync": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax embo-01 is text-only 1536-d, docs/30 §2)",
+    "library:search": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax embo-01 is text-only 1536-d, docs/30 §2)",
     "engine:creditHandoffOffer": "the Claude-allowance precondition needs a real Claude subscription (USER DIRECTIVE: none) — reachable only by UI-e2e injection; spend-authority equality reduced to isBlocked",
     "engine:continueOnCredits": "continuation is real (gateway route → shim → MiniMax, ledger-charged); materializeGatewaySpendPolicy not ported",
     "engine:saveAgentProviderKey": "stored in the vault only — the openai-api/openrouter Codex providers run on MiniMax (docs/27)",

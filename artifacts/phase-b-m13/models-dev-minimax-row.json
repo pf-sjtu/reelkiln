@@ -1,0 +1,39 @@
+{
+ "db": "<RUN>/.videoclaw-port/models-dev.sqlite (synced at app startup from https://models.dev/api.json)",
+ "rows": [
+  {
+   "provider": "minimax",
+   "model": "MiniMax-M3.1-Flash",
+   "cost_input": 0.15,
+   "cost_output": 0.6,
+   "cost_cache_read": 0.015,
+   "cost_cache_write": null
+  },
+  {
+   "provider": "minimax-cn",
+   "model": "MiniMax-M3.1-Flash",
+   "cost_input": 0.1494,
+   "cost_output": 0.5976,
+   "cost_cache_read": 0.0149,
+   "cost_cache_write": null
+  },
+  {
+   "provider": "minimax-cn-coding-plan",
+   "model": "MiniMax-M3.1-Flash",
+   "cost_input": 0,
+   "cost_output": 0,
+   "cost_cache_read": 0,
+   "cost_cache_write": 0
+  },
+  {
+   "provider": "minimax-coding-plan",
+   "model": "MiniMax-M3.1-Flash",
+   "cost_input": 0,
+   "cost_output": 0,
+   "cost_cache_read": 0,
+   "cost_cache_write": 0
+  }
+ ],
+ "used": "minimax-cn (endpoint api.minimaxi.com → minimaxModelsDevProviders → [minimax-cn, minimax]); the $0 *-coding-plan rows are never consulted",
+ "syncLog": "[port] models.dev catalog updated: 232 providers / 9168 models (U-m13-main-structured.log)"
+}

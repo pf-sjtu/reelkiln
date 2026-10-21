@@ -1,0 +1,25 @@
+{
+ "verdict": "MISMATCH — embo-01 not wired; the shim keeps refusing /v1/embed with 422 TOOL_NOT_OFFERED (not_submitted, nothing charged)",
+ "engine": "engine-0.1.57-rc7-15f8f2d (read-only)",
+ "engine_contract": {
+  "client": "tools/_media/embedder.py GatewayEmbedder._run → _gateway.run('embed', mode=video|image|text, params={dims, task_type, input|mime_type}, references=[path]) → res['output']['embeddings'][0]",
+  "modes_called_by_library_sync": "tools/index_media.py: embed_video_chunk (video chunks, mode=video, RETRIEVAL_DOCUMENT) and embed_image (stills, mode=image, RETRIEVAL_DOCUMENT) — the library index holds ONLY video/image vectors",
+  "modes_called_by_library_search": "embed_query (mode=text, RETRIEVAL_QUERY) or embed_image_query (mode=image) — the query vector is compared against the video/image vectors (one shared multimodal space, gemini-embedding-2)",
+  "dims": "DEFAULT_DIMENSIONS = 768, sent as params.dims (output_dimensionality)"
+ },
+ "minimax_embo01": {
+  "probe": "artifacts/phase-b-m13/embo01-probe.json: HTTP 200, 1 vector, 1536 dims, total_tokens 16",
+  "inputs": "text only (texts[] + type db|query); no image/video input",
+  "dims": "fixed 1536, no output_dimensionality parameter"
+ },
+ "mismatches": [
+  "modality: library:sync must embed video chunks and images; embo-01 accepts only text → no document vector can be produced",
+  "space: search compares a text query with video/image vectors in one multimodal space; a text-only space cannot answer it",
+  "dims: the engine asks for 768 dims; embo-01 returns a fixed 1536 (truncating a non-Matryoshka vector is not a valid projection)"
+ ],
+ "rejected_alternatives": [
+  "caption each image/chunk with an LLM and embed the caption text (a different retrieval contract than the original's native multimodal embedding; would need vision on MiniMax-M3.1-Flash and changes ranking semantics)",
+  "truncate/pad 1536→768"
+ ],
+ "library_search_proof": "NOT RUN — no faithful embedding backend; library:sync/search remain real-partial (scoped gateway lease is real, embed refused)"
+}

@@ -1,0 +1,230 @@
+{
+ "schema": "videoclaw-port.local-gateway-ledger/v1",
+ "account": {
+  "id": "acct_local_778bbc727f44",
+  "name": "Local studio (self-hosted)",
+  "createdAt": 1792594650548
+ },
+ "keys": [
+  {
+   "id": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "hint": "vc_a7f5\u2026b2f3",
+   "createdAt": 1792594650549
+  }
+ ],
+ "limits": {
+  "monthUsd": 5,
+  "totalUsd": null
+ },
+ "topupBalanceUsd": 0,
+ "topups": [],
+ "entries": [
+  {
+   "id": "spend_df201fc327fa",
+   "at": 1792594656927,
+   "usd": 0.000364588,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 2202,
+   "outputTokens": 55,
+   "cacheReadTokens": 184,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_672383df8220",
+   "at": 1792594668078,
+   "usd": 0.005588882,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 34257,
+   "outputTokens": 783,
+   "cacheReadTokens": 199,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_75b8d70a9600",
+   "at": 1792594671126,
+   "usd": 0.000601375,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 343,
+   "outputTokens": 42,
+   "cacheReadTokens": 35237,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_9269cfac5d45",
+   "at": 1792594680262,
+   "usd": 0.000993131,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 763,
+   "outputTokens": 583,
+   "cacheReadTokens": 35620,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_cb33b96e5295",
+   "at": 1792594687935,
+   "usd": 0.00103228,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 1619,
+   "outputTokens": 401,
+   "cacheReadTokens": 36964,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_844f4131ffe8",
+   "at": 1792594689448,
+   "usd": 0.000609815,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 66,
+   "outputTokens": 32,
+   "cacheReadTokens": 38982,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_fe4f171b3a52",
+   "at": 1792594691535,
+   "usd": 0.000751682,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 338,
+   "outputTokens": 199,
+   "cacheReadTokens": 39078,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_d3ba24f3a4b4",
+   "at": 1792594693118,
+   "usd": 0.000653256,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 404,
+   "outputTokens": 8,
+   "cacheReadTokens": 39471,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_bc2d5cf7ffc4",
+   "at": 1792594698103,
+   "usd": 0.000845817,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 1496,
+   "outputTokens": 47,
+   "cacheReadTokens": 39881,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  },
+  {
+   "id": "spend_1345a3349d7f",
+   "at": 1792594701254,
+   "usd": 0.000635116,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "f1418a268995f4aebdbf44af1bd11d687fd945c0561963d35c036116686dbdbb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 92,
+   "outputTokens": 7,
+   "cacheReadTokens": 41422,
+   "status": 200,
+   "clientJob": "10-propose-session-plan-context-fallback-20261021-817f41"
+  }
+ ],
+ "refusals": [],
+ "spendAuthorities": {},
+ "budgets": {},
+ "quotes": [],
+ "pricing": {
+  "table": "port-per-model/v2"
+ }
+}
