@@ -35,6 +35,8 @@
 //   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
 //   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
 //   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
+import { readQuitState as readQuitStateFrom } from "./quit/read-quit-state";
+import { characterVoiceErrorText } from "./characters/character-voice-store.generated";
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, session as electronSession, shell, systemPreferences, utilityProcess } from "electron";
 import { appendFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
@@ -244,6 +246,13 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       writeWorkspace: (e, ws) => { const r = writeWorkspacePartial(e, ws ?? workspaceRoot()); log(`[port] writeWorkspace (CLAUDE.md + session-context validated); NOT PORTED: ${r.notPorted.join(", ")}`); },
       validateEngineSessionContext: (e) => { validateEngineSessionContext(e); },
       assertEngineMoneyCompatibility: (e) => assertEngineMoneyCompatibility(e),
+      // L61155: the pointer only flips when NO session is mid-turn (awaiting_permission does not block)
+      safeToFlip: () => !(hostRef?.listSessions() ?? []).some((x: any) => x.status === "running"),
+      // L61160-61164 §11.6: window alive → toast now and advance lastEngineVersion; else the launch-time path
+      onEngineUpdated: (version2) => {
+        log(`[port] engine updated → ${version2}`);
+        if (push("engine:updated", { version: version2 })) m12.settings?.patch({ lastEngineVersion: version2 });
+      },
       ...(process.env[PORT_ACCEPT_GATEWAY_RED_ENV] === "1"
         ? { doctorAccepts: (r: any) => { const ok = r.ok || onlyGatewayFailed(r); if (ok && !r.ok) log("[port] PORT-NEW: doctor accepted with only `gateway` red (needs credentials)"); return ok; } }
         : {}),
@@ -401,7 +410,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     runningVideos: () => hostRef?.runningVideoCount() ?? 0,
     unsyncedRecords: () => 0, // no outbox
     blockPaidWork: () => {},
-    stopAuthenticatedWork: () => {},
+    stopAuthenticatedWork: () => { const r = hostRef?.stopAuthenticatedWork() ?? { interrupted: [] }; try { m12.sheetBuilder?.closeAll(); } catch {} return r; }, // L61476
     stopEditorRendering: () => { try { const st: any = editorRender.state(); if (st?.requestId) void editorRender.cancel(st.requestId); } catch {} hfPreview.stop("closed"); return []; },
     codexProcessesStopped: (timeoutMs: number) => codexProcessesStopped(timeoutMs), // docs/27: the port's codex process slots (L23382)
     stopEngineChildren: () => hostRef?.closeAll() ?? [],
@@ -487,7 +496,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       const accountService = new AccountService({
         settings: llm.settings as any, credentials: credentials as any, openedGatewayUrl: String(llm.settings.get().gatewayUrl ?? ""),
         packaged: app.isPackaged, appVersion: app.getVersion(), push: (ch, ...a) => { push(ch, ...a); },
-        openExternal: guardedShell.openExternal, stopAuthenticatedWork: () => { (host as any)?.stopAuthenticatedWork?.(); },
+        openExternal: guardedShell.openExternal, stopAuthenticatedWork: () => { host?.stopAuthenticatedWork(); try { m12.sheetBuilder?.closeAll(); } catch {} }, // L43256 (+ sheetBuilder.closeAll L43276)
       });
       // `void resolveAccount()` at launch (L60955). PORT ordering: the self-hosted key is issued by this process, so
       // its alpha consent (L60970, telemetry on + verified key) is reconciled first — the original's legacy key-only
@@ -545,6 +554,8 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       host = new AgentHost({
         emit: {
           ...emit,
+          // L61050-61054: every roster change is a chance to flip a parked engine update
+          sessionsChanged: (list) => { emit.sessionsChanged(list); void core.tryFlipPendingEngine(); },
           permissionRequest: (req) => { push("permission:request", req); },
           // original emit.jobSnapshot L61077: grant the snapshot's files, then push
           jobSnapshot: (sessionId, snapshot) => { exposeJobSnapshot(mediaCapabilities, snapshot); push("job:snapshot", { sessionId, snapshot }); },
@@ -649,7 +660,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         stateDir: userDataDir,
         authority: () => accountService.currentProjectMemoryScope(), // setProjectMemoryAuthority (L61128)
         settingsGatewayUrl: () => String(accountService.activeSettings().gatewayUrl ?? ""),
-        authenticatedWorkPaused: () => accountService.signedOutInProcess,
+        authenticatedWorkPaused: () => accountService.signedOutInProcess || h.authenticatedWorkPaused,
+        characterStore, // AgentHost.characterStore (L35028) → CharacterVoiceStore (L35029)
+        emitCharacterVoicesChanged: (scope) => { push("characters:voices:changed", scope); }, // L61104
         getClient: (id) => registry.getClient(id) as any,
         isClientRemoved: (id) => registry.removedClientIds.has(id),
         session: (id) => h.memorySessionView(id),
@@ -661,6 +674,19 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         },
         emitSessionEvent: (id, event) => h.emitSessionEvent(id, event as any), // memory_noted (L36848)
       });
+      // L61862-61881: voiceResult over host.readCharacterVoices / approveCharacterVoice / removeCharacterVoice
+      const voiceResult = async (run2: () => Promise<any>) => {
+        try {
+          const snapshot2 = await run2();
+          for (const voice of snapshot2.voices) if (voice.samplePath) mediaCapabilities.grant(voice.samplePath, "character");
+          return { ok: true, snapshot: snapshot2 };
+        } catch (error) {
+          return { ok: false, message: characterVoiceErrorText(error) };
+        }
+      };
+      handlers["characters:voices:list"] = (scope: unknown) => voiceResult(() => memoryHost.readCharacterVoices(scope));
+      handlers["characters:voice:approve"] = (scope: unknown, id2: unknown, sampleSha256: unknown) => voiceResult(() => memoryHost.approveCharacterVoice(scope, id2, sampleSha256));
+      handlers["characters:voice:remove"] = (scope: unknown, id2: unknown) => voiceResult(() => memoryHost.removeCharacterVoice(scope, id2));
       h.attachStudio(memoryHost); // docs/30: the studio MCP + session plans bind through project memory
       const sheetBuilder: any = new (CharacterSheetBuilder as any)(llm.settings, (evt: unknown) => { push("characters:build", evt); }, { // L34875
         quoteGatewayBudget: (jobId: string, items: unknown) => {
@@ -688,32 +714,14 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       const updateChannel = () => selectedUpdateChannel(updateSettings(), accountService.account) as "nightly" | "latest";
       let updateChecker: { checkNow(): Promise<any>; invalidate(): void; stop(): void } | null = null;
       let updateShutdownStarted = false;
-      // readQuitState (L62681). PORT adaptations: workingSessionIds = sessions with status "running"; the composer
-      // attachment drafts / active voice transcription counters are not tracked by the port host (0 / false).
-      const readQuitState = () => {
-        const sessions: any[] = h.listSessions() as any[];
-        const renderer: any = BrowserWindow.getAllWindows().some((w) => !w.isDestroyed()) ? latestLocal?.quitState() ?? null : null;
-        const working = sessions.filter((x) => x.status === "running").map((x) => x.sessionId);
-        const pending: any[] = h.listPendingInteractions() as any[];
-        const awaiting = sessions.filter((x) => x.status === "awaiting_permission");
-        const titleOf = new Map(sessions.map((x) => [x.sessionId, x.title ?? ""]));
-        return {
-          runningTurns: working.length,
-          pendingInteractions: Math.max(pending.length, awaiting.length),
-          renderActive: editorRender.state() != null,
-          previewActive: hfPreview.activeJobId() !== undefined,
-          recordingVoice: renderer?.recordingVoice === true,
-          transcribingVoice: false,
-          unsentDraft: renderer?.unsentDraft === true,
-          stagedAttachments: 0,
-          copyingAttachments: 0,
-          videos: {
-            working: videoTitles(working, titleOf),
-            waiting: videoTitles([...pending.map((row) => row.request?.sessionId || undefined), ...awaiting.map((x) => x.sessionId)], titleOf),
-            copying: videoTitles([], titleOf),
-          },
-        };
-      };
+      // readQuitState (L62681): host.composerAttachmentDrafts / workingSessionIds / hasActiveVoiceTranscription
+      // (the port host has no on-device voice transcription, so transcribingVoice stays false).
+      const readQuitState = () => readQuitStateFrom({
+        host: h as any,
+        renderer: BrowserWindow.getAllWindows().some((w) => !w.isDestroyed()) ? latestLocal?.quitState() ?? null : null,
+        renderActive: editorRender.state() != null,
+        previewActive: hfPreview.activeJobId() !== undefined,
+      });
       let appUpdater: any = null;
       // quitCoordinator (L62722): Restart to update AND every before-quit (index.ts → quitHooks, L62758-62760).
       const quitCoordinator: any = new QuitCoordinator({
@@ -792,7 +800,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
             currentVersion: app.getVersion(),
             channel: updateChannel,
             settings: () => ({ ...accountService.activeSettings(), gatewayUrl: updateGateway() }),
-            onTick: () => {}, // bootstrap.checkForEngineUpdate (engine re-check cadence) — not ported
+            onTick: () => core.checkForEngineUpdate(), // L62607: the engine re-check rides the app-update cadence
             onInfo: (info: any) => { currentUpdateInfo = info; appUpdater?.observeRelease(info); push("app:update", info); },
             onClear: () => { currentUpdateInfo = null; push("app:update", null); },
           });

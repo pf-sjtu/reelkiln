@@ -16,6 +16,7 @@ import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { chmodSync, copyFileSync, createReadStream, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { promisify } from "node:util";
+import { EngineMoneyCompatibilityError } from "./money-compat.generated";
 import { composeEnginePath, exeName, isWin, npmInvocation, pathEnvKey, pathMod, tarInvocation, type Invocation, type Plat } from "../platform";
 
 export const UV_PYTHON_POLICY_ENV = { UV_PYTHON_PREFERENCE: "only-managed" } as const; // L7145
@@ -162,6 +163,8 @@ export interface BootstrapHooks {
   doctorAccepts?: (report: any) => boolean;
   /** revertEngine (L10243): a running video blocks an engine flip (original hooks.safeToFlip). */
   safeToFlip?: () => boolean;
+  /** §11.6 onEngineUpdated (L61160): a background engine update (tryFlipPendingEngine L10417) flipped the pointer. */
+  onEngineUpdated?: (version: string) => void;
   resolveEngineSource(): Promise<{ manifest: EngineManifest; fetch: (onBytes?: (r: number, t?: number) => void) => Promise<string> }>; // L9496
   validateEngineSessionContext(enginePath: string): void; // L4188
   assertInstalledEngineProductionContract(enginePath: string): void; // L6982
@@ -383,12 +386,13 @@ export class BootstrapCore {
     return parseDoctorOutput(out);
   }
 
-  async activateEngine(enginePath: string): Promise<boolean> { // L10219
+  async activateEngine(enginePath: string, canActivate: () => boolean = () => true): Promise<boolean> { // L10219
     const active = this.currentEngine();
     const version = JSON.parse(readFileSync(this.pm.join(enginePath, "ENGINE_VERSION.json"), "utf-8")).version;
     const buildSha256 = readHashFile(this.pm.join(enginePath, ".videoclaw-build-sha256"));
     if (!buildSha256) throw new Error("engine build digest is missing or invalid");
     await this.hooks.assertEngineMoneyCompatibility(enginePath);
+    if (!canActivate()) return false;
     this.hooks.ensureEngineCommandShims(enginePath);
     this.hooks.writeWorkspace(enginePath);
     mkdirSync(this.pm.dirname(this.enginePointerFile()), { recursive: true });
@@ -425,10 +429,152 @@ export class BootstrapCore {
     }
     return removed;
   }
-  /** revertEngine (L10240) — bootstrap:revertEngine: revalidate and atomically reactivate the N-1 engine.
-   *  PORT: no background installer / pending flip exists, so only `running` gates; safeToFlip = hooks. */
+  // ── Background update (chunk 21 gap #3 / §11.6, L10277-10445) ──────────────────────────────────────
+  // docs/34 M17: installed-vs-latest re-check on the app-update cadence. SILENT: no gate progress; the installed
+  // engine keeps running whatever happens; flip only when no session is mid-run; the flip fires onEngineUpdated.
+  // PORT: no Studio bundle store (studioOwnsExecutor is always false); resolveEngineSource is the bundled /
+  // VIDEOCLAW_ENGINE_DIST half (the gateway download is NOT PORTED); doctorAccepts applies as in runAll.
+  updateState: "current" | "installing" | "pending-flip" | "updated" | "failed" | "reverted" = "current";
+  updating = false;
+  latestKnown?: string;
+  failedUpdateVersion?: string;
+  pendingFlip: { version: string; path: string; buildSha256: string } | null = null;
+  backgroundInstall?: Promise<unknown>;
+  private flipInFlight = false;
+  flipSettled?: Promise<void>;
+  studioOwnsExecutor(): boolean { return false; } // L10287 (no Studio bundle provenance in the port)
+  trackBackgroundInstall<T>(install: Promise<T>): Promise<T> { // L10099
+    this.backgroundInstall = install;
+    const clear = () => { if (this.backgroundInstall === install) this.backgroundInstall = undefined; };
+    install.then(clear, clear);
+    return install;
+  }
+  async checkForEngineUpdate(): Promise<string> { // L10290
+    if (this.studioOwnsExecutor()) {
+      this.pendingFlip = null;
+      if (this.updateState === "pending-flip") this.updateState = "current";
+      return this.updateState;
+    }
+    const eng = this.currentEngine();
+    if (!eng || this.running || this.updating || this.backgroundInstall) return this.updateState;
+    if (this.pendingFlip) {
+      await this.tryFlipPendingEngine();
+      return this.updateState;
+    }
+    return this.trackBackgroundInstall(this.installEngineUpdate(eng));
+  }
+  async installEngineUpdate(eng: EngineRef): Promise<string> { // L10304
+    this.updating = true;
+    try {
+      let source2: Awaited<ReturnType<BootstrapHooks["resolveEngineSource"]>>;
+      try {
+        source2 = await this.hooks.resolveEngineSource();
+      } catch (e) {
+        console.log("[engine-update] check skipped:", (e as Error).message);
+        return this.updateState;
+      }
+      const { manifest, fetch: fetchTarball } = source2;
+      this.latestKnown = manifest.version;
+      const compatible = this.hooks.inspectProductionCompatible(eng.path);
+      if (compatible && compareEngineVersions(manifest.version, eng.version) <= 0) {
+        this.updateState = "current";
+        return this.updateState;
+      }
+      if (!compatible) this.beacon?.("engine-production-contract-invalid", `${eng.version}: active engine failed the production contract`);
+      if (this.failedUpdateVersion === manifest.version) return this.updateState;
+      this.updateState = "installing";
+      try {
+        const ordinaryTarget = this.pm.join(this.enginesRoot(), `engine-${manifest.version}`);
+        const targetPath = ordinaryTarget === eng.path
+          ? this.pm.join(this.enginesRoot(), `engine-${manifest.version}-repair-${randomUUID().slice(0, 8)}`)
+          : ordinaryTarget;
+        const target = await this.installEngineDir(manifest, fetchTarball, targetPath);
+        await this.ensureVenv(target);
+        await this.ensureRemotion(target);
+        await this.ensureHyperframes(target);
+        this.writeEnvFile(target);
+        const doctorWorkspace = this.pm.join(target, ".videoclaw-doctor-workspace");
+        let report: any;
+        try {
+          rmSync(doctorWorkspace, { recursive: true, force: true });
+          this.hooks.writeWorkspace(target, doctorWorkspace);
+          report = await this.doctor(target, doctorWorkspace);
+        } finally {
+          rmSync(doctorWorkspace, { recursive: true, force: true });
+        }
+        if (!(this.hooks.doctorAccepts ? this.hooks.doctorAccepts(report) : report.ok)) throw new Error(`doctor failed on ${manifest.version} → ${doctorFailures(report)}`);
+        this.lastDoctor = report;
+        const buildSha256 = readHashFile(this.pm.join(target, ".videoclaw-build-sha256"));
+        if (!buildSha256) throw new Error("candidate engine build digest is missing");
+        this.pendingFlip = { version: manifest.version, path: target, buildSha256 };
+        this.updateState = "pending-flip";
+        this.beacon?.("engine-updated", `${eng.version} → ${manifest.version} installed alongside`);
+        await this.tryFlipPendingEngine();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("[engine-update] update to", manifest.version, "failed:", msg);
+        this.beacon?.("engine-update-failed", `${manifest.version}: ${msg.slice(0, 400)}`);
+        this.failedUpdateVersion = manifest.version;
+        this.updateState = "failed";
+      }
+      return this.updateState;
+    } finally {
+      this.updating = false;
+    }
+  }
+  /** tryFlipPendingEngine (L10384): flip a parked update the moment every session is idle. */
+  async tryFlipPendingEngine(): Promise<void> {
+    if (this.studioOwnsExecutor()) {
+      this.pendingFlip = null;
+      if (this.updateState === "pending-flip") this.updateState = "current";
+      return;
+    }
+    if (!this.pendingFlip || this.running || this.flipInFlight || !(this.hooks.safeToFlip?.() ?? true)) return;
+    const { version: version2, path, buildSha256 } = this.pendingFlip;
+    this.flipInFlight = true;
+    let flipDone!: () => void;
+    this.flipSettled = new Promise<void>((resolve2) => { flipDone = resolve2; });
+    try {
+      const currentBuildSha256 = readHashFile(this.pm.join(path, ".videoclaw-build-sha256"));
+      if (currentBuildSha256 !== buildSha256) {
+        this.refusePendingEngine(version2, "engine build digest changed after doctor");
+        return;
+      }
+      if (!(await this.activateEngine(path, () => !this.studioOwnsExecutor()))) {
+        this.pendingFlip = null;
+        this.updateState = "current";
+        return;
+      }
+      this.pendingFlip = null;
+      this.updateState = "updated";
+      console.log("[engine-update] pointer flipped to", version2);
+      this.hooks.onEngineUpdated?.(version2);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (e instanceof (EngineMoneyCompatibilityError as any)) {
+        this.refusePendingEngine(version2, msg);
+        return;
+      }
+      console.error("[engine-update] flip to", version2, "failed:", msg);
+      this.beacon?.("engine-update-flip-failed", `${version2}: ${msg.slice(0, 400)}`);
+    } finally {
+      this.flipInFlight = false;
+      this.flipSettled = undefined;
+      flipDone();
+    }
+  }
+  /** refusePendingEngine (L10435). */
+  refusePendingEngine(version2: string, reason: string): void {
+    this.pendingFlip = null;
+    this.failedUpdateVersion = version2;
+    this.updateState = "failed";
+    console.error("[engine-update] refusing stale pending engine", version2, reason);
+    this.beacon?.("engine-update-flip-failed", `${version2}: pending candidate failed final attestation — ${reason.slice(0, 300)}`);
+  }
+
+  /** revertEngine (L10240) — bootstrap:revertEngine: revalidate and atomically reactivate the N-1 engine. */
   async revertEngine() {
-    if (this.running) throw new Error("Wait for the current setup or update to finish.");
+    if (this.running || this.updating || this.backgroundInstall || this.pendingFlip) throw new Error("Wait for the current setup or update to finish.");
     if (!(this.hooks.safeToFlip?.() ?? true)) throw new Error("Finish the running video before reverting the engine.");
     const active = this.currentEngine();
     const previous = this.previousEngine();
@@ -442,6 +588,7 @@ export class BootstrapCore {
       if (!(this.hooks.doctorAccepts ? this.hooks.doctorAccepts(report) : report.ok)) throw new Error(`previous engine failed doctor → ${doctorFailures(report)}`);
       await this.activateEngine(previous.path);
       this.lastDoctor = report;
+      this.updateState = "reverted";
       this.beacon?.("engine-reverted", `${active.version} → ${previous.version}`);
       this.pruneOldEngines(previous.path, active.path);
       return this.status();

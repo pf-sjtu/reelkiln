@@ -354,6 +354,9 @@ export class AgentHost {
   readonly attachmentStore?: any;
   /** sends between the turn-slot claim and the runtime enqueue (attachment copies, job mint) */
   private readonly preparing = new Set<string>();
+  /** authenticatedWorkPaused (L34957): set by stopAuthenticatedWork (sign-out / account blocked / local reset) and
+   *  never cleared in-process — paid and signed-in work stays refused until Videoclaw restarts (L43232). */
+  authenticatedWorkPaused = false;
   /** docs/26: deleteProject latch (L39154). */
   private readonly deletingSessions = new Set<string>();
   /** docs/26: MaterialsLedger (L34844) + SessionSpendBudgets (L34832). */
@@ -474,7 +477,7 @@ export class AgentHost {
   collectAcceptedOperations(): Promise<void>[] {
     const proxy = this.d.agentGatewayProxy?.();
     const started: Promise<void>[] = [];
-    if (!proxy || this.operationCollectors.size >= 2) return started;
+    if (!proxy || this.authenticatedWorkPaused || this.operationCollectors.size >= 2) return started;
     const engine = this.d.engine?.currentEngine()?.path;
     if (!engine) return started;
     const python = join(engine, ".venv", "bin", "python");
@@ -847,7 +850,7 @@ export class AgentHost {
   /** completedModelContext (L48104). */
   completedModelContext(meta: AgentSessionMeta): any[] {
     const s = this.sessions.get(meta.sessionId);
-    if (!s || s.meta !== meta) return [];
+    if (!s || s.meta !== meta || this.authenticatedWorkPaused) return [];
     const authority = this.collectorAuthority();
     if (!authority.keySha256) return [];
     const contextKey = JSON.stringify([meta.sdkSessionId, s.contextEpoch]);
@@ -884,7 +887,7 @@ export class AgentHost {
   reportLateResults(s: Session): void {
     const meta = s.meta as any;
     const pending: string[] | undefined = meta.lateResultReports;
-    if (!pending?.length || this.sessions.get(s.meta.sessionId) !== s || this.deletingSessions.has(s.meta.sessionId) || !this.d.gatewaySettings?.()?.gatewayKey
+    if (!pending?.length || this.sessions.get(s.meta.sessionId) !== s || this.deletingSessions.has(s.meta.sessionId) || this.authenticatedWorkPaused || !this.d.gatewaySettings?.()?.gatewayKey
       || this.spendBudgets.isBlocked()) return;
     if (s.meta.status !== "idle" || meta.interruptedAtMs || (s.runtime?.queue.length ?? 0) > 0 || s.interrupting || this.reportOnlyTurn(s) || s.openTools?.size || s.activeBackgroundTools?.size
       || [...this.pendingPermissions.values(), ...this.pendingInputs.values()].some((waiting) => waiting.sessionId === s.meta.sessionId)
@@ -1176,6 +1179,9 @@ export class AgentHost {
       const titleSource = hasText2 ? req.text : fallbackSessionTitle(firstAttachmentName) === NEW_VIDEO_TITLE ? "Attached file" : firstAttachmentName;
       this.nameSession(s, titleSource, false, hasText2 ? "fallback" : "attachment");
     }
+    // L41533-41555 gateSpendTurn: accounting failure / signed-out pause → the original error card, no spawn.
+    // PORT: the display turn is not persisted before the gate, so there is no failedInputs replay of this send.
+    if (this.gateSpendTurn(s) === "blocked") { s.failedTurnCanRetry = undefined; throw new ComposerDeliveryError(this.spendBlockMessage()); }
     const titleCancellation = s.titleCancellation;
     const limit = this.d.maxConcurrentTurns ?? 1;
     if (this.activeTurns() >= limit) throw new ComposerDeliveryError(`Another video is still working (this port runs ${limit} agent turn${limit === 1 ? "" : "s"} at a time). Wait for it or press Stop there.`);
@@ -1307,6 +1313,63 @@ export class AgentHost {
 
   /** cancelSessionTitle (L41772). */
   cancelSessionTitle(s: Session): void { s.titleCancellation = (s.titleCancellation ?? 0) + 1; s.titleRequest?.abort(); }
+  /** needsSpendAccountingRestart (L43232). PORT: no spendAccountingUnresolved (no startup identity recovery). */
+  needsSpendAccountingRestart(): boolean { return this.authenticatedWorkPaused; }
+  /** spendBlockMessage (L35339). PORT: spendAccountingUnresolved is not modelled. */
+  spendBlockMessage(): string {
+    return this.authenticatedWorkPaused
+      ? "Paid work is paused. Sign in again to restore your saved budgets."
+      : this.spendBudgets.isStorageBlocked?.()
+        ? String((this as any).spendStorageError ?? "Saved budget data could not be saved, so paid work is paused.")
+        : "Saved budget data could not be verified, so paid work is paused. Contact support before continuing.";
+  }
+  /** gateSpendTurn (L35499) without the startup spendRecovery replay (not ported): an accounting failure or a
+   *  signed-out pause shows the original error card and never spawns. */
+  private gateSpendTurn(s: Session, messages?: DeliveredInput[]): "open" | "blocked" {
+    if (!(this.spendBudgets.isBlocked() || this.authenticatedWorkPaused)) return "open";
+    if (messages) s.failedInputs = [...messages];
+    s.failedTurnCanRetry = Boolean(this.spendBudgets.isStorageBlocked?.()) && Boolean(s.failedInputs?.length);
+    this.setStatus(s, "error");
+    this.send(s, { kind: "error", message: this.spendBlockMessage(), canRetry: s.failedTurnCanRetry } as any);
+    return "blocked";
+  }
+  /**
+   * stopAuthenticatedWork (L43256): stop EVERYTHING spending on the gateway credential (sign-out, a blocked
+   * account, a local reset). Synchronous; interrupted sessions go idle and are returned. PORT: no voice
+   * dictations / native media runs / hosted runtimes / library leases exist in the port host; the sheet builder is
+   * closed by main (it is not owned by the host here); the claude catalog has no cache to invalidate.
+   */
+  stopAuthenticatedWork(): { interrupted: AgentSessionMeta[] } {
+    this.authenticatedWorkPaused = true;
+    for (const controller of this.operationCollectors.values()) controller.abort();
+    const interrupted: AgentSessionMeta[] = [];
+    const proxy = this.d.agentGatewayProxy?.();
+    for (const s of this.sessions.values()) {
+      this.cancelSessionTitle(s);
+      try { (s.sessionPlannerRequest as AbortController | undefined)?.abort?.(); } catch {}
+      try { proxy?.revoke(s.meta.sessionId); } catch {}
+      const wasActive = s.meta.status === "running" || s.meta.status === "awaiting_permission";
+      if (!s.runtime && !wasActive) continue;
+      if (wasActive) interrupted.push(s.meta);
+      this.teardownRuntime(s, "signed-out");
+      this.setStatus(s, "idle");
+    }
+    this.log.info("agent.authenticated_work.stopped", { interrupted: interrupted.length });
+    return { interrupted };
+  }
+  /** composerAttachmentDrafts (L44806): ready files in the composer on screen + every copy still running. */
+  composerAttachmentDrafts(visibleSessionId: string | null, frozenIds: string[] = []): { ready: number; copying: string[] } {
+    return this.attachmentStore?.draftCounts(visibleSessionId, new Set(frozenIds)) ?? { ready: 0, copying: [] };
+  }
+  /** workingSessionIds (L44816): a running turn, or a composer Send main accepted and is still preparing. */
+  workingSessionIds(): string[] {
+    const working = new Set<string>();
+    for (const s of this.sessions.values()) if (s.meta.status === "running") working.add(s.meta.sessionId);
+    for (const id of this.preparing) working.add(id);
+    return [...working];
+  }
+  /** hasActiveVoiceTranscription (L44824): voiceDictations is always empty in the port (no on-device helper). */
+  hasActiveVoiceTranscription(): boolean { return false; }
   /** nameSession (L41776). The original requests a title only for route "claude-code" (+ subscription
    *  login, local runtime, claude-code harness); the port does the same request for PORT-NEW provider
    *  routes instead (session-title.ts) — claude-code proposals are NOT PORTED (no login probe). */
@@ -1320,7 +1383,7 @@ export class AgentHost {
     }
     const route = this.d.service.sessionLlmRoute?.({ llmRoute: s.meta.llmRoute, agentHarness: "claude-code" }) ?? s.meta.llmRoute;
     const providerRoute = typeof route === "string" && route !== "claude-code" && route !== "gateway";
-    if (!mayRequest || s.meta.titleOrigin !== "fallback" || s.meta.title !== fallback || this.sessions.get(s.meta.sessionId) !== s
+    if (!mayRequest || s.meta.titleOrigin !== "fallback" || s.meta.title !== fallback || this.sessions.get(s.meta.sessionId) !== s || this.authenticatedWorkPaused
       || (s.meta.agentHarness ?? "claude-code") !== "claude-code" || !providerRoute || this.d.providerTitles === false || !this.d.service.sessionHelperComplete) return;
     const controller = new AbortController();
     s.titleRequest = controller;
@@ -2341,6 +2404,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       if (qs && !qs.firstTurn?.submittedAt) return this.quickstartResume?.(s.meta) ?? false;
       return false;
     }
+    if (this.gateSpendTurn(s, batch) !== "open") return false; // L42596 (no startup replay → never "queued")
     if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(sessionId)) return false;
     const limit = this.d.maxConcurrentTurns ?? 1;
     if (this.activeTurns() >= limit) throw new ComposerDeliveryError(`Another video is still working (this port runs ${limit} agent turn${limit === 1 ? "" : "s"} at a time). Wait for it or press Stop there.`);
@@ -2567,7 +2631,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     const wasActive = active(atStart?.meta.status);
     return () => {
       const live = this.sessions.get(sessionId);
-      return Boolean(atStart && live === atStart && (runtime ? !runtime.dead : !requireRuntime) && live.runtime === runtime && live.epoch === epoch
+      return Boolean(atStart && live === atStart && !this.authenticatedWorkPaused && (runtime ? !runtime.dead : !requireRuntime) && live.runtime === runtime && live.epoch === epoch
         && live.turnStartedAtMs === turn && live.meta.jobId === jobId && live.meta.cwd === cwd && (!wasActive || active(live.meta.status)));
     };
   }
@@ -2619,7 +2683,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
    *  helper, so the run ends in the original's own "unavailable in this build" result (docs/29 §9). */
   async transcribeVoice(sessionId: string, recordingId: unknown, audio: unknown, tools: { helper: string; ffmpeg: string }, isAudio: (a: unknown) => boolean, invalidAudio: string): Promise<{ status: string; message: string }> {
     const s = this.mustGet(sessionId);
-    if (s.meta.finalizedAtMs) throw new Error("Open an editable conversation and sign in before transcribing.");
+    if (this.authenticatedWorkPaused || s.meta.finalizedAtMs) throw new Error("Open an editable conversation and sign in before transcribing.");
     if (typeof recordingId !== "string" || !/^[a-f0-9-]{36}$/.test(recordingId)) throw new Error("Invalid recording.");
     if (!isAudio(audio)) return { status: "failed", message: invalidAudio };
     if (!tools.helper || !tools.ffmpeg) return { status: "failed", message: "Voice notes are unavailable in this build." };
@@ -2823,7 +2887,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     try {
       const token = this.spendBudgets.gatewayReconciliationToken(s.meta.sessionId, queriedJobId);
       const body = await this.readGatewaySpend(s);
-      if (this.sessions.get(s.meta.sessionId) !== s || s.meta.jobId !== queriedJobId) return;
+      if (this.authenticatedWorkPaused || this.sessions.get(s.meta.sessionId) !== s || s.meta.jobId !== queriedJobId) return; // L48089
       const snapshot2 = this.spendBudgets.snapshot(s.meta.sessionId);
       const settleRestored = body.client_job === s.meta.jobId && body.mode === "capped" && body.ceiling_usd === snapshot2.ceilingUsd && body.reserved_usd === 0
         && (body.state === "ready" || body.state === "exhausted") && Array.isArray(body.in_flight) && body.in_flight.length === 0 && !s.runtime;
@@ -2882,9 +2946,9 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     for (const [sessionId, key] of this.materializedSpendPolicies) if (key.startsWith(prefix)) this.materializedSpendPolicies.delete(sessionId);
   }
   /** writeGatewaySpendPolicy (L47081): the writer seam, else the agent gateway proxy, else a direct PUT
-   *  /v1/spend-authorities/{job} with the active gateway key. PORT: authenticatedWorkPaused is not modelled. */
+   *  /v1/spend-authorities/{job} with the active gateway key. */
   private async writeGatewaySpendPolicy(jobId: string, policy: GatewaySpendPolicy): Promise<void> {
-    if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
+    if (this.spendBudgets.isBlocked() || this.authenticatedWorkPaused) throw new Error("Budget accounting is unavailable; the draft is safe.");
     if (this.gatewaySpendPolicyWriter) { await this.gatewaySpendPolicyWriter(jobId, policy); return; }
     const proxy = this.d.agentGatewayProxy?.();
     if (proxy?.setSessionSpendPolicy) { await proxy.setSessionSpendPolicy(jobId, policy as any); return; }
@@ -2925,7 +2989,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       projectId: () => s.meta.clientId,
       requireOperationIdentity: true,
       rememberOperation: (operation) => {
-        if (this.sessions.get(sessionId) !== s || operation.owner.project_id !== s.meta.clientId || operation.owner.client_job !== s.meta.jobId) {
+        if (this.sessions.get(sessionId) !== s || this.authenticatedWorkPaused || operation.owner.project_id !== s.meta.clientId || operation.owner.client_job !== s.meta.jobId) {
           throw new Error("The operation no longer belongs to this video.");
         }
         const saved = rows();
@@ -2985,6 +3049,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   }
   /** spendAdmissionFence (L45795) slice: the plan gate + the liveness check re-run after every await. */
   private spendAdmissionFence(s: Session, request2: { jobId: string; quote: any }, generation: number, signal?: AbortSignal): { refusal: any } | { current: () => boolean } {
+    if (this.authenticatedWorkPaused) return { refusal: { allowed: false, reason: "Sign in again to restart Videoclaw before paid work." } }; // L45796
     const sessionId = s.meta.sessionId;
     const creative = new Set(["mint_image", "mint_video", "cast_avatar", "perform_avatar", "synth_voice", "lipsync", "music", "model_call"]);
     const voiceDiscovery = request2.quote.tool === "synth_voice" && request2.quote.routeMode === "list_voices" && request2.quote.maximumUsd === 0;
@@ -2992,7 +3057,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     const needsPlan = creative.has(request2.quote.tool) && !voiceDiscovery && !transcription;
     const planRefusal = () => (needsPlan ? this.plans?.sessionPlanProductionRefusal(sessionId) : undefined);
     { const refusal2 = planRefusal(); if (refusal2) return { refusal: { allowed: false, reason: refusal2 } }; }
-    const current = () => !signal?.aborted && !planRefusal() && s.meta.jobId === request2.jobId && this.sessions.get(sessionId) === s
+    const current = () => !this.authenticatedWorkPaused && !signal?.aborted && !planRefusal() && s.meta.jobId === request2.jobId && this.sessions.get(sessionId) === s
       && (this.spendPolicyChangeGenerations.get(sessionId) ?? 0) === generation;
     if ((this.spendPolicyChangeGenerations.get(sessionId) ?? 0) !== generation) return { refusal: { allowed: false, reason: "This paid operation is no longer current." } };
     if (!current()) return { refusal: { allowed: false, reason: "This paid operation no longer belongs to this video." } };
@@ -3367,6 +3432,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   }
   /** installSpendPolicy (L47018) over putGatewaySpendPolicy (L47055). */
   private async installSpendPolicy(sessionId: string, policy: { kind: "capped"; ceilingUsd: number } | { kind: "unlimited_for_video" } | { kind: "ask_each" }): Promise<any> {
+    if (this.authenticatedWorkPaused) throw new Error("Sign in again to restart Videoclaw before changing spending settings."); // L47019
     const session2 = this.mustGet(sessionId);
     const jobId = session2.meta.jobId;
     if (jobId) await this.putGatewaySpendPolicy(jobId, policy);
@@ -3559,7 +3625,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     }
     // PORT: the per-video spend ledger is local-authority (no paid gateway spend flows through it), so the
     // original's ledger-authority equality check reduces to the blocked check (docs/29 §6).
-    if (this.spendBudgets.isBlocked()) return refuse("unsettled-spend", "Wait for accepted work and its charges to finish reconciling.");
+    if (this.spendBudgets.isBlocked() || this.authenticatedWorkPaused) return refuse("unsettled-spend", "Wait for accepted work and its charges to finish reconciling.");
     const cfg = { ...this.creditSettings() };
     const eligibility: any = this.d.creditEligibility ? await this.d.creditEligibility() : { available: false, reason: "account-unavailable", message: "Verify your VideoClaw account before continuing." };
     const current = this.creditSettings();

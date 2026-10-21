@@ -15,6 +15,7 @@ import { smokeScript } from "./smoke";
 import { homeSmokeScript, reloadSmokeScript, s1SmokeScript } from "./original-ui-smoke";
 import { resolveRendererEntry } from "./renderer-entry";
 import { redactText } from "./llm/logger";
+import { wireWindowState } from "./window-state";
 // PORT-NEW smoke helper: surface renderer-side exceptions instead of an opaque "Script failed to execute"
 const catchingScript = (script: string) => `(async () => { try { return await ${script}; } catch (e) { return { ok: false, error: String((e && e.stack) || e), events: [] }; } })()`;
 
@@ -91,6 +92,8 @@ function createWindow() {
   });
   win = created;
   created.on("closed", () => { if (win === created) win = null; });
+  // L60574-60580 window:state (fullscreen) — logged in smoke / UI-e2e mode like every other push
+  wireWindowState(created as any, () => win as any, (ch, payload) => { if (SMOKE || UI_E2E) log(`[smoke] push ${ch} ${JSON.stringify([payload])}`); return sendToRenderer(ch as any, payload as any); });
   const originalMode = process.env.VIDEOCLAW_PORT_SMOKE_HOME === "1" ? "home" : process.env.VIDEOCLAW_PORT_SMOKE_S1 ? "s1" : process.env.VIDEOCLAW_PORT_SMOKE_RELOAD === "1" ? "reload" : undefined;
   if (SMOKE && originalMode) {
     const errors: string[] = [];

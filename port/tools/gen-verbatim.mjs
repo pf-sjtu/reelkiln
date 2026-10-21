@@ -871,6 +871,25 @@ export const SPECS = [
     exports: ["createAppUpdater", "quiesceForUpdate"],
   },
   {
+    // docs/34 M17 T1: CharacterVoiceStore (L11793-12267) — per-account saved character voices behind
+    // characters:voices:list / voice:approve / voice:remove; the host emits characters:voices:changed (L45041).
+    out: "src/main/characters/character-voice-store.generated.ts",
+    imports: [
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { closeSync, constants, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";',
+      'import { basename, dirname, extname, join, relative, resolve } from "node:path";',
+      'import { CharacterStore } from "./character-store.generated";',
+      'import { isExistingProjectDirectory, projectMemoryFile, resolveProjectDestination, ProjectMemoryError } from "../memory/project-memory.generated";',
+      'import { copyProjectFile } from "../studio/studio-toolset";',
+      'import { sanitizeErrorText } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const digest\$1 = \(value\) => createHash/, /^}$/, /^class CharacterVoiceStore \{/),
+    ],
+    subs: [],
+    exports: ["CharacterVoiceError", "characterVoiceErrorText", "CharacterVoiceStore"],
+  },
+  {
     // docs/33 M16 T3: the quit/restart coordinator (assessQuit L56360, QuitCoordinator L56419) — Restart to update.
     out: "src/main/quit/quit-coordinator.generated.ts",
     imports: [],

@@ -29,6 +29,7 @@ import { join, isAbsolute, relative } from "node:path";
 import { realpathSync } from "node:fs";
 // appendDisplayMemory (L53034) — the display-transcript sidecar line a memory notice adds
 import { appendFileSync, mkdirSync } from "node:fs";
+import { CharacterVoiceError, CharacterVoiceStore } from "../characters/character-voice-store.generated";
 const DISPLAY_MEMORY_VERSION = 7; // L52944
 function appendDisplayMemory(file: string, memory: unknown, afterAssistantMessageId?: string): boolean {
   try {
@@ -56,11 +57,61 @@ export interface ProjectMemoryHostDeps {
   emitProjectMemoryChanged: (event: { clientId: string; change: unknown; sessionId?: string; notice?: unknown; authority: MemoryAuthority }) => void;
   emitSessionEvent?: (sessionId: string, event: unknown) => void;
   store?: InstanceType<typeof ProjectMemoryStore>;
+  /** docs/34 M17: AgentHost.characterStore (L35028) — the CharacterVoiceStore (L35029) reads characters through it. */
+  characterStore?: unknown;
+  /** docs/34 M17: emit.characterVoicesChanged (L61104) → characters:voices:changed */
+  emitCharacterVoicesChanged?: (scope: { clientId: string; gatewayUrl: string; canonicalKeyId: string }) => void;
 }
 
 export class ProjectMemoryHost {
   readonly projectMemoryStore: any;
-  constructor(private readonly d: ProjectMemoryHostDeps) { this.projectMemoryStore = d.store ?? new ProjectMemoryStore(); }
+  readonly characterVoiceStore: any;
+  constructor(private readonly d: ProjectMemoryHostDeps) {
+    this.projectMemoryStore = d.store ?? new ProjectMemoryStore();
+    this.characterVoiceStore = new (CharacterVoiceStore as any)(d.characterStore); // L35029
+  }
+
+  // ── characters: saved voices (L45019-45063, transcribed; the store is verbatim) ──
+  characterVoiceContext(clientId: string, scope?: { clientId: string; gatewayUrl: string; canonicalKeyId: string }) { // L45019
+    const binding = this.memoryBinding(clientId);
+    if (
+      scope &&
+      (scope.clientId !== clientId ||
+        scope.gatewayUrl.replace(/\/+$/, "") !== binding.gatewayUrl.replace(/\/+$/, "") ||
+        scope.canonicalKeyId !== binding.canonicalKeyId)
+    ) {
+      throw new (CharacterVoiceError as any)("The active account changed. Reopen Characters before continuing.");
+    }
+    const assertCurrent = () => {
+      if (JSON.stringify(this.memoryBinding(clientId)) !== JSON.stringify(binding))
+        throw new (CharacterVoiceError as any)("The active account changed.");
+    };
+    return { binding, assertCurrent };
+  }
+  async readCharacterVoices(scope: any) { // L45036
+    const { binding, assertCurrent } = this.characterVoiceContext(scope.clientId, scope);
+    return this.characterVoiceStore.list(binding, assertCurrent);
+  }
+  emitCharacterVoices(binding: { clientId: string; gatewayUrl: string; canonicalKeyId: string }) { // L45041
+    try {
+      this.d.emitCharacterVoicesChanged?.({ clientId: binding.clientId, gatewayUrl: binding.gatewayUrl, canonicalKeyId: binding.canonicalKeyId });
+    } catch {}
+  }
+  async approveCharacterVoice(scope: any, id2: unknown, sampleSha256: unknown) { // L45050
+    const { binding, assertCurrent } = this.characterVoiceContext(scope.clientId, scope);
+    await this.characterVoiceStore.approve(binding, id2, sampleSha256, assertCurrent);
+    this.emitCharacterVoices(binding);
+    return this.characterVoiceStore.list(binding, assertCurrent);
+  }
+  async removeCharacterVoice(scope: any, id2: unknown) { // L45056
+    const { binding, assertCurrent } = this.characterVoiceContext(scope.clientId, scope);
+    try {
+      this.characterVoiceStore.remove(binding, id2, assertCurrent);
+    } finally {
+      this.emitCharacterVoices(binding);
+    }
+    return this.characterVoiceStore.list(binding, assertCurrent);
+  }
 
   memoryBinding(clientId: string) { // L36456
     const authority = this.d.authority();
