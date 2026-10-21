@@ -5,7 +5,7 @@
 import { unwatchFile, watchFile, type Stats } from "node:fs";
 import { LlmProviderError } from "./errors";
 import { getLogger, registerSecret } from "./logger";
-import { baseUrlProblem, loadProvidersFile, parseProviderConfigs, parseProvidersFile, type AuthConfig, type LlmProtocol, type ProviderConfig, type ProviderConfigInput, BUILTIN_PRESETS } from "./provider-config";
+import { baseUrlProblem, loadProvidersFile, parseProviderConfigs, parseProvidersFile, type AgentCompat, type AuthConfig, type LlmProtocol, type ProviderConfig, type ProviderConfigInput, BUILTIN_PRESETS } from "./provider-config";
 import type { RetryPolicy } from "./retry";
 
 export interface ModelAliases { opus: string; sonnet: string; haiku: string; smallFast: string; subagent: string }
@@ -23,6 +23,8 @@ export interface ResolvedProvider {
   defaultParams: Record<string, unknown>;
   headers: Record<string, string>;
   agentEffort?: string;
+  /** docs/16 Claude Code child compatibility switches (only the ones set to true). */
+  agentCompat?: AgentCompat;
   maxConcurrency: number;
   retry: RetryPolicy;
   timeoutMs: number;
@@ -148,6 +150,7 @@ export function resolveProviderConfig(c: ProviderConfig, env: NodeJS.ProcessEnv 
     name: c.name, protocol: c.protocol, baseUrl, auth: c.auth, keyEnv: c.apiKeyEnv, key, model,
     aliases: { opus: a.opus ?? model, sonnet: a.sonnet ?? model, haiku: a.haiku ?? model, smallFast: a.smallFast ?? model, subagent: a.subagent ?? model },
     defaultParams: c.defaultParams, headers: c.headers, ...(c.agentEffort ? { agentEffort: c.agentEffort } : {}),
+    ...(Object.values(c.agentCompat).some(Boolean) ? { agentCompat: { ...c.agentCompat } } : {}),
     maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs, chatMaxTokensField: c.chatMaxTokensField, gateKey: gateKeyFor(c.apiKeyEnv),
     modelsDev: { provider: c.modelsDev.provider ?? c.name, model: c.modelsDev.model ?? model },
   };

@@ -13,7 +13,8 @@ export type LlmErrorCode =
   | "RATE_LIMITED" // retries exhausted
   | "TIMEOUT"
   | "NETWORK"
-  | "BAD_RESPONSE";
+  | "BAD_RESPONSE"
+  | "SDK_UNAVAILABLE"; // Claude Agent SDK not installed/configured for the real session path (docs/16)
 
 export class LlmProviderError extends Error {
   readonly code: LlmErrorCode;

@@ -12,14 +12,17 @@
 //   pinned to a provider keeps that provider (like the original's two literals); if the provider is
 //   later removed from the config, the video FAILS CLOSED (UNKNOWN_PROVIDER / not ready) instead of
 //   silently moving its spend to another payer.
-// DEFERRED (not ported, see docs/15 §3.4): the Claude Agent SDK query() spawn itself (the SDK is not a
-//   port dependency), AgentHost session lifecycle/teardown, CredentialStore (gateway key vault),
+// docs/16: sessionAgentRuntime() + agent-sdk.ts now drive a REAL minimal query() turn (SDK loaded at
+//   runtime, not a port dependency), optionally through the loopback gate proxy (agent-gate-proxy.ts).
+// DEFERRED (not ported, see docs/15 §3.4 / docs/16 §5): the full createLocalRuntime option set
+//   (resume, hooks, studio MCP, session store, permission UI), AgentHost session lifecycle/teardown, CredentialStore (gateway key vault),
 //   the claude-code presence probe. The env/options this service builds are exactly what
 //   createLocalRuntime hands to query(); a future AgentHost port passes them through unchanged.
 import type { LlmRouteId } from "../../shared/llm-types";
 import { LlmProviderError } from "./errors";
 import { getLogger, type Logger } from "./logger";
 import { anthropicMessages, claudeRouteEnv, claudeSdkBaseEnv, DEFAULT_LLM_ROUTE, resolveHelperCreds, resolvedLlmRoute, type AnthropicOpts, type AnthropicResult, type HelperCreds } from "./llm-route";
+import { proxiedAgentEnv, startAgentGateProxy, type AgentGateProxy, type AgentGateProxyOptions } from "./agent-gate-proxy";
 import { getProviderRegistry, onProviderRegistryChange, type ProviderRegistry, type ResolvedProvider } from "./provider-registry";
 
 export const CLAUDEAI_CONNECTORS_OFF = { ENABLE_CLAUDEAI_MCP_SERVERS: "0" } as const; // L22736
@@ -167,6 +170,18 @@ export class LlmRouteService {
     const cfg = this.d.settings();
     const env = this.localRuntimeEnv({ gateway: { llmRoute, gatewayKey: cfg.gatewayKey, gatewayUrl: cfg.gatewayUrl, clientJob: meta.jobId }, engineEnv: o.engineEnv, sessionContext: o.sessionContext, tenant: o.tenant, profileDir: this.d.profileDir() });
     return { llmRoute, model: this.sessionModel(meta), env };
+  }
+
+  /** PORT-NEW docs/16: sessionRuntimeConfig() + (for a provider whose agentCompat.gateProxy is on)
+   *  a loopback gate proxy for the child's lifetime — the env handed to query() then carries only a
+   *  per-session token and every child request runs inside the provider's account-level gate.
+   *  Caller MUST close() when the SDK child has exited. */
+  async sessionAgentRuntime(meta: SessionMetaLike, o: { engineEnv?: Record<string, string>; sessionContext?: { assembled?: boolean }; tenant?: string; proxy?: AgentGateProxyOptions } = {}): Promise<{ llmRoute: LlmRouteId; model: string | undefined; env: Record<string, string>; proxy?: Pick<AgentGateProxy, "url" | "stats">; close(): Promise<void> }> {
+    const rc = this.sessionRuntimeConfig(meta, o);
+    const p = rc.llmRoute !== "claude-code" && rc.llmRoute !== "gateway" ? this.provider(rc.llmRoute) : null;
+    if (!p?.agentCompat?.gateProxy) return { ...rc, close: async () => {} };
+    const proxy = await startAgentGateProxy(p, { logger: this.log, ...o.proxy });
+    return { ...rc, env: proxiedAgentEnv(rc.env, proxy, p), proxy: { url: proxy.url, stats: proxy.stats }, close: () => proxy.close() };
   }
 
   /** setSettings hook (L61682-61686): fire when the EFFECTIVE global route changes. */

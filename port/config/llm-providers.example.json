@@ -81,6 +81,9 @@
       },
       "modelsDev": {
         "provider": "anthropic"
+      },
+      "agentCompat": {
+        "gateProxy": true
       }
     },
     {

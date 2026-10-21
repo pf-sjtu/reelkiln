@@ -92,6 +92,21 @@ export function extractText(protocol: LlmProtocol, data: unknown, provider?: str
  *  The isolated CLAUDE_CONFIG_DIR keeps a local claude.ai login from shadowing the endpoint. Gateway
  *  job headers (ANTHROPIC_CUSTOM_HEADERS) are never forwarded to a third party; only the provider's
  *  own `headers` (+ a custom auth header) are. */
+/** docs/16 §4: provider agentCompat switches → Claude Code env knobs (verified names, Claude Code 2.1.305). */
+export const AGENT_COMPAT_ENV = {
+  disableNonessentialTraffic: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+  disableStructuredOutputs: "CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS",
+  disablePromptCaching: "DISABLE_PROMPT_CACHING",
+  disableExperimentalBetas: "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS",
+  disableThinking: "CLAUDE_CODE_DISABLE_THINKING",
+  disableAdaptiveThinking: "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING",
+} as const;
+export function agentCompatEnv(c: Partial<Record<string, boolean>> | undefined): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const [k, name] of Object.entries(AGENT_COMPAT_ENV)) if (c?.[k]) env[name] = "1";
+  return env;
+}
+
 export function claudeAgentEnv(p: ResolvedProvider, profileDir: string): Record<string, string> {
   if (p.protocol !== "anthropic-messages") {
     throw new LlmProviderError("UNSUPPORTED_PROTOCOL", `Provider "${p.name}" speaks ${p.protocol}; the Claude Agent SDK runtime needs an anthropic-messages provider (it can still serve helper calls).`, { provider: p.name });
@@ -111,6 +126,7 @@ export function claudeAgentEnv(p: ResolvedProvider, profileDir: string): Record<
     CLAUDE_CODE_SUBAGENT_MODEL: p.aliases.subagent,
   });
   if (p.agentEffort) env.CLAUDE_CODE_EFFORT_LEVEL = p.agentEffort;
+  Object.assign(env, agentCompatEnv(p.agentCompat));
   env.CLAUDE_CONFIG_DIR = profileDir;
   return env;
 }

@@ -65,6 +65,19 @@ export const ProviderConfigSchema = z.strictObject({
     .refine((h) => !Object.keys(h).some((k) => SECRETISH_HEADER.test(k)), "must not contain auth headers (use auth/apiKeyEnv)"),
   /** Claude Agent SDK effort level for the child runtime (CLAUDE_CODE_EFFORT_LEVEL). */
   agentEffort: z.enum(["low", "medium", "high", "xhigh", "max"]).optional(),
+  /** Claude Code child-runtime compatibility switches for non-Anthropic servers (docs/16 §4).
+   *  Each maps to a Claude Code env knob, except gateProxy (route the child through the
+   *  main-process loopback gate proxy: account-level concurrency + the real key never enters the
+   *  child env). All default false; the MiniMax preset turns on the ones verified necessary. */
+  agentCompat: z.strictObject({
+    gateProxy: z.boolean(),
+    disableNonessentialTraffic: z.boolean(), // CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: no title side-request, no HEAD /api/hello probe, no telemetry
+    disableStructuredOutputs: z.boolean(), // CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS: server ignores output_config.format json_schema
+    disablePromptCaching: z.boolean(), // DISABLE_PROMPT_CACHING: server rejects cache_control
+    disableExperimentalBetas: z.boolean(), // CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: server rejects anthropic-beta values / beta body fields
+    disableThinking: z.boolean(), // CLAUDE_CODE_DISABLE_THINKING
+    disableAdaptiveThinking: z.boolean(), // CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING
+  }).partial().prefault({}),
   concurrency: z.strictObject({
     max: z.int().min(1).max(64).default(1),
     /** Hard ceiling also applied to env overrides (MiniMax: 2, the key is shared). */
@@ -94,6 +107,7 @@ export const ProviderConfigSchema = z.strictObject({
 });
 export type ProviderConfig = z.output<typeof ProviderConfigSchema>;
 export type ProviderConfigInput = z.input<typeof ProviderConfigSchema>;
+export type AgentCompat = ProviderConfig["agentCompat"];
 
 export const ProvidersFileSchema = z.strictObject({
   $schema: z.string().optional(),
@@ -116,6 +130,11 @@ export const MINIMAX_PRESET: ProviderConfigInput = {
   apiKeyEnv: "MINIMAX_API_KEY",
   model: "MiniMax-M3.1-Flash",
   concurrency: { max: 1, cap: 2 },
+  // docs/16: verified against the real Claude Code 2.1.305 child — the title side-request runs in
+  // parallel with the turn (breaks concurrency 1 on the shared key) and MiniMax ignores
+  // output_config.format; the gate proxy keeps the child within the account gate and keeps the key
+  // out of the child env (the agent's Bash tool could otherwise read ANTHROPIC_AUTH_TOKEN).
+  agentCompat: { gateProxy: true, disableNonessentialTraffic: true, disableStructuredOutputs: true },
   retry: { maxRetries: 5, baseDelayMs: 2000, maxDelayMs: 60_000, retryStatuses: [429, 529], credentialStatuses: [401, 403], bodyCodePath: "base_resp.status_code", retryBodyCodes: [1002], credentialBodyCodes: [1004, 1008] },
   // api.minimaxi.com is the China site; models.dev lists the same models under minimax-cn.
   modelsDev: { provider: "minimax-cn" },

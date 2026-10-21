@@ -13,6 +13,8 @@
 //   node dist/cli/port-cli.cjs llm-providers           (offline; registered providers, keys only as configured:true/false)
 //   node dist/cli/port-cli.cjs llm-providers-validate [file]   (strict pre-deploy check of a providers file; exit 1 if invalid)
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt] [image.png]   (ONE real request via the main-process route service)
+//   VIDEOCLAW_LLM_LIVE=1 VIDEOCLAW_CLAUDE_AGENT_SDK=<dir> node dist/cli/port-cli.cjs llm-agent-smoke <provider> [prompt] [--tool|--key-probe]
+//        (ONE real Claude Agent SDK turn: sessionRuntimeConfig() env/model → query(); docs/16)
 //   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
 //   node dist/cli/port-cli.cjs sqlite-check            (node:sqlite capability: runtime, SQLite version, minimums)
 //   node dist/cli/port-cli.cjs models-list [--provider ID] [--search Q] [--limit N]
@@ -38,6 +40,7 @@ import { LlmRouteService } from "../main/llm/route-service";
 import { describeProvider, getProviderRegistry, loadProviderRegistry, PROVIDERS_FILE_ENV } from "../main/llm/provider-registry";
 import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
 import { checkSqliteCapability } from "../main/models-dev/sqlite";
+import { claudeCodeExecutableFor, loadClaudeAgentSdk, runAgentTurn } from "../main/llm/agent-sdk";
 
 const [, , cmd, a1, a2, a3] = process.argv;
 const out = (o: Record<string, unknown>) => console.log(JSON.stringify(o));
@@ -139,6 +142,41 @@ async function main() {
         const r = await service.sessionHelperComplete({ llmRoute: name }, { max_tokens: 512, messages: [{ role: "user", content }] }, { timeoutMs: p.timeoutMs, deadlineMs: 180_000 });
         const result = r.ok ? { ok: true, text: r.text.slice(0, 400), chars: r.text.length } : r;
         return out({ ok: r.ok, step: cmd, provider: describeProvider(p), image: image ? { bytes: Buffer.from(image, "base64").length, mediaType } : undefined, result, ms: Date.now() - t0 });
+      }
+      case "llm-agent-smoke": { // PORT-NEW docs/16: real agent turn through the Claude Agent SDK
+        if (process.env.VIDEOCLAW_LLM_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_LLM_LIVE=1 to start a real Claude Agent SDK session" });
+        const args = process.argv.slice(3);
+        // --tool: one Bash `echo <marker>` round trip. --key-probe: the agent's Bash tool prints the
+        // LENGTH of $ANTHROPIC_AUTH_TOKEN (never the value) to prove the provider key is not in the child env.
+        const mode = args.includes("--key-probe") ? "key-probe" : args.includes("--tool") ? "tool" : "plain";
+        const [name, prompt] = args.filter((a) => !a.startsWith("--"));
+        if (!name) return out({ ok: false, step: cmd, error: "usage: llm-agent-smoke <provider> [prompt] [--tool | --key-probe]" });
+        const p = getProviderRegistry().resolveOrThrow(name);
+        const { sdk, packageDir, version } = await loadClaudeAgentSdk();
+        const executable = claudeCodeExecutableFor(packageDir);
+        const profileDir = mkdtempSync(join(tmpdir(), "vc-agent-profile-")); // isolated CLAUDE_CONFIG_DIR
+        const cwd = mkdtempSync(join(tmpdir(), "vc-agent-cwd-"));
+        const service = new LlmRouteService({ settings: () => ({ gatewayUrl: "", llmRoute: name }), profileDir: () => profileDir });
+        const meta = { llmRoute: name };
+        const readiness = await service.llmRouteReadiness(meta);
+        const runtime = await service.sessionAgentRuntime(meta);
+        const marker = `vc-tool-${Date.now().toString(36)}`;
+        const PROBE = "echo LEN=${#ANTHROPIC_AUTH_TOKEN}";
+        const text = prompt || (mode === "tool" ? `Use the Bash tool to run exactly: echo ${marker}\nThen reply with only the command output.`
+          : mode === "key-probe" ? `Use the Bash tool to run exactly this command: ${PROBE}\nThen reply with only its output.`
+          : "Reply with one short sentence confirming you are working.");
+        const r = await runAgentTurn(sdk, {
+          runtime, prompt: text, cwd, executable,
+          allowedTools: mode === "plain" ? [] : ["Bash"],
+          allowTool: (n, input) => n === "Bash" && typeof input.command === "string" && (mode === "key-probe" ? input.command.trim() === PROBE : /^echo [A-Za-z0-9 _.-]+$/.test(input.command.trim())),
+          timeoutMs: 240_000,
+        }).finally(() => runtime.close());
+        const envNames = Object.keys(runtime.env).filter((k) => /^(ANTHROPIC_|CLAUDE_)/.test(k)).sort();
+        const childTokenLength = runtime.env.ANTHROPIC_AUTH_TOKEN?.length ?? 0;
+        const seenLen = mode === "key-probe" ? Number(/LEN=(\d+)/.exec(r.toolResults.map((t) => t.text).join("\n"))?.[1] ?? NaN) : undefined;
+        const keyProbe = mode === "key-probe" ? { childSawTokenLength: seenLen, sessionTokenLength: childTokenLength, providerKeyLength: p.key.length, childSawProviderKey: seenLen === p.key.length } : undefined;
+        const ok = r.ok && (mode !== "tool" || r.toolResults.some((t) => !t.isError && t.text.includes(marker))) && (mode !== "key-probe" || (seenLen === childTokenLength && seenLen !== p.key.length));
+        return out({ ok, step: cmd, mode, sdk: { package: "@anthropic-ai/claude-agent-sdk", version, executable }, provider: describeProvider(p), readiness, childEnvNames: envNames, childEnvHasProviderKey: Object.values(runtime.env).includes(p.key), gateProxy: runtime.proxy ? runtime.proxy.stats() : undefined, toolMarker: mode === "tool" ? marker : undefined, keyProbe, turn: r, ms: Date.now() - t0 });
       }
       default:
         out({ ok: false, error: `unknown subcommand ${cmd}` });
