@@ -73,7 +73,11 @@ export const ProviderConfigSchema = z.strictObject({
   agentCompat: z.strictObject({
     gateProxy: z.boolean(),
     disableNonessentialTraffic: z.boolean(), // CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: no title side-request, no HEAD /api/hello probe, no telemetry
-    disableStructuredOutputs: z.boolean(), // CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS: server ignores output_config.format json_schema
+    disableStructuredOutputs: z.boolean(), // CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS: server ignores output_config.format json_schema (Claude Code then prompts for JSON instead)
+    /** docs/17 §3 (needs gateProxy): the proxy rewrites tool-less output_config.format requests
+     *  into a forced tool call and the reply back into JSON text. Mutually exclusive with
+     *  disableStructuredOutputs in practice (that one stops Claude Code from asking). */
+    emulateStructuredOutputs: z.boolean(),
     disablePromptCaching: z.boolean(), // DISABLE_PROMPT_CACHING: server rejects cache_control
     disableExperimentalBetas: z.boolean(), // CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: server rejects anthropic-beta values / beta body fields
     disableThinking: z.boolean(), // CLAUDE_CODE_DISABLE_THINKING
@@ -110,6 +114,7 @@ export const ProviderConfigSchema = z.strictObject({
 }).superRefine((c, ctx) => {
   const problem = baseUrlProblem(c.baseUrl, c.allowInsecureHttp);
   if (problem) ctx.addIssue({ code: "custom", path: ["baseUrl"], message: problem });
+  if (c.agentCompat.emulateStructuredOutputs && !c.agentCompat.gateProxy) ctx.addIssue({ code: "custom", path: ["agentCompat", "emulateStructuredOutputs"], message: "needs agentCompat.gateProxy (the emulation runs inside the gate proxy)" });
 });
 export type ProviderConfig = z.output<typeof ProviderConfigSchema>;
 export type ProviderConfigInput = z.input<typeof ProviderConfigSchema>;
@@ -140,7 +145,10 @@ export const MINIMAX_PRESET: ProviderConfigInput = {
   // parallel with the turn (breaks concurrency 1 on the shared key) and MiniMax ignores
   // output_config.format; the gate proxy keeps the child within the account gate and keeps the key
   // out of the child env (the agent's Bash tool could otherwise read ANTHROPIC_AUTH_TOKEN).
-  agentCompat: { gateProxy: true, disableNonessentialTraffic: true, disableStructuredOutputs: true },
+  // docs/17 §3: structured outputs are no longer switched off — the proxy emulates them (Claude
+  // Code's output_config.format request → forced tool call → JSON text reply; verified end-to-end:
+  // Claude Code 2.1.305 persisted the emulated ai-title).
+  agentCompat: { gateProxy: true, disableNonessentialTraffic: true, emulateStructuredOutputs: true },
   // docs/17 (verified 2026-10-21, 15 live probes): MiniMax-M3.1-Flash IGNORES output_config.format,
   // response_format (json_schema and json_object) and Responses text.format — 200 + free text —
   // but a forced tool call returned schema-valid JSON 9/9 on both endpoints.

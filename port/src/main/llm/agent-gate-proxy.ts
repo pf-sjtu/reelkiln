@@ -17,15 +17,24 @@ import { getLogger, registerSecret, type Logger } from "./logger";
 import { authHeaders } from "./protocols";
 import type { ResolvedProvider } from "./provider-registry";
 import { providerGate, type ConcurrencyLimiter } from "./retry";
+import { rewriteStructuredMessage, rewriteStructuredRequest, StructuredSseRewriter } from "./structured-emulation";
 
 export interface AgentGateProxy {
   url: string;
   /** Per-session credential the child presents (ANTHROPIC_AUTH_TOKEN). Not the provider key. */
   token: string;
-  stats(): { requests: number; rejected: number; maxInflight: number; inflight: number };
+  stats(): AgentGateProxyStats;
   close(): Promise<void>;
 }
+export interface AgentGateProxyStats {
+  requests: number; rejected: number; maxInflight: number; inflight: number;
+  /** docs/17 §3: structured-output requests rewritten to a forced tool call / of those, replies that
+   *  came back as parseable JSON text. */
+  structuredEmulated: number; structuredJsonOk: number;
+}
 export interface AgentGateProxyOptions {
+  /** Override of p.agentCompat.emulateStructuredOutputs. */
+  emulateStructuredOutputs?: boolean;
   gate?: ConcurrencyLimiter;
   fetchImpl?: typeof fetch;
   logger?: Logger;
@@ -52,7 +61,7 @@ function jsonError(res: ServerResponse, status: number, type: string, message: s
   res.end(JSON.stringify({ type: "error", error: { type, message } }));
 }
 
-export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "baseUrl" | "auth" | "key" | "headers" | "maxConcurrency" | "gateKey">, o: AgentGateProxyOptions = {}): Promise<AgentGateProxy> {
+export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "baseUrl" | "auth" | "key" | "headers" | "maxConcurrency" | "gateKey"> & Partial<Pick<ResolvedProvider, "agentCompat">>, o: AgentGateProxyOptions = {}): Promise<AgentGateProxy> {
   const log = (o.logger ?? getLogger()).child({ component: "agent-gate-proxy", provider: p.name });
   const doFetch = o.fetchImpl ?? fetch;
   const maxBody = o.maxBodyBytes ?? 64 * 1024 * 1024;
@@ -60,7 +69,9 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
   registerSecret(token);
   const gate = () => o.gate ?? providerGate(p.gateKey ?? p.name, p.maxConcurrency);
   const extra = Object.fromEntries(Object.entries(p.headers).map(([k, v]) => [k.toLowerCase(), v]));
-  let requests = 0, rejected = 0, inflight = 0, maxInflight = 0;
+  let requests = 0, rejected = 0, inflight = 0, maxInflight = 0, structuredEmulated = 0, structuredJsonOk = 0;
+  const emulate = o.emulateStructuredOutputs ?? !!p.agentCompat?.emulateStructuredOutputs;
+  const jsonOk = (t: string) => { try { JSON.parse(t); return true; } catch { return false; } };
 
   const server = createServer(async (req, res) => {
     const t0 = Date.now();
@@ -74,6 +85,14 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
     try {
       for await (const c of req) { size += (c as Buffer).length; if (size > maxBody) return jsonError(res, 413, "request_too_large", "request body too large"); chunks.push(c as Buffer); }
     } catch { return; }
+    let reqBody = Buffer.concat(chunks);
+    let emulated = false;
+    if (emulate && req.method === "POST" && /^\/v1\/messages(\?|$)/.test(path)) {
+      let parsed: unknown;
+      try { parsed = JSON.parse(reqBody.toString("utf8")); } catch { parsed = undefined; }
+      const rewritten = rewriteStructuredRequest(parsed);
+      if (rewritten) { reqBody = Buffer.from(JSON.stringify(rewritten)); emulated = true; structuredEmulated++; }
+    }
     const abort = new AbortController();
     res.on("close", () => { if (!res.writableFinished) abort.abort(); });
     let waitedMs = 0;
@@ -88,13 +107,35 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
           for (const [k, v] of Object.entries(req.headers)) if (!HOP_BY_HOP.has(k) && typeof v === "string") headers[k] = v;
           Object.assign(headers, extra, authHeaders(p.auth, p.key));
           const method = req.method ?? "GET";
-          const upstream = await doFetch(p.baseUrl + path, { method, headers, body: method === "GET" || method === "HEAD" ? undefined : Buffer.concat(chunks), signal: abort.signal });
+          const upstream = await doFetch(p.baseUrl + path, { method, headers, body: method === "GET" || method === "HEAD" ? undefined : reqBody, signal: abort.signal });
           const rh: Record<string, string> = {};
           upstream.headers.forEach((v, k) => { if (!RESPONSE_DROP.has(k)) rh[k] = v; });
-          res.writeHead(upstream.status, rh);
-          if (upstream.body) for await (const c of upstream.body as any) { if (!res.write(c)) await new Promise((r) => res.once("drain", r)); }
+          const write = async (c: string | Uint8Array) => { if (c.length && !res.write(c)) await new Promise((r) => res.once("drain", r)); };
+          if (emulated && upstream.status === 200 && /text\/event-stream/i.test(upstream.headers.get("content-type") ?? "")) {
+            res.writeHead(upstream.status, rh);
+            const rw = new StructuredSseRewriter();
+            const dec = new TextDecoder();
+            if (upstream.body) for await (const c of upstream.body as any) await write(rw.push(dec.decode(c, { stream: true })));
+            await write(rw.push(dec.decode()) + rw.flush());
+            if (rw.sawTool && jsonOk(rw.json)) structuredJsonOk++;
+            log.debug("agent_proxy.structured_emulated", { stream: true, sawTool: rw.sawTool, jsonOk: jsonOk(rw.json) });
+          } else if (emulated && upstream.status === 200) {
+            const text = await upstream.text();
+            let outText = text;
+            try {
+              const r = rewriteStructuredMessage(JSON.parse(text));
+              outText = JSON.stringify(r.msg);
+              if (r.json !== undefined) structuredJsonOk++;
+            } catch { /* not JSON: pass through */ }
+            res.writeHead(upstream.status, rh);
+            await write(outText);
+            log.debug("agent_proxy.structured_emulated", { stream: false });
+          } else {
+            res.writeHead(upstream.status, rh);
+            if (upstream.body) for await (const c of upstream.body as any) await write(c);
+          }
           res.end();
-          log.debug("agent_proxy.request", { method, path: path.split("?")[0], status: upstream.status, waitedMs, ms: Date.now() - t0 });
+          log.debug("agent_proxy.request", { method, path: path.split("?")[0], status: upstream.status, waitedMs, emulated, ms: Date.now() - t0 });
         } finally { inflight--; }
       });
     } catch (e: any) {
@@ -109,7 +150,7 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
   return {
     url: `http://127.0.0.1:${port}`,
     token,
-    stats: () => ({ requests, rejected, maxInflight, inflight }),
+    stats: () => ({ requests, rejected, maxInflight, inflight, structuredEmulated, structuredJsonOk }),
     close: () => new Promise<void>((r) => { server.closeAllConnections?.(); server.close(() => r()); }),
   };
 }

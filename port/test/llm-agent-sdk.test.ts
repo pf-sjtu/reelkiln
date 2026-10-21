@@ -141,10 +141,12 @@ test("agentCompat: MiniMax preset → verified Claude Code knobs + gate proxy; u
   assert.deepEqual(agentCompatEnv({ disablePromptCaching: true, disableExperimentalBetas: false, gateProxy: true }), { DISABLE_PROMPT_CACHING: "1" });
   const reg = regWith([{ name: "acme", protocol: "anthropic-messages", baseUrl: "https://acme.test/anthropic", apiKeyEnv: "ACME_KEY", model: "a" }]);
   const mm = reg.resolve("minimax", { MINIMAX_API_KEY: KEY })!;
-  assert.deepEqual(mm.agentCompat, { gateProxy: true, disableNonessentialTraffic: true, disableStructuredOutputs: true });
+  assert.deepEqual(mm.agentCompat, { gateProxy: true, disableNonessentialTraffic: true, emulateStructuredOutputs: true });
   const env = claudeAgentEnv(mm, "/p");
   assert.equal(env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC, "1");
-  assert.equal(env.CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS, "1");
+  assert.equal(env.CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS, undefined, "docs/17: structured outputs emulated by the proxy, not disabled");
+  assert.equal(env.EMULATE_STRUCTURED_OUTPUTS, undefined);
+  assert.ok(!Object.keys(env).some((k) => /EMULATE/i.test(k)), "emulation is a proxy feature, not an env knob");
   assert.equal(env.DISABLE_PROMPT_CACHING, undefined, "MiniMax accepts cache_control (verified) — caching stays on");
   const acme = claudeAgentEnv(reg.resolve("acme", { ACME_KEY: KEY })!, "/p");
   assert.equal(acme.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC, undefined);
@@ -200,7 +202,7 @@ test("gate proxy: session token required, real auth swapped in upstream, custom 
     const xk = await send(proxy.url + "/v1/messages", { headers: { "x-api-key": proxy.token }, body: "{}" });
     assert.equal(xk.status, 200);
     await xk.text();
-    assert.deepEqual(proxy.stats(), { requests: 2, rejected: 1, maxInflight: 1, inflight: 0 });
+    assert.deepEqual(proxy.stats(), { requests: 2, rejected: 1, maxInflight: 1, inflight: 0, structuredEmulated: 0, structuredJsonOk: 0 });
   } finally { await proxy.close(); await up.close(); }
 });
 
@@ -295,4 +297,94 @@ test("LlmRouteService.sessionAgentRuntime: gateProxy provider → proxied env (n
     assert.equal(cc.proxy, undefined);
     assert.equal(cc.model, undefined);
   } finally { rmSync(dir, { recursive: true, force: true }); await up.close(); }
+});
+
+
+// ---- docs/17 §3: structured-output emulation in the gate proxy -----------------------------
+import { rewriteStructuredMessage, rewriteStructuredRequest, StructuredSseRewriter } from "../src/main/llm/structured-emulation";
+import { STRUCTURED_TOOL_NAME } from "../src/main/llm/structured-output";
+
+const titleSchema = { type: "object", properties: { title: { type: "string" } }, required: ["title"], additionalProperties: false };
+const titleReq = (extra: Record<string, unknown> = {}) => ({ model: "m", max_tokens: 100, stream: true, system: "Generate a title. Return JSON.", messages: [{ role: "user", content: "hi" }], tools: [], output_config: { effort: "high", format: { type: "json_schema", schema: titleSchema } }, ...extra });
+const sse = (events: Array<[string, unknown]>) => events.map(([e, d]) => `event: ${e}\ndata: ${JSON.stringify(d)}\n\n`).join("");
+const toolStream = sse([
+  ["message_start", { type: "message_start", message: { id: "x", type: "message", role: "assistant", content: [], model: "m", stop_reason: null, usage: { input_tokens: 0, output_tokens: 0 } } }],
+  ["content_block_start", { type: "content_block_start", index: 0, content_block: { type: "thinking", thinking: "" } }],
+  ["content_block_delta", { type: "content_block_delta", index: 0, delta: { type: "thinking_delta", thinking: "hmm" } }],
+  ["content_block_stop", { type: "content_block_stop", index: 0 }],
+  ["content_block_start", { type: "content_block_start", index: 1, content_block: { type: "text", text: "" } }],
+  ["content_block_delta", { type: "content_block_delta", index: 1, delta: { type: "text_delta", text: "Sure! " } }],
+  ["content_block_stop", { type: "content_block_stop", index: 1 }],
+  ["content_block_start", { type: "content_block_start", index: 2, content_block: { type: "tool_use", id: "t1", name: STRUCTURED_TOOL_NAME, input: {} } }],
+  ["content_block_delta", { type: "content_block_delta", index: 2, delta: { type: "input_json_delta", partial_json: '{"title": "Su' } }],
+  ["content_block_delta", { type: "content_block_delta", index: 2, delta: { type: "input_json_delta", partial_json: 'rf Cat"}' } }],
+  ["content_block_stop", { type: "content_block_stop", index: 2 }],
+  ["message_delta", { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 9 } }],
+  ["message_stop", { type: "message_stop" }],
+]);
+const parseSse = (t: string) => t.split("\n\n").filter(Boolean).map((e) => JSON.parse(e.split("\n").find((l) => l.startsWith("data:"))!.slice(5)));
+
+test("structured emulation: request rewrite only for tool-less output_config.format; effort kept", () => {
+  const r = rewriteStructuredRequest(titleReq())!;
+  assert.deepEqual(r.output_config, { effort: "high" });
+  assert.deepEqual(r.tools, [{ name: STRUCTURED_TOOL_NAME, description: r.tools[0].description, input_schema: titleSchema }]);
+  assert.deepEqual(r.tool_choice, { type: "tool", name: STRUCTURED_TOOL_NAME });
+  assert.equal(rewriteStructuredRequest(titleReq({ tools: [{ name: "Bash", input_schema: { type: "object" } }] })), undefined, "agent turns with tools are never hijacked");
+  assert.equal(rewriteStructuredRequest({ ...titleReq(), output_config: { effort: "high" } }), undefined);
+  assert.equal(rewriteStructuredRequest("nope"), undefined);
+});
+
+test("structured emulation: SSE tool_use → one text block with the JSON (thinking kept, stray text dropped, indices renumbered, stop_reason end_turn); split chunks OK", () => {
+  for (const step of [toolStream.length, 7, 1]) {
+    const rw = new StructuredSseRewriter();
+    let out = "";
+    for (let i = 0; i < toolStream.length; i += step) out += rw.push(toolStream.slice(i, i + step));
+    out += rw.flush();
+    const ev = parseSse(out);
+    const starts = ev.filter((e) => e.type === "content_block_start");
+    assert.deepEqual(starts.map((e) => [e.index, e.content_block.type]), [[0, "thinking"], [1, "text"]]);
+    const text = ev.filter((e) => e.type === "content_block_delta" && e.delta.type === "text_delta").map((e) => e.delta.text).join("");
+    assert.equal(text, '{"title": "Surf Cat"}');
+    assert.deepEqual(JSON.parse(text), { title: "Surf Cat" });
+    assert.ok(ev.every((e) => e.type !== "content_block_delta" || e.index <= 1));
+    assert.equal(ev.find((e) => e.type === "message_delta").delta.stop_reason, "end_turn");
+    assert.equal(rw.json, '{"title": "Surf Cat"}');
+  }
+});
+
+test("structured emulation: non-streamed reply rewritten; replies without the tool untouched", () => {
+  const r = rewriteStructuredMessage({ content: [{ type: "thinking", thinking: "x", signature: "s" }, { type: "text", text: "noise" }, { type: "tool_use", id: "t", name: STRUCTURED_TOOL_NAME, input: { title: "T" } }], stop_reason: "tool_use" });
+  assert.deepEqual(r.msg, { content: [{ type: "thinking", thinking: "x", signature: "s" }, { type: "text", text: '{"title":"T"}' }], stop_reason: "end_turn" });
+  const plain = { content: [{ type: "text", text: "hi" }], stop_reason: "end_turn" };
+  assert.equal(rewriteStructuredMessage(plain).msg, plain);
+});
+
+test("gate proxy + emulateStructuredOutputs: upstream sees the forced tool, client gets JSON text; other requests and errors untouched; config needs gateProxy", async () => {
+  silent(); resetProviderGatesForTests();
+  const up = await upstreamServer(async (_req, body, res) => {
+    const b = JSON.parse(body);
+    if (b.max_tokens === 1) { res.writeHead(400, { "content-type": "application/json" }); res.end('{"type":"error"}'); return; }
+    if (b.tool_choice?.name === STRUCTURED_TOOL_NAME) { res.writeHead(200, { "content-type": "text/event-stream" }); res.end(toolStream); return; }
+    res.writeHead(200, { "content-type": "text/event-stream" }); res.end("event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n");
+  });
+  const proxy = await startAgentGateProxy(P(up.url, { agentCompat: { gateProxy: true, emulateStructuredOutputs: true } }));
+  const h = { authorization: `Bearer ${proxy.token}`, "content-type": "application/json" };
+  try {
+    const r = await send(proxy.url + "/v1/messages?beta=true", { headers: h, body: JSON.stringify(titleReq()) });
+    const ev = parseSse(await r.text());
+    assert.equal(ev.filter((e) => e.delta?.type === "text_delta").map((e) => e.delta.text).join(""), '{"title": "Surf Cat"}');
+    const sent = JSON.parse(up.seen[0].body);
+    assert.equal(sent.output_config.format, undefined);
+    assert.equal(sent.tool_choice.name, STRUCTURED_TOOL_NAME);
+    const agent = await send(proxy.url + "/v1/messages", { headers: h, body: JSON.stringify(titleReq({ tools: [{ name: "Bash", input_schema: {} }] })) });
+    await agent.text();
+    assert.ok(JSON.parse(up.seen[1].body).output_config.format, "requests with tools pass through unchanged");
+    const err = await send(proxy.url + "/v1/messages", { headers: h, body: JSON.stringify(titleReq({ max_tokens: 1 })) });
+    assert.equal(err.status, 400);
+    assert.equal(await err.text(), '{"type":"error"}');
+    const st = proxy.stats();
+    assert.equal(st.structuredEmulated, 2);
+    assert.equal(st.structuredJsonOk, 1);
+  } finally { await proxy.close(); await up.close(); }
+  assert.throws(() => regWith([{ name: "acme3", protocol: "anthropic-messages", baseUrl: "https://a.test", apiKeyEnv: "K", model: "m", agentCompat: { emulateStructuredOutputs: true } }]), /needs agentCompat.gateProxy/);
 });
