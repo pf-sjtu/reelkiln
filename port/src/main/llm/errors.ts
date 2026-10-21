@@ -7,6 +7,7 @@ export type LlmErrorCode =
   | "UNKNOWN_PROVIDER"
   | "KEY_MISSING" // apiKeyEnv not set in the (unsanitized) environment
   | "UNSUPPORTED_PROTOCOL" // e.g. an openai-* provider selected for the Claude Agent SDK runtime
+  | "UNSUPPORTED_CONTENT" // a content block / tool the target protocol cannot represent (never silently dropped)
   | typeof PROVIDER_CREDENTIAL_CODE // 401/403 or provider-specific credential/balance body codes; never retried
   | "RATE_LIMITED" // retries exhausted
   | "TIMEOUT"

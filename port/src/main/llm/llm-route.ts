@@ -138,6 +138,7 @@ export interface HelperCreds {
   defaultParams?: Record<string, unknown>;
   keyEnv?: string;
   timeoutMs?: number;
+  chatMaxTokensField?: "max_tokens" | "max_completion_tokens";
 }
 export interface HelperCfg { llmRoute?: unknown; gatewayUrl: string; gatewayKey?: string }
 
@@ -145,6 +146,7 @@ export function helperCredsForProvider(p: ResolvedProvider): HelperCreds {
   return {
     url: endpointUrl(p.protocol, p.baseUrl), headers: requestHeaders(p), model: p.model, provider: p.name, protocol: p.protocol,
     maxConcurrency: p.maxConcurrency, retry: p.retry, defaultParams: p.defaultParams, keyEnv: p.keyEnv, timeoutMs: p.timeoutMs,
+    ...(p.chatMaxTokensField ? { chatMaxTokensField: p.chatMaxTokensField } : {}),
   };
 }
 
@@ -176,7 +178,16 @@ export async function anthropicMessages(creds: HelperCreds, body: Record<string,
   const doFetch = opts.fetchImpl ?? fetch;
   const protocol: LlmProtocol = creds.protocol ?? "anthropic-messages";
   const isProvider = !!creds.provider && creds.provider !== "gateway";
-  const payload = isProvider ? buildRequestBody(protocol, body, { model: creds.model, defaultParams: creds.defaultParams }) : creds.model ? { ...body, model: creds.model } : body;
+  const log = getLogger().child({ provider: creds.provider });
+  let payload: Record<string, unknown>;
+  try {
+    payload = isProvider
+      ? buildRequestBody(protocol, body, { model: creds.model, defaultParams: creds.defaultParams, provider: creds.provider, maxTokensField: creds.chatMaxTokensField, onDropped: (fields) => log.debug("llm.request.dropped_fields", { fields }) })
+      : creds.model ? { ...body, model: creds.model } : body;
+  } catch (err) {
+    if (err instanceof LlmProviderError) return { ok: false, reason: err.message, code: err.code };
+    throw err;
+  }
   const once = async (): Promise<Response> => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
@@ -193,7 +204,6 @@ export async function anthropicMessages(creds: HelperCreds, body: Record<string,
       clearTimeout(timer);
     }
   };
-  const log = getLogger().child({ provider: creds.provider });
   try {
     const res = isProvider
       ? await providerGate(creds.provider!, creds.maxConcurrency ?? 1).run(() => withRetry(once, creds.retry, {

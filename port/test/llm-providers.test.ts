@@ -169,7 +169,9 @@ test("child env: key read from UNSANITIZED env and passed explicitly past saniti
 });
 
 test("protocol adapters: Anthropic-shaped helper body → chat / responses bodies; text extraction", () => {
-  const body = { model: "claude-haiku-4-5", max_tokens: 64, system: "be brief", messages: [{ role: "user", content: [{ type: "text", text: "hi" }, { type: "image", source: {} }] }], temperature: 0.2 };
+  const body = { model: "claude-haiku-4-5", max_tokens: 64, system: "be brief", messages: [{ role: "user", content: [{ type: "text", text: "hi" }] }], temperature: 0.2 };
+  // an image without a usable source used to be dropped silently; now it is a typed error (llm-multimodal.test.ts)
+  assert.throws(() => buildRequestBody("openai-chat-completions", { messages: [{ role: "user", content: [{ type: "image", source: {} }] }] }), (e: any) => e.code === "UNSUPPORTED_CONTENT");
   const defaults = { reasoning_effort: "low", temperature: 1 };
   assert.deepEqual(buildRequestBody("openai-chat-completions", body, { model: "m", defaultParams: defaults }), { reasoning_effort: "low", temperature: 0.2, model: "m", messages: [{ role: "system", content: "be brief" }, { role: "user", content: "hi" }], max_tokens: 64 });
   assert.deepEqual(buildRequestBody("openai-responses", body, { model: "m" }), { temperature: 0.2, model: "m", input: [{ role: "user", content: "hi" }], instructions: "be brief", max_output_tokens: 64 });

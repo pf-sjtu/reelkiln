@@ -64,6 +64,9 @@ export const ProviderConfigSchema = z.strictObject({
     credentialBodyCodes: z.array(z.int()).default([]),
   }).prefault({}),
   timeoutMs: z.int().min(1000).max(600_000).default(60_000),
+  /** openai-chat-completions only: name of the output-token limit field. OpenAI's newer models
+   *  (o-series, gpt-5.x) reject `max_tokens`; most OpenAI-compatible servers still expect it. */
+  chatMaxTokensField: z.enum(["max_tokens", "max_completion_tokens"]).default("max_tokens"),
   /** Key into the models.dev catalog (docs/15 §5); defaults: provider=name, model=model. */
   modelsDev: z.strictObject({ provider: z.string().min(1).optional(), model: z.string().min(1).optional() }).prefault({}),
   /** Names of env vars that may override fields at resolve time (kept for MINIMAX_* compatibility). */

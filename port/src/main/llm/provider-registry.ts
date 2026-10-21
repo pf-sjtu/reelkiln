@@ -25,6 +25,8 @@ export interface ResolvedProvider {
   maxConcurrency: number;
   retry: RetryPolicy;
   timeoutMs: number;
+  /** openai-chat-completions output-token field (default max_tokens). */
+  chatMaxTokensField?: "max_tokens" | "max_completion_tokens";
   modelsDev: { provider: string; model: string };
 }
 
@@ -103,7 +105,7 @@ export function resolveProviderConfig(c: ProviderConfig, env: NodeJS.ProcessEnv 
     name: c.name, protocol: c.protocol, baseUrl, auth: c.auth, keyEnv: c.apiKeyEnv, key, model,
     aliases: { opus: a.opus ?? model, sonnet: a.sonnet ?? model, haiku: a.haiku ?? model, smallFast: a.smallFast ?? model, subagent: a.subagent ?? model },
     defaultParams: c.defaultParams, headers: c.headers, ...(c.agentEffort ? { agentEffort: c.agentEffort } : {}),
-    maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs,
+    maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs, chatMaxTokensField: c.chatMaxTokensField,
     modelsDev: { provider: c.modelsDev.provider ?? c.name, model: c.modelsDev.model ?? model },
   };
 }

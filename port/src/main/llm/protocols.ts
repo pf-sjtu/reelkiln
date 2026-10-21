@@ -1,8 +1,9 @@
 // PORT-NEW: wire-protocol adapters for generic providers (docs/15 §3.2).
 // Helper callers (proposeSessionTitle, Conductor judge, …) always build an ANTHROPIC-shaped body
 // ({model, max_tokens, system?, messages}); for openai-* providers it is translated here, and every
-// protocol's response is reduced to the concatenated text output.
+// protocol's response is reduced to the concatenated text output. Content conversion: content-convert.ts.
 import { LlmProviderError } from "./errors";
+import { ANTHROPIC_ONLY_FIELDS, convertToolChoice, convertTools, systemText, toChatMessages, toResponsesInput } from "./content-convert";
 import type { AuthConfig, LlmProtocol } from "./provider-config";
 import type { ResolvedProvider } from "./provider-registry";
 
@@ -31,22 +32,41 @@ export function requestHeaders(p: Pick<ResolvedProvider, "protocol" | "auth" | "
 }
 
 type AnthropicBlock = { type?: string; text?: string; [k: string]: unknown };
-type AnthropicMessage = { role: string; content: string | AnthropicBlock[] };
-const blocksToText = (c: unknown): string =>
-  typeof c === "string" ? c : Array.isArray(c) ? c.filter((b) => b && b.type === "text").map((b) => String(b.text ?? "")).join("\n") : "";
 
-/** Anthropic-shaped helper body → protocol body. Defaults < body < pinned model. */
-export function buildRequestBody(protocol: LlmProtocol, body: Record<string, unknown>, o: { model?: string; defaultParams?: Record<string, unknown> } = {}): Record<string, unknown> {
+export interface BuildOptions {
+  model?: string;
+  defaultParams?: Record<string, unknown>;
+  provider?: string;
+  /** chat.completions only: newer OpenAI models reject `max_tokens` (default) and need `max_completion_tokens`. */
+  maxTokensField?: "max_tokens" | "max_completion_tokens";
+  /** Receives the names of Anthropic-only fields that were removed (for a debug log). */
+  onDropped?: (fields: string[]) => void;
+}
+
+/** Anthropic-shaped helper body → protocol body. Defaults < body < pinned model. For the openai-*
+ *  protocols every content block is converted (images, documents, tool calls — content-convert.ts);
+ *  a block the target cannot represent throws UNSUPPORTED_CONTENT instead of being silently dropped. */
+export function buildRequestBody(protocol: LlmProtocol, body: Record<string, unknown>, o: BuildOptions = {}): Record<string, unknown> {
   const defaults = o.defaultParams ?? {};
   const model = o.model ?? body.model;
   if (protocol === "anthropic-messages") return { ...defaults, ...body, ...(model !== undefined ? { model } : {}) };
-  const { system, messages, max_tokens, model: _m, ...rest } = body as { system?: unknown; messages?: AnthropicMessage[]; max_tokens?: number; model?: unknown; [k: string]: unknown };
-  const msgs = Array.isArray(messages) ? messages.map((m) => ({ role: m.role, content: blocksToText(m.content) })) : [];
-  const sys = blocksToText(system);
+  const { system, messages, max_tokens, model: _m, tools, tool_choice, stop_sequences, ...rest } = body as Record<string, unknown> & { max_tokens?: number };
+  const dropped: string[] = [];
+  for (const f of ANTHROPIC_ONLY_FIELDS) if (f in rest) { delete rest[f]; dropped.push(f); }
+  const sys = systemText(system, o.provider);
+  const convertedTools = convertTools(tools, protocol, o.provider);
+  const choice = convertToolChoice(tool_choice, protocol);
+  const extra: Record<string, unknown> = { ...(convertedTools ? { tools: convertedTools } : {}), ...choice };
   if (protocol === "openai-chat-completions") {
-    return { ...defaults, ...rest, model, messages: sys ? [{ role: "system", content: sys }, ...msgs] : msgs, ...(max_tokens !== undefined ? { max_tokens } : {}) };
+    if (Array.isArray(stop_sequences) && stop_sequences.length) extra.stop = stop_sequences.slice(0, 4);
+    const msgs = toChatMessages(messages, o.provider);
+    const field = o.maxTokensField ?? "max_tokens";
+    if (dropped.length) o.onDropped?.(dropped);
+    return { ...defaults, ...rest, ...extra, model, messages: sys ? [{ role: "system", content: sys }, ...msgs] : msgs, ...(max_tokens !== undefined ? { [field]: max_tokens } : {}) };
   }
-  return { ...defaults, ...rest, model, input: msgs, ...(sys ? { instructions: sys } : {}), ...(max_tokens !== undefined ? { max_output_tokens: max_tokens } : {}) };
+  if (stop_sequences !== undefined) dropped.push("stop_sequences"); // the Responses API has no stop parameter
+  if (dropped.length) o.onDropped?.(dropped);
+  return { ...defaults, ...rest, ...extra, model, input: toResponsesInput(messages, o.provider), ...(sys ? { instructions: sys } : {}), ...(max_tokens !== undefined ? { max_output_tokens: max_tokens } : {}) };
 }
 
 /** Response JSON → text (thinking/reasoning blocks are ignored). Throws BAD_RESPONSE on a shape
