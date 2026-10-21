@@ -43,6 +43,35 @@ function sliceUntil(src, startRe, stopRe) {
 
 export const SPECS = [
   {
+    // docs/31: the ORIGINAL AgentGatewayProxy (L28672-30374) with its refusal copy and request helpers
+    // (L28134-28671), the provider-origin host guard it uses for media pulls (L19897-19918, L19992-20010),
+    // gatewayRefusalCopy (L1283-1303) and the wb-chunk spend/passthrough constants. Replaces the docs/29 shape port:
+    // session capabilities (vcs_), operation context, local spending admission, exact quotes / permits, durable
+    // operation identity and child-job scoping are now the shipped code, run against the self-hosted shim.
+    out: "src/main/gateway/agent-gateway-proxy.generated.ts",
+    imports: [
+      'import { once } from "node:events";',
+      'import { createServer, request as request$1 } from "node:http";',
+      'import { request } from "node:https";',
+      'import { createHash, randomBytes } from "node:crypto";',
+      'import { isClientJobId } from "../engine/session";',
+      'import { envForGatewayUrl } from "../account/account-gateway.generated";',
+      'import { policyRefusalMessage } from "../agent/session-assembly.generated";',
+      'import { providerCapabilityLabel } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      slice("wb", /^const SPEND_APPROVAL_PENDING_CODE = /, /^const SPEND_AUTHORITY_REQUIRED_CODE = /),
+      slice("wb", /^const ANTHROPIC_PASSTHROUGH_PATH = /, /^}$/),
+      slice("wb", /^const PROVIDER_GUIDANCE = \{/, /^}$/, /^function upstreamUnavailableRefusal\(/),
+      slice("main", /^const FEATURE_FLAG_REASON_COPY = \{/, /^}$/, /^function gatewayRefusalCopy\(code\) \{/),
+      slice("main", /^const PROVIDER_SERVICE_PATTERNS = \[/, /^\];$/),
+      sliceUntil("main", /^const PROVIDER_BARE_NAME_PATTERNS = \[/, /^const PROVIDER_SERVICE_RE = /),
+      sliceUntil("main", /^const UNMETERED_ACQUISITION_REFUSAL =/, /^const QUICKSTART_RENDERER_LATENCY_STAGES = /),
+    ],
+    subs: [],
+    exports: ["AgentGatewayProxy", "GatewayHttpError", "UpstreamGatewayHttpError", "PROVIDER_CREDENTIAL_CODE", "GATEWAY_CANCEL_REASON", "NON_RETRYABLE_REFUSAL_CODES", "SPEND_APPROVAL_PENDING_CODE", "SPEND_AUTHORITY_REQUIRED_CODE", "SPEND_APPROVAL_PENDING_MESSAGE", "SPEND_POLICY_CONFLICT_MESSAGE", "isAnthropicPassthroughPath", "isUnknownCostQuote", "UNKNOWN_COST_POLICY", "ESTIMATED_SETTLEMENT_POLICY", "EXACT_OPERATION_MEDIA_TYPE", "MAX_BODY_BYTES", "bearer", "UNKNOWN_COST_APPROVAL_REQUIRED", "gatewayRefusalCopy", "FEATURE_FLAG_REASON_COPY"],
+  },
+  {
     out: "src/main/engine/session-context.generated.ts",
     imports: [
       'import { createHash } from "node:crypto";',

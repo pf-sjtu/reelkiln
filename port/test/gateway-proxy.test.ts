@@ -15,7 +15,7 @@ function get(origin: string, headers: Record<string, string> = {}): Promise<{ st
   });
 }
 
-test("AgentGatewayProxy binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s unknown tokens (loopback only, no upstream)", async () => {
+test("AgentGatewayProxy (verbatim L28672) binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s unknown tokens (loopback only, no upstream)", async () => {
   const p = await AgentGatewayProxy.start("https://gw.invalid///", "acct-key");
   try {
     assert.match(p.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
@@ -28,7 +28,9 @@ test("AgentGatewayProxy binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s un
     assert.equal(r1.headers["x-videoclaw-not-forwarded"], "1");
     assert.deepEqual(r1.body, { detail: "invalid session credential" });
     const r2 = await get(p.origin, { authorization: `Bearer ${c.gatewayKey}` });
-    assert.equal(r2.status, 501);
+    // docs/31: the shipped authorize() runs — a policy without spend authority is refused before any upstream call
+    assert.equal(r2.status, 403);
+    assert.equal(r2.headers["x-videoclaw-not-forwarded"], "1");
     // credentials() replaces the previous non-auxiliary token; auxiliary survives
     const aux = p.auxiliaryCredentials("s1", { jobId: () => "j" });
     const c2 = p.credentials("s1", { jobId: () => "j" });

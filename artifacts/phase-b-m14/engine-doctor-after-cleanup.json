@@ -1,0 +1,61 @@
+{
+  "ok": false,
+  "engine": "/workspace/vc-linux/home/.config/videoclaw-port/engines/engine-0.1.57-rc7-15f8f2d",
+  "workspace": "/tmp/vc-doctor-ws",
+  "checks": {
+    "ffmpeg": {
+      "ok": true,
+      "detail": "/usr/bin/ffmpeg \u00b7 ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+      "ms": 59
+    },
+    "ffprobe": {
+      "ok": true,
+      "detail": "/usr/bin/ffprobe \u00b7 ffprobe version 7.1.5-0+deb13u1 Copyright (c) 2007-2026 the FFmpeg developers",
+      "ms": 55
+    },
+    "node": {
+      "ok": true,
+      "detail": "/home/box/.n/bin/node \u00b7 v24.22.0",
+      "ms": 4
+    },
+    "python venv": {
+      "ok": true,
+      "detail": "imports ok: PIL, numpy, scipy, requests, dotenv, elevenlabs, fontTools, openai",
+      "ms": 658
+    },
+    "yt-dlp": {
+      "ok": true,
+      "detail": "venv yt-dlp 2026.06.09",
+      "ms": 277
+    },
+    "remotion": {
+      "ok": true,
+      "detail": "package.json + node_modules present (use --deep for a smoke render)",
+      "ms": 0
+    },
+    "gateway": {
+      "ok": false,
+      "detail": "no VIDEOCLAW_API_KEY (env or engine .env)",
+      "fix": "enter the key in the app (AccountModal) \u2014 bootstrap writes .env",
+      "ms": 0
+    },
+    "workspace": {
+      "ok": false,
+      "detail": "taste packs missing (/tmp/vc-doctor-ws/taste/packs); assets missing (/tmp/vc-doctor-ws/assets)",
+      "fix": "bootstrap should create workspace dirs (SHIPPING.md WS2 step 1)",
+      "ms": 0
+    },
+    "hooks": {
+      "ok": false,
+      "detail": "workspace settings missing (/tmp/vc-doctor-ws/.claude/settings.json)",
+      "fix": "bootstrap must copy engine .claude/settings.json (WS2 step 5)",
+      "ms": 18
+    },
+    "taste packs": {
+      "ok": false,
+      "detail": "no taste packs in /tmp/vc-doctor-ws/taste/packs",
+      "fix": "bootstrap should seed taste/packs/_starter/ (WS1)",
+      "ms": 0
+    }
+  }
+}
