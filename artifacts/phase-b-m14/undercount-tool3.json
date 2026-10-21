@@ -1,0 +1,409 @@
+{
+ "tag": "tool3",
+ "sdkVersion": "0.3.305",
+ "interruptAtCall": 3,
+ "holdMs": 2500,
+ "interruptedAtMs": 18060,
+ "interruptAck": "ack",
+ "streamedCalls": [
+  {
+   "id": "072812f061f587137f3e9a8b66e25bb0",
+   "t": 5061,
+   "input": 0,
+   "output": 155,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "072812f56d172fc92a3e8082d939255d",
+   "t": 9673,
+   "input": 0,
+   "output": 94,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "072812fab8b792ee573acb5c3d4ac693",
+   "t": 15561,
+   "input": 0,
+   "output": 115,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "072812fd3829d6ad0869e1d08b88baed",
+   "t": 17864,
+   "input": 0,
+   "output": 0,
+   "stopped": null
+  }
+ ],
+ "resultMessage": {
+  "subtype": "error_during_execution",
+  "is_error": true,
+  "num_turns": 5,
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 3944,
+    "outputTokens": 479,
+    "cacheReadInputTokens": 6309,
+    "cacheCreationInputTokens": 0,
+    "webSearchRequests": 0,
+    "costUSD": 0.013308900000000002,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 164,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "usage": {
+   "input_tokens": 3105,
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 6125,
+   "output_tokens": 364,
+   "output_tokens_details": {
+    "thinking_tokens": 58
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "",
+   "iterations": [],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "total_cost_usd": 0.013308900000000002
+ },
+ "ledger": [
+  {
+   "at": 1792597999765,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 839,
+   "outputTokens": 115,
+   "cacheReadTokens": 184,
+   "usd": 0.00019761,
+   "status": 200,
+   "clientJob": "m14-under-tool3"
+  },
+  {
+   "at": 1792598003083,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 2772,
+   "outputTokens": 155,
+   "cacheReadTokens": 128,
+   "usd": 0.00051072,
+   "status": 200,
+   "clientJob": "m14-under-tool3"
+  },
+  {
+   "at": 1792598006771,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 197,
+   "outputTokens": 94,
+   "cacheReadTokens": 2900,
+   "usd": 0.00012945,
+   "status": 200,
+   "clientJob": "m14-under-tool3"
+  },
+  {
+   "at": 1792598013191,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 136,
+   "outputTokens": 115,
+   "cacheReadTokens": 3097,
+   "usd": 0.000135855,
+   "status": 200,
+   "clientJob": "m14-under-tool3"
+  },
+  {
+   "at": 1792598015058,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 1173,
+   "outputTokens": 77,
+   "cacheReadTokens": 3233,
+   "usd": 0.000270645,
+   "status": 200,
+   "clientJob": "m14-under-tool3"
+  }
+ ],
+ "ledgerUsd": 0.00124428,
+ "messages": [
+  {
+   "t": 434,
+   "type": "system",
+   "subtype": "init"
+  },
+  {
+   "t": 438,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 5062,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5072,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5100,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5132,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5156,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5185,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5213,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5240,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5364,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5364,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5364,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5364,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5381,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5408,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5435,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5462,
+   "type": "system",
+   "subtype": "thinking_tokens"
+  },
+  {
+   "t": 5464,
+   "type": "assistant",
+   "id": "072812f061f587137f3e9a8b66e25bb0",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 6352,
+   "type": "assistant",
+   "id": "072812f061f587137f3e9a8b66e25bb0",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 6690,
+   "type": "assistant",
+   "id": "072812f061f587137f3e9a8b66e25bb0",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 7757,
+   "type": "user"
+  },
+  {
+   "t": 7761,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 10080,
+   "type": "assistant",
+   "id": "072812f56d172fc92a3e8082d939255d",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 10372,
+   "type": "assistant",
+   "id": "072812f56d172fc92a3e8082d939255d",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 11396,
+   "type": "user"
+  },
+  {
+   "t": 11398,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 16234,
+   "type": "assistant",
+   "id": "072812fab8b792ee573acb5c3d4ac693",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 16795,
+   "type": "assistant",
+   "id": "072812fab8b792ee573acb5c3d4ac693",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 16822,
+   "type": "user"
+  },
+  {
+   "t": 16825,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 18065,
+   "type": "assistant",
+   "id": "072812fd3829d6ad0869e1d08b88baed",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 18066,
+   "type": "user"
+  },
+  {
+   "t": 18069,
+   "type": "result",
+   "subtype": "error_during_execution"
+  }
+ ],
+ "upstreamRequests": [
+  {
+   "startMs": 464,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 0,
+   "messages": 1,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.09f; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. You are naming a coding",
+   "lastUserHead": "<session>\nRun these four shell commands, strictly one Bash tool call each, one after another (never in parallel), then reply with a one-paragraph summary of all four outputs: 1) `echo one; sleep 1` 2)",
+   "status": 200,
+   "endMs": 2071
+  },
+  {
+   "startMs": 3363,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 2,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "# Environment\nYou have been invoked in the following environment: \n - Primary working directory: /tmp/vc-m14-under-Cd7btP/ws\n - Is a git repository: false\n - Platform: linux\n - Shell: unknown\n - OS Ve",
+   "status": 200,
+   "endMs": 5057
+  },
+  {
+   "startMs": 7774,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 5,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996945 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 9670
+  },
+  {
+   "startMs": 11407,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 8,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996809 tokens left</total_tokens>",
+   "status": 429,
+   "endMs": 12024
+  },
+  {
+   "startMs": 14051,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 8,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996809 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 15556
+  },
+  {
+   "startMs": 16837,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 11,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996652 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 17860
+  }
+ ]
+}

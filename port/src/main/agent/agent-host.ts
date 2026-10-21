@@ -1346,6 +1346,7 @@ export class AgentHost {
     if (!rt || rt.dead) return; // nothing launched (or stopped while spawning: sendMessage sees idle and does not queue)
     if (!wasRunning) return;
     s.staleResults++;
+    void this.settleSpendAfterStop(s, rt);
     s.interrupting = (async () => {
       try {
         if (!(await this.acknowledgedInterrupt(rt))) {
@@ -2173,6 +2174,31 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       try { this.d.emit.sessionsChanged(this.listSessions()); } catch {}
     }
     return { meteredJobUsd: Math.round(charge.totalUsd * 1e9) / 1e9, trueUpUsd: nextTrueUp, displayedUsd: Math.round(s.meta.totalCostUsd * 1e9) / 1e9 };
+  }
+  /** PORT-NEW docs/31 §5: a Stop mid-stream leaves one upstream call that the CLI walked away from (its usage never
+   *  reaches the SDK's modelUsage) but that the gate proxy / the local shim drain to the end and meter. Once those
+   *  drained calls are in (proxy inflight 0 / shim llm_in_flight 0), meter the proxy route again, or reconcile the
+   *  gateway route with the job ledger (which trues up "Videoclaw gateway reasoning"). Bounded; best effort. */
+  async settleSpendAfterStop(s: Session, rt: Runtime, o: { pollMs?: number; maxPolls?: number } = {}): Promise<void> {
+    const pollMs = o.pollMs ?? 1500, maxPolls = o.maxPolls ?? 80;
+    const pause = () => new Promise<void>((r) => { const t = setTimeout(r, pollMs); (t as any).unref?.(); });
+    const live = () => this.sessions.get(s.meta.sessionId) === s;
+    try {
+      const stats = () => (rt.handle.proxy as { stats?: () => any } | undefined)?.stats?.();
+      if (stats()) {
+        for (let i = 0; i < maxPolls && (stats()?.inflight ?? 0) > 0; i++) await pause();
+        if (live()) this.meterResultCost(s, rt, {});
+        return;
+      }
+      if (rt.llmRoute !== "gateway" || !s.meta.jobId || !this.d.gatewaySettings?.()?.gatewayKey) return;
+      for (let i = 0; i < maxPolls; i++) {
+        const body = await this.readGatewaySpend(s).catch(() => undefined);
+        if (!body || !(Number(body.llm_in_flight) > 0)) break;
+        await pause();
+      }
+      if (live()) await this.reconcileGatewaySpend(s);
+      this.log.info("agent.spend.settled_after_stop", { sessionId: s.meta.sessionId, llmRoute: rt.llmRoute, totalUsd: s.meta.totalCostUsd });
+    } catch (e) { this.log.debug("agent.spend.settle_after_stop_failed", { sessionId: s.meta.sessionId, error: e }); }
   }
   /** applyGatewaySpend (L48047) + reconcileGatewaySpend (L48078). */
   async reconcileGatewaySpend(s: Session): Promise<void> {

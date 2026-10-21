@@ -52,9 +52,14 @@ export const AGENT_STARTUP_ENV_DENYLIST = new Set([ // L16004
 /** L16026 — strips every variable whose name contains KEY, TOKEN, SECRET, PASSWORD, CREDENTIAL or AUTH. */
 export function sanitizedAgentEnv(source: NodeJS.ProcessEnv = process.env): Record<string, string> {
   const safe: Record<string, string> = {};
+  const secretName = (name: string) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH)/i.test(name);
+  // PORT-NEW: a variable under an innocuous name that embeds a secret's value (e.g. a sandbox's env-restore blob)
+  // would carry the secret past the name filter; drop it too
+  const secretValues = Object.entries(source).filter(([n, v]) => v && v.length >= 16 && !v.startsWith("/") && secretName(n)).map(([, v]) => v as string);
   for (const [name, value] of Object.entries(source)) {
     if (value === undefined) continue;
-    if (/(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH)/i.test(name)) continue;
+    if (secretName(name)) continue;
+    if (value.length >= 16 && secretValues.some((v) => value.includes(v))) continue;
     if (name === "VIDEOCLAW_BOUND_JOB") continue;
     if (AGENT_STARTUP_ENV_DENYLIST.has(name) || name.startsWith("BASH_FUNC_") || name.startsWith("DYLD_") || name.startsWith("LD_")) continue;
     safe[name] = value;

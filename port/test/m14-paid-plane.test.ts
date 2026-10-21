@@ -176,3 +176,53 @@ test("m14 non-fitting paid tools keep the original failure branches: mint_video 
     assert.deepEqual([(await direct.json()).detail.code], ["SPEND_AUTHORITY_REQUIRED"]);
   } finally { await h.close(); }
 });
+
+test("sanitizedAgentEnv drops an innocuously named variable that embeds a secret value", async () => {
+  const { sanitizedAgentEnv } = await import("../src/main/llm/llm-route");
+  const secret = "sk-test-" + "x".repeat(40);
+  const out = sanitizedAgentEnv({ MINIMAX_API_KEY: secret, __SANDBOX_ENV_RESTORE: `{"MINIMAX_API_KEY":"${secret}"}`, PATH: "/usr/bin", XAUTHORITY: "/tmp/run/Xauthority", MY_DIR: "/tmp/run/Xauthority/x" } as any);
+  assert.equal(out.MINIMAX_API_KEY, undefined);
+  assert.equal(out.__SANDBOX_ENV_RESTORE, undefined);
+  assert.equal(out.PATH, "/usr/bin");
+  assert.equal(out.MY_DIR, "/tmp/run/Xauthority/x");
+});
+
+test("shim (docs/31 §5): a client that leaves mid-stream is drained and charged; llm_in_flight shows it meanwhile; a call whose client left while queued is never sent", async () => {
+  setLoggerForTests(createLogger({ level: "silent" })); resetProviderGatesForTests();
+  const root = mkdtempSync(join(tmpdir(), "vc-m14-drain-"));
+  let sent = 0;
+  const enc = new TextEncoder();
+  const fetchImpl = (async (_u: string, init: any) => {
+    sent++;
+    const slow = JSON.parse(init.body).slow === true;
+    const body = new ReadableStream({ async start(c) {
+      c.enqueue(enc.encode(`data: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 900 } } })}\n\n`));
+      for (let i = 0; i < (slow ? 8 : 1); i++) { await new Promise((r) => setTimeout(r, 40)); c.enqueue(enc.encode(`data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text: "y" } })}\n\n`)); }
+      c.enqueue(enc.encode(`data: ${JSON.stringify({ type: "message_delta", usage: { output_tokens: 55 } })}\n\n`)); c.close();
+    } });
+    return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+  }) as any;
+  const { minimaxConfig } = await import("../src/main/llm/minimax");
+  const { priceTable } = await import("../src/main/gateway/pricing");
+  const shim = new LocalGatewayShim({ dir: join(root, "lg"), provider: () => ({ ...minimaxConfig({ MINIMAX_API_KEY: "mm-test-key-0123456789" })!, maxConcurrency: 1 }), fetchImpl, price: priceTable({ env: {}, catalog: null }) });
+  const url = await shim.start(); const { key } = shim.issueKey();
+  const H = { authorization: `Bearer ${key}`, "content-type": "application/json", "x-videoclaw-client-job": "job-drain" };
+  try {
+    const ac = new AbortController();
+    const r = await fetch(`${url}/anthropic/v1/messages`, { method: "POST", headers: H, body: JSON.stringify({ model: "sonnet", stream: true, slow: true }), signal: ac.signal });
+    // a second call queues behind the first (concurrency 1); its client leaves before it is sent
+    const ac2 = new AbortController();
+    const queued = fetch(`${url}/anthropic/v1/messages`, { method: "POST", headers: H, body: JSON.stringify({ model: "sonnet", stream: true }), signal: ac2.signal }).catch((e) => e);
+    await r.body!.getReader().read(); ac.abort(); ac2.abort(); await queued;
+    const mid = await (await fetch(`${url}/v1/spend-authorities/job-drain`, { headers: { authorization: `Bearer ${key}` } })).json();
+    assert.ok(mid.llm_in_flight >= 1, "the drained call is still in flight");
+    for (let i = 0; i < 60; i++) { const b = await (await fetch(`${url}/v1/spend-authorities/job-drain`, { headers: { authorization: `Bearer ${key}` } })).json(); if (b.llm_in_flight === 0) break; await new Promise((res) => setTimeout(res, 25)); }
+    const entries = (shim as any).ledger.entries.filter((e: any) => e.clientJob === "job-drain");
+    assert.equal(entries.length, 1, "the drained call is charged once; the queued one is never charged");
+    assert.equal(entries[0].inputTokens, 900); assert.equal(entries[0].outputTokens, 55);
+    assert.equal(sent, 1, "the queued call whose client left never reached MiniMax");
+    const after = await (await fetch(`${url}/v1/spend-authorities/job-drain`, { headers: { authorization: `Bearer ${key}` } })).json();
+    assert.equal(after.llm_in_flight, 0);
+    assert.ok(Math.abs(after.llm_spent_usd - entries[0].usd) < 1e-12);
+  } finally { await shim.close(); rmSync(root, { recursive: true, force: true }); }
+});

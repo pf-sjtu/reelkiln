@@ -460,6 +460,26 @@ test("docs/30 spend: gateway route — the job's ledger (same models.dev price) 
     assert.deepEqual(h.host.trueUpGatewayReasoning(s, "other-job", 5), {}, "another job's ledger never moves this session");
   } finally { await h.host.dispose(); h.cleanup(); }
 });
+test("docs/31 §5 spend: after a Stop the host waits for the drained calls (shim llm_in_flight / proxy inflight), then reconciles / re-meters once", async () => {
+  const h = harness({ route: "gateway", price: () => FLASH, script: usageTurn({}) });
+  try {
+    const { sessionId } = h.host.createSession({});
+    const host: any = h.host; const s: any = host.sessions.get(sessionId);
+    s.meta.jobId = "job-1";
+    host.d.gatewaySettings = () => ({ gatewayUrl: "http://gw", gatewayKey: "k" });
+    const reads = [{ llm_in_flight: 1 }, { llm_in_flight: 1 }, { llm_in_flight: 0 }];
+    let readN = 0, reconciled = 0, metered = 0;
+    host.readGatewaySpend = async () => reads[Math.min(readN++, reads.length - 1)];
+    host.reconcileGatewaySpend = async () => { reconciled++; };
+    await host.settleSpendAfterStop(s, { llmRoute: "gateway", handle: {} }, { pollMs: 2 });
+    assert.equal(readN, 3, "polled until the shim had no call in flight for the job"); assert.equal(reconciled, 1);
+    // a proxy route: wait for the gate proxy's inflight to drain, then meter the runtime once more
+    let inflight = 2;
+    host.meterResultCost = () => { metered++; };
+    await host.settleSpendAfterStop(s, { llmRoute: "minimax", handle: { proxy: { stats: () => ({ inflight: inflight > 0 ? inflight-- : 0 }) } } }, { pollMs: 2 });
+    assert.equal(metered, 1); assert.equal(inflight, 0); assert.equal(reconciled, 1, "a proxy route never reads the gateway ledger");
+  } finally { await h.host.dispose(); h.cleanup(); }
+});
 test("docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels", async () => {
   const h = harness();
   try {

@@ -1,0 +1,230 @@
+{
+ "tag": "i3",
+ "sdkVersion": "0.3.305",
+ "interruptAtCall": 3,
+ "holdMs": 1500,
+ "interruptedAtMs": 38666,
+ "interruptAck": "ack",
+ "streamedCalls": [
+  {
+   "id": "0728126d127add0ee3a6648e1d7c9c26",
+   "t": 15674,
+   "input": 0,
+   "output": 110,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "07281272478d5c8653bc5905d94d40f8",
+   "t": 33071,
+   "input": 0,
+   "output": 100,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "072812835f8898b3d37997da9ac627c4",
+   "t": 37166,
+   "input": 0,
+   "output": 123,
+   "stopped": "tool_use"
+  }
+ ],
+ "resultMessage": {
+  "subtype": "error_during_execution",
+  "is_error": true,
+  "num_turns": 5,
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 3818,
+    "outputTokens": 415,
+    "cacheReadInputTokens": 6360,
+    "cacheCreationInputTokens": 0,
+    "webSearchRequests": 0,
+    "costUSD": 0.012422,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 71,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "usage": {
+   "input_tokens": 2996,
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 6159,
+   "output_tokens": 333,
+   "output_tokens_details": {
+    "thinking_tokens": 0
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "",
+   "iterations": [],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "total_cost_usd": 0.012422
+ },
+ "ledger": [
+  {
+   "at": 1792597868192,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 822,
+   "outputTokens": 82,
+   "cacheReadTokens": 201,
+   "usd": 0.000175515,
+   "status": 200,
+   "clientJob": "m14-under-i3"
+  },
+  {
+   "at": 1792597872652,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 2702,
+   "outputTokens": 110,
+   "cacheReadTokens": 201,
+   "usd": 0.000474315,
+   "status": 200,
+   "clientJob": "m14-under-i3"
+  },
+  {
+   "at": 1792597890200,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 152,
+   "outputTokens": 100,
+   "cacheReadTokens": 2903,
+   "usd": 0.000126345,
+   "status": 200,
+   "clientJob": "m14-under-i3"
+  },
+  {
+   "at": 1792597894705,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 142,
+   "outputTokens": 123,
+   "cacheReadTokens": 3055,
+   "usd": 0.000140925,
+   "status": 200,
+   "clientJob": "m14-under-i3"
+  },
+  {
+   "at": 1792597900867,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 1181,
+   "outputTokens": 86,
+   "cacheReadTokens": 3197,
+   "usd": 0.000276705,
+   "status": 200,
+   "clientJob": "m14-under-i3"
+  }
+ ],
+ "ledgerUsd": 0.001193805,
+ "messages": [
+  {
+   "t": 347,
+   "type": "system",
+   "subtype": "init"
+  },
+  {
+   "t": 351,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 16041,
+   "type": "assistant",
+   "id": "0728126d127add0ee3a6648e1d7c9c26",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 16484,
+   "type": "assistant",
+   "id": "0728126d127add0ee3a6648e1d7c9c26",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 17552,
+   "type": "user"
+  },
+  {
+   "t": 17555,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 33775,
+   "type": "assistant",
+   "id": "07281272478d5c8653bc5905d94d40f8",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 34026,
+   "type": "assistant",
+   "id": "07281272478d5c8653bc5905d94d40f8",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 35058,
+   "type": "user"
+  },
+  {
+   "t": 35059,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 38384,
+   "type": "assistant",
+   "id": "072812835f8898b3d37997da9ac627c4",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 38530,
+   "type": "assistant",
+   "id": "072812835f8898b3d37997da9ac627c4",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 38555,
+   "type": "user"
+  },
+  {
+   "t": 38557,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 38670,
+   "type": "user"
+  },
+  {
+   "t": 38673,
+   "type": "result",
+   "subtype": "error_during_execution"
+  }
+ ]
+}

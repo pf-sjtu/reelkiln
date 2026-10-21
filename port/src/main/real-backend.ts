@@ -502,7 +502,10 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       }
       const allSessions = () => [...(registry.listSessions() as any[]), ...(host?.listSessions() ?? [])];
       const engineMode = process.env[PORT_AGENT_ENGINE_ENV] !== "0" && !!core.currentEngine();
-      const sessionEnvDeps = { currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p: string) => core.enginePathEnv(p) };
+      // configureEngineGatewaySession (L9356, called at startup L60937 with the opened gateway URL): configuredGatewayEnv
+      // (L9372) gives every engine session VIDEOCLAW_GATEWAY_URL (+ the session's proxy credential when one is minted)
+      const sessionEnvDeps = { currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p: string) => core.enginePathEnv(p),
+        gatewaySessionConfig: () => { const u = m12.shimUrl ?? (accountService.activeSettings() as { gatewayUrl?: string })?.gatewayUrl; return u ? { gatewayUrl: String(u).trim().replace(/\/+$/, "") } : undefined; } };
       const engineDeps: EngineSessionDeps | undefined = engineMode ? {
         workspaceRoot,
         currentEngine: () => core.currentEngine(),

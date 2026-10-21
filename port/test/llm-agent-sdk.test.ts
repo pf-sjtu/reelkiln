@@ -268,11 +268,23 @@ test("gate proxy: concurrent child requests are serialised by the account gate (
     assert.equal(up.seen.length, 3, "child request queued behind the helper call");
     release(); await held; await waiting;
     assert.ok(Date.now() - t0 >= 80);
-    // abort mid-flight releases the slot
+    // docs/31 §5: a client abort while QUEUED never reaches upstream; an abort mid-flight drains the sent call to
+    // its end (metered), then frees the slot
+    let release2!: () => void;
+    const held2 = gate.run(() => new Promise<void>((r) => { release2 = r; }));
+    const acQ = new AbortController();
+    const queued = send(proxy.url + "/v1/messages/queued", { headers: hdr, body: "{}", signal: acQ.signal }).catch((e) => e);
+    await new Promise((r) => setTimeout(r, 50)); acQ.abort(); await queued;
+    await new Promise((r) => setTimeout(r, 30));
+    release2(); await held2;
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal(up.seen.filter((x) => x.url?.includes("queued")).length, 0, "a call aborted while queued is never sent");
     const ac = new AbortController();
     const slow = send(proxy.url + "/v1/messages/slow", { headers: hdr, body: "{}", signal: ac.signal }).catch((e) => e);
     await new Promise((r) => setTimeout(r, 50)); ac.abort(); await slow;
     await new Promise((r) => setTimeout(r, 30));
+    assert.equal(gate.running, 1, "the sent call is still being drained");
+    await new Promise((r) => setTimeout(r, 450));
     assert.equal(gate.running, 0);
   } finally { await proxy.close(); await up.close(); }
 });
@@ -412,4 +424,24 @@ test("gate proxy + emulateStructuredOutputs: upstream sees the forced tool, clie
     assert.equal(st.structuredJsonOk, 1);
   } finally { await proxy.close(); await up.close(); }
   assert.throws(() => regWith([{ name: "acme3", protocol: "anthropic-messages", baseUrl: "https://a.test", apiKeyEnv: "K", model: "m", agentCompat: { emulateStructuredOutputs: true } }]), /needs agentCompat.gateProxy/);
+});
+
+test("gate proxy (docs/31 §5): a client that leaves mid-stream — the call is drained and its usage still metered", async () => {
+  silent(); resetProviderGatesForTests();
+  const up = await upstreamServer(async (_req, _body, res) => {
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    res.write(`event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { model: "MiniMax-M", usage: { input_tokens: 1200, cache_read_input_tokens: 300 } } })}\n\n`);
+    for (let i = 0; i < 5; i++) { await new Promise((r) => setTimeout(r, 40)); res.write(`event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text: "x".repeat(50) } })}\n\n`); }
+    res.end(`event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", usage: { output_tokens: 77 } })}\n\n`);
+  });
+  const proxy = await startAgentGateProxy(P(up.url));
+  try {
+    const ac = new AbortController();
+    const r = await send(proxy.url + "/v1/messages", { headers: { authorization: `Bearer ${proxy.token}` }, body: JSON.stringify({ model: "MiniMax-M", stream: true }), signal: ac.signal });
+    const reader = r.body!.getReader(); await reader.read(); ac.abort(); // the CLI's Stop: it reads the start, then walks away
+    for (let i = 0; i < 40 && proxy.stats().inflight > 0; i++) await new Promise((res) => setTimeout(res, 25));
+    const u = proxy.stats().usage!["MiniMax-M"];
+    assert.ok(u, "the drained call is metered");
+    assert.equal(u.inputTokens, 1200); assert.equal(u.outputTokens, 77); assert.equal(u.cacheReadTokens, 300); assert.equal(u.calls, 1);
+  } finally { await proxy.close(); await up.close(); }
 });

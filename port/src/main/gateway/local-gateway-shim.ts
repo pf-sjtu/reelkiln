@@ -143,6 +143,8 @@ export class LocalGatewayShim {
   readonly sinkDir: string;
   /** tokenised unauthenticated PUT targets (signed-URL stand-ins): token → where the bytes go + what they must be */
   private readonly putTargets = new Map<string, { file: string; size?: number; sha256?: string; md5Base64?: string; contentType?: string; onDone?: () => void }>();
+  /** docs/31 §5: in-flight /anthropic calls per X-VideoClaw-Client-Job ("" = untagged) */
+  private readonly llmInflight = new Map<string, number>();
   constructor(private readonly o: ShimOptions) {
     mkdirSync(o.dir, { recursive: true });
     this.file = join(o.dir, "ledger.json");
@@ -335,7 +337,7 @@ export class LocalGatewayShim {
         const reserved = this.jobReservedUsd(jobId);
         const ceilingA = a?.ceilingUsd ?? null;
         const spent = this.jobSpentUsd(jobId);
-        return this.json(res, 200, { job_id: jobId, client_job: jobId, revision: Math.max(0, Math.floor((a?.updatedAt ?? 0) / 1000)), mode: a?.mode ?? "per_operation", ceiling_usd: ceilingA, spent_usd: spent, llm_spent_usd: this.jobLlmSpentUsd(jobId), reserved_usd: reserved, state: ceilingA !== null && spent >= ceilingA ? "exhausted" : "ready", in_flight: inFlight, available_credit_usd: this.available() });
+        return this.json(res, 200, { job_id: jobId, client_job: jobId, revision: Math.max(0, Math.floor((a?.updatedAt ?? 0) / 1000)), mode: a?.mode ?? "per_operation", ceiling_usd: ceilingA, spent_usd: spent, llm_spent_usd: this.jobLlmSpentUsd(jobId), llm_in_flight: this.llmInflight.get(jobId) ?? 0, reserved_usd: reserved, state: ceilingA !== null && spent >= ceilingA ? "exhausted" : "ready", in_flight: inFlight, available_credit_usd: this.available() });
       }
     }
     if (method === "POST" && (m = /^\/v1\/spend-authorities\/([^/]+)\/(quote|permits)$/.exec(path))) {
@@ -686,7 +688,17 @@ export class LocalGatewayShim {
       cacheReadTokens = Number(u.cache_read_input_tokens ?? 0) || cacheReadTokens;
       cacheWriteTokens = Number(u.cache_creation_input_tokens ?? 0) || cacheWriteTokens;
     };
-    await gate.run(async () => {
+    // docs/31 §5: a client that leaves while the call is still QUEUED never reaches MiniMax (nothing is billed).
+    // Once the call is sent it is drained to the end even if the client left (an interrupted turn): MiniMax bills
+    // it, and only the full stream carries the usage that makes this ledger exact. llm_in_flight lets the app
+    // reconcile after a Stop once those drained calls have been charged.
+    let clientGone = false;
+    res.on("close", () => { if (!res.writableFinished) clientGone = true; });
+    const jobKey = clientJob ?? "";
+    this.llmInflight.set(jobKey, (this.llmInflight.get(jobKey) ?? 0) + 1);
+    let skipped = false;
+    try { await gate.run(async () => {
+      if (clientGone) { skipped = true; return; }
       const upstream = await withMiniMaxRetry(() => doFetch(`${p.baseUrl.replace(/\/+$/, "")}/v1/messages`, {
         method: "POST",
         headers: { ...authHeaders(p.auth, p.key), "content-type": "application/json", "anthropic-version": String(req.headers["anthropic-version"] ?? "2023-06-01"), "accept-encoding": "identity" },
@@ -717,7 +729,9 @@ export class LocalGatewayShim {
         try { const j = JSON.parse(text); usageIn(j?.usage); outputTokens = Number(j?.usage?.output_tokens ?? 0) || 0; } catch {}
         res.end(text);
       }
-    });
+      if (clientGone) this.o.log?.(`[local-gateway] drained a call whose client left (interrupted turn): job ${clientJob ?? "-"}, ${inputTokens} in / ${outputTokens} out`);
+    }); } finally { const n = (this.llmInflight.get(jobKey) ?? 1) - 1; if (n > 0) this.llmInflight.set(jobKey, n); else this.llmInflight.delete(jobKey); }
+    if (skipped) { this.o.log?.(`[local-gateway] skipped a queued call whose client left: job ${clientJob ?? "-"}`); res.destroy(); return; }
     if (status >= 200 && status < 300) this.charge({ kind: "model_call", keyId, model: requested || upstreamModel, upstreamModel, inputTokens, outputTokens, ...(cacheReadTokens ? { cacheReadTokens } : {}), ...(cacheWriteTokens ? { cacheWriteTokens } : {}), status, ...(clientJob ? { clientJob } : {}) });
   }
 }

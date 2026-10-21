@@ -156,14 +156,19 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
       const rewritten = surface === "openai" ? rewriteResponsesStructuredRequest(parsed) : rewriteStructuredRequest(parsed);
       if (rewritten) { reqBody = Buffer.from(JSON.stringify(rewritten)); emulated = true; structuredEmulated++; }
     }
+    // docs/31 §5: a client that leaves while the call is still QUEUED aborts it (never sent, never billed). Once the
+    // call is sent it is drained to the end even if the client left (a Stop mid-stream): the provider bills it and
+    // only the complete reply carries the usage this meter (the displayed spend of the route) needs.
     const abort = new AbortController();
-    res.on("close", () => { if (!res.writableFinished) abort.abort(); });
+    let sent = false, clientGone = false;
+    res.on("close", () => { if (!res.writableFinished) { clientGone = true; if (!sent) abort.abort(); } });
     let waitedMs = 0;
     const queuedAt = Date.now();
     try {
       await gate().run(async () => {
         waitedMs = Date.now() - queuedAt;
         if (abort.signal.aborted) return;
+        sent = true;
         requests++; inflight++; maxInflight = Math.max(maxInflight, inflight);
         try {
           const headers: Record<string, string> = {};
@@ -182,7 +187,8 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
           const textOf = (c: string | Uint8Array) => (typeof c === "string" ? c : Buffer.from(c).toString("utf8"));
           const write = async (c: string | Uint8Array) => {
             if (okStatus) { if (sse) meter.push(c); else if (jsonBuf.length < 4_000_000) jsonBuf += textOf(c); }
-            if (c.length && !res.write(c)) await new Promise((r) => res.once("drain", r));
+            if (clientGone || res.destroyed) return;
+            if (c.length && !res.write(c)) await new Promise((r) => { res.once("drain", r); res.once("close", r); });
           };
           if (emulated && upstream.status === 200 && /text\/event-stream/i.test(upstream.headers.get("content-type") ?? "")) {
             res.writeHead(upstream.status, rh);
@@ -214,8 +220,9 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
             if (upstream.body) for await (const c of upstream.body as any) await write(c);
           }
           if (okStatus && !sse) meter.json(jsonBuf);
-          res.end();
+          if (!clientGone) res.end();
           record(meter, requestModel);
+          if (clientGone) log.info("agent_proxy.drained_after_disconnect", { path: path.split("?")[0], status: upstream.status, inputTokens: meter.inputTokens, outputTokens: meter.outputTokens });
           log.debug("agent_proxy.request", { method, path: path.split("?")[0], status: upstream.status, waitedMs, emulated, ms: Date.now() - t0 });
         } finally { inflight--; }
       });
