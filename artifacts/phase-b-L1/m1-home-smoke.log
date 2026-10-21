@@ -1,0 +1,7 @@
+[port] AgentHost ENGINE mode; restored 0 session(s) from sessions.json
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list, account:snapshot, app:update:get, workflowSubmit:eligibility, bootstrap:status, client:list, client:create, interaction:replayPending, settings:get, settings:set, engine:llmRouteReadiness, session:create, session:send, session:interrupt
+[port] registered 157 handle + 3 on; fake-implemented: 13
+[port] llmRoute changed — AgentHost retired runtimes; interrupted=0
+[port] renderer: original file:///workspace/videoclaw/repo/app/out/renderer/index.html
+[smoke] HOME {"ok":true,"ms":1040,"checks":{"home":true,"newVideo":true,"noSignInGate":true,"composer":true,"projectsPersonal":true},"errors":[],"account":{"step":"ready","legacyKeyOnly":true,"signedIn":false,"portLocalStudio":true},"bootstrap":{"ready":false,"engineVersion":"0.1.57-rc7-15f8f2d","shouldOffer":false,"devMode":true},"clients":[{"clientId":"personal","name":"Personal"}],"textHead":"New video\nQuickstarts\nCharacters\nProjects\nPersonal\nYour account\nLocal studio\nWhat are we making today?\nClone a meme\nNewsletter to video\nArticle to video\nPodcast to video\nVideo ad\nTalking head\nLip sync\nVoice cloning\nAI avatar\nLong to short\nMore (16)\nStyle inspirations:\nSee all\n\nLoading examples…\n\n1.7M\nViews\n1K\nLikes\n145\nReposts\n390\nReplies\nView on X\n\nStep 1 of 3\n\nStart your video\n\nDescribe the video you want to make right here.\n\nSkip tour\nNext\nFeedback","rendererConsoleErrors":[]}
+[smoke] DONE failed=[]

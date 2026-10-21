@@ -2,6 +2,8 @@
 
 > 2026-10-21，box（Debian trixie x64，Electron 42.11.9 / Node 24.19，Claude Agent SDK 0.3.305 + 内置 Claude Code 2.1.305）。代码全部在 `port/`；`app/out`、`app/reconstructed` 只作参照、未改动。MiniMax key 只来自 box 环境变量，未打印/记录/提交（证据文件 grep key 命中 0）。
 
+> **后续（docs/21）**：有已安装引擎时 AgentHost 默认跑引擎会话（工作区 cwd、原版权限模型、job 绑定、sessions.json 持久化）；本文描述的只读确认聊天保留为 `VIDEOCLAW_PORT_AGENT_ENGINE=0` / 无引擎时的回退。
+
 ## 0. 已验证 / 未验证（一览）
 
 | 项 | 状态 | 证据 |

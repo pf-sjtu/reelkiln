@@ -75,6 +75,8 @@
 
 ### 2.1 IPC：184 通道 × 功能区（`python3 tools/ipc_coverage.py`，2026-10-21 [已验证]）
 
+> Phase B（docs/21）后：real 18 + real-env 1 + fixture 8 + stub 133 + push 5/23。下表为 Phase A 基线。
+
 分类说明：**real** = 真实移植或 PORT-NEW 真实实现；**real-env** = 仅在 `VIDEOCLAW_PORT_REAL_BOOTSTRAP=1` 时真实；**fixture** = 返回原版 QA fixture 的固定值；**stub** = 已注册，返回 `undefined`/只打日志；**push-real/none** = 推送有/没有发出；**local** = preload 本地方法。**“not-present”为 0**：契约生成器保证 184 个都已注册、preload 成员逐一对齐（`preload-completeness`/`preload-fidelity` 测试）。
 
 | 功能区 | 前缀（通道数） | 总 | real | real-env | fixture | stub | push 发出/总 | 已做真的通道 |

@@ -24,13 +24,13 @@
 
 ## 功能重建路线（2026-10-21，docs/20）
 北极星：在 box 上 100% 功能重建并真实跑通主流程。现状与计划见 `docs/20-reconstruction-roadmap.md`。
-- 覆盖（`python3 tools/ipc_coverage.py`）：184 通道 = real 10 + real-env 1 + fixture 11 + stub 138 + push 发出 4/23 + local 1
+- 覆盖（`python3 tools/ipc_coverage.py`，2026-10-21 Phase B 后）：184 通道 = real 18 + real-env 1 + fixture 8 + stub 133 + push 发出 5/23 + local 1（Phase A 时为 10+1+11+138+4/23）
 - 验收场景 S1：`tools/accept_fixtures.sh` → 应用内 agent 出片 → `tools/accept_check.py`（E1–E15 + A1–A3）；L0（纯引擎）已 PASS
 - 原版渲染器可直接挂 port 主进程（探针，`artifacts/phase-a-probe/original-renderer-on-port.png`）
 
 ### 下一轮待办（Phase B）
-- [ ] M1 原版 UI 上线：port 加载 `app/out/renderer`，首页启动路径 6 个通道补原版形状返回，CDP 冒烟入库
-- [ ] M2 引擎化 AgentHost：工作区 cwd、`engineSessionEnv`、完整 writeWorkspace（CLAUDE.md/执行契约）、引擎 hooks、Bash + 原版权限模型、job 嗅探绑定、sessions.json 持久化 → S1-L1
+- [x] M1 原版 UI 上线：port 默认加载 `app/out/renderer`，首页启动通道做真（`quickstart:catalog` 除外），HOME 冒烟入库 — docs/21
+- [x] M2 引擎化 AgentHost：工作区 cwd、`engineSessionEnv`、完整 writeWorkspace（CLAUDE.md/执行契约）、引擎 hooks、Bash + 原版权限模型、job 绑定、sessions.json 持久化 → **S1-L1 PASS（E1–E15，MiniMax + PORT-NEW 路由提示）** — docs/21
 - [ ] M3 JobWatcher/scanJob/VersionStore/vcmedia/导出 → A1/A3
 - [ ] M4 附件 → S1-L2；M5 原版 UI 端到端 → S1-L3（+ AppImage）
 - [ ] M6 编辑器；M7 其余本地功能；M8 Codex（凭据）；M9 账户/网关（凭据，mock 契约）；M10 mac/Win 平台专属（CI/手动）
