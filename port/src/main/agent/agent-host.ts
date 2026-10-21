@@ -53,6 +53,10 @@ import { minimalAgentOptions, type ClaudeAgentSdkLike, type AgentQuery } from ".
 import { getLogger, redact, redactText, registerSecret, type Logger } from "../llm/logger";
 import type { SessionMetaLike } from "../llm/route-service";
 import { isClientJobId } from "../engine/session";
+import type { AgentGatewayProxy, GatewaySessionPolicy } from "../gateway/agent-gateway-proxy";
+import { isAnthropicPassthroughPath, isUnknownCostQuote } from "../gateway/agent-gateway-proxy";
+import { sanitizedAgentEnv } from "../llm/llm-route";
+import { execFile } from "node:child_process";
 import {
   adaptClaudeCodeCanUseTool, claudeCodeDisallowedTools, engineChildEnv, engineTurnText, ensureJobDir, firstMessageJobId, isPreexistingJob, listJobIds,
   makeEngineCanUseTool, makeEngineHooks, prepareEngineSpawn, providerRouteHint, sniffJobIds,
@@ -187,6 +191,10 @@ export interface AgentHostDeps {
    *  pinned gateway settings (activeSettings) the credit route runs on (the docs/28 local gateway shim). */
   creditEligibility?: () => Promise<Record<string, any>>;
   gatewaySettings?: () => { gatewayUrl?: string; gatewayKey?: string };
+  /** docs/31: agentGatewayProxy (L39643) — the verbatim AgentGatewayProxy started over the self-hosted gateway. */
+  agentGatewayProxy?: () => AgentGatewayProxy | undefined;
+  /** docs/31: currentEngine()?.version for the proxy's diagnostic headers (agentGatewayPolicy L39708). */
+  engineVersion?: () => string | undefined;
   /** docs/30: THE price table (gateway/pricing.ts priceTable: env → models.dev → MiniMax fallback) — the same resolver
    *  the local gateway ledger charges with. Every route's displayed spend is priced with it from metered token usage;
    *  the SDK's Claude-priced total_cost_usd is never shown. Absent → no LLM spend is shown (tests / chat mode). */
@@ -224,6 +232,8 @@ interface Runtime {
 }
 interface Session {
   meta: AgentSessionMeta;
+  /** docs/31: spawnLocal's engineEnv2 (L39462) — the studio paid tools read VIDEOCLAW_GATEWAY_URL/API_KEY from it. */
+  engineEnv?: Record<string, string>;
   runtime?: Runtime;
   spawning?: Promise<Runtime>;
   turnStartedAtMs?: number;
@@ -263,7 +273,7 @@ interface Session {
   sessionPlannerRequest?: unknown;
 }
 interface DeliveredInput { msg: Record<string, any>; displayTexts: string[]; attachmentIds: string[] }
-interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void }
+interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void; spendPolicyCeilingUsd?: number }
 
 export const DEFAULT_AGENT_TOOLS = ["Read", "Glob", "Grep"];
 /** PORT-NEW UI-e2e fault injection (docs/29 §6): the Claude subscription limit is an EXTERNAL precondition the
@@ -925,8 +935,9 @@ export class AgentHost {
     if (s.epoch !== epoch) throw new Error("The session was reset before the agent started.");
     // spawnLocal L39461-39495: engine env (+ bound job, pinned context epoch) and the assembled
     // session context are computed BEFORE the runtime starts, so a broken engine fails fast.
-    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId)) : undefined;
+    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId), this.agentGatewayCredentials(s)) : undefined;
     if (engineSpawn?.contextEpoch && engineSpawn.contextEpoch !== s.contextEpoch) { s.contextEpoch = engineSpawn.contextEpoch; this.saveRegistry(); }
+    s.engineEnv = engineSpawn?.engineEnv;
     // spawnLocal L39461: the gateway branch's X-VideoClaw-Client-Job header carries the bound job (docs/30 spend reconcile)
     const handle = await this.d.service.sessionAgentRuntime(s.meta.jobId ? { ...meta, jobId: s.meta.jobId } : meta);
     if (s.epoch !== epoch) { await handle.close().catch(() => {}); throw new Error("The session was reset before the agent started."); }
@@ -977,8 +988,9 @@ export class AgentHost {
     this.codex.assertEnabled();
     const p = c.provider();
     if (!p) throw new Error(this.codex.runtimeGate().message);
-    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId)) : undefined;
+    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId), this.agentGatewayCredentials(s)) : undefined;
     if (engineSpawn?.contextEpoch && engineSpawn.contextEpoch !== s.contextEpoch) { s.contextEpoch = engineSpawn.contextEpoch; this.saveRegistry(); }
+    s.engineEnv = engineSpawn?.engineEnv;
     ensureCodexProfile(c.profileDir(), p.model);
     const backend = await (c.startBackend ?? ((pp: ResolvedProvider) => startCodexMiniMaxBackend(pp, { logger: this.log })))(p);
     if (s.epoch !== epoch) { await backend.close().catch(() => {}); throw new Error("The session was reset before the agent started."); }
@@ -1238,11 +1250,11 @@ export class AgentHost {
   }
 
   /** canUseTool → permission card: rememberPermission + emit.permissionRequest (L50060-50085). */
-  private askHuman(req: PermissionRequest, signal?: AbortSignal): Promise<CanUseToolResult> {
+  private askHuman(req: PermissionRequest, signal?: AbortSignal, spendPolicyCeilingUsd?: number): Promise<CanUseToolResult> {
     const s = this.sessions.get(req.sessionId);
     if (!s) return Promise.resolve({ behavior: "deny", message: "Session runtime changed", interrupt: true });
     return new Promise<CanUseToolResult>((resolve) => {
-      this.pendingPermissions.set(req.requestId, { request: req, sessionId: req.sessionId, runtime: s.runtime, order: ++this.permissionOrder, resolve });
+      this.pendingPermissions.set(req.requestId, { request: req, sessionId: req.sessionId, runtime: s.runtime, order: ++this.permissionOrder, resolve, ...(spendPolicyCeilingUsd !== undefined ? { spendPolicyCeilingUsd } : {}) });
       this.setStatus(s, "awaiting_permission");
       this.log.info("agent.permission.request", { sessionId: req.sessionId, requestId: req.requestId, kind: req.kind, tool: req.toolName });
       try { this.d.emit.permissionRequest?.(req); } catch (e) { this.log.warn("agent.emit_failed", { error: e }); }
@@ -1273,6 +1285,16 @@ export class AgentHost {
     if (response?.behavior === "answers") decision = { behavior: "allow", updatedInput: { ...input, answers: response.answers } };
     else if (response?.behavior === "allow") decision = { behavior: "allow", updatedInput: input };
     else decision = { behavior: "deny", message: response?.message ?? "Denied by user" };
+    // respondPermission L44605: a budget card's allow installs the exact ceiling before the tool sees "approved"
+    if (decision.behavior === "allow" && pending.spendPolicyCeilingUsd !== undefined) {
+      const ceiling = pending.spendPolicyCeilingUsd;
+      void this.setSpendCeiling(pending.sessionId, ceiling).then(
+        () => pending.resolve({ behavior: "allow", updatedInput: { ...input, amount_usd: ceiling } }),
+        (error) => pending.resolve({ behavior: "deny", message: error instanceof Error ? error.message : "The spending limit could not be saved." }),
+      );
+      this.log.info("agent.permission.decision", { sessionId: pending.sessionId, requestId, tool: pending.request.toolName, behavior: "allow", budgetUsd: ceiling });
+      return;
+    }
     // docs/24: what canUseTool hands back to the SDK (shape only — no answer text is logged)
     const answers = response?.behavior === "answers" && response.answers && typeof response.answers === "object" ? Object.keys(response.answers as object).length : 0;
     this.log.info("agent.permission.decision", { sessionId: pending.sessionId, requestId, tool: pending.request.toolName, behavior: decision.behavior, answers });
@@ -1968,6 +1990,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       readPdf: (sessionId, attachmentId, o) => this.attachmentStore ? this.attachmentStore.readPdf(sessionId, attachmentId, o) : { ok: false, reason: "Attachments are unavailable." },
       requestInput: (req) => this.requestInput(req),
       noteMaterial: (sessionId, arrival) => { try { this.materialsLedger?.record({ ...arrival, sessionId }); this.publishMaterials(sessionId); } catch (e) { this.log.warn("agent.materials.note_failed", { error: e }); } },
+      ...(this.d.agentGatewayProxy ? { paid: this.paidStudioHost(s) } : {}),
     }, sdk);
   }
   /** docs/30: emit a session event on behalf of a collaborator (ProjectMemoryHost memory_noted, L36848). */
@@ -2113,14 +2136,19 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       if (rt.llmRoute === "gateway") void this.reconcileGatewaySpend(s);
     }
   }
-  /** readGatewaySpend (L48020), direct fetch branch (no agentGatewayProxy in the port). */
+  /** readGatewaySpend (L48020): the agentGatewayProxy.getJobBudget branch when the proxy runs, else the direct fetch. */
   async readGatewaySpend(s: Session): Promise<any> {
     const jobId = s.meta.jobId!;
-    const cfg = this.d.gatewaySettings?.() ?? {};
-    if (!cfg.gatewayUrl) throw new Error("No gateway");
-    const response = await fetch(`${cfg.gatewayUrl.replace(/\/+$/, "")}/v1/spend-authorities/${encodeURIComponent(jobId)}`, { headers: { authorization: `Bearer ${cfg.gatewayKey}` }, signal: AbortSignal.timeout(5e3) });
-    if (!response.ok) throw new Error(`Gateway spending read returned HTTP ${response.status}`);
-    const body: any = await response.json();
+    const proxy = this.d.agentGatewayProxy?.();
+    let body: any;
+    if (proxy) body = await proxy.getJobBudget(jobId);
+    else {
+      const cfg = this.d.gatewaySettings?.() ?? {};
+      if (!cfg.gatewayUrl) throw new Error("No gateway");
+      const response = await fetch(`${cfg.gatewayUrl.replace(/\/+$/, "")}/v1/spend-authorities/${encodeURIComponent(jobId)}`, { headers: { authorization: `Bearer ${cfg.gatewayKey}` }, signal: AbortSignal.timeout(5e3) });
+      if (!response.ok) throw new Error(`Gateway spending read returned HTTP ${response.status}`);
+      body = await response.json();
+    }
     if (!body || typeof body.spent_usd !== "number" || !Number.isFinite(body.spent_usd) || body.spent_usd < 0
       || typeof body.reserved_usd !== "number" || !Number.isFinite(body.reserved_usd) || body.reserved_usd < 0
       || !Number.isSafeInteger(Math.ceil(body.spent_usd * 100)) || !Number.isSafeInteger(Math.ceil(body.reserved_usd * 100))
@@ -2159,9 +2187,249 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       const settleRestored = body.client_job === s.meta.jobId && body.mode === "capped" && body.ceiling_usd === snapshot2.ceilingUsd && body.reserved_usd === 0
         && (body.state === "ready" || body.state === "exhausted") && Array.isArray(body.in_flight) && body.in_flight.length === 0 && !s.runtime;
       this.spendBudgets.reconcileGatewayLedger(s.meta.sessionId, body.spent_usd, body.reserved_usd, s.meta.jobId, token, settleRestored);
-      const trueUp = this.trueUpGatewayReasoning(s, queriedJobId, body.spent_usd);
+      // docs/31: the job ledger now also holds paid model_call spend; the reasoning true-up compares only the shim's
+      // reasoning share (llm_spent_usd, PORT-NEW field) — an older shim without it reports reasoning only.
+      const trueUp = this.trueUpGatewayReasoning(s, queriedJobId, typeof body.llm_spent_usd === "number" ? body.llm_spent_usd : body.spent_usd);
       this.log.info("agent.spend.gateway_reconciled", { sessionId: s.meta.sessionId, jobId: queriedJobId, ledgerSpentUsd: body.spent_usd, ...trueUp });
     } catch (e) { this.log.debug("agent.spend.gateway_reconcile_failed", { sessionId: s.meta.sessionId, error: e }); }
+  }
+
+  // ── docs/31: the paid tool plane — agentGatewayCredentials / agentGatewayPolicy (L39643-39745), the spend
+  //    decision authorizeGatewaySpend (L45755-46140, the branches this port can honour) and the studio paid tools ──
+  /** agentGatewayCredentials (L39643): the proxy's per-session vcs_ capability; no proxy → the engine gets no key. */
+  agentGatewayCredentials(s: Session): { gatewayKey: string; gatewayUrl: string } | undefined {
+    const proxy = this.d.agentGatewayProxy?.();
+    if (!proxy) return undefined;
+    return proxy.credentials(s.meta.sessionId, this.agentGatewayPolicy(s));
+  }
+  private readonly materializedSpendPolicies = new Map<string, string>();
+  private readonly spendPolicyQueues = new Map<string, Promise<unknown>>();
+  /** enqueueSpendPolicyUpdate (L47369): one spend decision / policy write at a time per video. */
+  private enqueueSpendPolicyUpdate<T>(sessionId: string, apply: () => Promise<T>): Promise<T> {
+    const previous = this.spendPolicyQueues.get(sessionId) ?? Promise.resolve();
+    const next = previous.catch(() => {}).then(apply);
+    this.spendPolicyQueues.set(sessionId, next.catch(() => {}));
+    return next;
+  }
+  /** materializeGatewaySpendPolicy (L47123): install the saved policy on the gateway before quoting against it. */
+  private async materializeGatewaySpendPolicy(s: Session): Promise<void> {
+    const jobId = s.meta.jobId;
+    const proxy = this.d.agentGatewayProxy?.();
+    if (!jobId || !proxy) return;
+    const snapshot2 = this.spendBudgets.snapshot(s.meta.sessionId);
+    const key = `${jobId}:${snapshot2.policy}:${snapshot2.ceilingUsd ?? ""}`;
+    if (this.materializedSpendPolicies.get(s.meta.sessionId) === key) return;
+    await proxy.setSessionSpendPolicy(jobId, snapshot2.policy === "capped" ? { kind: "capped", ceilingUsd: snapshot2.ceilingUsd } : snapshot2.policy === "unlimited_for_video" ? { kind: "unlimited_for_video" } : { kind: "ask_each" });
+    this.materializedSpendPolicies.set(s.meta.sessionId, key);
+  }
+  /** agentGatewayPolicy (L39649). */
+  agentGatewayPolicy(s: Session): GatewaySessionPolicy {
+    const sessionId = s.meta.sessionId;
+    const MAX_PENDING_OPERATIONS = 32;
+    const rows = (): any[] => (Array.isArray((s.meta as any).acceptedOperations) ? (s.meta as any).acceptedOperations : []);
+    return {
+      jobId: () => s.meta.jobId,
+      projectId: () => s.meta.clientId,
+      requireOperationIdentity: true,
+      rememberOperation: (operation) => {
+        if (this.sessions.get(sessionId) !== s || operation.owner.project_id !== s.meta.clientId || operation.owner.client_job !== s.meta.jobId) {
+          throw new Error("The operation no longer belongs to this video.");
+        }
+        const saved = rows();
+        const existing = saved.find((row) => row.id === operation.id && row.owner.account_id === operation.owner.account_id && row.owner.gateway_url === operation.owner.gateway_url);
+        if (existing) {
+          if (existing.sha256 !== operation.sha256 || existing.path !== operation.path || existing.cwd !== s.meta.cwd || JSON.stringify(existing.owner) !== JSON.stringify(operation.owner)) {
+            throw new Error("This operation ID already belongs to a different request.");
+          }
+          return false;
+        }
+        if (saved.length >= MAX_PENDING_OPERATIONS) throw new Error("Collect or repair the unfinished media in this video before starting another generation.");
+        (s.meta as any).acceptedOperations = [...saved, { ...operation, cwd: s.meta.cwd, createdAt: Date.now() }];
+        this.saveRegistry();
+        this.log.info("agent.paid.operation_remembered", { sessionId, operationId: operation.id, path: operation.path });
+        return true;
+      },
+      forgetRefusedOperation: (operation) => {
+        (s.meta as any).acceptedOperations = rows().filter((row) => row.id !== operation.id || row.sha256 !== operation.sha256 || JSON.stringify(row.owner) !== JSON.stringify(operation.owner));
+        this.saveRegistry();
+      },
+      diagnostic: { appVersion: this.d.codex?.appVersion, engineVersion: this.d.engineVersion?.() },
+      prepareSpend: (jobId, signal) => this.enqueueSpendPolicyUpdate(sessionId, async () => {
+        if (signal.aborted || this.sessions.get(sessionId) !== s || s.meta.jobId !== jobId) throw new Error("This paid operation is no longer current.");
+        await this.materializeGatewaySpendPolicy(s);
+      }),
+      authorizeSpend: (request2, signal) => this.authorizeGatewaySpend(s, request2, signal),
+      finishSpend: (reservationId) => {
+        if (reservationId) { try { this.spendBudgets.settle(sessionId, reservationId); } catch (e) { this.log.warn("agent.spend.settle_failed", { sessionId, error: e }); } }
+        void this.reconcileGatewaySpend(s);
+      },
+      noteOperationStatus: (operationId, status) => this.log.info("agent.paid.operation_status", { sessionId, operationId, status }),
+    };
+  }
+  /** authorizeGatewaySpend (L45755) → authorizeGatewaySpendAtHead (L45860), queued per video. PORTED branches: the
+   *  plan fence (spendAdmissionFence L45795: creative tools need an accepted plan unless none/bypass), a zero-price
+   *  quote, capped reserve+commit (with the original refusal copy), unlimited_for_video reserve+commit.
+   *  NOT PORTED (docs/31 §1.4): the raise-the-cap card (requestExactSpendChoice) and the per-operation exact-spend
+   *  card for ask_each — both refuse BEFORE any submission with a port message naming the missing budget. */
+  async authorizeGatewaySpend(s: Session, request2: { jobId: string; method: "POST"; path: string; body: Buffer; quote: any }, signal?: AbortSignal): Promise<any> {
+    const sessionId = s.meta.sessionId;
+    const decide = async (): Promise<any> => {
+      const quote = request2.quote;
+      const creative = new Set(["mint_image", "mint_video", "cast_avatar", "perform_avatar", "synth_voice", "lipsync", "music", "model_call"]);
+      const planRefusal = () => (creative.has(quote.tool) ? this.plans?.sessionPlanProductionRefusal(sessionId) : undefined);
+      const current = () => !signal?.aborted && !planRefusal() && s.meta.jobId === request2.jobId && this.sessions.get(sessionId) === s;
+      { const refusal2 = planRefusal(); if (refusal2) return { allowed: false, reason: refusal2 }; }
+      if (!current()) return { allowed: false, reason: "This paid operation no longer belongs to this video." };
+      if (isUnknownCostQuote(quote)) return { allowed: false, reason: "This operation does not have a reliable maximum price." };
+      if (quote.maximumUsd === 0) return { allowed: true, isCurrent: current };
+      let snapshot2 = this.spendBudgets.snapshot(sessionId);
+      if (snapshot2.policy === "capped") {
+        const reservation2 = this.spendBudgets.reserve(sessionId, quote.maximumUsd, { gatewayJobId: request2.jobId });
+        if (reservation2.allowed) { this.spendBudgets.commit(sessionId, reservation2.reservationId); return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current }; }
+        snapshot2 = reservation2.snapshot;
+        if (reservation2.reason !== "over_ceiling") {
+          return { allowed: false, reason: reservation2.reason === "unknown_spend" ? "An earlier paid operation still needs spend reconciliation." : reservation2.reason === "unpriced" ? "This operation does not have a reliable maximum price." : "This video no longer has an active spending limit." };
+        }
+        if ((snapshot2.remainingUsd ?? 0) <= 0) return { allowed: false, reason: "This video’s budget is exhausted. Change the budget before starting more paid work. Nothing was sent." };
+        // PORT-NEW copy: requestExactSpendChoice("raise") card not ported
+        return { allowed: false, reason: `This operation's maximum ($${Number(quote.maximumUsd).toFixed(4)}) is above this video's remaining budget ($${Number(snapshot2.remainingUsd ?? 0).toFixed(4)}). Raise the video budget, then retry. Nothing was sent.` };
+      }
+      if (snapshot2.policy === "unlimited_for_video") {
+        const reservation2 = this.spendBudgets.reserve(sessionId, quote.maximumUsd, { gatewayJobId: request2.jobId });
+        if (!reservation2.allowed) return { allowed: false, reason: "Spend accounting could not safely reserve this operation." };
+        this.spendBudgets.commit(sessionId, reservation2.reservationId);
+        return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current };
+      }
+      // PORT-NEW copy: the per-operation (ask_each) exact-spend card is not ported
+      return { allowed: false, reason: "This video asks before each paid operation, and per-operation approval is not available in this build. Set a video budget, then retry. Nothing was sent." };
+    };
+    const observed = this.enqueueSpendPolicyUpdate(sessionId, decide).then((d) => { this.log.info("agent.paid.spend_decision", { sessionId, tool: request2.quote?.tool, maximumUsd: request2.quote?.maximumUsd, allowed: d.allowed, reason: d.allowed ? undefined : d.reason }); return d; });
+    if (!signal) return observed;
+    if (signal.aborted) return { allowed: false, reason: "This paid operation was cancelled." };
+    return new Promise((resolve2, reject) => {
+      const onAbort = () => resolve2({ allowed: false, reason: "This paid operation was cancelled." });
+      signal.addEventListener("abort", onAbort, { once: true });
+      void observed.then(resolve2, reject).finally(() => signal.removeEventListener("abort", onAbort));
+    });
+  }
+  /** The studio paid tools' handlers (makeStudioToolset L48247-49297) bound to one session. */
+  private paidStudioHost(s0: Session) {
+    const sessionId = s0.meta.sessionId;
+    const meta = s0.meta;
+    const env = () => this.sessions.get(sessionId)?.engineEnv ?? {};
+    return {
+      // search_models handler L48939-49065 (no retry wait: the local catalog never answers retryable)
+      searchModels: async (args: { query: string; limit: number; kind?: string; inputs?: string[]; cursor?: string }) => {
+        const gatewayUrl = env().VIDEOCLAW_GATEWAY_URL?.replace(/\/+$/, "");
+        const gatewayKey = env().VIDEOCLAW_API_KEY;
+        if (!gatewayUrl || !gatewayKey) return { ok: false, reason: "The app is not connected to the model gateway." };
+        try {
+          const query2 = new URLSearchParams({ q: args.query, limit: String(args.limit) });
+          if (args.kind) query2.set("kind", args.kind);
+          for (const input of args.inputs ?? []) query2.append("inputs", input);
+          if (args.cursor) query2.set("cursor", args.cursor);
+          const response = await fetch(`${gatewayUrl}/v1/models/search?${query2}`, { headers: { authorization: `Bearer ${gatewayKey}` }, signal: AbortSignal.timeout(45e3) });
+          const body: any = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const temporary = body.detail?.retryable !== false && (response.status === 408 || response.status === 429 || response.status >= 500);
+            return { ok: false, retryable: temporary, next_action: temporary ? "retry_read" : "change_input", reason: temporary ? `Model search is temporarily unavailable (HTTP ${response.status}); search again after retry_after_s.` : `Model search failed (HTTP ${response.status}).` };
+          }
+          const results = body.results?.map(({ model_slug, ...item }: any) => ({ model_id: model_slug, ...item, ...(item.pricing && typeof item.pricing === "object" && item.pricing.kind === "unknown-cost" && !("pricing_note" in item) ? { pricing_note: "No usable pre-run price estimate; a temporary hold is required and final cost may exceed it." } : {}) }));
+          return { ok: true, ...body, ...(results ? { results } : {}) };
+        } catch {
+          return { ok: false, retryable: true, next_action: "retry_read", reason: "Model search is temporarily unavailable." };
+        }
+      },
+      // callOneModel L48247 — the VIDEOCLAW_OPERATION_RECOVERY branch (engine tools/_model_call.py)
+      callOneModel: async (args: { model_id?: string; model_slug?: string; model_contract?: string; input: Record<string, unknown> }) => {
+        const model = args.model_id ?? args.model_slug;
+        if (!model || (args.model_id && args.model_slug && args.model_id !== args.model_slug)) {
+          return { ok: false, retryable: false, next_action: "change_input", reason: model ? "model_id and model_slug name different models; pass only the model_id from search_models." : "Pass the model_id returned by search_models." };
+        }
+        const planRefusal = this.plans?.sessionPlanProductionRefusal(sessionId);
+        if (planRefusal) return { ok: false, retryable: false, reason: planRefusal };
+        const engineEnv2 = env();
+        const gatewayUrl = engineEnv2.VIDEOCLAW_GATEWAY_URL?.replace(/\/+$/, "");
+        const gatewayKey = engineEnv2.VIDEOCLAW_API_KEY;
+        if (!gatewayUrl || !gatewayKey) return { ok: false, reason: "The app is not connected to the model gateway." };
+        if (!meta.jobId) return { ok: false, reason: "Prepare this video before calling a paid model." };
+        const localJobId = meta.jobId;
+        if (engineEnv2.VIDEOCLAW_OPERATION_RECOVERY !== "1") {
+          // the legacy direct POST branch (L48352-48500) is for engines without durable recovery; the pinned engine has it
+          return { ok: false, retryable: false, reason: "Native model recovery is unavailable. Paid work was not started." };
+        }
+        const engine = engineEnv2.VIDEOCLAW_ENGINE;
+        const script = engine && join(engine, "tools", "_model_call.py");
+        const python = engine && join(engine, ".venv", "bin", "python");
+        const boundJob: any = resolveJobDir({ sessionId, jobId: localJobId }, (id2) => this.sessions.get(id2)?.meta as any);
+        if (!boundJob.ok || !script || !python || !existsSync(script) || !existsSync(python)) {
+          return { ok: false, retryable: false, reason: "Native model recovery is unavailable. Paid work was not started." };
+        }
+        try {
+          const stdout = await new Promise<string>((resolve2, reject) => {
+            const child = execFile(python, [script, "--job", boundJob.jobPath], {
+              cwd: dirname(boundJob.jobsDir), timeout: 30 * 6e4, maxBuffer: 16 * 1024 * 1024,
+              env: { ...sanitizedAgentEnv(process.env), ...engineEnv2, VIDEOCLAW_WORKSPACE: dirname(boundJob.jobsDir), VIDEOCLAW_JOBS_DIR: boundJob.jobsDir, PYTHON_DOTENV_DISABLED: "1" },
+            }, (error, out) => (error ? reject(error) : resolve2(String(out))));
+            child.stdin?.end(JSON.stringify({ model_slug: model, input: args.input, ...(args.model_contract ? { model_contract: args.model_contract } : {}) }));
+          });
+          const result = JSON.parse(stdout);
+          this.log.info("agent.paid.model_call", { sessionId, model, ok: result?.ok, status: result?.status, imported: result?.imported, saved: Array.isArray(result?.saved) ? result.saved.length : undefined, next_action: result?.next_action });
+          if (result?.ok === false && ["failed", "canceled", "timeout"].includes(String(result.status)) && result.not_submitted !== true && result.next_action === "change_input") {
+            return { ...result, retryable: false, next_action: "report_failure" };
+          }
+          if (result?.ok && result.imported) { try { this.ensureWatcher(this.mustGet(sessionId), true); } catch {} }
+          return result;
+        } catch (e) {
+          this.log.warn("agent.paid.model_call_failed", { sessionId, model, error: e });
+          return { ok: false, retryable: false, status: "pending", next_action: "resume_original", reason: "The model call may still be running. The app will recover its original result; do not generate it again." };
+        }
+      },
+      // get_project_budget L49163
+      getProjectBudget: async (args: { job_id: string }) => {
+        if (!meta.jobId || args.job_id !== meta.jobId) return { ok: false, reason: "The budget query must name the job owned by this video." };
+        const cfg = this.d.gatewaySettings?.() ?? {};
+        if (!cfg.gatewayKey) return { ok: false, reason: "The app is not connected to the gateway." };
+        try {
+          const reconciliationToken = this.spendBudgets.gatewayReconciliationToken(sessionId, args.job_id);
+          const budget2 = await this.readGatewaySpend(this.mustGet(sessionId));
+          if (meta.jobId !== args.job_id) throw new Error("The active video changed during the budget read.");
+          const spent = budget2.spent_usd, reserved = budget2.reserved_usd;
+          const reservedUsd = typeof reserved === "number" && Number.isFinite(reserved) && reserved >= 0 ? reserved : 0;
+          if (typeof spent === "number" && Number.isFinite(spent) && spent >= 0 && typeof reserved === "number" && Number.isFinite(reserved) && reserved >= 0) {
+            this.spendBudgets.reconcileGatewayLedger(sessionId, spent, reserved, meta.jobId, reconciliationToken);
+          }
+          return {
+            ok: true, authoritative: true, ...budget2,
+            instruction: "This read reports spend and spending permission, not a production estimate. per_operation does not prevent a separate read-only plan estimate; do not infer estimate availability from this budget mode. " +
+              (reservedUsd > 0 ? "Work is in flight. Wait or inspect those jobs; do not call this spent and do not request more budget yet." : "No money is in flight. A higher budget is only appropriate if actual remaining headroom cannot cover the next exact quote."),
+          };
+        } catch {
+          return { ok: false, retryable: true, reason: "The authoritative gateway budget is temporarily unavailable." };
+        }
+      },
+      // set_video_budget L49229 — the "budget" permission card; allow → setSpendCeiling (respondPermission L44605)
+      setVideoBudget: async (args: { amount_usd: number }) => {
+        const amount = normalizeSpendCeilingUsd(args.amount_usd);
+        if (amount === null || amount <= 0) return { approved: false, reason: "The requested limit was invalid." };
+        const s = this.sessions.get(sessionId);
+        const runtime = s?.runtime;
+        if (!s || !runtime || runtime.dead) return { approved: false, reason: "Session runtime changed" };
+        if (s.meta.permissionMode === "bypassPermissions") {
+          return { approved: false, reason: "Bypass is enabled, so this video cannot also have a hard spending limit. The user can switch out of Bypass in the app before setting a budget.", instruction: "Do not ask again or open a spending-limit card while Bypass remains enabled." };
+        }
+        const requestId = randomUUID();
+        const permissionRequest: any = {
+          requestId, sessionId, kind: "budget", toolName: "mcp__studio__set_video_budget", input: { amount_usd: amount },
+          title: `Set a $${amount.toFixed(2)} maximum for this video?`,
+          description: "This budget pauses new paid work when exhausted. Actual costs may exceed estimates.",
+          budgetUsd: amount, budgetCeilingUsd: this.spendBudgets.snapshot(sessionId).ceilingUsd,
+        };
+        const response: any = await this.askHuman(permissionRequest, undefined, amount);
+        if (response.behavior !== "allow") return { approved: false, reason: response.message ?? "User declined" };
+        return { approved: true, ceiling_usd: response.updatedInput?.amount_usd, instruction: "The budget is active. Continue while reservations fit; actual costs may exceed estimates, after which new paid work pauses. Do not wait for a separate budget-plan confirmation." };
+      },
+    };
   }
 
   // ── docs/29: the VideoClaw-credits continuation (creditHandoffOffer L51901 / continueOnCredits L52012) ──

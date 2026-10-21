@@ -8,10 +8,13 @@
 //   read_workbook L48567, read_pdf L48611, get_workflow L48642 / search_workflows L48709 / workflow_advisor L48741 (the
 //   original no-pinned-Studio-Bundle branch: the port pins no bundle), request_rights_confirmation L49348,
 //   request_voiceover L49380, request_files L49445.
-// NOT REGISTERED (docs/30 §1.3, each needs the paid gateway model plane the MiniMax-backed shim refuses):
-//   preview_session_shot, character_voice, quickstart_reference, search_models, call_model, get_project_budget,
-//   set_video_budget, plan_paid_operations; Codex-only import_generated_image / write_video_project_files /
-//   execute_videoclaw_command.
+// docs/31 PORTED (the paid model plane, backed by the shim's MiniMax catalog): search_models L48906, call_model L49068
+//   (callOneModel L48247, the VIDEOCLAW_OPERATION_RECOVERY branch → engine tools/_model_call.py), get_project_budget
+//   L49163, set_video_budget L49229 (the "budget" permission card). Descriptions are verbatim
+//   (studio-paid-tools.generated.ts); shapes are copied with line refs.
+// NOT REGISTERED (docs/31 §1): preview_session_shot (GPT Image 2 / NB2 sheet routes), character_voice (ElevenLabs
+//   voice design + voice memory), quickstart_reference, plan_paid_operations (recommendVideoBudget prices the
+//   gateway's own tool table); Codex-only import_generated_image / write_video_project_files / execute_videoclaw_command.
 import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
 import { Readable } from "node:stream";
@@ -23,6 +26,10 @@ import {
 } from "./studio-tools.generated";
 import { resolveProjectDestination, attestExistingProjectDirectory, sameProjectDirectory } from "../memory/project-memory.generated";
 import { writeProjectStream } from "./relative-writer";
+import { SEARCH_MODELS_DESCRIPTION, CALL_MODEL_DESCRIPTION, GET_PROJECT_BUDGET_DESCRIPTION, SET_VIDEO_BUDGET_DESCRIPTION } from "./studio-paid-tools.generated";
+
+const MODEL_CALL_BATCH_MAX = 6; // L34322
+const JOB_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/; // L34320 = CLIENT_JOB_ID_RE
 
 const ACCOUNT_PREFERENCE_MAX_TEXT = 1e3; // L1638
 
@@ -39,6 +46,13 @@ export interface StudioToolHost {
   readPdf(sessionId: string, attachmentId: string, o: Record<string, unknown>): unknown;
   requestInput(req: StudioInputRequest): Promise<any>;
   noteMaterial(sessionId: string, arrival: Record<string, unknown>): void;
+  /** docs/31: the paid model plane (absent → the tools are not registered) */
+  paid?: {
+    searchModels(args: { query: string; limit: number; kind?: string; inputs?: string[]; cursor?: string }): Promise<unknown>;
+    callOneModel(args: { model_id?: string; model_slug?: string; model_contract?: string; input: Record<string, unknown> }): Promise<any>;
+    getProjectBudget(args: { job_id: string }): Promise<unknown>;
+    setVideoBudget(args: { amount_usd: number }): Promise<unknown>;
+  };
 }
 export interface StudioToolset { server?: unknown; dynamicTools: Array<{ type: "function"; name: string; description: string; inputSchema: unknown }>; call(name: string, input: unknown): Promise<unknown>; names: string[] }
 
@@ -153,6 +167,50 @@ export function makeStudioToolset(meta: { sessionId: string; cwd: string; client
     },
     noBundle("This session has no pinned Studio Bundle."),
   );
+  if (host.paid) {
+    const paid = host.paid;
+    // search_models L48906 (shape L48909-48937)
+    studioTool("search_models", SEARCH_MODELS_DESCRIPTION, {
+      query: z.string().max(512).default("").describe("Model name, purpose, or exact model_id for details; empty browses."),
+      limit: z.number().int().min(1).max(25).default(10).describe("Maximum results on this page."),
+      kind: z.enum(["image", "video", "audio"]).optional().describe("Only models producing this output kind."),
+      inputs: z.array(z.enum(["image", "video", "audio"])).max(3).optional().describe("Only models accepting all of these input kinds."),
+      cursor: z.string().min(1).max(2048).optional().describe("next_cursor from the previous page of the same search."),
+    }, async (args) => text2(await paid.searchModels(args)));
+    // call_model L49068 (shape L49070-49114, handler L49115-49161)
+    studioTool("call_model", CALL_MODEL_DESCRIPTION, {
+      model_id: z.string().min(1).max(512).optional().describe("Exact model_id from search_models."),
+      model_slug: z.string().min(1).max(256).optional().describe("Older name for model_id; omit it."),
+      model_contract: z.string().regex(/^fmc_[a-f0-9]{64}$/).optional().describe("Optional; omit it. The gateway binds the current verified contract."),
+      input: z.record(z.string(), z.unknown()).optional().describe("Input object accepted by the selected model. Omit it when passing requests."),
+      requests: z.array(z.object({
+        model_id: z.string().min(1).max(512).describe("Exact model_id from search_models."),
+        input: z.record(z.string(), z.unknown()).describe("Input object accepted by that model."),
+      }).strict()).min(1).max(MODEL_CALL_BATCH_MAX).optional().describe("1-6 independent calls to run together, instead of model_id and input."),
+    }, async ({ requests, ...single }) => {
+      if (!requests) {
+        if (!single.input) return text2({ ok: false, retryable: false, next_action: "change_input", reason: "Pass input with the model_id, or pass requests. Nothing was submitted." });
+        return text2(await paid.callOneModel({ ...single, input: single.input }));
+      }
+      if (Object.values(single).some((value) => value !== undefined)) {
+        return text2({ ok: false, retryable: false, next_action: "change_input", reason: "Pass either requests or one model_id with input, not both. Nothing was submitted." });
+      }
+      const results = await Promise.all(requests.map(async (request2: any, index: number) => ({
+        index, model_id: request2.model_id,
+        result: await paid.callOneModel(request2).catch(() => ({ ok: false, retryable: false, status: "pending", next_action: "resume_original", reason: "This call may have been accepted and charged, but its outcome is unknown. Do not call it again." })),
+      })));
+      const ok = results.every((entry) => entry.result?.ok === true);
+      return text2({ ok, results, ...(ok ? {} : { reason: "Each result is separate: follow its own next_action, and never repeat an entry that succeeded or is still running." }) });
+    });
+    // get_project_budget L49163
+    studioTool("get_project_budget", GET_PROJECT_BUDGET_DESCRIPTION, {
+      job_id: z.string().regex(JOB_ID_RE).describe("Exact bare job id owned by this video."),
+    }, async (args) => text2(await paid.getProjectBudget(args)));
+    // set_video_budget L49229
+    studioTool("set_video_budget", SET_VIDEO_BUDGET_DESCRIPTION, {
+      amount_usd: z.number().positive().max(1e6).describe("Absolute total USD ceiling requested by the user."),
+    }, async (args) => text2(await paid.setVideoBudget(args)));
+  }
   studioTool(
     "request_rights_confirmation", // L49348
     "Before cloning or closely imitating a real person's voice or likeness, show the user a mandatory rights checkbox. Do not call this for identity motion transfer when the user uploaded or selected the face: that input is treated as authorized. This is also not needed for ordinary editing or a synthetic character. " +

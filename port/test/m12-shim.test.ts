@@ -75,7 +75,7 @@ test("ledger: cache-read tokens reported by MiniMax are recorded and charged at 
       const r = await fetch(`${h.url}/anthropic/v1/messages`, { method: "POST", headers: { authorization: `Bearer ${h.key}`, "content-type": "application/json" }, body: JSON.stringify({ model: "MiniMax-M3.1-Flash", stream, max_tokens: 8, messages: [{ role: "user", content: "hi" }] }) });
       assert.equal(r.status, 200); await r.text();
     }
-    const [a, b] = h.shim.snapshot().entries;
+    const [a, b] = h.shim.snapshot().entries as any[];
     for (const e of [a, b]) {
       assert.deepEqual([e.inputTokens, e.cacheReadTokens, e.outputTokens], [200, 5000, 50]);
       assert.equal(e.usd, (200 * 0.15 + 5000 * 0.015 + 50 * 0.6) / 1e6);
@@ -118,7 +118,7 @@ test("shim sinks: feedback (+ bound screenshot PUT), blocked feedback without a 
     const ref = Buffer.from("reference image");
     r = await fetch(`${h.url}/v1/uploads`, { method: "POST", headers: auth, body: JSON.stringify({ filename: "ref.png", content_type: "image/png", size_bytes: ref.length, md5_base64: createHash("md5").update(ref).digest("base64") }) });
     const up: any = await r.json();
-    assert.match(up.upload_id, /^up_/);
+    assert.match(up.upload_id, /^[a-f0-9]{32}$/);
     assert.equal((await fetch(up.put_url, { method: "PUT", headers: up.headers, body: ref })).status, 200);
     // release feed
     r = await fetch(`${h.url}/v1/app/latest?channel=latest`);

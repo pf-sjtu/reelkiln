@@ -5,7 +5,7 @@
   "description": "Windows port scaffold of Videoclaw 0.0.40 (faithful IPC/process model, fake backend)",
   "main": "dist/main/index.cjs",
   "scripts": {
-    "gen": "node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs",
+    "gen": "node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "bundle": "node tools/build.mjs",
     "build": "npm run gen && npm run typecheck && npm run bundle",

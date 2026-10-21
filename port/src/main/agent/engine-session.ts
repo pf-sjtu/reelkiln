@@ -49,7 +49,7 @@ export interface EngineSessionDeps {
   /** currentEngine (L9187). null = no installed engine → sessions refuse to start. */
   currentEngine(): EngineRefLike | null;
   /** engineSessionEnv (L9380) — throws SessionContextError when the workspace settings drifted. */
-  engineSessionEnv(): Record<string, string>;
+  engineSessionEnv(gatewayKey?: string, gatewayUrl?: string): Record<string, string>;
   /** assertInstalledEngineProductionContract (L6982). */
   assertProductionContract(enginePath: string): void;
   /** app.isPackaged (authorizeProductionCommand requireInstalledEngine). */
@@ -158,9 +158,10 @@ export function pinSessionContextEpoch(env: Record<string, string>, current: str
 
 export interface EngineSpawnContext { engineEnv: Record<string, string>; append: string; contextEpoch?: string; lawsVersion?: string; appendSha256?: string }
 /** spawnLocal L39461-39495 (local claude-code branch): engine env + assembled session context. */
-export function prepareEngineSpawn(d: EngineSessionDeps, meta: EngineSessionMeta, contextEpoch: string | undefined, memoryContext: string[] = []): EngineSpawnContext {
+export function prepareEngineSpawn(d: EngineSessionDeps, meta: EngineSessionMeta, contextEpoch: string | undefined, memoryContext: string[] = [], gateway?: { gatewayKey: string; gatewayUrl: string }): EngineSpawnContext {
   if (!d.currentEngine()) throw new Error("Production is blocked because no installed engine can validate the current route. Run Setup, then retry.");
-  const engineEnv: Record<string, string> = { ...d.engineSessionEnv() };
+  // L39462: engineSessionEnv(gateway.gatewayKey, gateway.gatewayUrl) — docs/31: the session's AgentGatewayProxy credential
+  const engineEnv: Record<string, string> = { ...(gateway ? d.engineSessionEnv(gateway.gatewayKey, gateway.gatewayUrl) : d.engineSessionEnv()) };
   assertEnginePython(engineEnv.VIDEOCLAW_ENGINE);
   if (engineSupportsOperationRecovery(engineEnv.VIDEOCLAW_ENGINE)) engineEnv.VIDEOCLAW_OPERATION_RECOVERY = "1";
   pinBoundJobEnv(engineEnv, meta.jobId);

@@ -506,7 +506,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       const engineDeps: EngineSessionDeps | undefined = engineMode ? {
         workspaceRoot,
         currentEngine: () => core.currentEngine(),
-        engineSessionEnv: () => engineSessionEnv(sessionEnvDeps),
+        engineSessionEnv: (k?: string, u?: string) => engineSessionEnv(sessionEnvDeps, k, u),
         assertProductionContract: (e) => assertInstalledEngineProductionContract(e),
         isPackaged: app.isPackaged,
       } : undefined;
@@ -540,6 +540,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         // docs/29: setCreditHandoffEligibility (L61622) + the opened gateway the credits continuation bills
         creditEligibility: () => accountService.creditHandoffEligibility(),
         gatewaySettings: () => accountService.activeSettings() as { gatewayUrl?: string; gatewayKey?: string },
+        // docs/31: agentGatewayCredentials (L39643) — the session's private loopback proxy (verbatim AgentGatewayProxy)
+        agentGatewayProxy: () => m12.proxy ?? undefined,
+        engineVersion: () => core.currentEngine()?.version,
         price: sharedPrice, servedModel: () => minimaxConfig()?.model,
         engine: engineDeps,
         // docs/22: versions.json + composer-attachments.json live next to sessions.json (L34841-34848)

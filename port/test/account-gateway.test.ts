@@ -108,7 +108,7 @@ test("local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mappe
     assert.equal(h.up.seen[0].url, "https://api.minimaxi.com/anthropic/v1/messages");
     assert.equal(h.up.seen[0].body.model, "MiniMax-M3.1-Flash", "a Claude id is served by the configured MiniMax model");
     assert.ok(h.up.seen[0].auth?.includes(FAKE_KEY) && !h.up.seen[0].auth?.includes(key), "upstream sees only the MiniMax key");
-    let led = h.shim.snapshot();
+    let led: any = h.shim.snapshot();
     assert.equal(led.entries.length, 1);
     assert.deepEqual([led.entries[0].inputTokens, led.entries[0].outputTokens], [1000, 500]);
     assert.equal(led.entries[0].usd, (1000 * 0.15 + 500 * 0.6) / 1e6); // 0.00045 at MiniMax-M3.1-Flash (docs/29 §1)

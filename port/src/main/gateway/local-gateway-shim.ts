@@ -30,7 +30,18 @@
 //                                            "current" — the shim never offers a newer build); nightly → 404
 //   POST /v1/uploads (+ tokenised PUT)        engine _gateway.upload: reference bytes land on local disk
 //   POST /v1/{paid tool}                      mint_image / embed / mint_video / …: refused 422 not_submitted —
-//                                            the MiniMax backend has no faithful equivalent (docs/29 §4)
+//                                            the MiniMax backend has no faithful equivalent (docs/29 §4, docs/31 §1)
+//   docs/31 additions (the paid MODEL plane, backed by MiniMax's official media APIs — minimax-media.ts):
+//   GET  /health                              settlementPolicies L28690: no estimated/unknown-cost policy advertised
+//                                            → the proxy keeps the strict exact-quote contract
+//   GET  /v1/me .operation_recovery           operationContext L28817 (durable operations, tools ["model_call"])
+//   POST /v1/spend-authorities/{job}/quote    quoteSpendOperation L30069 — exact, bound_proven list-price quote
+//   POST /v1/spend-authorities/{job}/permits  mintSpendPermit L30250 — a vsp_ permit bound to that quote
+//   GET  /v1/models/search                    search_models L48906 — the MiniMax media catalog
+//   POST /v1/model_call                       engine _model_call.py via the proxy (durable operation id required)
+//   GET  /v1/operations/{id}, POST …/cancel   engine recover_operation / collect_operation
+//   GET  /v1/uploads/{id} (+ signed content)  _model_call._hosted read_url
+//   GET  /v1/assets/{id}?e=&sig=              signed same-origin model media (collect_operation download)
 // Anything else → 404. No request is ever forwarded with the shim key; MiniMax sees only its own key.
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { costUsd, priceTable, type ModelPrice } from "./pricing";
@@ -43,6 +54,8 @@ import type { ResolvedProvider } from "../llm/provider-registry";
 import { providerGate } from "../llm/retry";
 import { withMiniMaxRetry } from "../llm/minimax";
 import { registerSecret } from "../llm/logger";
+import { createHmac } from "node:crypto";
+import { catalog, ModelInputError, operationSha256, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, type PricedCall } from "./minimax-media";
 
 export const LOCAL_GATEWAY_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY";
 export const LOCAL_GATEWAY_PORT_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY_PORT";
@@ -65,6 +78,9 @@ export const TOOL_QUOTE_CENTS: Record<string, number> = { model_call: 1, mint_im
 export const DEFAULT_TOOL_QUOTE_CENTS = 5;
 
 export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number; status: number; pricing: ModelPrice; /** docs/30: X-VideoClaw-Client-Job of the call (route-service anthropicClientJobCustomHeaders, chunk L149) */ clientJob?: string }
+/** docs/31: one paid model call charged at MiniMax's list price (minimax-media.ts) */
+export interface PaidToolEntry { id: string; at: number; kind: "paid_tool"; tool: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; units: Record<string, number>; pricing: { source: string; maximumUsd: number }; operationId: string; clientJob: string; status: number }
+export interface OperationRow { id: string; jobId: string; projectId: string; clientJob: string; sha256: string; model: string; quoteId: string; maximumUsd: number; status: "running" | "succeeded" | "failed" | "canceled" | "timeout"; createdAt: number; finishedAt?: number; costUsd?: number; assets: Array<{ asset_id: string; content_type: string }>; error?: string; upstream?: Record<string, unknown>; keyId: string }
 export interface Ledger {
   schema: typeof LEDGER_SCHEMA;
   account: { id: string; name: string; createdAt: number };
@@ -72,7 +88,7 @@ export interface Ledger {
   limits: { monthUsd: number | null; totalUsd: number | null };
   topupBalanceUsd: number;
   topups: Array<{ at: number; usd: number; source: string }>;
-  entries: LedgerEntry[];
+  entries: Array<LedgerEntry | PaidToolEntry>;
   refusals: Array<{ at: number; keyId: string; reason: string }>;
   spendAuthorities: Record<string, { mode: string; ceilingUsd: number | null; updatedAt: number }>;
   budgets: Record<string, { ceilingUsd: number; updatedAt: number }>;
@@ -81,6 +97,12 @@ export interface Ledger {
   pricing: { table: string } | { inputPerMTokUsd: number; outputPerMTokUsd: number; source: string };
   /** docs/29: per-job scoped capabilities issued by credentialsForBudgetedTools (library lease / sheet build) */
   sinks?: Record<string, number>;
+  /** docs/31: exact spend quotes (by operation digest), permits, durable model operations, uploads, model assets */
+  spendQuotes?: Array<{ quoteId: string; sha256: string; jobId: string; tool: string; model: string; estimateUsd: number; maximumUsd: number; at: number }>;
+  permits?: Array<{ permit: string; quoteId: string; sha256: string; jobId: string; maximumApprovedUsd: number; at: number; used?: boolean }>;
+  operations?: Record<string, OperationRow>;
+  uploads?: Record<string, { file: string; contentType: string; at: number }>;
+  assets?: Record<string, { file: string; contentType: string; operationId: string }>;
 }
 const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
 const monthKey = (ms: number) => new Date(ms).toISOString().slice(0, 7); // UTC calendar month
@@ -107,6 +129,9 @@ export interface ShimOptions {
   price?: (model: string) => ModelPrice;
   /** docs/29: the version THIS build reports (GET /v1/app/latest answers it as current) */
   appVersion?: string;
+  /** docs/31 test seams: the media fetch (MiniMax media APIs) and the poll sleep */
+  mediaFetch?: typeof fetch;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export class LocalGatewayShim {
@@ -209,6 +234,10 @@ export class LocalGatewayShim {
   available(): number | null { return this.meter().available_credit_usd as number | null; }
   /** docs/30: the metered spend of one client job (sum of its ledger entries, 6-dp). */
   jobSpentUsd(jobId: string): number { return round6(this.ledger.entries.filter((e) => e.clientJob === jobId).reduce((a, e) => a + e.usd, 0)); }
+  /** docs/31: the reasoning (LLM) part of one job's spend — the SDK true-up compares only against this. */
+  jobLlmSpentUsd(jobId: string): number { return round6(this.ledger.entries.filter((e) => e.clientJob === jobId && e.kind === "model_call").reduce((a, e) => a + e.usd, 0)); }
+  /** docs/31: money held by this job's model operations still running (their quoted maximum). */
+  jobReservedUsd(jobId: string): number { return round6(Object.values(this.ledger.operations ?? {}).filter((o) => o.clientJob === jobId && o.status === "running").reduce((a, o) => a + o.maximumUsd, 0)); }
   /** The price the ledger charges `model` at (docs/29 §1). */
   priceFor(model: string): ModelPrice { return this.price(model); }
   charge(e: Omit<LedgerEntry, "id" | "at" | "usd" | "pricing">): LedgerEntry {
@@ -264,12 +293,15 @@ export class LocalGatewayShim {
     // ── docs/29 unauthenticated surfaces (exactly the ones the original calls without a key) ──
     let m0: RegExpExecArray | null;
     if (method === "PUT" && (m0 = /^\/v1\/sinks\/put\/([0-9a-f]{48})$/.exec(path))) return this.sinkPut(req, res, m0[1]);
+    // docs/31: signed media reads carry no bearer (collect_operation "never attach a bearer to media GETs")
+    if (method === "GET" && (m0 = /^\/v1\/(assets\/([a-f0-9]{32})|uploads\/([a-f0-9]{32})\/content)$/.exec(path))) { req.resume(); return this.signedRead(res, path, url, m0[2], m0[3]); }
     if (method === "POST" && path === "/v1/feedback/blocked") return this.feedbackSink(req, res, null, true); // sendBlockedFeedback: no authorization header
     if (method === "GET" && path === "/v1/app/latest") { req.resume(); return this.appLatest(res, url.searchParams.get("channel")); } // startUpdateCheck: no authorization on the latest channel
     const auth = typeof req.headers.authorization === "string" ? /^Bearer\s+(.+)$/i.exec(req.headers.authorization.trim())?.[1] : undefined;
     const key = this.authenticate(auth ?? (typeof req.headers["x-api-key"] === "string" ? req.headers["x-api-key"] : undefined));
     if (!key) { req.resume(); return this.json(res, 401, { error: "invalid key" }); }
-    if (method === "GET" && path === "/v1/me") return this.json(res, 200, { id: key.id, ...this.meter() });
+    if (method === "GET" && path === "/v1/me") return this.json(res, 200, { id: key.id, ...this.meter(), operation_recovery: this.operationRecovery() });
+    if (method === "GET" && path === "/health") { req.resume(); return this.json(res, 200, { ok: true, self_hosted: true }); }
     let m: RegExpExecArray | null;
     if (method === "POST" && (m = /^\/v1\/keys\/([0-9a-f]{64})\/topup-session$/.exec(path))) {
       req.resume();
@@ -298,8 +330,17 @@ export class LocalGatewayShim {
         const a = this.ledger.spendAuthorities[jobId];
         // docs/30: readGatewaySpend (L48020) needs spent_usd / reserved_usd / client_job — spent is this job's metered
         // model calls (the same per-model models.dev-first prices every entry was charged at); the shim reserves nothing
-        return this.json(res, 200, { job_id: jobId, client_job: jobId, mode: a?.mode ?? "per_operation", ceiling_usd: a?.ceilingUsd ?? null, spent_usd: this.jobSpentUsd(jobId), reserved_usd: 0, state: "ready", in_flight: [], available_credit_usd: this.available() });
+        // docs/31: reserved = running model operations' quoted maximum; llm_spent_usd (PORT-NEW) = the reasoning share
+        const inFlight = Object.values(this.ledger.operations ?? {}).filter((o) => o.clientJob === jobId && o.status === "running").map((o) => ({ job_id: o.jobId, tool: "model_call", reserved_usd: o.maximumUsd }));
+        const reserved = this.jobReservedUsd(jobId);
+        const ceilingA = a?.ceilingUsd ?? null;
+        const spent = this.jobSpentUsd(jobId);
+        return this.json(res, 200, { job_id: jobId, client_job: jobId, revision: Math.max(0, Math.floor((a?.updatedAt ?? 0) / 1000)), mode: a?.mode ?? "per_operation", ceiling_usd: ceilingA, spent_usd: spent, llm_spent_usd: this.jobLlmSpentUsd(jobId), reserved_usd: reserved, state: ceilingA !== null && spent >= ceilingA ? "exhausted" : "ready", in_flight: inFlight, available_credit_usd: this.available() });
       }
+    }
+    if (method === "POST" && (m = /^\/v1\/spend-authorities\/([^/]+)\/(quote|permits)$/.exec(path))) {
+      const raw = await this.body(req);
+      return m[2] === "quote" ? this.spendQuote(req, res, decodeURIComponent(m[1]), raw) : this.spendPermit(req, res, decodeURIComponent(m[1]), raw);
     }
     if (method === "PUT" && (m = /^\/v1\/budgets\/([^/]+)$/.exec(path))) {
       let b: any; try { b = JSON.parse((await this.body(req)).toString("utf8")); } catch { return this.json(res, 400, { error: "invalid json" }); }
@@ -317,6 +358,31 @@ export class LocalGatewayShim {
       if (method === expected) return this.telemetrySink(req, res, key.id, m);
     }
     if (method === "POST" && path === "/v1/uploads") return this.uploadIntake(req, res, key.id);
+    if (method === "GET" && (m = /^\/v1\/uploads\/([a-f0-9]{32})$/.exec(path))) {
+      req.resume();
+      const u = this.ledger.uploads?.[m[1]];
+      if (!u || !existsSync(u.file)) return this.json(res, 404, { detail: "unknown upload" });
+      return this.json(res, 200, { upload_id: m[1], content_type: u.contentType, read_url: this.signedUrl(`/v1/uploads/${m[1]}/content`) });
+    }
+    if (method === "GET" && path === "/v1/models/search") {
+      req.resume();
+      const inputs = url.searchParams.getAll("inputs");
+      return this.json(res, 200, searchCatalog(url.searchParams.get("q") ?? "", Number(url.searchParams.get("limit") ?? 10), url.searchParams.get("kind"), inputs));
+    }
+    if (method === "POST" && path === "/v1/model_call") return this.modelCall(req, res, key.id);
+    if ((m = /^\/v1\/operations\/([A-Za-z0-9._-]{1,128})(\/cancel)?$/.exec(path)) && method === (m[2] ? "POST" : "GET")) {
+      req.resume();
+      const op = this.ledger.operations?.[m[1]];
+      if (!op || url.searchParams.get("client_job") !== op.clientJob) return this.json(res, 404, { detail: "unknown operation" });
+      // MiniMax offers no cancel for a synchronous call or a submitted video task: a cancel reads the result back
+      return this.json(res, 200, this.operationView(op));
+    }
+    if (method === "GET" && (m = /^\/v1\/jobs\/([A-Za-z0-9._-]+)$/.exec(path))) {
+      req.resume();
+      const op = Object.values(this.ledger.operations ?? {}).find((o) => o.jobId === m![1]);
+      if (!op) return this.json(res, 404, { detail: "unknown job" });
+      return this.json(res, 200, this.operationView(op));
+    }
     if (method === "POST" && (m = /^\/v1\/(mint_image|mint_video|embed|audio\/enhance|media\/pull|synth_voice|lipsync_footage|llm|model_call|qa_video|enumerate_profile|harness\/review|[a-z][a-z0-9_]{1,63})$/.exec(path))) {
       req.resume();
       return this.paidToolRefusal(res, m[1]);
@@ -400,9 +466,11 @@ export class LocalGatewayShim {
   private async uploadIntake(req: IncomingMessage, res: ServerResponse, keyId: string): Promise<void> {
     let b: any; try { b = JSON.parse((await this.body(req)).toString("utf8")); } catch { return this.json(res, 400, { error: "invalid json" }); }
     if (typeof b?.filename !== "string" || !Number.isSafeInteger(b?.size_bytes) || b.size_bytes < 0) return this.json(res, 400, { error: "filename and size_bytes required" });
-    const uploadId = `up_${randomBytes(12).toString("hex")}`;
+    // docs/31: a 32-hex id — the proxy admits GET /v1/uploads/<32 hex> (authorize L29700) for the read_url lookup
+    const uploadId = randomBytes(16).toString("hex");
     const contentType = typeof b.content_type === "string" ? b.content_type : "application/octet-stream";
-    const put_url = this.putUrl({ file: this.sinkFile("uploads", `${uploadId}-${b.filename}`), size: b.size_bytes, md5Base64: typeof b.md5_base64 === "string" ? b.md5_base64 : undefined, onDone: () => this.record("upload") });
+    const file = this.sinkFile("uploads", `${uploadId}-${b.filename}`);
+    const put_url = this.putUrl({ file, size: b.size_bytes, md5Base64: typeof b.md5_base64 === "string" ? b.md5_base64 : undefined, onDone: () => { (this.ledger.uploads ??= {})[uploadId] = { file, contentType, at: this.now() }; this.record("upload"); } });
     this.appendSink("upload-ticket", { keyId, uploadId, filename: b.filename, size: b.size_bytes });
     return this.json(res, 200, { upload_id: uploadId, put_url, headers: { "Content-Type": contentType } });
   }
@@ -414,6 +482,177 @@ export class LocalGatewayShim {
     this.appendSink("paid-refusal", { tool });
     res.writeHead(422, { "content-type": "application/json", [SHIM_HEADER]: "1", "x-should-retry": "false" });
     res.end(JSON.stringify({ detail: { code: "TOOL_NOT_OFFERED", message: `This self-hosted Videoclaw gateway does not offer ${tool}: its model backend (MiniMax) has no equivalent for this paid tool. Nothing was charged.`, retryable: false, not_submitted: true } }));
+  }
+
+  // ── docs/31: the paid model plane ──────────────────────────────────────
+  private accountFingerprint(): string { return createHash("sha256").update(`videoclaw-port-account\0${this.ledger.account.id}`).digest("hex"); }
+  /** GET /v1/me .operation_recovery — the capability operationContext (L28817) verifies. Only model_call is durable
+   *  here: it is the only paid tool this gateway offers. accepting=false when no MiniMax key is configured. */
+  operationRecovery() {
+    return { schema: "videoclaw.operation-recovery/v1", account_fingerprint: this.accountFingerprint(), environment: "local", accepting: !!this.o.provider(), tools: ["model_call"] };
+  }
+  private signingKey(): Buffer {
+    const f = join(this.o.dir, "asset-signing.key");
+    if (!this.assetKey) {
+      if (existsSync(f)) this.assetKey = readFileSync(f);
+      else { this.assetKey = randomBytes(32); writeFileSync(f, this.assetKey, { mode: 0o600 }); }
+    }
+    return this.assetKey;
+  }
+  private assetKey?: Buffer;
+  private sig(path: string, e: string) { return createHmac("sha256", this.signingKey()).update(`${path}\n${e}`).digest("hex"); }
+  signedUrl(path: string, ttlS = 3600): string { const e = String(Math.floor(this.now() / 1000) + ttlS); return `${this.url}${path}?e=${e}&sig=${this.sig(path, e)}`; }
+  private signedRead(res: ServerResponse, path: string, url: URL, assetId?: string, uploadId?: string) {
+    const e = url.searchParams.get("e") ?? "", sig = url.searchParams.get("sig") ?? "";
+    const expect = Buffer.from(this.sig(path, e)), got = Buffer.from(sig);
+    if (!/^\d+$/.test(e) || Number(e) * 1000 < this.now() || expect.length !== got.length || !timingSafeEqual(expect, got)) return this.json(res, 403, { detail: "invalid or expired signature" });
+    const row = assetId ? this.ledger.assets?.[assetId] : uploadId ? this.ledger.uploads?.[uploadId] : undefined;
+    if (!row || !existsSync(row.file)) return this.json(res, 404, { detail: "not found" });
+    const bytes = readFileSync(row.file);
+    res.writeHead(200, { "content-type": row.contentType, "content-length": String(bytes.length), [SHIM_HEADER]: "1" });
+    res.end(bytes);
+  }
+  /** the bytes behind one of this gateway's own signed upload read_urls (MiniMax cannot reach loopback) */
+  readOwnUpload(readUrl: string): { bytes: Buffer; contentType: string } | undefined {
+    try {
+      const u = new URL(readUrl);
+      if (`${u.protocol}//${u.host}` !== this.url) return undefined;
+      const m = /^\/v1\/uploads\/([a-f0-9]{32})\/content$/.exec(u.pathname);
+      const e = u.searchParams.get("e") ?? "";
+      if (!m || u.searchParams.get("sig") !== this.sig(u.pathname, e)) return undefined;
+      const row = this.ledger.uploads?.[m[1]];
+      return row && existsSync(row.file) ? { bytes: readFileSync(row.file), contentType: row.contentType } : undefined;
+    } catch { return undefined; }
+  }
+  private refuse(res: ServerResponse, status: number, code: string, message: string, retryable = false) {
+    res.writeHead(status, { "content-type": "application/json", [SHIM_HEADER]: "1", ...(retryable ? {} : { "x-should-retry": "false" }) });
+    res.end(JSON.stringify({ detail: { code, message, retryable, not_submitted: true } }));
+  }
+  /** POST /v1/spend-authorities/{job}/quote (quoteSpendOperation L30069): the body IS the exact operation. */
+  private spendQuote(req: IncomingMessage, res: ServerResponse, jobId: string, raw: Buffer) {
+    const opPath = String(req.headers["x-videoclaw-operation-path"] ?? "");
+    if (String(req.headers["x-videoclaw-operation-method"] ?? "") !== "POST" || !/^\/v1\//.test(opPath)) return this.json(res, 400, { detail: "operation method/path required" });
+    const tool = opPath.slice(4).replaceAll("/", ".");
+    if (opPath !== "/v1/model_call") {
+      this.appendSink("paid-refusal", { tool, stage: "quote" });
+      return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway does not offer ${tool}: its model backend (MiniMax) has no faithful equivalent for this paid tool. Nothing was charged.`);
+    }
+    let body: any; try { body = JSON.parse(raw.toString("utf8")); } catch { return this.json(res, 400, { detail: "operation body must be JSON" }); }
+    if (body?.client_job !== jobId) return this.refuse(res, 409, "OPERATION_MISMATCH", "The operation names a different video.");
+    let priced: PricedCall;
+    try { priced = priceCall(body?.model, body?.params); }
+    catch (e) { return this.refuse(res, 422, e instanceof ModelInputError ? e.code : "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
+    const sha256 = operationSha256(opPath, raw);
+    const quoteId = `vsq_3.${randomBytes(18).toString("base64url")}`;
+    const q = { quoteId, sha256, jobId, tool: "model_call", model: priced.model.model_slug, estimateUsd: priced.estimateUsd, maximumUsd: priced.maximumUsd, at: this.now() };
+    (this.ledger.spendQuotes ??= []).push(q);
+    if (this.ledger.spendQuotes.length > 200) this.ledger.spendQuotes.splice(0, this.ledger.spendQuotes.length - 200);
+    this.write();
+    return this.json(res, 200, { quote_id: quoteId, operation_sha256: sha256, tool: "model_call", route_mode: priced.model.model_slug, estimate_usd: priced.estimateUsd, maximum_usd: priced.maximumUsd, bound_proven: true, currency: "USD", units: priced.units, price_source: PRICE_SOURCE });
+  }
+  /** POST /v1/spend-authorities/{job}/permits (mintSpendPermit L30250): one-shot approval for one exact quote. */
+  private spendPermit(req: IncomingMessage, res: ServerResponse, jobId: string, raw: Buffer) {
+    const opPath = String(req.headers["x-videoclaw-operation-path"] ?? "");
+    const sha256 = operationSha256(opPath, raw);
+    const quoteId = String(req.headers["x-videoclaw-quote-id"] ?? "");
+    const q = (this.ledger.spendQuotes ?? []).find((x) => x.quoteId === quoteId && x.sha256 === sha256 && x.jobId === jobId);
+    if (!q) return this.refuse(res, 409, "SPEND_QUOTE_STALE", "The approved quote is no longer current.");
+    const approved = Number(req.headers["x-videoclaw-maximum-approved-usd"]);
+    if (!(approved >= q.maximumUsd)) return this.refuse(res, 409, "SPEND_PERMIT_AMOUNT_EXCEEDED", "The approval does not cover the quoted maximum.");
+    const permit = `vsp_${randomBytes(18).toString("base64url")}`;
+    (this.ledger.permits ??= []).push({ permit, quoteId, sha256, jobId, maximumApprovedUsd: approved, at: this.now() });
+    this.write();
+    return this.json(res, 200, { permit });
+  }
+  private operationView(op: OperationRow): Record<string, unknown> {
+    const terminal = op.status !== "running";
+    return {
+      operation_id: op.id, project_id: op.projectId, client_job: op.clientJob, job_id: op.jobId, tool: "model_call", model: op.model, status: op.status,
+      assets: op.status === "succeeded" ? op.assets.map((a) => ({ asset_id: a.asset_id, content_type: a.content_type, url: this.signedUrl(`/v1/assets/${a.asset_id}`) })) : [],
+      ...(terminal ? { cost_usd: op.costUsd ?? 0, cost_source: "minimax-list-price" } : {}),
+      ...(op.error ? { error: op.error } : {}),
+    };
+  }
+  /** POST /v1/model_call — durable, exact-quoted, charged once at MiniMax's list price on success. */
+  private async modelCall(req: IncomingMessage, res: ServerResponse, keyId: string): Promise<void> {
+    const raw = await this.body(req);
+    const operationId = req.headers["x-videoclaw-operation-id"];
+    const projectId = req.headers["x-videoclaw-project-id"];
+    if (typeof operationId !== "string" || !/^[A-Za-z0-9._-]{1,128}$/.test(operationId) || typeof projectId !== "string" || !projectId) {
+      return this.refuse(res, 400, "OPERATION_IDENTITY_REQUIRED", "model_call needs a durable operation identity.");
+    }
+    let body: any; try { body = JSON.parse(raw.toString("utf8")); } catch { return this.json(res, 400, { detail: "invalid json" }); }
+    const clientJob = typeof body?.client_job === "string" ? body.client_job : "";
+    const scoped = req.headers["x-videoclaw-scoped-job"];
+    if (!clientJob || (typeof scoped === "string" && scoped !== clientJob)) return this.refuse(res, 409, "OPERATION_MISMATCH", "The operation names a different video.");
+    const sha256 = operationSha256("/v1/model_call", raw);
+    const ops = (this.ledger.operations ??= {});
+    const existing = ops[operationId];
+    if (existing) {
+      if (existing.sha256 !== sha256 || existing.clientJob !== clientJob) return this.refuse(res, 409, "OPERATION_MISMATCH", "This operation id already belongs to a different request.");
+      return this.json(res, 200, this.operationView(existing)); // idempotent: never a second purchase
+    }
+    const quote = [...(this.ledger.spendQuotes ?? [])].reverse().find((q) => q.sha256 === sha256 && q.jobId === clientJob && this.now() - q.at < 15 * 60_000);
+    if (!quote) return this.refuse(res, 409, "SPEND_AUTHORITY_REQUIRED", "This exact operation has no current quote; nothing was submitted.");
+    const authority = this.ledger.spendAuthorities[clientJob];
+    const mode = authority?.mode ?? "per_operation";
+    if (mode === "per_operation") {
+      const permitHeader = req.headers["x-videoclaw-spend-permit"];
+      const permit = (this.ledger.permits ?? []).find((p) => p.permit === permitHeader && p.sha256 === sha256 && !p.used);
+      if (!permit) return this.refuse(res, 402, "SPEND_AUTHORITY_REQUIRED", "This video asks before each paid operation; no approval was presented. Nothing was submitted.");
+      permit.used = true;
+    } else if (mode === "capped" && authority.ceilingUsd !== null && this.jobSpentUsd(clientJob) + this.jobReservedUsd(clientJob) + quote.maximumUsd > authority.ceilingUsd + 1e-9) {
+      return this.refuse(res, 402, "SESSION_BUDGET_EXHAUSTED", "This video's budget cannot cover this operation. Nothing was submitted.");
+    }
+    const available = this.available();
+    if (available !== null && available < quote.maximumUsd) {
+      this.ledger.refusals.push({ at: this.now(), keyId, reason: "no-credit" }); this.write();
+      return this.refuse(res, 402, "INSUFFICIENT_CREDIT", "This self-hosted Videoclaw account has too little credit left for this operation. Nothing was submitted.");
+    }
+    const p = this.o.provider();
+    if (!p) return this.refuse(res, 503, "PROVIDER_UNAVAILABLE", "The self-hosted gateway has no MiniMax key configured. Nothing was submitted.");
+    let priced: PricedCall;
+    try { priced = priceCall(body.model, body.params); } catch (e) { return this.refuse(res, 422, "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
+    registerSecret(p.key);
+    const op: OperationRow = { id: operationId, jobId: `mc_${randomBytes(12).toString("hex")}`, projectId, clientJob, sha256, model: priced.model.model_slug, quoteId: quote.quoteId, maximumUsd: quote.maximumUsd, status: "running", createdAt: this.now(), assets: [], keyId };
+    ops[operationId] = op;
+    this.write();
+    const run = this.runOperation(op, priced, p);
+    this.inflight.add(run);
+    void run.finally(() => this.inflight.delete(run));
+    // a fast synchronous model (TTS / image) answers the submission with its terminal result
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([run, new Promise((r) => { timer = setTimeout(r, 25_000); timer.unref?.(); })]);
+    if (timer) clearTimeout(timer);
+    return this.json(res, 200, this.operationView(op));
+  }
+  readonly inflight = new Set<Promise<void>>();
+  private async runOperation(op: OperationRow, priced: PricedCall, p: ResolvedProvider): Promise<void> {
+    const origin = new URL(p.baseUrl).origin;
+    try {
+      const out = await providerGate(`${p.gateKey ?? p.name}:media`, 1).run(() => runMiniMaxCall(priced, {
+        origin, key: p.key, fetchImpl: this.o.mediaFetch ?? this.o.fetchImpl, readOwnUpload: (u) => this.readOwnUpload(u), sleep: this.o.sleep,
+        onTask: (taskId) => { op.upstream = { task_id: taskId }; this.write(); },
+      }));
+      for (const o of out.outputs) {
+        const assetId = randomBytes(16).toString("hex");
+        const ext = o.contentType === "audio/mpeg" ? ".mp3" : o.contentType === "image/jpeg" ? ".jpg" : o.contentType === "video/mp4" ? ".mp4" : ".bin";
+        const file = this.sinkFile("assets", `${assetId}${ext}`);
+        writeFileSync(file, o.bytes, { mode: 0o600 });
+        (this.ledger.assets ??= {})[assetId] = { file, contentType: o.contentType, operationId: op.id };
+        op.assets.push({ asset_id: assetId, content_type: o.contentType });
+      }
+      op.costUsd = out.costUsd; op.upstream = { ...op.upstream, ...out.upstream }; op.status = "succeeded"; op.finishedAt = this.now();
+      const entry: PaidToolEntry = { id: `spend_${randomBytes(6).toString("hex")}`, at: this.now(), kind: "paid_tool", tool: "model_call", usd: out.costUsd, keyId: op.keyId, model: op.model, upstreamModel: priced.model.upstream_model, units: out.units, pricing: { source: PRICE_SOURCE, maximumUsd: op.maximumUsd }, operationId: op.id, clientJob: op.clientJob, status: 200 };
+      this.ledger.entries.push(entry);
+      this.write();
+      this.o.log?.(`[local-gateway] model_call ${op.model} succeeded: $${out.costUsd} (max $${op.maximumUsd})`);
+    } catch (e: any) {
+      op.status = e?.terminal === "timeout" ? "timeout" : "failed"; op.costUsd = 0; op.finishedAt = this.now();
+      op.error = (e instanceof Error ? e.message : String(e)).replaceAll(p.key, "[redacted]").slice(0, 400);
+      this.write();
+      this.o.log?.(`[local-gateway] model_call ${op.model} ${op.status}: ${op.error}`);
+    }
   }
 
   /** /anthropic/v1/messages → MiniMax, metered. Credit is checked BEFORE the call (402 when exhausted); the

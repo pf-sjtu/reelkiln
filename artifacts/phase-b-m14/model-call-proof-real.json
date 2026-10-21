@@ -1,0 +1,321 @@
+{
+ "mode": "real",
+ "jobId": "m14-mvi9y5wc",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "calls": [
+  {
+   "call": "tts",
+   "model": "minimax/speech-2.8-turbo",
+   "input": {
+    "text": "你好，这是 Videoclaw 的配音测试。",
+    "voice_id": "female-shaonv"
+   },
+   "seconds": 3.328,
+   "result": {
+    "ok": true,
+    "status": "succeeded",
+    "imported": true,
+    "cost_usd": 0.000926,
+    "cost_source": "minimax-list-price",
+    "assets": [
+     {
+      "asset_id": "7ddab73fb93824c3ccd59988a2d6436b",
+      "content_type": "audio/mpeg"
+     }
+    ]
+   },
+   "saved": [
+    {
+     "rel": "incoming/model-7ddab73fb93824c3ccd59988a2d6436b.mp3",
+     "bytes": 46068,
+     "sha256": "6670b85b81672694d23d7dc000f0fd30f22bff02451db820ba1e96f6d7be8a3f",
+     "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "mp3",
+        "codec_type": "audio",
+        "sample_rate": "32000"
+       }
+      ],
+      "format": {
+       "format_name": "mp3",
+       "duration": "2.772000",
+       "size": "46068"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "call": "image",
+   "model": "minimax/image-01",
+   "input": {
+    "prompt": "a small red paper boat on a calm blue pond, soft morning light, vertical composition",
+    "aspect_ratio": "9:16",
+    "n": 1
+   },
+   "seconds": 16.405,
+   "result": {
+    "ok": true,
+    "status": "succeeded",
+    "imported": true,
+    "cost_usd": 0.003735,
+    "cost_source": "minimax-list-price",
+    "assets": [
+     {
+      "asset_id": "fda656111852fadc5ec809e13df4607b",
+      "content_type": "image/jpeg"
+     }
+    ]
+   },
+   "saved": [
+    {
+     "rel": "incoming/model-fda656111852fadc5ec809e13df4607b.jpg",
+     "bytes": 129122,
+     "sha256": "fe8e63566bccd5e3dd3c8564b59e6443a741ef31e8f5fd0bac2eddf81e79215d",
+     "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "mjpeg",
+        "codec_type": "video",
+        "width": 720,
+        "height": 1280
+       }
+      ],
+      "format": {
+       "format_name": "image2",
+       "duration": "0.040000",
+       "size": "129122"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "call": "video",
+   "model": "minimax/hailuo-02-i2v-512p",
+   "input": {
+    "prompt": "the paper boat drifts slowly forward, gentle ripples",
+    "first_frame_image_url": "incoming/model-fda656111852fadc5ec809e13df4607b.jpg",
+    "duration": 6
+   },
+   "seconds": 131.496,
+   "result": {
+    "ok": true,
+    "status": "succeeded",
+    "imported": true,
+    "cost_usd": 0.08964,
+    "cost_source": "minimax-list-price",
+    "assets": [
+     {
+      "asset_id": "c6209b8e04b99a2dc7ca53fb21ca075c",
+      "content_type": "video/mp4"
+     }
+    ]
+   },
+   "saved": [
+    {
+     "rel": "incoming/model-c6209b8e04b99a2dc7ca53fb21ca075c.mp4",
+     "bytes": 291790,
+     "sha256": "2341dab7c50703d05a6818c51451ee81631abfeb986988ff970664eaa4d3e1a8",
+     "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 512,
+        "height": 910
+       }
+      ],
+      "format": {
+       "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+       "duration": "5.875000",
+       "size": "291790"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "decisions": [
+  {
+   "tool": "model_call",
+   "routeMode": "minimax/speech-2.8-turbo",
+   "maximumUsd": 0.000986,
+   "quoteId": "vsq_3.kUBX…"
+  },
+  {
+   "tool": "model_call",
+   "routeMode": "minimax/image-01",
+   "maximumUsd": 0.003735,
+   "quoteId": "vsq_3.Zc0W…"
+  },
+  {
+   "tool": "model_call",
+   "routeMode": "minimax/hailuo-02-i2v-512p",
+   "maximumUsd": 0.08964,
+   "quoteId": "vsq_3.oArq…"
+  }
+ ],
+ "remembered": [
+  {
+   "id": "df6f3928-abcc-4b0a-8b0b-93196a441192",
+   "path": "/v1/model_call",
+   "sha256": "001557ba13e2b3b672a941fc5e201a06568c1924fe3e9ec2618f1cd947a8c64e"
+  },
+  {
+   "id": "b7b29021-114a-4c1a-ad89-eb170cf18368",
+   "path": "/v1/model_call",
+   "sha256": "bf126fc1f5164082909e2282697252604bc0e7e0b0ec5a7f838b4419cef3dfa9"
+  },
+  {
+   "id": "d1dc7d43-950a-489a-8cba-dd4be03bf81d",
+   "path": "/v1/model_call",
+   "sha256": "4706a75fbf81b8ac892b66d4d5382c06b9415bc506def381b1215dbb60d734e8"
+  }
+ ],
+ "ledger": {
+  "paidTool": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "upstreamModel": "speech-2.8-turbo",
+    "usd": 0.000926,
+    "units": {
+     "billed_characters": 31
+    },
+    "maximumUsd": 0.000986,
+    "clientJob": "m14-mvi9y5wc"
+   },
+   {
+    "model": "minimax/image-01",
+    "upstreamModel": "image-01",
+    "usd": 0.003735,
+    "units": {
+     "images": 1
+    },
+    "maximumUsd": 0.003735,
+    "clientJob": "m14-mvi9y5wc"
+   },
+   {
+    "model": "minimax/hailuo-02-i2v-512p",
+    "upstreamModel": "MiniMax-Hailuo-02",
+    "usd": 0.08964,
+    "units": {
+     "clips": 1,
+     "seconds": 6
+    },
+    "maximumUsd": 0.08964,
+    "clientJob": "m14-mvi9y5wc"
+   }
+  ],
+  "operations": [
+   {
+    "status": "succeeded",
+    "model": "minimax/speech-2.8-turbo",
+    "costUsd": 0.000926,
+    "maximumUsd": 0.000986,
+    "upstream": {
+     "trace_id": "07280ee66bfd99d7382be59e892d07bc",
+     "audio_length_ms": 2772,
+     "usage_characters": 31
+    }
+   },
+   {
+    "status": "succeeded",
+    "model": "minimax/image-01",
+    "costUsd": 0.003735,
+    "maximumUsd": 0.003735,
+    "upstream": {
+     "id": "07280ee84fe552fca201ce44eee344c7",
+     "success_count": "1",
+     "failed_count": "0"
+    }
+   },
+   {
+    "status": "succeeded",
+    "model": "minimax/hailuo-02-i2v-512p",
+    "costUsd": 0.08964,
+    "maximumUsd": 0.08964,
+    "upstream": {
+     "task_id": "454835537322293",
+     "file_id": "454836115509563",
+     "video_width": 512,
+     "video_height": 910
+    }
+   }
+  ],
+  "quotes": 3
+ },
+ "jobBudget": {
+  "job_id": "m14-mvi9y5wc",
+  "client_job": "m14-mvi9y5wc",
+  "revision": 1792596984,
+  "mode": "capped",
+  "ceiling_usd": 0.5,
+  "spent_usd": 0.094301,
+  "llm_spent_usd": 0,
+  "reserved_usd": 0,
+  "state": "ready",
+  "in_flight": [],
+  "available_credit_usd": 4.905699
+ },
+ "engineJournal": [
+  {
+   "file": "b7b29021-114a-4c1a-ad89-eb170cf18368.json",
+   "path": "/v1/model_call",
+   "status": "succeeded",
+   "outputs": [
+    "incoming/model-fda656111852fadc5ec809e13df4607b.jpg"
+   ],
+   "delivered": [
+    "incoming/model-fda656111852fadc5ec809e13df4607b.jpg"
+   ]
+  },
+  {
+   "file": "d1dc7d43-950a-489a-8cba-dd4be03bf81d.json",
+   "path": "/v1/model_call",
+   "status": "succeeded",
+   "outputs": [
+    "incoming/model-c6209b8e04b99a2dc7ca53fb21ca075c.mp4"
+   ],
+   "delivered": [
+    "incoming/model-c6209b8e04b99a2dc7ca53fb21ca075c.mp4"
+   ]
+  },
+  {
+   "file": "df6f3928-abcc-4b0a-8b0b-93196a441192.json",
+   "path": "/v1/model_call",
+   "status": "succeeded",
+   "outputs": [
+    "incoming/model-7ddab73fb93824c3ccd59988a2d6436b.mp3"
+   ],
+   "delivered": [
+    "incoming/model-7ddab73fb93824c3ccd59988a2d6436b.mp3"
+   ]
+  }
+ ],
+ "runLogCost": [
+  {
+   "tool": "model_call",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  },
+  {
+   "tool": "model_call",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  },
+  {
+   "tool": "model_call",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  }
+ ],
+ "totalPaidUsd": 0.094301
+}

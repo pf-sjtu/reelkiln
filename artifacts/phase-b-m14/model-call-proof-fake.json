@@ -1,0 +1,284 @@
+{
+ "mode": "fake",
+ "jobId": "m14-mvi9xusx",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "calls": [
+  {
+   "call": "tts",
+   "model": "minimax/speech-2.8-turbo",
+   "input": {
+    "text": "你好，这是 Videoclaw 的配音测试。",
+    "voice_id": "female-shaonv"
+   },
+   "seconds": 1.441,
+   "result": {
+    "ok": true,
+    "status": "succeeded",
+    "imported": true,
+    "cost_usd": 0.000657,
+    "cost_source": "minimax-list-price",
+    "assets": [
+     {
+      "asset_id": "3b4b00fc2d7350e5a581018c757d0808",
+      "content_type": "audio/mpeg"
+     }
+    ]
+   },
+   "saved": [
+    {
+     "rel": "incoming/model-3b4b00fc2d7350e5a581018c757d0808.mp3",
+     "bytes": 7,
+     "sha256": "a674979b07be3009b1622c7cf93bcf0506c33e236b58077e8e897399f3225959",
+     "ffprobe": null
+    }
+   ]
+  },
+  {
+   "call": "image",
+   "model": "minimax/image-01",
+   "input": {
+    "prompt": "a small red paper boat on a calm blue pond, soft morning light, vertical composition",
+    "aspect_ratio": "9:16",
+    "n": 1
+   },
+   "seconds": 1.33,
+   "result": {
+    "ok": true,
+    "status": "succeeded",
+    "imported": true,
+    "cost_usd": 0.003735,
+    "cost_source": "minimax-list-price",
+    "assets": [
+     {
+      "asset_id": "fe273bdc7c3061c40ec0ae8e731ab879",
+      "content_type": "image/jpeg"
+     }
+    ]
+   },
+   "saved": [
+    {
+     "rel": "incoming/model-fe273bdc7c3061c40ec0ae8e731ab879.jpg",
+     "bytes": 134,
+     "sha256": "dc96652c81ee5689c77eb424e81d2a3ffb61b9f2ac4bbe5b7c4906b642fff51a",
+     "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "mjpeg",
+        "codec_type": "video",
+        "width": 1,
+        "height": 1
+       }
+      ],
+      "format": {
+       "format_name": "image2",
+       "duration": "0.040000",
+       "size": "134"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "call": "video",
+   "model": "minimax/hailuo-02-i2v-512p",
+   "input": {
+    "prompt": "the paper boat drifts slowly forward, gentle ripples",
+    "first_frame_image_url": "incoming/model-fe273bdc7c3061c40ec0ae8e731ab879.jpg",
+    "duration": 6
+   },
+   "seconds": 1.276,
+   "result": {
+    "ok": true,
+    "status": "succeeded",
+    "imported": true,
+    "cost_usd": 0.08964,
+    "cost_source": "minimax-list-price",
+    "assets": [
+     {
+      "asset_id": "befda6f962136cc9a6491a090222fc1e",
+      "content_type": "video/mp4"
+     }
+    ]
+   },
+   "saved": [
+    {
+     "rel": "incoming/model-befda6f962136cc9a6491a090222fc1e.mp4",
+     "bytes": 8,
+     "sha256": "5d50d66fa9e75c6eed0a2820906493db5ccf57321ebfad1d0db18d45080f6e16",
+     "ffprobe": null
+    }
+   ]
+  }
+ ],
+ "decisions": [
+  {
+   "tool": "model_call",
+   "routeMode": "minimax/speech-2.8-turbo",
+   "maximumUsd": 0.000986,
+   "quoteId": "vsq_3.mD4O…"
+  },
+  {
+   "tool": "model_call",
+   "routeMode": "minimax/image-01",
+   "maximumUsd": 0.003735,
+   "quoteId": "vsq_3.3ye9…"
+  },
+  {
+   "tool": "model_call",
+   "routeMode": "minimax/hailuo-02-i2v-512p",
+   "maximumUsd": 0.08964,
+   "quoteId": "vsq_3.eIQ7…"
+  }
+ ],
+ "remembered": [
+  {
+   "id": "6f7f0498-7c6a-4516-ad13-1c20e799dc72",
+   "path": "/v1/model_call",
+   "sha256": "ad2988522a6b9aa6de8fba6ef51283b04c4c54dc08b60f5aeb1f02d20fcc41a5"
+  },
+  {
+   "id": "12d1504d-dec0-46af-affc-14d89fc46f58",
+   "path": "/v1/model_call",
+   "sha256": "ecbc03a053029212b61d1a9de974194e827d6a06562fdab373b318ef00145919"
+  },
+  {
+   "id": "88d62671-9bf9-4390-8194-c32add6e9e43",
+   "path": "/v1/model_call",
+   "sha256": "2af96e9176a92e4a0c4f9d2d4a76f78db1a37b2a58c8d120cd520777e84da0ad"
+  }
+ ],
+ "ledger": {
+  "paidTool": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "upstreamModel": "speech-2.8-turbo",
+    "usd": 0.000657,
+    "units": {
+     "billed_characters": 22
+    },
+    "maximumUsd": 0.000986,
+    "clientJob": "m14-mvi9xusx"
+   },
+   {
+    "model": "minimax/image-01",
+    "upstreamModel": "image-01",
+    "usd": 0.003735,
+    "units": {
+     "images": 1
+    },
+    "maximumUsd": 0.003735,
+    "clientJob": "m14-mvi9xusx"
+   },
+   {
+    "model": "minimax/hailuo-02-i2v-512p",
+    "upstreamModel": "MiniMax-Hailuo-02",
+    "usd": 0.08964,
+    "units": {
+     "clips": 1,
+     "seconds": 6
+    },
+    "maximumUsd": 0.08964,
+    "clientJob": "m14-mvi9xusx"
+   }
+  ],
+  "operations": [
+   {
+    "status": "succeeded",
+    "model": "minimax/speech-2.8-turbo",
+    "costUsd": 0.000657,
+    "maximumUsd": 0.000986,
+    "upstream": {
+     "usage_characters": 22
+    }
+   },
+   {
+    "status": "succeeded",
+    "model": "minimax/image-01",
+    "costUsd": 0.003735,
+    "maximumUsd": 0.003735,
+    "upstream": {
+     "success_count": 1
+    }
+   },
+   {
+    "status": "succeeded",
+    "model": "minimax/hailuo-02-i2v-512p",
+    "costUsd": 0.08964,
+    "maximumUsd": 0.08964,
+    "upstream": {
+     "task_id": "fake-task",
+     "file_id": "f1"
+    }
+   }
+  ],
+  "quotes": 3
+ },
+ "jobBudget": {
+  "job_id": "m14-mvi9xusx",
+  "client_job": "m14-mvi9xusx",
+  "revision": 1792596952,
+  "mode": "capped",
+  "ceiling_usd": 0.5,
+  "spent_usd": 0.094032,
+  "llm_spent_usd": 0,
+  "reserved_usd": 0,
+  "state": "ready",
+  "in_flight": [],
+  "available_credit_usd": 4.905968
+ },
+ "engineJournal": [
+  {
+   "file": "12d1504d-dec0-46af-affc-14d89fc46f58.json",
+   "path": "/v1/model_call",
+   "status": "succeeded",
+   "outputs": [
+    "incoming/model-fe273bdc7c3061c40ec0ae8e731ab879.jpg"
+   ],
+   "delivered": [
+    "incoming/model-fe273bdc7c3061c40ec0ae8e731ab879.jpg"
+   ]
+  },
+  {
+   "file": "6f7f0498-7c6a-4516-ad13-1c20e799dc72.json",
+   "path": "/v1/model_call",
+   "status": "succeeded",
+   "outputs": [
+    "incoming/model-3b4b00fc2d7350e5a581018c757d0808.mp3"
+   ],
+   "delivered": [
+    "incoming/model-3b4b00fc2d7350e5a581018c757d0808.mp3"
+   ]
+  },
+  {
+   "file": "88d62671-9bf9-4390-8194-c32add6e9e43.json",
+   "path": "/v1/model_call",
+   "status": "succeeded",
+   "outputs": [
+    "incoming/model-befda6f962136cc9a6491a090222fc1e.mp4"
+   ],
+   "delivered": [
+    "incoming/model-befda6f962136cc9a6491a090222fc1e.mp4"
+   ]
+  }
+ ],
+ "runLogCost": [
+  {
+   "tool": "model_call",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  },
+  {
+   "tool": "model_call",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  },
+  {
+   "tool": "model_call",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  }
+ ],
+ "totalPaidUsd": 0.094032
+}
