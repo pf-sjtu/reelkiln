@@ -1,0 +1,65 @@
+# T0 engine venv repair (2026-10-22 01:54:53 UTC+8)
+before: .venv/bin/python -> /workspace/videoclaw/m13-run/.local/share/uv/python/cpython-3.14.6-linux-x86_64-gnu/bin/python3.14 (per-run scratch dir; deleted => 'installed engine cannot start a session')
+after:  /workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d/.venv/bin/python -> /home/box/.local/share/uv/python/cpython-3.14.6-linux-x86_64-gnu/bin/python3.14
+pyvenv.cfg: home = /home/box/.local/share/uv/python/cpython-3.14.6-linux-x86_64-gnu/bin
+old m13-run python dir moved to python.unused-m15; venv still imports => no remaining reference
+harnesses: ui-e2e*.mjs + packaged-smoke.mjs now pass UV_PYTHON_INSTALL_DIR=/home/box/.local/share/uv/python (HOME=RUN no longer redirects uv python installs into per-run dirs)
+
+## engine doctor (uv run --project ENGINE python tools/doctor.py --json, app env: VIDEOCLAW_ENGINE/WORKSPACE/JOBS_DIR, gateway=local healthz stub, VIDEOCLAW_API_KEY=vcs_doctor_no_authority)
+{
+  "ok": true,
+  "engine": "/workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d",
+  "workspace": "/tmp/m15ui/dry5/Videoclaw",
+  "checks": {
+    "ffmpeg": {
+      "ok": true,
+      "detail": "/usr/bin/ffmpeg \u00b7 ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+      "ms": 86
+    },
+    "ffprobe": {
+      "ok": true,
+      "detail": "/usr/bin/ffprobe \u00b7 ffprobe version 7.1.5-0+deb13u1 Copyright (c) 2007-2026 the FFmpeg developers",
+      "ms": 52
+    },
+    "node": {
+      "ok": true,
+      "detail": "/home/box/.n/bin/node \u00b7 v24.22.0",
+      "ms": 5
+    },
+    "python venv": {
+      "ok": true,
+      "detail": "imports ok: PIL, numpy, scipy, requests, dotenv, elevenlabs, fontTools, openai",
+      "ms": 919
+    },
+    "yt-dlp": {
+      "ok": true,
+      "detail": "venv yt-dlp 2026.06.09",
+      "ms": 619
+    },
+    "remotion": {
+      "ok": true,
+      "detail": "package.json + node_modules present (use --deep for a smoke render)",
+      "ms": 0
+    },
+    "gateway": {
+      "ok": true,
+      "detail": "http://127.0.0.1:47801 \u2192 HTTP 200 (key present)",
+      "ms": 83
+    },
+    "workspace": {
+      "ok": true,
+      "detail": "split \u00b7 jobs=/tmp/m15ui/dry5/Videoclaw/jobs",
+      "ms": 0
+    },
+    "hooks": {
+      "ok": true,
+      "detail": "all hook paths use portable engine root \u00b7 workspace bytes canonical",
+      "ms": 9
+    },
+    "taste packs": {
+      "ok": true,
+      "detail": "2 pack(s): _default, _starter",
+      "ms": 0
+    }
+  }
+}

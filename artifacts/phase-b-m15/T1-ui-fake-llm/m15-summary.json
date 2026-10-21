@@ -1,0 +1,531 @@
+{
+ "llmUpstream": "FAKE-LLM: local scripted Anthropic/t2a stub (http://127.0.0.1:47999/anthropic, port/tools/m15-fake-anthropic-upstream.mjs) — UI/cards/IPC/AgentHost/gateway proxy/shim ledger/engine real; LLM turns + TTS bytes fake; real spend $0",
+ "phase": "m15",
+ "started": "2026-10-21T17:50:09.865Z",
+ "steps": {
+  "ask_each_mode": {
+   "ok": true,
+   "before": "unlimited_for_video",
+   "dialog": true,
+   "toBypass": "[\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"bypassPermissions\",{\"confirmSpendLimitRemoval\":true}]",
+   "toAuto": "[\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"auto\",null]",
+   "policy": "ask_each",
+   "installed": [
+    "{\"ts\":\"2026-10-21T17:51:17.385Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"jobId\":\"ok-vc3l5ei-20261021-ab4ad9\",\"policy\":\"unlimited_for_video\"}",
+    "{\"ts\":\"2026-10-21T17:51:19.057Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"jobId\":\"ok-vc3l5ei-20261021-ab4ad9\",\"policy\":\"ask_each\"}"
+   ]
+  },
+  "ask_each_deny": {
+   "ok": true,
+   "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$5.00 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.000956,
+     "allowed": false,
+     "reason": "Paid work was denied by the user."
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "operation",
+     "maximumUsd": 0.000956
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "deny"
+    }
+   ],
+   "settled": [
+    {
+     "family": "money",
+     "outcome": "denied",
+     "title": "Paid operation",
+     "summary": "Not approved"
+    }
+   ],
+   "paidEntries": 0,
+   "files": [],
+   "policy": "ask_each",
+   "reply": "完成 VC3L5EI"
+  },
+  "ask_each_allow_once": {
+   "ok": true,
+   "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$5.00 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.000956,
+     "allowed": false,
+     "reason": "Paid work was denied by the user."
+    },
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.000956,
+     "allowed": true,
+     "once": true
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "operation",
+     "maximumUsd": 0.000956
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "once"
+    }
+   ],
+   "settled": [
+    {
+     "family": "money",
+     "outcome": "approved",
+     "title": "Paid operation",
+     "summary": "Approved"
+    }
+   ],
+   "paid": [
+    {
+     "model": "minimax/speech-2.8-turbo",
+     "usd": 0.000956,
+     "units": {
+      "billed_characters": 32
+     },
+     "maximumUsd": 0.000956,
+     "pricing": "minimax-cn official pay-as-you-go list (CNY) × models.dev minimax-cn USD/CNY 0.1494"
+    }
+   ],
+   "permits": [
+    {
+     "used": true
+    }
+   ],
+   "files": [
+    {
+     "f": "model-f3757a484454861bb8dfe1f2ae6dae69.mp3",
+     "bytes": 4096
+    }
+   ],
+   "policy": "ask_each",
+   "reply": "完成 VC3L5EI"
+  },
+  "files_card": {
+   "ok": true,
+   "card": "Files requested\n请提供一张参考图（PNG）\nAccepts: .png\nDrop files here, or click to browse\nSend files\nDecline",
+   "listed": "m15-ref.png",
+   "copied": [
+    "m15-ref.png"
+   ],
+   "tools": [
+    "mcp__studio__call_model",
+    "mcp__studio__call_model",
+    "mcp__studio__request_files"
+   ],
+   "settled": [
+    {
+     "family": "files",
+     "outcome": "answered",
+     "title": "Files needed",
+     "summary": "1 file added"
+    }
+   ],
+   "reply": "完成 VC3L5EI"
+  },
+  "raise_deny": {
+   "ok": true,
+   "cap": {
+    "usedCentsBefore": 1,
+    "ceilingCents": 3,
+    "opener": "Change video budget"
+   },
+   "card": "Raise spending limit?\nRunning a model: raise budget to $0.04?\nThis would go past the approved $0.03 total.\nRaise limit by $0.01\nDeny",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.020378,
+     "allowed": false,
+     "reason": "The spending-limit increase was not approved."
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "raise",
+     "maximumUsd": 0.020378
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "deny"
+    }
+   ],
+   "settled": [
+    {
+     "family": "budget",
+     "outcome": "denied",
+     "title": "Raise spending limit?",
+     "summary": "Not approved"
+    }
+   ],
+   "paidEntries": 0,
+   "ceilingCentsAfter": 3,
+   "reply": "完成 VC3L5EI"
+  },
+  "raise_allow": {
+   "ok": true,
+   "cap": {
+    "usedCentsBefore": 1,
+    "ceilingCents": 3,
+    "opener": "Change video budget"
+   },
+   "card": "Raise spending limit?\nRunning a model: raise budget to $0.04?\nThis would go past the approved $0.03 total.\nRaise limit by $0.01\nDeny",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.020378,
+     "allowed": false,
+     "reason": "The spending-limit increase was not approved."
+    },
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.020378,
+     "allowed": true
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "raise",
+     "maximumUsd": 0.020378
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "once"
+    }
+   ],
+   "settled": [
+    {
+     "family": "budget",
+     "outcome": "approved",
+     "title": "Raise spending limit?",
+     "summary": "$0.04 limit approved"
+    }
+   ],
+   "paid": [
+    {
+     "model": "minimax/speech-2.8-turbo",
+     "usd": 0.020378,
+     "units": {
+      "billed_characters": 682
+     },
+     "maximumUsd": 0.020378
+    }
+   ],
+   "ceilingCentsAfter": 4,
+   "files": [
+    {
+     "f": "model-25e84dce6d4203b79ad1e7b487a9a289.mp3",
+     "bytes": 4096
+    }
+   ],
+   "chip": "$0.03 / $0.04",
+   "reply": "完成 VC3L5EI"
+  }
+ },
+ "code": "VC3L5EI",
+ "landing": "home",
+ "sessionA": "ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54",
+ "llmRouteA": "gateway",
+ "jobA": "ok-vc3l5ei-20261021-ab4ad9",
+ "mode": {
+  "before": "unlimited_for_video",
+  "dialog": true,
+  "toBypass": "[\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"bypassPermissions\",{\"confirmSpendLimitRemoval\":true}]",
+  "toAuto": "[\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"auto\",null]",
+  "policy": "ask_each",
+  "installed": [
+   "{\"ts\":\"2026-10-21T17:51:17.385Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"jobId\":\"ok-vc3l5ei-20261021-ab4ad9\",\"policy\":\"unlimited_for_video\"}",
+   "{\"ts\":\"2026-10-21T17:51:19.057Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"ab4ad97c-c6e3-4d91-a926-c10f8c2c0d54\",\"jobId\":\"ok-vc3l5ei-20261021-ab4ad9\",\"policy\":\"ask_each\"}"
+  ]
+ },
+ "askDeny": {
+  "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$5.00 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.000956,
+    "allowed": false,
+    "reason": "Paid work was denied by the user."
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "operation",
+    "maximumUsd": 0.000956
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "deny"
+   }
+  ],
+  "settled": [
+   {
+    "family": "money",
+    "outcome": "denied",
+    "title": "Paid operation",
+    "summary": "Not approved"
+   }
+  ],
+  "paidEntries": 0,
+  "files": [],
+  "policy": "ask_each",
+  "reply": "完成 VC3L5EI"
+ },
+ "askAllow": {
+  "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$5.00 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.000956,
+    "allowed": false,
+    "reason": "Paid work was denied by the user."
+   },
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.000956,
+    "allowed": true,
+    "once": true
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "operation",
+    "maximumUsd": 0.000956
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "once"
+   }
+  ],
+  "settled": [
+   {
+    "family": "money",
+    "outcome": "approved",
+    "title": "Paid operation",
+    "summary": "Approved"
+   }
+  ],
+  "paid": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "usd": 0.000956,
+    "units": {
+     "billed_characters": 32
+    },
+    "maximumUsd": 0.000956,
+    "pricing": "minimax-cn official pay-as-you-go list (CNY) × models.dev minimax-cn USD/CNY 0.1494"
+   }
+  ],
+  "permits": [
+   {
+    "used": true
+   }
+  ],
+  "files": [
+   {
+    "f": "model-f3757a484454861bb8dfe1f2ae6dae69.mp3",
+    "bytes": 4096
+   }
+  ],
+  "policy": "ask_each",
+  "reply": "完成 VC3L5EI"
+ },
+ "files": {
+  "card": "Files requested\n请提供一张参考图（PNG）\nAccepts: .png\nDrop files here, or click to browse\nSend files\nDecline",
+  "listed": "m15-ref.png",
+  "copied": [
+   "m15-ref.png"
+  ],
+  "tools": [
+   "mcp__studio__call_model",
+   "mcp__studio__call_model",
+   "mcp__studio__request_files"
+  ],
+  "settled": [
+   {
+    "family": "files",
+    "outcome": "answered",
+    "title": "Files needed",
+    "summary": "1 file added"
+   }
+  ],
+  "reply": "完成 VC3L5EI"
+ },
+ "sessionB": "c9bdc485-7e23-45e6-afe0-34d21f01232e",
+ "llmRouteB": "gateway",
+ "jobB": "ok-vc3l5ei-20261021-c9bdc4",
+ "raiseDeny": {
+  "cap": {
+   "usedCentsBefore": 1,
+   "ceilingCents": 3,
+   "opener": "Change video budget"
+  },
+  "card": "Raise spending limit?\nRunning a model: raise budget to $0.04?\nThis would go past the approved $0.03 total.\nRaise limit by $0.01\nDeny",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.020378,
+    "allowed": false,
+    "reason": "The spending-limit increase was not approved."
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "raise",
+    "maximumUsd": 0.020378
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "deny"
+   }
+  ],
+  "settled": [
+   {
+    "family": "budget",
+    "outcome": "denied",
+    "title": "Raise spending limit?",
+    "summary": "Not approved"
+   }
+  ],
+  "paidEntries": 0,
+  "ceilingCentsAfter": 3,
+  "reply": "完成 VC3L5EI"
+ },
+ "raiseAllow": {
+  "cap": {
+   "usedCentsBefore": 1,
+   "ceilingCents": 3,
+   "opener": "Change video budget"
+  },
+  "card": "Raise spending limit?\nRunning a model: raise budget to $0.04?\nThis would go past the approved $0.03 total.\nRaise limit by $0.01\nDeny",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.020378,
+    "allowed": false,
+    "reason": "The spending-limit increase was not approved."
+   },
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.020378,
+    "allowed": true
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "raise",
+    "maximumUsd": 0.020378
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "once"
+   }
+  ],
+  "settled": [
+   {
+    "family": "budget",
+    "outcome": "approved",
+    "title": "Raise spending limit?",
+    "summary": "$0.04 limit approved"
+   }
+  ],
+  "paid": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "usd": 0.020378,
+    "units": {
+     "billed_characters": 682
+    },
+    "maximumUsd": 0.020378
+   }
+  ],
+  "ceilingCentsAfter": 4,
+  "files": [
+   {
+    "f": "model-25e84dce6d4203b79ad1e7b487a9a289.mp3",
+    "bytes": 4096
+   }
+  ],
+  "chip": "$0.03 / $0.04",
+  "reply": "完成 VC3L5EI"
+ },
+ "ledgerAtEnd": {
+  "entries": 22,
+  "usd": 0.025414000000000003,
+  "paidToolUsd": 0.021334,
+  "llmUsd": 0.004080000000000002
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "attachment:preview",
+  "attachment:stage",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "input:respond",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "materials:preview",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "session:setPermissionMode",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "spend:setCeiling",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T17:51:52.353Z"
+}

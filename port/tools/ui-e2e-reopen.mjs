@@ -49,7 +49,7 @@ const disk = { sessionId: sid, title: target.title, sdkSessionId: target.sdkSess
 say(`disk ${JSON.stringify(disk)}`);
 
 // ---- launch (fresh process; no in-memory state survives) ----------------------------------------
-const env = { ...process.env, HOME: RUN, VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax", VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl") };
+const env = { ...process.env, HOME: RUN, UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python", VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax", VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl") };
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;
 const appArgs = ["--no-sandbox", `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${UD}`];
 let cmd = "xvfb-run", args;

@@ -74,7 +74,7 @@ function pngFile(path, rgb) { // a small valid RGB PNG (no image libraries on th
 }
 
 // ---- launch ------------------------------------------------------------------------------------------
-const env = { ...process.env, HOME: RUN, VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax", VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl"), VIDEOCLAW_PORT_IPC_LOG: IPC };
+const env = { ...process.env, HOME: RUN, UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python", VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax", VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl"), VIDEOCLAW_PORT_IPC_LOG: IPC };
 if (PHASE === "retry") env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS = opt("--turn-timeout-ms", "6000");
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;
 if (PHASE === "local") delete env.MINIMAX_API_KEY; // the local phase must not be able to reach MiniMax

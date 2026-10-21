@@ -42,7 +42,7 @@ function prepare(t) {
 }
 
 function baseEnv(home) {
-  const env = { ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, ".config") };
+  const env = { ...process.env, HOME: home, UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python", XDG_CONFIG_HOME: join(home, ".config") };
   delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_CLAUDE_CODE_EXECUTABLE; delete env.ELECTRON_RUN_AS_NODE;
   return env;
 }

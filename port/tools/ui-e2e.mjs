@@ -62,7 +62,7 @@ const readJson = (p) => { try { return JSON.parse(readFileSync(p, "utf8")); } ca
 const steps = {}; const verdict = (id, ok, detail) => { steps[id] = { ok, ...detail }; say(`STEP ${id}: ${ok ? "PASS" : "FAIL"} ${JSON.stringify(detail).slice(0, 400)}`); };
 
 // ---- launch ----------------------------------------------------------------------------------
-const env = { ...process.env, HOME: RUN, ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
+const env = { ...process.env, HOME: RUN, UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python", ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
   VIDEOCLAW_PORT_SMOKE_SAVE_AS: EXPORT, VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl"),
   VIDEOCLAW_PORT_TURN_TIMEOUT_MS: String(TURN_TIMEOUT_MS - 60_000) };
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;

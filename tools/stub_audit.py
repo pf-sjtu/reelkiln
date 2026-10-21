@@ -15,7 +15,7 @@ AUDIT = {
  # ---- a, implemented in M8 (port/src/main/local-channels.ts, agent-host.ts, session.ts, quickstart-ipc.ts)
  "session:rename": (A, 61731, "done-M8: host.renameSession L38915, registry flush"),
  "session:reorder": (A, 61698, "done-M8: host.reorderSessions L38482 (sidebarOrder)"),
- "session:setPermissionMode": (A, 61781, "done-M8 (real-partial): host.setPermissionMode L43987; spend/codex branches not ported"),
+ "session:setPermissionMode": (A, 61781, "done-M8/M15 (real-partial): host.setPermissionMode L43987; spend-policy branch ported in M15 (docs/32), codex branch not ported"),
  "client:rename": (A, 61819, "done-M8: SessionRegistry renameClient L36367"),
  "client:remove": (A, 61820, "done-M8: removeClient L36384 + tombstones"),
  "client:reorder": (A, 61826, "done-M8: reorderClients L36332"),
@@ -31,7 +31,7 @@ AUDIT = {
  "characters:approve": (A, 61893, "done-M8: CharacterStore.approve"),
  "characters:discard": (A, 61900, "done-M8: CharacterStore.discard"),
  "characters:delete": (A, 61903, "done-M8: CharacterStore.delete"),
- "permission:shown": (A, 61803, "done-M8: send; local log only"),
+ "permission:shown": (A, 61803, "done-M8/M15: send → host.noteSpendApprovalShown L46776 (raise / ask_each cards, docs/32)"),
  "quit:rendererState": (A, 61804, "done-M8: send; verbatim normalisation into quit coordinator state"),
  "quickstart:mark": (A, 61250, "done-M8: verbatim validation + latency ring"),
  "quickstart:impression": (A, 61254, "done-M8: validation; outbox?.enqueue no-op (gateway)"),

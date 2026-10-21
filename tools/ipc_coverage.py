@@ -26,7 +26,7 @@ real_env = {"bootstrap:run"}
 # docs/24 → docs/25: session:history now replays the display transcript + SDK transcript (real).
 # docs/25 real-partial: original handler shape, some original branches not ported (reason given).
 PARTIAL = {
-    "session:setPermissionMode": "no spend-policy branch (port has no paid-spend ledger); codex containment is enforced in the codex runtime (docs/27)",
+    "session:setPermissionMode": "docs/32: the spend-policy branch is ported (Bypass ⇒ unlimited_for_video, leaving Bypass ⇒ ask_each via spendPolicyForMaterialChange, capped-limit removal consent); still partial: codex containment is enforced in the codex runtime (docs/27) instead of the original applyPermissionMode codex branch",
     # docs/26 real-partial: the handler runs the original body, but the branch that does real work needs (b)/(c)
     "characters:voices:list": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",
     "characters:voice:approve": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",

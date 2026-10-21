@@ -1,0 +1,179 @@
+{
+ "note": "shim ledger at end of FAKE-LLM run (LLM turns priced at MiniMax rates from fake usage; paid_tool entries = TTS ops, fake bytes); no secrets",
+ "entries": [
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605014008
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605014045
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605081421
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605081464
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605082710
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605085101
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605085120
+  },
+  {
+   "kind": "paid_tool",
+   "model": "minimax/speech-2.8-turbo",
+   "usd": 0.000956,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "operationId": "b4c59e21-480a-4df4-8b95-05975d2f3d36",
+   "units": {
+    "billed_characters": 32
+   },
+   "at": 1792605087292
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605087398
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605089781
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-ab4ad9",
+   "at": 1792605090956
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605095671
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605095720
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605102780
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605102784
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605102816
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605105075
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605107723
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605107727
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605107750
+  },
+  {
+   "kind": "paid_tool",
+   "model": "minimax/speech-2.8-turbo",
+   "usd": 0.020378,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "operationId": "c8c98bc9-7112-44f1-bd88-2d9d1800c116",
+   "units": {
+    "billed_characters": 682
+   },
+   "at": 1792605109922
+  },
+  {
+   "kind": "model_call",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.000204,
+   "clientJob": "ok-vc3l5ei-20261021-c9bdc4",
+   "at": 1792605110003
+  }
+ ],
+ "permits": [
+  {
+   "permit": "vsp_2G7v52S9GTSHvCrRTix7BAUc",
+   "quoteId": "vsq_3.zBw-dQV-q-HaBPmr0BP3-fIZ",
+   "sha256": "0621fe830da24678365a1bf36dfdce5f8318e869093f272da9269b9da8fe0a61",
+   "jobId": "ok-vc3l5ei-20261021-ab4ad9",
+   "maximumApprovedUsd": 0.000956,
+   "at": 1792605086647,
+   "used": true
+  }
+ ],
+ "authorities": null
+}

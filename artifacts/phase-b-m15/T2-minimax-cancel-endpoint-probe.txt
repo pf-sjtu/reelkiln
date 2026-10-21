@@ -1,0 +1,4 @@
+$ curl -X DELETE https://api.minimaxi.com/v2/video_generation/123456789012345 (fake task id, no charge) — 2026-10-22 01:25 UTC+8
+{"type":"error","error":{"type":"bad_request_error","message":"invalid params, invalid task_id (2013)","http_code":"400"}}
+HTTP 400
+=> the cancel endpoint exists on the CN host the shim uses; a queued task id returns {"action":"cancelled"} per MiniMax docs (not exercised with a real task: a real queued video would cost the weekly video quota).
