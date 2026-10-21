@@ -1,0 +1,4 @@
+[smoke] push session:event [{"sessionId":"ceca381e-41ab-4355-a4e1-3d145fc56024","event":{"kind":"port_runtime","phase":"started","llmRoute":"codex","model":"MiniMax-M3.1-Flash","gateProxy":true}}]
+[smoke] push session:event [{"sessionId":"ceca381e-41ab-4355-a4e1-3d145fc56024","event":{"kind":"port_runtime","phase":"started","llmRoute":"codex","model":"MiniMax-M3.1-Flash","gateProxy":true}}]
+[smoke] push session:event [{"sessionId":"ceca381e-41ab-4355-a4e1-3d145fc56024","event":{"kind":"error","message":"The turn ended with error_during_execution: We’re currently experiencing high demand, which may cause temporary errors.","canRetry":true}}]
+{"ts":"2026-10-21T17:16:38.204Z","level":"info","event":"agent.runtime.closed","component":"agent-host","sessionId":"ceca381e-41ab-4355-a4e1-3d145fc56024","reason":"stream-ended","gateProxy":{"requests":30,"rejected":0,"maxInflight":1,"inflight":0,"structuredEmulated":0,"structuredJsonOk":0,"usage":{}}}

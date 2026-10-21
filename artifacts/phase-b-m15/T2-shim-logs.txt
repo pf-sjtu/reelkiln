@@ -1,0 +1,3 @@
+[local-gateway] recovered 1 interrupted operation(s): resumed_polling
+[local-gateway] model_call minimax/hailuo-02-i2v-512p video task cancelled by MiniMax while queued (nothing charged)
+[local-gateway] model_call minimax/speech-2.8-turbo failed: MiniMax /v1/t2a_v2 status_code 2067: 当前已达到 Token Plan 用量上限。为避免调用中断，请升级 Token Plan 套餐，或购买积分补充用量并开启积分自动消耗。

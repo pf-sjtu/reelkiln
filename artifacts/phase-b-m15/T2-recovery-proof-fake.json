@@ -1,0 +1,258 @@
+{
+ "mode": "fake",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "scenarios": {
+  "engine-kill": {
+   "phaseAtKill": {
+    "phase": "sent",
+    "status": "running"
+   },
+   "engineExit": "killed (SIGKILL)",
+   "shimOperation": {
+    "status": "succeeded",
+    "costUsd": 0.000359
+   },
+   "collectorPasses": 1,
+   "rowsLeft": [],
+   "completedModelResults": [
+    {
+     "operation_id": "c06cb642-fcd0-4074-b46b-fb12a3c2118e",
+     "status": "succeeded",
+     "saved": [
+      "incoming/model-279a3d5f14ec2092dbbf556862f57382.mp3"
+     ],
+     "cost_usd": 0.000359
+    }
+   ],
+   "incoming": [
+    {
+     "file": "model-279a3d5f14ec2092dbbf556862f57382.mp3",
+     "bytes": 11,
+     "sha256": "93fb94ae42739e60"
+    }
+   ],
+   "paidEntriesAdded": 1,
+   "paidUsd": [
+    0.000359
+   ],
+   "minimaxTtsRequests": 1,
+   "pass": true
+  },
+  "gateway-kill": {
+   "engineExit": "killed (SIGKILL)",
+   "collectorWhileGatewayDown": [
+    {
+     "id": "e4325852-f48f-4c7b-8273-bd54c4a568f8",
+     "cancelRequested": false,
+     "recoveryFailures": 1
+    }
+   ],
+   "shimOperation": {
+    "status": "succeeded",
+    "costUsd": 0.08964,
+    "recovery": {
+     "at": 1792603083709,
+     "outcome": "resumed_polling"
+    }
+   },
+   "minimaxVideoSubmits": 1,
+   "submitPids": 1,
+   "collectorPasses": 1,
+   "rowsLeft": [],
+   "incoming": [
+    {
+     "file": "model-61dcb58d2d3b30b7421771d74af7edf7.mp4",
+     "bytes": 12,
+     "sha256": "d9368875648c9539"
+    },
+    {
+     "file": "model-bf5a5c7eea24de3b79c8884b2238b088.jpg",
+     "bytes": 70,
+     "sha256": "c414cd0e204de974"
+    }
+   ],
+   "paidEntriesAdded": 1,
+   "pass": true
+  },
+  "stop-cancel": {
+   "rowsAfterStop": [
+    {
+     "id": "23acdf21-a22f-4a32-b1af-955da4bd5b17",
+     "cancelRequested": true
+    }
+   ],
+   "shimOperation": {
+    "status": "canceled",
+    "costUsd": 0,
+    "cancel": {
+     "requestedAt": 1792603087073,
+     "outcome": "upstream_cancelled"
+    }
+   },
+   "minimaxRequestsAfterSubmit": [
+    "POST /v1/video_generation",
+    "DELETE /v2/video_generation/fake-task-m15"
+   ],
+   "collectorPasses": 1,
+   "rowsLeft": [],
+   "paidEntriesAdded": 0,
+   "completed": [
+    {
+     "status": "canceled",
+     "cost_usd": 0
+    }
+   ],
+   "pass": true
+  }
+ },
+ "ledger": {
+  "paidTool": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "usd": 0.000359,
+    "clientJob": "m15-ek-mvidl59f",
+    "operationId": "c06cb642-fcd0-4074-b46b-fb12a3c2118e"
+   },
+   {
+    "model": "minimax/image-01",
+    "usd": 0.003735,
+    "clientJob": "m15-gk-mvidl9jk",
+    "operationId": "7694abbc-9735-4683-8615-8565f9edaca5"
+   },
+   {
+    "model": "minimax/hailuo-02-i2v-512p",
+    "usd": 0.08964,
+    "clientJob": "m15-gk-mvidl9jk",
+    "operationId": "e4325852-f48f-4c7b-8273-bd54c4a568f8"
+   },
+   {
+    "model": "minimax/image-01",
+    "usd": 0.003735,
+    "clientJob": "m15-sc-mvidlc5y",
+    "operationId": "c2a0c606-b6b9-4ee9-9db8-ccc9b72252e2"
+   }
+  ],
+  "unsettledExposure": [],
+  "totalPaidUsd": 0.097469
+ },
+ "hostEvents": [
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "c06cb642-fcd0-4074-b46b-fb12a3c2118e"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "c06cb642-fcd0-4074-b46b-fb12a3c2118e",
+   "status": "succeeded",
+   "complete": true,
+   "cancelRequested": false
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "7694abbc-9735-4683-8615-8565f9edaca5"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.operation_status",
+   "operationId": "7694abbc-9735-4683-8615-8565f9edaca5",
+   "status": "succeeded"
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "7694abbc-9735-4683-8615-8565f9edaca5",
+   "status": "succeeded",
+   "complete": true,
+   "cancelRequested": false
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "e4325852-f48f-4c7b-8273-bd54c4a568f8"
+  },
+  {
+   "event": "agent.paid.operation_collect_failed",
+   "operationId": "e4325852-f48f-4c7b-8273-bd54c4a568f8",
+   "failures": 1
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "e4325852-f48f-4c7b-8273-bd54c4a568f8",
+   "status": "succeeded",
+   "complete": true,
+   "cancelRequested": false
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "c2a0c606-b6b9-4ee9-9db8-ccc9b72252e2"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.operation_status",
+   "operationId": "c2a0c606-b6b9-4ee9-9db8-ccc9b72252e2",
+   "status": "succeeded"
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "c2a0c606-b6b9-4ee9-9db8-ccc9b72252e2",
+   "status": "succeeded",
+   "complete": true,
+   "cancelRequested": false
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "23acdf21-a22f-4a32-b1af-955da4bd5b17"
+  },
+  {
+   "event": "agent.paid.cancel_requested",
+   "operations": [
+    "23acdf21-a22f-4a32-b1af-955da4bd5b17"
+   ]
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "23acdf21-a22f-4a32-b1af-955da4bd5b17",
+   "status": "canceled",
+   "complete": true,
+   "cancelRequested": true
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  }
+ ]
+}

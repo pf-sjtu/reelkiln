@@ -1,0 +1,59 @@
+{
+ "mode": "real",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "scenarios": {
+  "engine-kill": {
+   "phaseAtKill": {
+    "phase": "sent",
+    "status": "running"
+   },
+   "engineExit": "killed (SIGKILL)",
+   "shimOperation": {
+    "status": "failed",
+    "costUsd": 0
+   },
+   "collectorPasses": 1,
+   "rowsLeft": [],
+   "completedModelResults": [
+    {
+     "operation_id": "2427e859-7f45-4311-9217-96a2c79c7db4",
+     "status": "failed",
+     "saved": [],
+     "cost_usd": 0
+    }
+   ],
+   "incoming": [],
+   "paidEntriesAdded": 0,
+   "paidUsd": [],
+   "minimaxTtsRequests": "n/a (real: one request; ledger shows the single charge)",
+   "pass": false
+  }
+ },
+ "ledger": {
+  "paidTool": [],
+  "unsettledExposure": [],
+  "totalPaidUsd": 0
+ },
+ "hostEvents": [
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "2427e859-7f45-4311-9217-96a2c79c7db4"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "2427e859-7f45-4311-9217-96a2c79c7db4",
+   "status": "failed",
+   "complete": true,
+   "cancelRequested": false
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  }
+ ]
+}

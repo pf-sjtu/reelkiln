@@ -1,0 +1,1 @@
+{"ts":"2026-10-21T17:14:19.177Z","level":"warn","event":"agent.spawn_failed","component":"agent-host","sessionId":"0c9fdbc4-cad3-453e-a872-fcad9185a4ba","error":{"name":"SessionContextError","message":"installed engine cannot start a session: the engine's own Python (.venv/bin/python) is missing or damaged","code":"VIDEOCLAW_SESSION_CONTEXT_INVALID"}}
