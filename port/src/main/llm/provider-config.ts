@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { z } from "zod";
 import { LlmProviderError } from "./errors";
 import { DEFAULT_RETRY_POLICY } from "./retry";
+import { STRUCTURED_OUTPUT_MODES } from "./structured-output";
 
 export const LLM_PROTOCOLS = ["anthropic-messages", "openai-chat-completions", "openai-responses"] as const;
 export type LlmProtocol = (typeof LLM_PROTOCOLS)[number];
@@ -97,6 +98,11 @@ export const ProviderConfigSchema = z.strictObject({
   /** openai-chat-completions only: name of the output-token limit field. OpenAI's newer models
    *  (o-series, gpt-5.x) reject `max_tokens`; most OpenAI-compatible servers still expect it. */
   chatMaxTokensField: z.enum(["max_tokens", "max_completion_tokens"]).default("max_tokens"),
+  /** How helper calls request structured (JSON-Schema) output (docs/17): "native" = the protocol's
+   *  own field (output_config.format / response_format / text.format), "tool" = one forced tool
+   *  call carrying the schema (for servers that ignore the native field, e.g. MiniMax), "off" =
+   *  drop it. */
+  structuredOutput: z.enum(STRUCTURED_OUTPUT_MODES).default("native"),
   /** Key into the models.dev catalog (docs/15 §5); defaults: provider=name, model=model. */
   modelsDev: z.strictObject({ provider: z.string().min(1).optional(), model: z.string().min(1).optional() }).prefault({}),
   /** Names of env vars that may override fields at resolve time (kept for MINIMAX_* compatibility). */
@@ -135,6 +141,10 @@ export const MINIMAX_PRESET: ProviderConfigInput = {
   // output_config.format; the gate proxy keeps the child within the account gate and keeps the key
   // out of the child env (the agent's Bash tool could otherwise read ANTHROPIC_AUTH_TOKEN).
   agentCompat: { gateProxy: true, disableNonessentialTraffic: true, disableStructuredOutputs: true },
+  // docs/17 (verified 2026-10-21, 15 live probes): MiniMax-M3.1-Flash IGNORES output_config.format,
+  // response_format (json_schema and json_object) and Responses text.format — 200 + free text —
+  // but a forced tool call returned schema-valid JSON 9/9 on both endpoints.
+  structuredOutput: "tool",
   retry: { maxRetries: 5, baseDelayMs: 2000, maxDelayMs: 60_000, retryStatuses: [429, 529], credentialStatuses: [401, 403], bodyCodePath: "base_resp.status_code", retryBodyCodes: [1002], credentialBodyCodes: [1004, 1008] },
   // api.minimaxi.com is the China site; models.dev lists the same models under minimax-cn.
   modelsDev: { provider: "minimax-cn" },

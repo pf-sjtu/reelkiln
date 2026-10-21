@@ -139,6 +139,8 @@ export interface HelperCreds {
   keyEnv?: string;
   timeoutMs?: number;
   chatMaxTokensField?: "max_tokens" | "max_completion_tokens";
+  /** docs/17: how a structured-output request is expressed (default native). */
+  structuredOutput?: "native" | "tool" | "off";
   /** Concurrency gate id (one per key env var); defaults to the provider name. */
   gateKey?: string;
 }
@@ -149,6 +151,7 @@ export function helperCredsForProvider(p: ResolvedProvider): HelperCreds {
     url: endpointUrl(p.protocol, p.baseUrl), headers: requestHeaders(p), model: p.model, provider: p.name, protocol: p.protocol,
     maxConcurrency: p.maxConcurrency, retry: p.retry, defaultParams: p.defaultParams, keyEnv: p.keyEnv, timeoutMs: p.timeoutMs,
     ...(p.chatMaxTokensField ? { chatMaxTokensField: p.chatMaxTokensField } : {}),
+    ...(p.structuredOutput ? { structuredOutput: p.structuredOutput } : {}),
     ...(p.gateKey ? { gateKey: p.gateKey } : {}),
   };
 }
@@ -221,7 +224,7 @@ export async function anthropicMessages(creds: HelperCreds, body: Record<string,
   let payload: Record<string, unknown>;
   try {
     payload = isProvider
-      ? buildRequestBody(protocol, body, { model: creds.model, defaultParams: creds.defaultParams, provider: creds.provider, maxTokensField: creds.chatMaxTokensField, onDropped: (fields) => log.debug("llm.request.dropped_fields", { fields }) })
+      ? buildRequestBody(protocol, body, { model: creds.model, defaultParams: creds.defaultParams, provider: creds.provider, maxTokensField: creds.chatMaxTokensField, structuredOutput: creds.structuredOutput, onDropped: (fields) => log.debug("llm.request.dropped_fields", { fields }) })
       : creds.model ? { ...body, model: creds.model } : body;
   } catch (err) {
     if (err instanceof LlmProviderError) return { ok: false, reason: redactText(err.message), code: err.code };

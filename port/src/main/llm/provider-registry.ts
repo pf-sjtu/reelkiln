@@ -32,6 +32,8 @@ export interface ResolvedProvider {
   gateKey?: string;
   /** openai-chat-completions output-token field (default max_tokens). */
   chatMaxTokensField?: "max_tokens" | "max_completion_tokens";
+  /** docs/17 structured-output mode for helper calls (default native). */
+  structuredOutput?: "native" | "tool" | "off";
   modelsDev: { provider: string; model: string };
 }
 
@@ -151,7 +153,7 @@ export function resolveProviderConfig(c: ProviderConfig, env: NodeJS.ProcessEnv 
     aliases: { opus: a.opus ?? model, sonnet: a.sonnet ?? model, haiku: a.haiku ?? model, smallFast: a.smallFast ?? model, subagent: a.subagent ?? model },
     defaultParams: c.defaultParams, headers: c.headers, ...(c.agentEffort ? { agentEffort: c.agentEffort } : {}),
     ...(Object.values(c.agentCompat).some(Boolean) ? { agentCompat: { ...c.agentCompat } } : {}),
-    maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs, chatMaxTokensField: c.chatMaxTokensField, gateKey: gateKeyFor(c.apiKeyEnv),
+    maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs, chatMaxTokensField: c.chatMaxTokensField, structuredOutput: c.structuredOutput, gateKey: gateKeyFor(c.apiKeyEnv),
     modelsDev: { provider: c.modelsDev.provider ?? c.name, model: c.modelsDev.model ?? model },
   };
 }

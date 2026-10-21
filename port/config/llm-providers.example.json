@@ -19,6 +19,7 @@
       "apiKeyEnv": "MINIMAX_API_KEY",
       "model": "MiniMax-M3.1-Flash",
       "chatMaxTokensField": "max_completion_tokens",
+      "structuredOutput": "tool",
       "concurrency": {
         "max": 1,
         "cap": 1

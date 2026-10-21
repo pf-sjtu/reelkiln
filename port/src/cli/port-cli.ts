@@ -13,6 +13,8 @@
 //   node dist/cli/port-cli.cjs llm-providers           (offline; registered providers, keys only as configured:true/false)
 //   node dist/cli/port-cli.cjs llm-providers-validate [file]   (strict pre-deploy check of a providers file; exit 1 if invalid)
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt] [image.png]   (ONE real request via the main-process route service)
+//   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-structured <provider> [--mode native|tool|off]
+//        (ONE real structured-output helper request; reports whether the reply is schema-valid JSON; docs/17)
 //   VIDEOCLAW_LLM_LIVE=1 VIDEOCLAW_CLAUDE_AGENT_SDK=<dir> node dist/cli/port-cli.cjs llm-agent-smoke <provider> [prompt] [--tool|--key-probe]
 //        (ONE real Claude Agent SDK turn: sessionRuntimeConfig() env/model → query(); docs/16)
 //   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
@@ -41,6 +43,7 @@ import { describeProvider, getProviderRegistry, loadProviderRegistry, PROVIDERS_
 import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
 import { checkSqliteCapability } from "../main/models-dev/sqlite";
 import { claudeCodeExecutableFor, loadClaudeAgentSdk, runAgentTurn } from "../main/llm/agent-sdk";
+import { anthropicMessages } from "../main/llm/llm-route";
 
 const [, , cmd, a1, a2, a3] = process.argv;
 const out = (o: Record<string, unknown>) => console.log(JSON.stringify(o));
@@ -142,6 +145,32 @@ async function main() {
         const r = await service.sessionHelperComplete({ llmRoute: name }, { max_tokens: 512, messages: [{ role: "user", content }] }, { timeoutMs: p.timeoutMs, deadlineMs: 180_000 });
         const result = r.ok ? { ok: true, text: r.text.slice(0, 400), chars: r.text.length } : r;
         return out({ ok: r.ok, step: cmd, provider: describeProvider(p), image: image ? { bytes: Buffer.from(image, "base64").length, mediaType } : undefined, result, ms: Date.now() - t0 });
+      }
+      case "llm-structured": { // PORT-NEW docs/17: structured output through the route service
+        if (process.env.VIDEOCLAW_LLM_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_LLM_LIVE=1 to make a real request" });
+        const args = process.argv.slice(3);
+        const mi = args.indexOf("--mode");
+        const modeArg = mi >= 0 ? args[mi + 1] : undefined;
+        if (modeArg !== undefined && !["native", "tool", "off"].includes(modeArg)) return out({ ok: false, step: cmd, error: "--mode must be native | tool | off" });
+        const name = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--mode");
+        if (!name) return out({ ok: false, step: cmd, error: "usage: llm-structured <provider> [--mode native|tool|off]" });
+        const p = getProviderRegistry().resolveOrThrow(name);
+        const service = new LlmRouteService({ settings: () => ({ gatewayUrl: "", llmRoute: name }), profileDir: () => tmpdir() });
+        const creds = service.sessionHelperCreds({ llmRoute: name });
+        if (!creds) return out({ ok: false, step: cmd, error: "no helper credentials" });
+        const mode = (modeArg ?? creds.structuredOutput ?? "native") as "native" | "tool" | "off";
+        // deliberately NOT asking for JSON in the prompt: only the structured-output mechanism can make it JSON
+        const schema = { type: "object", properties: { title: { type: "string" }, tags: { type: "array", items: { type: "string" } } }, required: ["title", "tags"], additionalProperties: false };
+        const body = { max_tokens: 2048, output_config: { effort: "low", format: { type: "json_schema", schema } }, messages: [{ role: "user", content: "A short video shows a cat riding a surfboard at sunset. Propose a title and three tags for it." }] };
+        const r = await anthropicMessages({ ...creds, structuredOutput: mode }, body, { timeoutMs: p.timeoutMs, deadlineMs: 180_000 });
+        let verdict = "ERROR";
+        if (r.ok) {
+          try {
+            const o = JSON.parse(r.text);
+            verdict = o && typeof o.title === "string" && Array.isArray(o.tags) && o.tags.every((t: unknown) => typeof t === "string") && Object.keys(o).every((k) => k === "title" || k === "tags") ? "SCHEMA_VALID" : "JSON_NOT_SCHEMA";
+          } catch { verdict = "NOT_JSON"; }
+        }
+        return out({ ok: r.ok && verdict === "SCHEMA_VALID", step: cmd, provider: describeProvider(p), structuredOutput: mode, verdict, result: r.ok ? { text: r.text.slice(0, 400) } : r, ms: Date.now() - t0 });
       }
       case "llm-agent-smoke": { // PORT-NEW docs/16: real agent turn through the Claude Agent SDK
         if (process.env.VIDEOCLAW_LLM_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_LLM_LIVE=1 to start a real Claude Agent SDK session" });

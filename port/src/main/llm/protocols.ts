@@ -6,6 +6,7 @@ import { LlmProviderError } from "./errors";
 import { ANTHROPIC_ONLY_FIELDS, convertToolChoice, convertTools, systemText, toChatMessages, toResponsesInput } from "./content-convert";
 import type { AuthConfig, LlmProtocol } from "./provider-config";
 import type { ResolvedProvider } from "./provider-registry";
+import { applyOutputFormat, extractStructuredToolOutput, mapOutputConfig, takeOutputFormat, type StructuredOutputMode } from "./structured-output";
 
 export const ANTHROPIC_VERSION = { "anthropic-version": "2023-06-01" } as const; // original L22342
 
@@ -41,18 +42,31 @@ export interface BuildOptions {
   maxTokensField?: "max_tokens" | "max_completion_tokens";
   /** Receives the names of Anthropic-only fields that were removed (for a debug log). */
   onDropped?: (fields: string[]) => void;
+  /** How a structured-output request (output_config.format / output_format / response_format) is
+   *  expressed for this provider (structured-output.ts). Default "native". */
+  structuredOutput?: StructuredOutputMode;
 }
 
 /** Anthropic-shaped helper body → protocol body. Defaults < body < pinned model. For the openai-*
  *  protocols every content block is converted (images, documents, tool calls — content-convert.ts);
  *  a block the target cannot represent throws UNSUPPORTED_CONTENT instead of being silently dropped. */
-export function buildRequestBody(protocol: LlmProtocol, body: Record<string, unknown>, o: BuildOptions = {}): Record<string, unknown> {
+export function buildRequestBody(protocol: LlmProtocol, input: Record<string, unknown>, o: BuildOptions = {}): Record<string, unknown> {
   const defaults = o.defaultParams ?? {};
+  const { body, format } = takeOutputFormat(input, o.provider);
   const model = o.model ?? body.model;
-  if (protocol === "anthropic-messages") return { ...defaults, ...body, ...(model !== undefined ? { model } : {}) };
-  const { system, messages, max_tokens, model: _m, tools, tool_choice, stop_sequences, ...rest } = body as Record<string, unknown> & { max_tokens?: number };
+  const mode = o.structuredOutput ?? "native";
+  const finish = (target: Record<string, unknown>, dropped: string[]): Record<string, unknown> => {
+    const r = applyOutputFormat(protocol, mode, target, format);
+    if (r.dropped) dropped.push(r.dropped);
+    if (dropped.length) o.onDropped?.(dropped);
+    return r.body;
+  };
+  if (protocol === "anthropic-messages") return finish({ ...defaults, ...body, ...(model !== undefined ? { model } : {}) }, []);
+  const { system, messages, max_tokens, model: _m, tools, tool_choice, stop_sequences, output_config, ...rest } = body as Record<string, unknown> & { max_tokens?: number };
   const dropped: string[] = [];
   for (const f of ANTHROPIC_ONLY_FIELDS) if (f in rest) { delete rest[f]; dropped.push(f); }
+  const oc = mapOutputConfig(protocol, output_config);
+  dropped.push(...oc.dropped);
   const sys = systemText(system, o.provider);
   const convertedTools = convertTools(tools, protocol, o.provider);
   const choice = convertToolChoice(tool_choice, protocol);
@@ -61,18 +75,20 @@ export function buildRequestBody(protocol: LlmProtocol, body: Record<string, unk
     if (Array.isArray(stop_sequences) && stop_sequences.length) extra.stop = stop_sequences.slice(0, 4);
     const msgs = toChatMessages(messages, o.provider);
     const field = o.maxTokensField ?? "max_tokens";
-    if (dropped.length) o.onDropped?.(dropped);
-    return { ...defaults, ...rest, ...extra, model, messages: sys ? [{ role: "system", content: sys }, ...msgs] : msgs, ...(max_tokens !== undefined ? { [field]: max_tokens } : {}) };
+    return finish({ ...defaults, ...oc.fields, ...rest, ...extra, model, messages: sys ? [{ role: "system", content: sys }, ...msgs] : msgs, ...(max_tokens !== undefined ? { [field]: max_tokens } : {}) }, dropped);
   }
   if (stop_sequences !== undefined) dropped.push("stop_sequences"); // the Responses API has no stop parameter
-  if (dropped.length) o.onDropped?.(dropped);
-  return { ...defaults, ...rest, ...extra, model, input: toResponsesInput(messages, o.provider), ...(sys ? { instructions: sys } : {}), ...(max_tokens !== undefined ? { max_output_tokens: max_tokens } : {}) };
+  return finish({ ...defaults, ...oc.fields, ...rest, ...extra, model, input: toResponsesInput(messages, o.provider), ...(sys ? { instructions: sys } : {}), ...(max_tokens !== undefined ? { max_output_tokens: max_tokens } : {}) }, dropped);
 }
 
-/** Response JSON → text (thinking/reasoning blocks are ignored). Throws BAD_RESPONSE on a shape
+/** Response JSON → text (thinking/reasoning blocks are ignored; a call of the synthetic
+ *  structured-output tool wins and yields its arguments as JSON text). Throws BAD_RESPONSE on a shape
  *  that has no recognisable text container. */
 export function extractText(protocol: LlmProtocol, data: unknown, provider?: string): string {
   const d = (data ?? {}) as Record<string, any>;
+  // "tool" structured-output mode: the forced tool call's arguments ARE the answer
+  const structured = extractStructuredToolOutput(protocol, d);
+  if (structured !== undefined) return structured;
   if (protocol === "anthropic-messages") {
     return Array.isArray(d.content) ? d.content.filter((b: AnthropicBlock) => b.type === "text").map((b: AnthropicBlock) => b.text ?? "").join(" ") : "";
   }
