@@ -93,7 +93,7 @@ test("quickstart:catalog — the ORIGINAL store validates + serves the shipped b
     const pushes: unknown[][] = [];
     const roots = quickstartCandidateRoots({ packaged: false, env: {}, resourcesPath: "/nonexistent-res", appPath: resolve(process.cwd()) });
     assert.ok(roots.includes(BUNDLED_QUICKSTARTS), "PORT-NEW dev root <port>/../app/resources/quickstarts");
-    assert.deepEqual(quickstartCandidateRoots({ packaged: true, env: { VIDEOCLAW_QUICKSTART_FIXTURE_DIR: "/x" }, resourcesPath: "/res", appPath: "/app.asar" }), ["/res/quickstarts", "/app.asar/resources/quickstarts", "/app.asar/apps/desktop/resources/quickstarts"], "packaged = the original's roots only (fixture dir ignored)");
+    assert.deepEqual(quickstartCandidateRoots({ packaged: true, env: { VIDEOCLAW_QUICKSTART_FIXTURE_DIR: "/x" }, resourcesPath: "/res", appPath: "/app.asar" }), [join("/res", "quickstarts"), join("/app.asar", "resources", "quickstarts"), join("/app.asar", "apps", "desktop", "resources", "quickstarts")], "packaged = the original's roots only (fixture dir ignored)");
     const qs = createQuickstartCatalog({ packaged: false, env: {}, resourcesPath: "/nonexistent-res", appPath: resolve(process.cwd()), userData: ud, grant: () => true, push: (...a) => { pushes.push(a); } });
     const cold: any = await qs.handlers["quickstart:catalog"]();
     assert.equal(cold.schema, "videoclaw.quickstart-catalog-view/v1");

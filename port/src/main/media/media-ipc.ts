@@ -10,7 +10,7 @@
 // user would click; every check after the dialog is the original code path.
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { copyFile } from "node:fs/promises";
-import { basename, isAbsolute, join } from "node:path";
+import { basename, isAbsolute, join, win32 } from "node:path";
 import { Readable } from "node:stream";
 import { MediaCapabilityRegistry, mediaFailure, mimeFor, planMediaResponse } from "./media.generated";
 
@@ -23,6 +23,13 @@ export function exposeJobSnapshot(media: any, snapshot: any): any { // L60411
   return snapshot;
 }
 
+/** PORT-WIN docs/34: main builds vcmedia URLs from pathToFileURL(path).pathname (L61029/L61121/L62204), which on Windows
+ *  is "/C:/Users/…" — back to the native "C:\\Users\\…" the capability table was granted with. POSIX: unchanged. */
+export function vcmediaFilePath(pathname: string, platform: string = process.platform): string {
+  if (platform !== "win32" || !/^\/[A-Za-z]:[\\/]/.test(pathname)) return pathname;
+  return win32.normalize(pathname.slice(1));
+}
+
 /** protocol.handle("vcmedia") body (L62452-62486). */
 export async function handleVcmedia(req: Request, media: any, chatMediaRoot: (sessionId: string) => string | null | undefined): Promise<Response> {
   let filePath: string;
@@ -31,7 +38,7 @@ export async function handleVcmedia(req: Request, media: any, chatMediaRoot: (se
   try {
     const url = new URL(req.url);
     if (url.hostname !== "local") return mediaFailure("denied");
-    filePath = decodeURIComponent(url.pathname);
+    filePath = vcmediaFilePath(decodeURIComponent(url.pathname));
     expectedIdentity = url.searchParams.get("version") ?? undefined;
     sessionId = url.searchParams.get("session");
   } catch {

@@ -2,9 +2,10 @@
 // Verbatim slices of the shipped bundle:
 //   app/reconstructed/main/index.js L15178-15491
 // Substitutions (platform-layer routing only):
+//   2× const title = file.split("/").slice(-2, -1)[0] ?? "taste";  →  const title = file.split(sep).slice(-2, -1)[0] ?? "taste";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, sep } from "node:path";
 import { recordMainLog } from "./taste-log";
 
 const SECTION = "## COMMITMENTS";
@@ -289,7 +290,7 @@ function commitTaste(_cwd, files) {
   try {
     for (const { file, cards } of files) {
       const existing = existsSync(file) ? readFileSync(file, "utf-8") : "";
-      const title = file.split("/").slice(-2, -1)[0] ?? "taste";
+      const title = file.split(sep).slice(-2, -1)[0] ?? "taste";
       writeTaste(file, writeCommitments(existing, cards, title));
       filesUpdated++;
     }
@@ -307,7 +308,7 @@ function commitTaste(_cwd, files) {
 function declineProposal(_cwd, file, cards, antiText) {
   try {
     const existing = existsSync(file) ? readFileSync(file, "utf-8") : "";
-    const title = file.split("/").slice(-2, -1)[0] ?? "taste";
+    const title = file.split(sep).slice(-2, -1)[0] ?? "taste";
     const withCommits = writeCommitments(existing, cards, title);
     const next = appendAnti(withCommits, antiText);
     writeTaste(file, next);

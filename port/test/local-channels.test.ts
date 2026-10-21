@@ -182,7 +182,7 @@ test("local channels: quit:rendererState / permission:shown / file:openExternal 
   assert.equal(await local.invoke["media:requestMic"](), true, "non-darwin branch");
   assert.equal(local.invoke["analytics:playbackCompleted"]("/w/jobs/j/final.mp4"), undefined);
   local.invoke["bootstrap:revealSetupLog"]();
-  assert.deepEqual(revealed, ["/ud/setup.log"]);
+  assert.deepEqual(revealed, [join("/ud", "setup.log")]);
   const ws = mkdtempSync(join(tmpdir(), "vc-etas-"));
   try { const etas = local.invoke["stats:stageEtas"](ws); assert.equal(typeof etas, "object"); assert.ok(etas !== null); } finally { rmSync(ws, { recursive: true, force: true }); }
   await assert.rejects(Promise.resolve().then(() => local.invoke["session:rename"]("s", "t")), /not available/);

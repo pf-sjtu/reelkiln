@@ -3,10 +3,11 @@
 //   app/reconstructed/main/index.js L339-353
 //   app/reconstructed/main/index.js L14786-15177
 // Substitutions (platform-layer routing only):
+//   1× const segments2 = suffix ? suffix.split("/") : [];  →  const segments2 = suffix ? suffix.split(sep) : [];
 import { randomUUID } from "node:crypto";
 import { lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { lstat, readdir, rm } from "node:fs/promises";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 function deletionBlockMessage(block) {
   if (block === "active-production") {
@@ -72,7 +73,7 @@ function attestCandidate(workspace, candidate) {
   const suffix = relative(root, requested).startsWith("..")
     ? relative(resolve(workspace), requested)
     : relative(root, requested);
-  const segments2 = suffix ? suffix.split("/") : [];
+  const segments2 = suffix ? suffix.split(sep) : [];
   if (segments2.length === 0) {
     throw new Error(`project data cannot be the workspace root: ${label}`);
   }

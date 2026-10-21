@@ -2,6 +2,7 @@
 // Verbatim slices of the shipped bundle:
 //   app/reconstructed/main/index.js L11793-12267
 // Substitutions (platform-layer routing only):
+//   3× path: relative(character.dir, path)  →  path: posixRelative(character.dir, path)
 import { createHash, randomUUID } from "node:crypto";
 import { closeSync, constants, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
@@ -9,6 +10,7 @@ import { CharacterStore } from "./character-store.generated";
 import { isExistingProjectDirectory, projectMemoryFile, resolveProjectDestination, ProjectMemoryError } from "../memory/project-memory.generated";
 import { copyProjectFile } from "../studio/studio-toolset";
 import { sanitizeErrorText } from "../agent/history.generated";
+import { posixRelative } from "../platform/paths";
 
 const digest$1 = (value) => createHash("sha256").update(value).digest("hex");
 const MAX_DOCUMENT_BYTES = 1024 * 1024;
@@ -274,7 +276,7 @@ class CharacterVoiceStore {
       const checked = await projectMemoryFile(cwd, path);
       if (checked.sha256 !== file.sha256)
         throw new CharacterVoiceError("The source changed while saving. Please try again.");
-      return { path: relative(character.dir, path), sha256: checked.sha256 };
+      return { path: posixRelative(character.dir, path), sha256: checked.sha256 };
     };
     try {
       const copiedPhotos = [];
@@ -282,7 +284,7 @@ class CharacterVoiceStore {
         const checked = await projectMemoryFile(cwd, path);
         if (!photos.some((photo) => photo.sha256 === checked.sha256))
           throw new CharacterVoiceError("A face reference changed while saving.");
-        copiedPhotos.push({ path: relative(character.dir, path), sha256: checked.sha256 });
+        copiedPhotos.push({ path: posixRelative(character.dir, path), sha256: checked.sha256 });
       }
       if (copiedPhotos.length !== photos.length)
         throw new CharacterVoiceError("Some face references could not be saved.");
@@ -350,7 +352,7 @@ class CharacterVoiceStore {
         throw new CharacterVoiceError("The sample changed while saving. Please try again.");
       const next = {
         ...record2,
-        sample: { path: relative(character.dir, path), sha256: checked.sha256 },
+        sample: { path: posixRelative(character.dir, path), sha256: checked.sha256 },
       };
       this.write(
         binding,

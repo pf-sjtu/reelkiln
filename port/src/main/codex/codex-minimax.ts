@@ -92,17 +92,23 @@ export function ensureCodexProfile(profileDir: string, model: string): void {
 /** resolveCodexExecutable (L23423) for this box: explicit → VIDEOCLAW_CODEX_BIN → the packaged
  *  resources/bootstrap/codex/bin/codex → the port's vendored native binary (port/vendor/codex, npm
  *  @openai/codex, gitignored — an external dependency, never reconstructed) → "codex" on PATH. */
-export function resolveCodexExecutable(o: { explicit?: string; env?: NodeJS.ProcessEnv; resourcesPath?: string; appRoot?: string; exists?: (p: string) => boolean } = {}): string {
+/** PORT-WIN docs/34: the @openai/codex platform package + Rust target triple per OS (was Linux-musl only). */
+export function codexVendorLayout(platform: string = process.platform, arch: string = process.arch): { pkg: string; triple: string; exe: string } {
+  const a = arch === "arm64" ? "arm64" : "x64"; const cpu = arch === "arm64" ? "aarch64" : "x86_64";
+  if (platform === "win32") return { pkg: `codex-win32-${a}`, triple: `${cpu}-pc-windows-msvc`, exe: "codex.exe" };
+  if (platform === "darwin") return { pkg: `codex-darwin-${a}`, triple: `${cpu}-apple-darwin`, exe: "codex" };
+  return { pkg: `codex-linux-${a}`, triple: `${cpu}-unknown-linux-musl`, exe: "codex" };
+}
+export function resolveCodexExecutable(o: { explicit?: string; env?: NodeJS.ProcessEnv; resourcesPath?: string; appRoot?: string; exists?: (p: string) => boolean; platform?: string; arch?: string } = {}): string {
   const env = o.env ?? process.env;
   const exists = o.exists ?? existsSync;
   if (o.explicit) return o.explicit;
   const fromEnv = env.VIDEOCLAW_CODEX_BIN?.trim();
   if (fromEnv) return fromEnv;
-  const triple = process.arch === "arm64" ? "aarch64-unknown-linux-musl" : "x86_64-unknown-linux-musl";
-  const plat = process.arch === "arm64" ? "linux-arm64" : "linux-x64";
+  const v = codexVendorLayout(o.platform, o.arch);
   const candidates = [
-    o.resourcesPath ? join(o.resourcesPath, "bootstrap", "codex", "bin", "codex") : "",
-    o.appRoot ? join(o.appRoot, "vendor", "codex", "node_modules", "@openai", `codex-${plat}`, "vendor", triple, "bin", "codex") : "",
+    o.resourcesPath ? join(o.resourcesPath, "bootstrap", "codex", "bin", v.exe) : "",
+    o.appRoot ? join(o.appRoot, "vendor", "codex", "node_modules", "@openai", v.pkg, "vendor", v.triple, "bin", v.exe) : "",
   ].filter(Boolean);
   return candidates.find((p) => exists(p)) ?? "codex";
 }

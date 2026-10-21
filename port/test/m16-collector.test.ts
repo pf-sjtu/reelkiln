@@ -14,6 +14,9 @@ import { readDisplayTranscript, displayTranscriptPath } from "../src/main/agent/
 import { busyCollectorArgs, readOperationJournal, lateResultReportNote, savedGatewayOperations } from "../src/main/agent/operation-journal.generated";
 
 const PY = (() => { for (const p of ["/usr/bin/python3", "/usr/local/bin/python3"]) if (existsSync(p)) return p; try { return execFileSync("which", ["python3"]).toString().trim(); } catch { return ""; } })();
+// PORT-WIN docs/34: the fake engine symlinks a POSIX python into .venv/bin; on Windows (no symlink right, .venv\\Scripts\\python.exe
+// layout) these collector runs are NOT exercised — recorded as unverified on Windows in docs/34.
+const SKIP_COLLECTOR: boolean | string = !PY ? true : process.platform === "win32" ? "PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows" : false;
 const GW = "http://127.0.0.1:1";
 const OPS = `import json, os, sys
 from pathlib import Path
@@ -96,7 +99,7 @@ function setup() {
   return { root, host, events, delivered, video, done: () => rmSync(root, { recursive: true, force: true }) };
 }
 
-test("M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend", { skip: !PY }, async () => {
+test("M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend", { skip: SKIP_COLLECTOR }, async () => {
   const h = setup();
   try {
     const v = h.video(); const op = v.addOp(); v.plan({ status: "succeeded", cost: 0.0004 });
@@ -123,7 +126,7 @@ test("M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar 
   } finally { h.done(); }
 });
 
-test("M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row untouched; an operation the open tool may own gets no late line", { skip: !PY }, async () => {
+test("M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row untouched; an operation the open tool may own gets no late line", { skip: SKIP_COLLECTOR }, async () => {
   const h = setup();
   try {
     const v = h.video(); v.s.openTools.add("toolu_1"); (v.s.openToolStartedAt ??= new Map()).set("toolu_1", Date.now() - 2000);
@@ -142,7 +145,7 @@ test("M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row unto
   } finally { h.done(); }
 });
 
-test("M16 busy collection of an operation older than every open tool is late (mayBelongToOpenTool margin)", { skip: !PY }, async () => {
+test("M16 busy collection of an operation older than every open tool is late (mayBelongToOpenTool margin)", { skip: SKIP_COLLECTOR }, async () => {
   const h = setup();
   try {
     const v = h.video(); v.s.openTools.add("toolu_2"); (v.s.openToolStartedAt ??= new Map()).set("toolu_2", Date.now());
@@ -156,7 +159,7 @@ test("M16 busy collection of an operation older than every open tool is late (ma
   } finally { h.done(); }
 });
 
-test("M16 dropCollectorMarks: a tool start drops a mark the journal has not moved past; restore drops backoff + parking", { skip: !PY }, async () => {
+test("M16 dropCollectorMarks: a tool start drops a mark the journal has not moved past; restore drops backoff + parking", { skip: SKIP_COLLECTOR }, async () => {
   const h = setup();
   try {
     const v = h.video(); const row = v.addOp(); (row as any).collectorOwned = { delivered: [] };
@@ -174,7 +177,7 @@ test("M16 dropCollectorMarks: a tool start drops a mark the journal has not move
   } finally { h.done(); }
 });
 
-test("M16 a provider failure the collector learned → late 'failed' line + failure report; three import failures → import_failed", { skip: !PY }, async () => {
+test("M16 a provider failure the collector learned → late 'failed' line + failure report; three import failures → import_failed", { skip: SKIP_COLLECTOR }, async () => {
   const h = setup();
   try {
     const v = h.video(); v.addOp({ status: "running" }); v.plan({ status: "failed", error: "MiniMax video task failed", cost: 0 });

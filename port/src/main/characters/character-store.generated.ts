@@ -2,8 +2,9 @@
 // Verbatim slices of the shipped bundle:
 //   app/reconstructed/main/index.js L11564-11792
 // Substitutions (platform-layer routing only):
+//   1× !target.startsWith(root + "/")  →  !target.startsWith(root + sep)
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { assetKind } from "../attachments/asset-kinds.generated";
 import { convertHeicToJpg, HEIC_RE$1, streamCopyFile } from "../attachments/composer-attachments.generated";
 
@@ -46,7 +47,7 @@ class CharacterStore {
   assertInside(cwd, dir) {
     const root = resolve(this.root(cwd));
     const target = resolve(dir);
-    if (target !== root && !target.startsWith(root + "/")) {
+    if (target !== root && !target.startsWith(root + sep)) {
       throw new Error("refusing to touch a path outside characters/");
     }
   }

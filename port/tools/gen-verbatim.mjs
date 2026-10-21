@@ -276,14 +276,17 @@ export const SPECS = [
     out: "src/main/characters/character-store.generated.ts",
     imports: [
       'import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";',
-      'import { join, resolve } from "node:path";',
+      'import { join, resolve, sep } from "node:path";',
       'import { assetKind } from "../attachments/asset-kinds.generated";',
       'import { convertHeicToJpg, HEIC_RE$1, streamCopyFile } from "../attachments/composer-attachments.generated";',
     ],
     slices: () => [
       slice("main", /^const META = "meta\.json";$/, /^}$/, /^class CharacterStore \{/),
     ],
-    subs: [],
+    subs: [
+      // PORT-WIN docs/34: containment by the platform separator (the original only ran where sep === "/")
+      ['!target.startsWith(root + "/")', "!target.startsWith(root + sep)", 1],
+    ],
     exports: ["META", "SHEET", "REFS", "PENDING", "CharacterStore"],
   },
   {
@@ -294,7 +297,7 @@ export const SPECS = [
     imports: [
       'import { createHash, createPublicKey, verify } from "node:crypto";',
       'import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";',
-      'import { dirname, join, resolve } from "node:path";',
+      'import { dirname, join, resolve, sep } from "node:path";',
       'import { isDeepStrictEqual } from "node:util";',
     ],
     slices: () => [
@@ -304,7 +307,10 @@ export const SPECS = [
       slice("main", /^function canonicalStudioJson\(value\) \{/, /^}$/),
       slice("main", /^const QUICKSTART_RENDERER_LATENCY_STAGES = \[/, /^}$/, /^class QuickstartCatalogStore \{/),
     ],
-    subs: [],
+    subs: [
+      // PORT-WIN docs/34: containment by the platform separator (catalog-relative paths stay "/"-joined)
+      ["!target.startsWith(`${root}/`)", "!target.startsWith(`${root}${sep}`)", 1],
+    ],
     exports: ["envForGatewayUrl", "recordQuickstartLatency", "beginQuickstartLatency", "measureQuickstartLatency", "quickstartLatencySnapshot", "quickstartLatencyMark", "milestoneDurationMs", "validateRawCatalog", "validateRoot", "sameQuickstartCatalogView", "QuickstartCatalogStore"],
   },
   {
@@ -361,13 +367,16 @@ export const SPECS = [
     imports: [
       'import { randomUUID } from "node:crypto";',
       'import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";',
-      'import { dirname, join } from "node:path";',
+      'import { dirname, join, sep } from "node:path";',
       'import { recordMainLog } from "./taste-log";',
     ],
     slices: () => [
       slice("main", /^const SECTION = "## COMMITMENTS";$/, /^}$/, /^function declineProposal\(/),
     ],
-    subs: [],
+    subs: [
+      // PORT-WIN docs/34: the taste title is the parent folder name of an absolute platform path
+      ['const title = file.split("/").slice(-2, -1)[0] ?? "taste";', 'const title = file.split(sep).slice(-2, -1)[0] ?? "taste";', 2],
+    ],
     exports: ["SECTION", "ANTI", "ANTI_HEADING", "readCommitments", "writeCommitments", "appendAnti", "listTaste", "commitTaste", "declineProposal", "saveAccountCommitment"],
   },
   {
@@ -394,13 +403,16 @@ export const SPECS = [
       'import { randomUUID } from "node:crypto";',
       'import { lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";',
       'import { lstat, readdir, rm } from "node:fs/promises";',
-      'import { dirname, isAbsolute, join, relative, resolve } from "node:path";',
+      'import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";',
     ],
     slices: () => [
       slice("main", /^function deletionBlockMessage\(block\) \{/, /^}$/),
       slice("main", /^const PROJECT_TRASH_DIR = /, /^}$/, /^async function purgeExpiredProjectTrash\(/),
     ],
-    subs: [],
+    subs: [
+      // PORT-WIN docs/34: path.relative() segments by the platform separator ("jobs\\<id>" on Windows)
+      ['const segments2 = suffix ? suffix.split("/") : [];', "const segments2 = suffix ? suffix.split(sep) : [];", 1],
+    ],
     exports: ["deletionBlockMessage", "PROJECT_TRASH_DIR", "PROJECT_TRASH_SCHEMA", "PROJECT_TRASH_RETENTION_MS", "pathIsWithin", "planProjectTrash", "moveProjectToTrash", "readTrashEntry", "purgeExpiredProjectTrash"],
   },
   {
@@ -882,11 +894,15 @@ export const SPECS = [
       'import { isExistingProjectDirectory, projectMemoryFile, resolveProjectDestination, ProjectMemoryError } from "../memory/project-memory.generated";',
       'import { copyProjectFile } from "../studio/studio-toolset";',
       'import { sanitizeErrorText } from "../agent/history.generated";',
+      'import { posixRelative } from "../platform/paths";',
     ],
     slices: () => [
       slice("main", /^const digest\$1 = \(value\) => createHash/, /^}$/, /^class CharacterVoiceStore \{/),
     ],
-    subs: [],
+    subs: [
+      // PORT-WIN docs/34: voices.json paths are "/"-joined and read() refuses "\\" — store them POSIX-style on Windows
+      ["path: relative(character.dir, path)", "path: posixRelative(character.dir, path)", 3],
+    ],
     exports: ["CharacterVoiceError", "characterVoiceErrorText", "CharacterVoiceStore"],
   },
   {

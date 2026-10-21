@@ -3,6 +3,7 @@
 // and the verbatim ComposerAttachmentStore through AgentHost (stage → ready → Send materializes
 // into jobs/<id>/incoming/ and lists the files ahead of the turn). SDK boundary mocked; the real
 // S1 runs are in artifacts/phase-b-m3 (not unit tests).
+import { pathToFileURL } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -12,7 +13,7 @@ import { join } from "node:path";
 import { AgentHost, type AgentHostRouteService, type SessionEvent } from "../src/main/agent/agent-host";
 import type { EngineSessionDeps } from "../src/main/agent/engine-session";
 import { VersionStore, scanJob, isFinishedMp4 } from "../src/main/jobs/version-store.generated";
-import { createMediaCapabilities, exposeJobSnapshot, fileIpcHandlers, handleVcmedia, isIntakePickerScope, smokeDialog } from "../src/main/media/media-ipc";
+import { createMediaCapabilities, exposeJobSnapshot, fileIpcHandlers, handleVcmedia, vcmediaFilePath, isIntakePickerScope, smokeDialog } from "../src/main/media/media-ipc";
 import { createLogger, setLoggerForTests } from "../src/main/llm/logger";
 
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
@@ -133,7 +134,7 @@ test("vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range /
     const job = join(root, "jobs", "j"); mkdirSync(job, { recursive: true });
     const file = join(job, "final.mp4"); const bytes = tinyMp4("m"); writeFileSync(file, bytes);
     const media = createMediaCapabilities();
-    const url = `vcmedia://local${file}`;
+    const url = `vcmedia://local${pathToFileURL(file).pathname}`; // how main builds it (L61029); "/C:/…" on Windows
     assert.equal((await handleVcmedia(new Request(url), media, () => null)).status, 403, "ungranted → denied");
     exposeJobSnapshot(media, { jobPath: job, renders: [{ path: file }], assets: [], versions: [] });
     const full = await handleVcmedia(new Request(url), media, () => null);
@@ -144,8 +145,8 @@ test("vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range /
     assert.deepEqual(Buffer.from(await part.arrayBuffer()), bytes.subarray(0, 10));
     assert.equal((await handleVcmedia(new Request(url, { headers: { range: `bytes=${bytes.length + 5}-` } }), media, () => null)).status, 416);
     const other = join(job, "other.mp4"); writeFileSync(other, bytes);
-    assert.equal((await handleVcmedia(new Request(`vcmedia://local${other}?session=s1`, { method: "HEAD" }), media, () => job)).status, 200, "HEAD with session grants a file under the chat media root");
-    assert.equal((await handleVcmedia(new Request(`vcmedia://elsewhere${file}`), media, () => null)).status, 403);
+    assert.equal((await handleVcmedia(new Request(`vcmedia://local${pathToFileURL(other).pathname}?session=s1`, { method: "HEAD" }), media, () => job)).status, 200, "HEAD with session grants a file under the chat media root");
+    assert.equal((await handleVcmedia(new Request(`vcmedia://elsewhere${pathToFileURL(file).pathname}`), media, () => null)).status, 403);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -222,4 +223,11 @@ test("smoke driver scripts parse for every S1 option combination (attach/m3/exis
   for (const attach of [false, true]) for (const m3 of [false, true]) for (const existingSession of [undefined, "sid"]) {
     parse(s1SmokeScript({ brief: "b \"q\" `t` ${x}", timeoutMs: 1, permission: "allow", llmRoute: "minimax", attach, m3, keepTasteTurn: false, existingSession } as any));
   }
+});
+
+test("PORT-WIN docs/34: vcmediaFilePath maps main's pathToFileURL pathnames (\"/C:/…\") back to native Windows paths; POSIX untouched", () => {
+  assert.equal(vcmediaFilePath("/C:/Users/u/jobs/j/final.mp4", "win32"), "C:\\Users\\u\\jobs\\j\\final.mp4");
+  assert.equal(vcmediaFilePath("/home/u/jobs/j/final.mp4", "win32"), "/home/u/jobs/j/final.mp4");
+  assert.equal(vcmediaFilePath("/C:/x", "linux"), "/C:/x");
+  assert.equal(vcmediaFilePath("/home/u/a b.mp4", "darwin"), "/home/u/a b.mp4");
 });

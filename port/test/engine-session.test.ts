@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { AgentHost, type AgentHostRouteService, type SessionEvent } from "../src/main/agent/agent-host";
 import { engineTurnText, firstMessageJobId, sessionPolicyPreamble, sniffJobIds, claudeCodeDisallowedTools, engineChildEnv, type EngineSessionDeps } from "../src/main/agent/engine-session";
 import { SessionRegistry } from "../src/main/engine/session";
@@ -248,8 +249,8 @@ test("M1 home boot: account snapshot (local studio default / honest signed-out w
   assert.deepEqual(st.studioBundle, { state: "disabled" }); assert.deepEqual(st.engineIdentity, { buildSha256: "ab" });
   assert.equal(bootstrapStatus({ ...core, currentEngine: () => null }, { packaged: true, env: {}, productionCompatible: () => true }).shouldOffer, true);
   const base = { packaged: false, appPath: "/repo/port", resourcesPath: "/res", mainDir: "/repo/port/dist/main", exists: () => true };
-  assert.equal(resolveRendererEntry({ ...base, env: {} }).url, "file:///repo/app/out/renderer/index.html");
-  assert.equal(resolveRendererEntry({ ...base, env: {}, packaged: true }).url, "file:///res/renderer-original/index.html");
+  assert.equal(resolveRendererEntry({ ...base, env: {} }).url, pathToFileURL(join("/repo", "app", "out", "renderer", "index.html")).href); // "file:///C:/repo/…" on Windows
+  assert.equal(resolveRendererEntry({ ...base, env: {}, packaged: true }).url, pathToFileURL(join("/res", "renderer-original", "index.html")).href);
   assert.equal(resolveRendererEntry({ ...base, env: { VIDEOCLAW_PORT_RENDERER: "port" } }).kind, "port");
   assert.equal(resolveRendererEntry({ ...base, env: { VIDEOCLAW_PORT_SMOKE: "1" } }).kind, "port", "legacy smoke keeps the port page");
   assert.equal(resolveRendererEntry({ ...base, env: { VIDEOCLAW_PORT_SMOKE: "1", VIDEOCLAW_PORT_SMOKE_HOME: "1" } }).kind, "original");

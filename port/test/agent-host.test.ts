@@ -462,6 +462,8 @@ test("docs/30 spend: gateway route — the job's ledger (same models.dev price) 
 });
 test("docs/31 §5 spend: after a Stop the host waits for the drained calls (shim llm_in_flight / proxy inflight), then reconciles / re-meters once", async () => {
   const h = harness({ route: "gateway", price: () => FLASH, script: usageTurn({}) });
+  // the poll pause is unref'd (never holds the app open); keep this test's own loop alive (seen on win32: nothing else does)
+  const keepAlive = setInterval(() => {}, 1000);
   try {
     const { sessionId } = h.host.createSession({});
     const host: any = h.host; const s: any = host.sessions.get(sessionId);
@@ -478,7 +480,7 @@ test("docs/31 §5 spend: after a Stop the host waits for the drained calls (shim
     host.meterResultCost = () => { metered++; };
     await host.settleSpendAfterStop(s, { llmRoute: "minimax", handle: { proxy: { stats: () => ({ inflight: inflight > 0 ? inflight-- : 0 }) } } }, { pollMs: 2 });
     assert.equal(metered, 1); assert.equal(inflight, 0); assert.equal(reconciled, 1, "a proxy route never reads the gateway ledger");
-  } finally { await h.host.dispose(); h.cleanup(); }
+  } finally { clearInterval(keepAlive); await h.host.dispose(); h.cleanup(); }
 });
 test("docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels", async () => {
   const h = harness();

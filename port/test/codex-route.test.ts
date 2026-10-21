@@ -10,7 +10,7 @@ import { createLogger, setLoggerForTests } from "../src/main/llm/logger";
 import { resetProviderGatesForTests } from "../src/main/llm/retry";
 import { startAgentGateProxy } from "../src/main/llm/agent-gate-proxy";
 import { ResponsesStructuredSseRewriter, rewriteResponsesStructuredJson, rewriteResponsesStructuredRequest } from "../src/main/llm/structured-emulation-responses";
-import { CODEX_MINIMAX_TOKEN_ENV, codexMiniMaxConfig, discoverMiniMaxCodexModels, ensureCodexProfile, resolveCodexExecutable, resolveMiniMaxCodexProvider } from "../src/main/codex/codex-minimax";
+import { CODEX_MINIMAX_TOKEN_ENV, codexMiniMaxConfig, codexVendorLayout, discoverMiniMaxCodexModels, ensureCodexProfile, resolveCodexExecutable, resolveMiniMaxCodexProvider } from "../src/main/codex/codex-minimax";
 import { CodexRouteController, portCodexEvidence, resolvedAgentHarness, resolvedCodexProvider } from "../src/main/codex/codex-host";
 import { codexChannels } from "../src/main/codex/codex-channels";
 import { AgentHost, type SessionEvent } from "../src/main/agent/agent-host";
@@ -130,7 +130,11 @@ test("MiniMax backend: provider resolution, profile, thread config, child env wi
     assert.equal(env.CODEX_HOME, "/prof");
   } finally { if (prev === undefined) delete process.env.MINIMAX_API_KEY; else process.env.MINIMAX_API_KEY = prev; }
   assert.equal(resolveCodexExecutable({ env: { VIDEOCLAW_CODEX_BIN: "/x/codex" } }), "/x/codex");
-  assert.equal(resolveCodexExecutable({ env: {}, resourcesPath: "/r", exists: (q) => q === "/r/bootstrap/codex/bin/codex" }), "/r/bootstrap/codex/bin/codex");
+  const bundledCodex = join("/r", "bootstrap", "codex", "bin", process.platform === "win32" ? "codex.exe" : "codex"); // platform separators + .exe
+  assert.equal(resolveCodexExecutable({ env: {}, resourcesPath: "/r", exists: (q) => q === bundledCodex }), bundledCodex);
+  assert.equal(resolveCodexExecutable({ env: {}, resourcesPath: "/r", platform: "win32", exists: (q) => q.endsWith("codex.exe") }), join("/r", "bootstrap", "codex", "bin", "codex.exe"));
+  assert.deepEqual(codexVendorLayout("win32", "x64"), { pkg: "codex-win32-x64", triple: "x86_64-pc-windows-msvc", exe: "codex.exe" });
+  assert.deepEqual(codexVendorLayout("linux", "arm64"), { pkg: "codex-linux-arm64", triple: "aarch64-unknown-linux-musl", exe: "codex" });
   assert.equal(resolveCodexExecutable({ env: {}, exists: () => false }), "codex");
   const models = await discoverMiniMaxCodexModels(p, { fetchImpl: (async () => new Response(JSON.stringify({ data: [{ id: "MiniMax-M3" }, { id: "speech-2.8-hd" }, { id: "MiniMax-M3.1-Flash" }] }), { status: 200 })) as any });
   assert.deepEqual(models.map((m) => m.id), ["MiniMax-M3", "MiniMax-M3.1-Flash"]);

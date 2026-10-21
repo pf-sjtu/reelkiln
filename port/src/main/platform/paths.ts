@@ -79,3 +79,9 @@ export function composeEngineChildPath(enginePath: string, extra: string[], p: P
   }
   return out.join(d);
 }
+
+/** PORT-WIN docs/34: a relative path stored in a ledger/JSON the original only wrote on macOS (always "/"-joined, and
+ *  its readers refuse "\\") — identical to path.relative on POSIX. */
+export function posixRelative(from: string, to: string): string {
+  return path.relative(from, to).split(path.sep).join("/");
+}

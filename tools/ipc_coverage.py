@@ -75,6 +75,8 @@ fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()
 for f in (R / "port/src/main").rglob("*.ts"):
     pushes |= set(re.findall(r'push\(\s*"([a-zA-Z]+:[a-zA-Z:-]+)"', f.read_text()))
+    # docs/34: window-state.ts sends through the injected sendToRenderer (createWindow L60574-60580)
+    pushes |= set(re.findall(r'sendToRenderer\(\s*"([a-zA-Z]+:[a-zA-Z:-]+)"', f.read_text()))
 rows = []
 for c in chans:
     ch, d = c["channel"], c["dir"]

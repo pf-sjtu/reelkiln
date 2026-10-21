@@ -6,9 +6,10 @@
 //   app/reconstructed/main/index.js L1213-1227
 //   app/reconstructed/main/index.js L30375-31373
 // Substitutions (platform-layer routing only):
+//   1× !target.startsWith(`${root}/`)  →  !target.startsWith(`${root}${sep}`)
 import { createHash, createPublicKey, verify } from "node:crypto";
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 const PROD_GATEWAY_URL = "https://videoclaw-gw-650303209435.us-central1.run.app";
@@ -195,7 +196,7 @@ function contained(root, relative2) {
     throw new Error("Quickstart fixture path is invalid.");
   }
   const target = resolve(root, relative2);
-  if (target !== root && !target.startsWith(`${root}/`)) {
+  if (target !== root && !target.startsWith(`${root}${sep}`)) {
     throw new Error("Quickstart fixture escaped its catalog.");
   }
   return target;

@@ -64,7 +64,7 @@ test("local gateway shim: key plane (/v1/me = keyMeterFrom body, id = sha256(key
     assert.ok(hint.startsWith("vc_") && hint.includes("…"));
     const ledgerText = readFileSync(join(h.root, "local-gateway", "ledger.json"), "utf8");
     assert.ok(!ledgerText.includes(key), "the shim never stores the plaintext key");
-    assert.equal(statSync(join(h.root, "local-gateway", "ledger.json")).mode & 0o777, 0o600);
+    if (process.platform !== "win32") assert.equal(statSync(join(h.root, "local-gateway", "ledger.json")).mode & 0o777, 0o600);
     const me = await get(`${h.url}/v1/me`, key);
     assert.equal(me.status, 200);
     assert.equal(me.headers.get(SHIM_HEADER), "1");
@@ -162,7 +162,7 @@ test("account channels over the shim: snapshot ready (legacy key, storedKeyId = 
   try {
     const vault = readFileSync(join(h.ud, "credentials.dat"), "utf8");
     assert.ok(vault.startsWith("{"), "unpackaged + no keychain under node:test → the original's plaintext vault");
-    assert.equal(statSync(join(h.ud, "credentials.dat")).mode & 0o777, 0o600);
+    if (process.platform !== "win32") assert.equal(statSync(join(h.ud, "credentials.dat")).mode & 0o777, 0o600);
     const snap: any = await h.ch["account:snapshot"]();
     assert.equal(snap.step, "ready");
     assert.equal(snap.legacyKeyOnly, true);

@@ -322,7 +322,7 @@ test("bootstrap:revertEngine (L10240): one engine → 'No previous engine is ava
     const ud = join(root, "ud"); const engines = join(ud, "engines");
     const mk = (v: string) => { const p = join(engines, `engine-${v}`); mkdirSync(p, { recursive: true }); writeFileSync(join(p, "ENGINE_VERSION.json"), JSON.stringify({ version: v })); writeFileSync(join(p, ".videoclaw-build-sha256"), createHash("sha256").update(v).digest("hex") + "\n"); return p; };
     const a = mk("0.1.0"), b = mk("0.2.0"); mk("0.0.9");
-    const core = new BootstrapCore({ platform: "linux", userData: ud, workspaceRoot: join(root, "ws"), bootstrapRoots: [], packaged: false, bootstrapTool: () => null } as any,
+    const core = new BootstrapCore({ platform: process.platform, userData: ud, workspaceRoot: join(root, "ws"), bootstrapRoots: [], packaged: false, bootstrapTool: () => null } as any,
       notPortedHooks({ validateEngineSessionContext: () => {}, runDoctor: async () => ({ ok: true, checks: {} }), writeWorkspace: () => {}, assertEngineMoneyCompatibility: async () => {}, ensureEngineCommandShims: () => {}, inspectProductionCompatible: () => true } as any),
       (async () => "") as any, () => {});
     writeFileSync(join(ud, "engine-current.json"), JSON.stringify({ version: "0.2.0", path: b, buildSha256: "x" }));

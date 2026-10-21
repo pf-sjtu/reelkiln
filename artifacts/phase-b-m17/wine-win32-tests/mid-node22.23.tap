@@ -1,0 +1,2119 @@
+TAP version 13
+# Subtest: local gateway shim: key plane (/v1/me = keyMeterFrom body, id = sha256(key)), refusals, account plane not offered, billing endpoints
+ok 1 - local gateway shim: key plane (/v1/me = keyMeterFrom body, id = sha256(key)), refusals, account plane not offered, billing endpoints
+  ---
+  duration_ms: 175.2761
+  type: 'test'
+  ...
+# Subtest: local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mapped, MiniMax key only), metered (JSON + SSE usage), ceiling → 402, top-up restores
+ok 2 - local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mapped, MiniMax key only), metered (JSON + SSE usage), ceiling → 402, top-up restores
+  ---
+  duration_ms: 55.5783
+  type: 'test'
+  ...
+# Subtest: account channels over the shim: snapshot ready (legacy key, storedKeyId = shim id), verify, meter, top-up branch, saveGatewayKey, switchGateway, revoked key
+ok 3 - account channels over the shim: snapshot ready (legacy key, storedKeyId = shim id), verify, meter, top-up branch, saveGatewayKey, switchGateway, revoked key
+  ---
+  duration_ms: 79.2691
+  type: 'test'
+  ...
+# Subtest: account sign-in / consent / access / mint / claim on a self-hosted gateway: the original's unconfigured-pool refusals (no network)
+ok 4 - account sign-in / consent / access / mint / claim on a self-hosted gateway: the original's unconfigured-pool refusals (no network)
+  ---
+  duration_ms: 69.5198
+  type: 'test'
+  ...
+# Subtest: taste:titles: gateway route + key → one batched helper call through the shim (MiniMax, metered), cached; claude-code route → no helper call
+ok 5 - taste:titles: gateway route + key → one batched helper call through the shim (MiniMax, metered), cached; claude-code route → no helper call
+  ---
+  duration_ms: 50.2982
+  type: 'test'
+  ...
+# Subtest: Claude Code channels: the original's not-connected branches (no probe, no login child); claudeModels on the MiniMax source
+ok 6 - Claude Code channels: the original's not-connected branches (no probe, no login child); claudeModels on the MiniMax source
+  ---
+  duration_ms: 2.801
+  type: 'test'
+  ...
+# Subtest: codexHandoffOffer / continueOnCodex: a Claude video continues as a NEW Codex (MiniMax) chat; source untouched; second call returns the same continuation
+ok 7 - codexHandoffOffer / continueOnCodex: a Claude video continues as a NEW Codex (MiniMax) chat; source untouched; second call returns the same continuation
+  ---
+  duration_ms: 15.7408
+  type: 'test'
+  ...
+# Subtest: AgentHost.createSession: pins the current route, per-session cwd, idle, session:changed
+ok 8 - AgentHost.createSession: pins the current route, per-session cwd, idle, session:changed
+  ---
+  duration_ms: 25.0043
+  type: 'test'
+  ...
+# Subtest: AgentHost.sendMessage: spawns ONE streaming-input query bound to sessionAgentRuntime, streams original-shaped events, second turn reuses the runtime
+ok 9 - AgentHost.sendMessage: spawns ONE streaming-input query bound to sessionAgentRuntime, streams original-shaped events, second turn reuses the runtime
+  ---
+  duration_ms: 41.7033
+  type: 'test'
+  ...
+# Subtest: AgentHost: tool_use → tool_start, tool_result → tool_end; canUseTool confined to the session cwd
+ok 10 - AgentHost: tool_use → tool_start, tool_result → tool_end; canUseTool confined to the session cwd
+  ---
+  duration_ms: 23.3983
+  type: 'test'
+  ...
+# Subtest: AgentHost.interrupt('stop'): synthetic stopped result, idle at once, query.interrupt(), no output after Stop, stale result swallowed, next turn works
+ok 11 - AgentHost.interrupt('stop'): synthetic stopped result, idle at once, query.interrupt(), no output after Stop, stale result swallowed, next turn works
+  ---
+  duration_ms: 110.4689
+  type: 'test'
+  ...
+# Subtest: AgentHost.interrupt: no ack within interruptAckTimeoutMs → runtime torn down (query.close + gate proxy close); next send respawns
+ok 12 - AgentHost.interrupt: no ack within interruptAckTimeoutMs → runtime torn down (query.close + gate proxy close); next send respawns
+  ---
+  duration_ms: 70.3375
+  type: 'test'
+  ...
+# Subtest: AgentHost: Stop while the runtime is still spawning → idle, nothing is queued into the new runtime
+ok 13 - AgentHost: Stop while the runtime is still spawning → idle, nothing is queued into the new runtime
+  ---
+  duration_ms: 42.6773
+  type: 'test'
+  ...
+# Subtest: AgentHost.onLlmRouteChanged: active turn → original error card + status error + teardown; idle runtime → teardown; builtin-pinned skipped; next send respawns
+ok 14 - AgentHost.onLlmRouteChanged: active turn → original error card + status error + teardown; idle runtime → teardown; builtin-pinned skipped; next send respawns
+  ---
+  duration_ms: 86.2606
+  type: 'test'
+  ...
+# Subtest: AgentHost.onLlmRouteChanged while spawning: the late runtime is discarded (gate proxy closed), status error
+ok 15 - AgentHost.onLlmRouteChanged while spawning: the late runtime is discarded (gate proxy closed), status error
+  ---
+  duration_ms: 17.3217
+  type: 'test'
+  ...
+# Subtest: AgentHost concurrency: host-wide 1 turn at a time (shared MiniMax key); same-video send while running refused; slot frees after result/stop
+ok 16 - AgentHost concurrency: host-wide 1 turn at a time (shared MiniMax key); same-video send while running refused; slot frees after result/stop
+  ---
+  duration_ms: 7.3576
+  type: 'test'
+  ...
+# Subtest: AgentHost: route not ready / SDK missing → error event + status error + rejected send; error result → error card
+ok 17 - AgentHost: route not ready / SDK missing → error event + status error + rejected send; error result → error card
+  ---
+  duration_ms: 15.9156
+  type: 'test'
+  ...
+# Subtest: agent IPC glue: original channel names, {sessionId, event} push payload, session:changed list
+ok 18 - agent IPC glue: original channel names, {sessionId, event} push payload, session:changed list
+  ---
+  duration_ms: 10.9009
+  type: 'test'
+  ...
+# Subtest: renderer chat reducer: deltas stream into one bubble, final text replaces, tools, stop notice, foreign sessions ignored
+ok 19 - renderer chat reducer: deltas stream into one bubble, final text replaces, tools, stop notice, foreign sessions ignored
+  ---
+  duration_ms: 0.8951
+  type: 'test'
+  ...
+# Subtest: AgentHost + real LlmRouteService + gate proxy (local upstream): child env carries only the session token, the upstream sees the real key, proxy closes on teardown
+ok 20 - AgentHost + real LlmRouteService + gate proxy (local upstream): child env carries only the session token, the upstream sees the real key, proxy closes on teardown
+  ---
+  duration_ms: 163.1119
+  type: 'test'
+  ...
+# Subtest: docs/30 spend: the SDK result's modelUsage (a Claude alias priced as the served MiniMax model) → result.totalCostUsd; total_cost_usd is ignored
+ok 21 - docs/30 spend: the SDK result's modelUsage (a Claude alias priced as the served MiniMax model) → result.totalCostUsd; total_cost_usd is ignored
+  ---
+  duration_ms: 11.9909
+  type: 'test'
+  ...
+# Subtest: docs/30 spend: a gate-proxied route (provider / Codex) is priced from the proxy's metered upstream usage, cumulative per runtime
+ok 22 - docs/30 spend: a gate-proxied route (provider / Codex) is priced from the proxy's metered upstream usage, cumulative per runtime
+  ---
+  duration_ms: 13.9309
+  type: 'test'
+  ...
+# Subtest: docs/30 spend: gateway route — the job's ledger (same models.dev price) trues up the displayed gateway reasoning to max(metered, ledger), idempotently
+ok 23 - docs/30 spend: gateway route — the job's ledger (same models.dev price) trues up the displayed gateway reasoning to max(metered, ledger), idempotently
+  ---
+  duration_ms: 5.952
+  type: 'test'
+  ...
+# Subtest: docs/31 §5 spend: after a Stop the host waits for the drained calls (shim llm_in_flight / proxy inflight), then reconciles / re-meters once
+not ok 24 - docs/31 §5 spend: after a Stop the host waits for the drained calls (shim llm_in_flight / proxy inflight), then reconciles / re-meters once
+  ---
+  duration_ms: 2.0096
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\agent-host.test.cjs:40433:27'
+  failureType: 'cancelledByParent'
+  error: 'Promise resolution is still pending but the event loop has already resolved'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    process.emit (node:events:519:28)
+  ...
+# Subtest: docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels
+not ok 25 - docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels
+  ---
+  duration_ms: 0
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\agent-host.test.cjs:40463:27'
+  failureType: 'cancelledByParent'
+  error: 'Promise resolution is still pending but the event loop has already resolved'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    process.emit (node:events:519:28)
+  ...
+# Subtest: pure helpers match the original source (compareEngineVersions, manifest compat, classify, doctorFailures, scrub regex)
+ok 26 - pure helpers match the original source (compareEngineVersions, manifest compat, classify, doctorFailures, scrub regex)
+  ---
+  duration_ms: 26.3189
+  type: 'test'
+  ...
+# Subtest: argv / env builders match the original call sites
+ok 27 - argv / env builders match the original call sites
+  ---
+  duration_ms: 0.6252
+  type: 'test'
+  ...
+# Subtest: platform npm/tar invocations
+ok 28 - platform npm/tar invocations
+  ---
+  duration_ms: 0.4058
+  type: 'test'
+  ...
+# Subtest: scrubEngineGatewaySecrets output identical to original
+ok 29 - scrubEngineGatewaySecrets output identical to original
+  ---
+  duration_ms: 2.0222
+  type: 'test'
+  ...
+# Subtest: BootstrapCore.runAll: full step machine with a recording runner (real tar, fake uv/npm)
+not ok 30 - BootstrapCore.runAll: full step machine with a recording runner (real tar, fake uv/npm)
+  ---
+  duration_ms: 4.9385
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\bootstrap.test.cjs:1324:27'
+  failureType: 'testCodeFailure'
+  error: 'spawnSync tar ENOENT'
+  code: 'ENOENT'
+  stack: |-
+    Object.spawnSync (node:internal/child_process:1120:20)
+    spawnSync (node:child_process:902:24)
+    execFileSync (node:child_process:945:15)
+    makeEngineTarball (Z:\workspace\videoclaw\repo\port\dist-test\bootstrap.test.cjs:1320:47)
+    TestContext.<anonymous> (Z:\workspace\videoclaw\repo\port\dist-test\bootstrap.test.cjs:1327:24)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  ...
+# Subtest: BootstrapCore: sha mismatch fails the engine step with the original message; unported hooks never pass silently
+not ok 31 - BootstrapCore: sha mismatch fails the engine step with the original message; unported hooks never pass silently
+  ---
+  duration_ms: 3.2458
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\bootstrap.test.cjs:1380:27'
+  failureType: 'testCodeFailure'
+  error: 'spawnSync tar ENOENT'
+  code: 'ENOENT'
+  stack: |-
+    Object.spawnSync (node:internal/child_process:1120:20)
+    spawnSync (node:child_process:902:24)
+    execFileSync (node:child_process:945:15)
+    makeEngineTarball (Z:\workspace\videoclaw\repo\port\dist-test\bootstrap.test.cjs:1320:47)
+    TestContext.<anonymous> (Z:\workspace\videoclaw\repo\port\dist-test\bootstrap.test.cjs:1382:19)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  ...
+# Subtest: resolveEditorRenderEngine mirrors the original branches
+ok 32 - resolveEditorRenderEngine mirrors the original branches
+  ---
+  duration_ms: 0.7754
+  type: 'test'
+  ...
+# Subtest: claude / codex executable resolution (original order; win32 suffix)
+ok 33 - claude / codex executable resolution (original order; win32 suffix)
+  ---
+  duration_ms: 0.8274
+  type: 'test'
+  ...
+# Subtest: writeWorkspacePartial: dirs, taste packs, CLAUDE.md (verbatim contract) then validateEngineSessionContext refuses an incomplete engine (L9650-9689 order)
+ok 34 - writeWorkspacePartial: dirs, taste packs, CLAUDE.md (verbatim contract) then validateEngineSessionContext refuses an incomplete engine (L9650-9689 order)
+  ---
+  duration_ms: 17.7149
+  type: 'test'
+  ...
+# Subtest: initialize handshake: exact params, version gate 0.160.1, then `initialized` notification
+ok 35 - initialize handshake: exact params, version gate 0.160.1, then `initialized` notification
+  ---
+  duration_ms: 241.4932
+  type: 'test'
+  ...
+# Subtest: version mismatch rejects with the original message; errors/unknown ids/server requests handled
+ok 36 - version mismatch rejects with the original message; errors/unknown ids/server requests handled
+  ---
+  duration_ms: 231.9374
+  type: 'test'
+  ...
+# Subtest: request timeout message
+ok 37 - request timeout message
+  ---
+  duration_ms: 242.6878
+  type: 'test'
+  ...
+# Subtest: Responses structured emulation: text.format json_schema → forced function tool; response → message/output_text
+ok 38 - Responses structured emulation: text.format json_schema → forced function tool; response → message/output_text
+  ---
+  duration_ms: 1.7579
+  type: 'test'
+  ...
+# Subtest: Responses SSE rewriter: function_call events of structured_output become output_text events (other calls untouched)
+ok 39 - Responses SSE rewriter: function_call events of structured_output become output_text events (other calls untouched)
+  ---
+  duration_ms: 0.8734
+  type: 'test'
+  ...
+# Subtest: gate proxy surface "openai": token auth (OpenAI error shape), /v1 stripped onto the provider base, key swapped in, gate + emulation
+ok 40 - gate proxy surface "openai": token auth (OpenAI error shape), /v1 stripped onto the provider base, key swapped in, gate + emulation
+  ---
+  duration_ms: 102.5172
+  type: 'test'
+  ...
+# Subtest: MiniMax backend: provider resolution, profile, thread config, child env without the key, executable discovery, model catalog
+ok 41 - MiniMax backend: provider resolution, profile, thread config, child env without the key, executable discovery, model catalog
+  ---
+  duration_ms: 10.5526
+  type: 'test'
+  ...
+# Subtest: CodexRouteController: gate, status, catalog partition with the PORT evidence rows, refusals, pins
+ok 42 - CodexRouteController: gate, status, catalog partition with the PORT evidence rows, refusals, pins
+  ---
+  duration_ms: 3.3627
+  type: 'test'
+  ...
+# Subtest: AgentHost + Codex harness: createSession pins the harness, a turn runs (text + tool + declined approval), stream ends, resume on the next send
+ok 43 - AgentHost + Codex harness: createSession pins the harness, a turn runs (text + tool + declined approval), stream ends, resume on the next send
+  ---
+  duration_ms: 44.369
+  type: 'test'
+  ...
+# Subtest: AgentHost + Codex: setModel / setReasoningEffort (channels), effort pin mismatch refused, unavailable without the key
+ok 44 - AgentHost + Codex: setModel / setReasoningEffort (channels), effort pin mismatch refused, unavailable without the key
+  ---
+  duration_ms: 41.2404
+  type: 'test'
+  ...
+# Subtest: POSIX shim scripts are byte-identical to the original source
+ok 45 - POSIX shim scripts are byte-identical to the original source
+  ---
+  duration_ms: 8.628
+  type: 'test'
+  ...
+# Subtest: win32 shims: sh flavour points at .venv/Scripts/python.exe, .cmd siblings use CRLF + goto
+ok 46 - win32 shims: sh flavour points at .venv/Scripts/python.exe, .cmd siblings use CRLF + goto
+  ---
+  duration_ms: 0.7182
+  type: 'test'
+  ...
+# Subtest: writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 adds .cmd
+ok 47 - writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 adds .cmd
+  ---
+  duration_ms: 30.1309
+  type: 'test'
+  ...
+# Subtest: installAppCommandShims prepends bin to PATH (win32: replaces the case-variant key)
+ok 48 - installAppCommandShims prepends bin to PATH (win32: replaces the case-variant key)
+  ---
+  duration_ms: 10.3304
+  type: 'test'
+  ...
+# Subtest: linux git shim forwards to the real git (original xcode probe would block it)
+ok 49 - linux git shim forwards to the real git (original xcode probe would block it)
+  ---
+  duration_ms: 0.4344
+  type: 'test'
+  ...
+# Subtest: ported editor-render worker matches the shipped editorRenderWorker.js message-for-message
+ok 50 - ported editor-render worker matches the shipped editorRenderWorker.js message-for-message
+  ---
+  duration_ms: 224.0768
+  type: 'test'
+  ...
+# Subtest: EditorRenderController: validation, start message, completion receipt, cancel/reap
+ok 51 - EditorRenderController: validation, start message, completion receipt, cancel/reap
+  ---
+  duration_ms: 88.082
+  type: 'test'
+  ...
+# Subtest: expandHome: POSIX regex unchanged; win32 also expands ~\\
+ok 52 - expandHome: POSIX regex unchanged; win32 also expands ~\\
+  ---
+  duration_ms: 0.684
+  type: 'test'
+  ...
+# Subtest: first-message job id (submitPreparedMessage L41559-41600): deterministic, minted once, turn text = session policy + APP-OWNED PRODUCTION ID
+ok 53 - first-message job id (submitPreparedMessage L41559-41600): deterministic, minted once, turn text = session policy + APP-OWNED PRODUCTION ID
+  ---
+  duration_ms: 7.3427
+  type: 'test'
+  ...
+# Subtest: AgentHost ENGINE session: workspace cwd, first message binds + mkdirs the job and persists it, createLocalRuntime-shaped options, policy-prefixed turn
+ok 54 - AgentHost ENGINE session: workspace cwd, first message binds + mkdirs the job and persists it, createLocalRuntime-shaped options, policy-prefixed turn
+  ---
+  duration_ms: 45.3673
+  type: 'test'
+  ...
+# Subtest: AgentHost ENGINE: Hooks deny Task/Agent; Bash app-owned final render is refused by the original appOwnedVideoCommandRefusal; plan-mode tools redirected
+ok 55 - AgentHost ENGINE: Hooks deny Task/Agent; Bash app-owned final render is refused by the original appOwnedVideoCommandRefusal; plan-mode tools redirected
+  ---
+  duration_ms: 16.5802
+  type: 'test'
+  ...
+# Subtest: AgentHost ENGINE: permission card round-trip (canUseTool → permission:request → respondPermission) + replay + abort on Stop
+ok 56 - AgentHost ENGINE: permission card round-trip (canUseTool → permission:request → respondPermission) + replay + abort on Stop
+  ---
+  duration_ms: 15.5677
+  type: 'test'
+  ...
+# Subtest: AgentHost ENGINE: continue-intent first message does not mint; a NEW jobs/<id> named in a tool_use binds (maybeBindJob), a pre-existing one never does
+ok 57 - AgentHost ENGINE: continue-intent first message does not mint; a NEW jobs/<id> named in a tool_use binds (maybeBindJob), a pre-existing one never does
+  ---
+  duration_ms: 45.7279
+  type: 'test'
+  ...
+# Subtest: sessions.json: writeRegistry merge-with-disk (foreign rows + clients carried), load → takeSessions → AgentHost.restoreSessions (status healed idle)
+ok 58 - sessions.json: writeRegistry merge-with-disk (foreign rows + clients carried), load → takeSessions → AgentHost.restoreSessions (status healed idle)
+  ---
+  duration_ms: 15.5094
+  type: 'test'
+  ...
+# Subtest: M1 home boot: account snapshot (local studio default / honest signed-out with the gate on), eligibility, bootstrap status, renderer entry
+ok 59 - M1 home boot: account snapshot (local studio default / honest signed-out with the gate on), eligibility, bootstrap status, renderer entry
+  ---
+  duration_ms: 2.5456
+  type: 'test'
+  ...
+# Subtest: AgentGatewayProxy (verbatim L28672) binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s unknown tokens (loopback only, no upstream)
+ok 60 - AgentGatewayProxy (verbatim L28672) binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s unknown tokens (loopback only, no upstream)
+  ---
+  duration_ms: 43.396
+  type: 'test'
+  ...
+# Subtest: bearer() parsing
+ok 61 - bearer() parsing
+  ---
+  duration_ms: 0.2783
+  type: 'test'
+  ...
+# Subtest: channel counts match docs/04 (157/3/23/1 = 184)
+ok 62 - channel counts match docs/04 (157/3/23/1 = 184)
+  ---
+  duration_ms: 0.7858
+  type: 'test'
+  ...
+# Subtest: IPC table equals the original `const IPC = {…}` in the shipped bundle
+ok 63 - IPC table equals the original `const IPC = {…}` in the shipped bundle
+  ---
+  duration_ms: 120.1121
+  type: 'test'
+  ...
+# Subtest: every invoke channel maps to a unique bridge method
+ok 64 - every invoke channel maps to a unique bridge method
+  ---
+  duration_ms: 0.2456
+  type: 'test'
+  ...
+# Subtest: every verified shape carries a line citation and a level
+ok 65 - every verified shape carries a line citation and a level
+  ---
+  duration_ms: 0.8582
+  type: 'test'
+  ...
+# Subtest: coverage snapshot (update deliberately when shapes are added)
+ok 66 - coverage snapshot (update deliberately when shapes are added)
+  ---
+  duration_ms: 0.8791
+  type: 'test'
+  ...
+# Subtest: VersionStore (L13344) + scanJob (L14365): a recorded final.mp4 is minted as versions/v1.mp4 (same bytes), approve records a final, registry survives a reload
+ok 67 - VersionStore (L13344) + scanJob (L14365): a recorded final.mp4 is minted as versions/v1.mp4 (same bytes), approve records a final, registry survives a reload
+  ---
+  duration_ms: 120.9558
+  type: 'test'
+  ...
+# Subtest: AgentHost job path (getJobSnapshot L45620, ensureWatcher L47956, approveVersion L47488): watcher pushes job:snapshot with v1, approve finalizes + persists finalizedAtMs + sends the taste-capture turn
+ok 68 - AgentHost job path (getJobSnapshot L45620, ensureWatcher L47956, approveVersion L47488): watcher pushes job:snapshot with v1, approve finalizes + persists finalizedAtMs + sends the taste-capture turn
+  ---
+  duration_ms: 902.7435
+  type: 'test'
+  ...
+# Subtest: vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range / HEAD / 416, identity header
+ok 69 - vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range / HEAD / 416, identity header
+  ---
+  duration_ms: 61.7964
+  type: 'test'
+  ...
+# Subtest: file:saveItemAs (L61987) copies to the dialog's path; intake:pickFiles (L62157) checks the scope and grants picked files
+ok 70 - file:saveItemAs (L61987) copies to the dialog's path; intake:pickFiles (L62157) checks the scope and grants picked files
+  ---
+  duration_ms: 10.6886
+  type: 'test'
+  ...
+# Subtest: ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): copy → ready, Send mints the job then materializes into jobs/<id>/incoming/ and lists the files ahead of the turn
+ok 71 - ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): copy → ready, Send mints the job then materializes into jobs/<id>/incoming/ and lists the files ahead of the turn
+  ---
+  duration_ms: 148.5402
+  type: 'test'
+  ...
+# Subtest: smoke driver scripts parse for every S1 option combination (attach/m3/existing session)
+ok 72 - smoke driver scripts parse for every S1 option combination (attach/m3/existing session)
+  ---
+  duration_ms: 3.9801
+  type: 'test'
+  ...
+# Subtest: PORT-WIN docs/34: vcmediaFilePath maps main's pathToFileURL pathnames ("/C:/…") back to native Windows paths; POSIX untouched
+ok 73 - PORT-WIN docs/34: vcmediaFilePath maps main's pathToFileURL pathnames ("/C:/…") back to native Windows paths; POSIX untouched
+  ---
+  duration_ms: 0.2902
+  type: 'test'
+  ...
+# Subtest: minimalAgentOptions: passes sessionRuntimeConfig env/model through unchanged, isolated settings/MCP, executable, turn cap
+ok 74 - minimalAgentOptions: passes sessionRuntimeConfig env/model through unchanged, isolated settings/MCP, executable, turn cap
+  ---
+  duration_ms: 2.0329
+  type: 'test'
+  ...
+# Subtest: runAgentTurn: SDK boundary gets the runtime env/model; init/assistant/tool_use/tool_result/result collected; canUseTool allow-list; key scrubbed
+ok 75 - runAgentTurn: SDK boundary gets the runtime env/model; init/assistant/tool_use/tool_result/result collected; canUseTool allow-list; key scrubbed
+  ---
+  duration_ms: 2.4662
+  type: 'test'
+  ...
+# Subtest: runAgentTurn: error result, SDK throw and timeout become a typed failure (no throw)
+ok 76 - runAgentTurn: error result, SDK throw and timeout become a typed failure (no throw)
+  ---
+  duration_ms: 31.5251
+  type: 'test'
+  ...
+# Subtest: loadClaudeAgentSdk: SDK_UNAVAILABLE when unset/missing/wrong package; loads an ESM package from a node_modules dir
+ok 77 - loadClaudeAgentSdk: SDK_UNAVAILABLE when unset/missing/wrong package; loads an ESM package from a node_modules dir
+  ---
+  duration_ms: 23.7076
+  type: 'test'
+  ...
+# Subtest: SDK discovery (docs/17 §4): env > app node_modules > resources(unpacked) > vendor > ~/.videoclaw; env misconfig is an error, not a fallback
+ok 78 - SDK discovery (docs/17 §4): env > app node_modules > resources(unpacked) > vendor > ~/.videoclaw; env misconfig is an error, not a fallback
+  ---
+  duration_ms: 2.0616
+  type: 'test'
+  ...
+# Subtest: pinned SDK version: agent-sdk.ts constant == package.json config (install script source)
+ok 79 - pinned SDK version: agent-sdk.ts constant == package.json config (install script source)
+  ---
+  duration_ms: 0.4108
+  type: 'test'
+  ...
+# Subtest: claudeCodeExecutableFor: original packaged layout (claude-agent-sdk-<platform>-<arch>/claude), musl, win32 .exe, override
+ok 80 - claudeCodeExecutableFor: original packaged layout (claude-agent-sdk-<platform>-<arch>/claude), musl, win32 .exe, override
+  ---
+  duration_ms: 0.5531
+  type: 'test'
+  ...
+# Subtest: agentCompat: MiniMax preset → verified Claude Code knobs + gate proxy; user file can turn them off; other providers unaffected
+ok 81 - agentCompat: MiniMax preset → verified Claude Code knobs + gate proxy; user file can turn them off; other providers unaffected
+  ---
+  duration_ms: 11.5685
+  type: 'test'
+  ...
+# Subtest: gate proxy: session token required, real auth swapped in upstream, custom headers kept, streamed body passed through, non-/v1 answered locally
+ok 82 - gate proxy: session token required, real auth swapped in upstream, custom headers kept, streamed body passed through, non-/v1 answered locally
+  ---
+  duration_ms: 142.3584
+  type: 'test'
+  ...
+# Subtest: gate proxy: x-api-key / header auth schemes upstream; upstream unreachable → 502 without leaking
+ok 83 - gate proxy: x-api-key / header auth schemes upstream; upstream unreachable → 502 without leaking
+  ---
+  duration_ms: 53.1499
+  type: 'test'
+  ...
+# Subtest: gate proxy: concurrent child requests are serialised by the account gate (shared with helper calls); client abort frees the slot
+ok 84 - gate proxy: concurrent child requests are serialised by the account gate (shared with helper calls); client abort frees the slot
+  ---
+  duration_ms: 951.9209
+  type: 'test'
+  ...
+# Subtest: proxiedAgentEnv: base URL → proxy, only the session token, auth header dropped from ANTHROPIC_CUSTOM_HEADERS
+ok 85 - proxiedAgentEnv: base URL → proxy, only the session token, auth header dropped from ANTHROPIC_CUSTOM_HEADERS
+  ---
+  duration_ms: 0.8115
+  type: 'test'
+  ...
+# Subtest: LlmRouteService.sessionAgentRuntime: gateProxy provider → proxied env (no provider key anywhere); others unchanged; end-to-end through a mock SDK + mock upstream
+ok 86 - LlmRouteService.sessionAgentRuntime: gateProxy provider → proxied env (no provider key anywhere); others unchanged; end-to-end through a mock SDK + mock upstream
+  ---
+  duration_ms: 41.13
+  type: 'test'
+  ...
+# Subtest: structured emulation: request rewrite only for tool-less output_config.format; effort kept
+ok 87 - structured emulation: request rewrite only for tool-less output_config.format; effort kept
+  ---
+  duration_ms: 0.3464
+  type: 'test'
+  ...
+# Subtest: structured emulation: SSE tool_use → one text block with the JSON (thinking kept, stray text dropped, indices renumbered, stop_reason end_turn); split chunks OK
+ok 88 - structured emulation: SSE tool_use → one text block with the JSON (thinking kept, stray text dropped, indices renumbered, stop_reason end_turn); split chunks OK
+  ---
+  duration_ms: 1.5054
+  type: 'test'
+  ...
+# Subtest: structured emulation: non-streamed reply rewritten; replies without the tool untouched
+ok 89 - structured emulation: non-streamed reply rewritten; replies without the tool untouched
+  ---
+  duration_ms: 0.2412
+  type: 'test'
+  ...
+# Subtest: gate proxy + emulateStructuredOutputs: upstream sees the forced tool, client gets JSON text; other requests and errors untouched; config needs gateProxy
+ok 90 - gate proxy + emulateStructuredOutputs: upstream sees the forced tool, client gets JSON text; other requests and errors untouched; config needs gateProxy
+  ---
+  duration_ms: 37.0356
+  type: 'test'
+  ...
+# Subtest: gate proxy (docs/31 §5): a client that leaves mid-stream — the call is drained and its usage still metered
+ok 91 - gate proxy (docs/31 §5): a client that leaves mid-stream — the call is drained and its usage still metered
+  ---
+  duration_ms: 233.9166
+  type: 'test'
+  ...
+# Subtest: config: baseUrl credentials/query/fragment/insecure http refused; loopback http + allowInsecureHttp ok; CR/LF and control chars refused
+ok 92 - config: baseUrl credentials/query/fragment/insecure http refused; loopback http + allowInsecureHttp ok; CR/LF and control chars refused
+  ---
+  duration_ms: 17.8521
+  type: 'test'
+  ...
+# Subtest: env overrides: invalid base URL / model ignored with a warning naming only the env var; malformed key → not configured
+ok 93 - env overrides: invalid base URL / model ignored with a warning naming only the env var; malformed key → not configured
+  ---
+  duration_ms: 3.2642
+  type: 'test'
+  ...
+# Subtest: logger: pattern scrubbing (sk-…, x-api-key:, URL userinfo, ?key=), numeric secret fields, failing sink never throws
+ok 94 - logger: pattern scrubbing (sk-…, x-api-key:, URL userinfo, ?key=), numeric secret fields, failing sink never throws
+  ---
+  duration_ms: 0.509
+  type: 'test'
+  ...
+# Subtest: provider responses: non-JSON → BAD_RESPONSE without echoing the body; oversized → BAD_RESPONSE; gateway path unchanged
+ok 95 - provider responses: non-JSON → BAD_RESPONSE without echoing the body; oversized → BAD_RESPONSE; gateway path unchanged
+  ---
+  duration_ms: 193.0674
+  type: 'test'
+  ...
+# Subtest: deadlineMs bounds retries+backoff (TIMEOUT); caller AbortSignal cancels; NETWORK reason carries the cause code, never the key
+ok 96 - deadlineMs bounds retries+backoff (TIMEOUT); caller AbortSignal cancels; NETWORK reason carries the cause code, never the key
+  ---
+  duration_ms: 416.7286
+  type: 'test'
+  ...
+# (node:688) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: end-to-end: no key or Bearer token in ANY log line or result across success, 401, 429-exhausted, 500, timeout
+ok 97 - end-to-end: no key or Bearer token in ANY log line or result across success, 401, 429-exhausted, 500, timeout
+  ---
+  duration_ms: 332.6916
+  type: 'test'
+  ...
+# Subtest: models sync: credentials in a custom URL are never returned/stored; non-http URL refused; chunked body over the cap → TOO_LARGE, catalog untouched
+ok 98 - models sync: credentials in a custom URL are never returned/stored; non-http URL refused; chunked body over the cap → TOO_LARGE, catalog untouched
+  ---
+  duration_ms: 5.2998
+  type: 'test'
+  ...
+# Subtest: providers sharing one key env share ONE account-level gate sized by the smallest limit (minimax + minimax-openai)
+ok 99 - providers sharing one key env share ONE account-level gate sized by the smallest limit (minimax + minimax-openai)
+  ---
+  duration_ms: 194.9414
+  type: 'test'
+  ...
+# Subtest: reloadProviderRegistry: add/update/remove providers, listeners + generation, no-op when unchanged
+ok 100 - reloadProviderRegistry: add/update/remove providers, listeners + generation, no-op when unchanged
+  ---
+  duration_ms: 21.2667
+  type: 'test'
+  ...
+# Subtest: invalid config on reload → strict CONFIG_INVALID, presets only (minimax kept), error logged without file content; fix restores
+ok 101 - invalid config on reload → strict CONFIG_INVALID, presets only (minimax kept), error logged without file content; fix restores
+  ---
+  duration_ms: 12.2558
+  type: 'test'
+  ...
+# Subtest: watchProvidersFile: in-place write and atomic rename both trigger a reload; close() stops watching
+ok 102 - watchProvidersFile: in-place write and atomic rename both trigger a reload; close() stops watching
+  ---
+  duration_ms: 331.7076
+  type: 'test'
+  ...
+# Subtest: ConcurrencyLimiter.setMax / providerGate resize after a reload changes concurrency
+ok 103 - ConcurrencyLimiter.setMax / providerGate resize after a reload changes concurrency
+  ---
+  duration_ms: 11.7092
+  type: 'test'
+  ...
+# Subtest: SettingsStore: differential vs original Settings (L5291) — load/normalise/get/patch/written bytes/legacy creds
+ok 104 - SettingsStore: differential vs original Settings (L5291) — load/normalise/get/patch/written bytes/legacy creds
+  ---
+  duration_ms: 26.8805
+  type: 'test'
+  ...
+# Subtest: rendererWritableSettingsPatch: differential vs original L5107; PORT-NEW llmRoute filter by registry
+ok 105 - rendererWritableSettingsPatch: differential vs original L5107; PORT-NEW llmRoute filter by registry
+  ---
+  duration_ms: 1.9724
+  type: 'test'
+  ...
+# Subtest: SettingsStore PORT-NEW: provider route kept when registered, parked (hidden but preserved on disk) when not, re-adopted on revalidate
+ok 106 - SettingsStore PORT-NEW: provider route kept when registered, parked (hidden but preserved on disk) when not, re-adopted on revalidate
+  ---
+  duration_ms: 5.4241
+  type: 'test'
+  ...
+# Subtest: LlmRouteService: sessionLlmRoute / sessionHelperKind / sessionModel differential vs original AgentHost (L40822-40872); provider routes
+ok 107 - LlmRouteService: sessionLlmRoute / sessionHelperKind / sessionModel differential vs original AgentHost (L40822-40872); provider routes
+  ---
+  duration_ms: 21.7213
+  type: 'test'
+  ...
+# Subtest: localRuntimeEnv: differential vs original createLocalRuntime env (L23214-23230 + L23282-23321) for claude-code/gateway; provider branch
+ok 108 - localRuntimeEnv: differential vs original createLocalRuntime env (L23214-23230 + L23282-23321) for claude-code/gateway; provider branch
+  ---
+  duration_ms: 23.1634
+  type: 'test'
+  ...
+# Subtest: sessionRuntimeConfig → a REAL child process receives base URL, auth token (past sanitizedAgentEnv), aliases, isolated profile; no other secret leaks
+ok 109 - sessionRuntimeConfig → a REAL child process receives base URL, auth token (past sanitizedAgentEnv), aliases, isolated profile; no other secret leaks
+  ---
+  duration_ms: 312.9052
+  type: 'test'
+  ...
+# Subtest: helper creds + readiness per route; helper request for a provider video reaches the provider (mock)
+ok 110 - helper creds + readiness per route; helper request for a provider video reaches the provider (mock)
+  ---
+  duration_ms: 70.1239
+  type: 'test'
+  ...
+# Subtest: createLlmRuntime: IPC handlers settings:get/set + engine:llmRouteReadiness; route-change hook; provider removed by hot reload → fallback + hook, restored → re-adopted
+ok 111 - createLlmRuntime: IPC handlers settings:get/set + engine:llmRouteReadiness; route-change hook; provider removed by hot reload → fallback + hook, restored → re-adopted
+  ---
+  duration_ms: 16.2537
+  type: 'test'
+  ...
+# Subtest: port:llm:routes lists built-ins + providers (key presence, agent/helper capability, structured mode, no secrets); selection via settings:set round-trips
+ok 112 - port:llm:routes lists built-ins + providers (key presence, agent/helper capability, structured mode, no secrets); selection via settings:set round-trips
+  ---
+  duration_ms: 5.2932
+  type: 'test'
+  ...
+# Subtest: chat.completions: text+image(base64,url)+pdf → content parts; text-only stays a string; system first
+ok 113 - chat.completions: text+image(base64,url)+pdf → content parts; text-only stays a string; system first
+  ---
+  duration_ms: 2.6179
+  type: 'test'
+  ...
+# Subtest: responses: input_text / input_image(detail auto) / input_file(file_data | file_url); instructions; max_output_tokens
+ok 114 - responses: input_text / input_image(detail auto) / input_file(file_data | file_url); instructions; max_output_tokens
+  ---
+  duration_ms: 0.6106
+  type: 'test'
+  ...
+# Subtest: documents: text / content sources become text; thinking blocks dropped; anthropic passthrough untouched
+ok 115 - documents: text / content sources become text; thinking blocks dropped; anthropic passthrough untouched
+  ---
+  duration_ms: 0.3768
+  type: 'test'
+  ...
+# Subtest: tools: tool_use/tool_result/tools/tool_choice per protocol; images inside tool_result follow as user content
+ok 116 - tools: tool_use/tool_result/tools/tool_choice per protocol; images inside tool_result follow as user content
+  ---
+  duration_ms: 0.9741
+  type: 'test'
+  ...
+# Subtest: unrepresentable content → UNSUPPORTED_CONTENT (never silently dropped)
+ok 117 - unrepresentable content → UNSUPPORTED_CONTENT (never silently dropped)
+  ---
+  duration_ms: 0.9809
+  type: 'test'
+  ...
+# Subtest: end-to-end (mock): image reaches an openai-chat provider on the wire; UNSUPPORTED_CONTENT returns {ok:false} without a request
+ok 118 - end-to-end (mock): image reaches an openai-chat provider on the wire; UNSUPPORTED_CONTENT returns {ok:false} without a request
+  ---
+  duration_ms: 71.5431
+  type: 'test'
+  ...
+# Subtest: config: defaults applied, trailing slash trimmed, preset present, strict schema
+ok 119 - config: defaults applied, trailing slash trimmed, preset present, strict schema
+  ---
+  duration_ms: 12.186
+  type: 'test'
+  ...
+# Subtest: config: validation errors are CONFIG_INVALID with a path; secrets and auth headers are refused
+ok 120 - config: validation errors are CONFIG_INVALID with a path; secrets and auth headers are refused
+  ---
+  duration_ms: 5.111
+  type: 'test'
+  ...
+# Subtest: config: a user entry named like a preset merges over it (nested one level, auth replaced)
+ok 121 - config: a user entry named like a preset merges over it (nested one level, auth replaced)
+  ---
+  duration_ms: 0.9386
+  type: 'test'
+  ...
+# Subtest: registry: providers file via env var; missing explicit file errors; invalid file degrades to presets
+ok 122 - registry: providers file via env var; missing explicit file errors; invalid file degrades to presets
+  ---
+  duration_ms: 4.9386
+  type: 'test'
+  ...
+# Subtest: resolution: every protocol × auth combo → endpoint URL + headers; env overrides; summaries never expose the key
+ok 123 - resolution: every protocol × auth combo → endpoint URL + headers; env overrides; summaries never expose the key
+  ---
+  duration_ms: 4.6776
+  type: 'test'
+  ...
+# Subtest: routes: any registered provider is a valid llmRoute; unknown ones fall back / are deleted; session model
+ok 124 - routes: any registered provider is a valid llmRoute; unknown ones fall back / are deleted; session model
+  ---
+  duration_ms: 0.5093
+  type: 'test'
+  ...
+# Subtest: child env: key read from UNSANITIZED env and passed explicitly past sanitizedAgentEnv, per auth scheme
+ok 125 - child env: key read from UNSANITIZED env and passed explicitly past sanitizedAgentEnv, per auth scheme
+  ---
+  duration_ms: 2.5292
+  type: 'test'
+  ...
+# Subtest: protocol adapters: Anthropic-shaped helper body → chat / responses bodies; text extraction
+ok 126 - protocol adapters: Anthropic-shaped helper body → chat / responses bodies; text extraction
+  ---
+  duration_ms: 1.9817
+  type: 'test'
+  ...
+# Subtest: helper call end-to-end (mock) for openai-chat-completions with custom header auth + config retry policy
+ok 127 - helper call end-to-end (mock) for openai-chat-completions with custom header auth + config retry policy
+  ---
+  duration_ms: 121.5506
+  type: 'test'
+  ...
+# Subtest: helper call (mock) for openai-responses + bearer; credential body code from config is not retried; 500 passes through
+ok 128 - helper call (mock) for openai-responses + bearer; credential body code from config is not retried; 500 passes through
+  ---
+  duration_ms: 62.3246
+  type: 'test'
+  ...
+# Subtest: per-provider gates: concurrency from config (2), independent across providers; network error → typed NETWORK
+ok 129 - per-provider gates: concurrency from config (2), independent across providers; network error → typed NETWORK
+  ---
+  duration_ms: 63.4919
+  type: 'test'
+  ...
+# Subtest: timeout per attempt → typed TIMEOUT
+ok 130 - timeout per attempt → typed TIMEOUT
+  ---
+  duration_ms: 20.7747
+  type: 'test'
+  ...
+# Subtest: withRetry: retry-after honoured and capped by policy maxDelayMs; exhaustion → RATE_LIMITED; bodyCode path
+ok 131 - withRetry: retry-after honoured and capped by policy maxDelayMs; exhaustion → RATE_LIMITED; bodyCode path
+  ---
+  duration_ms: 1.3391
+  type: 'test'
+  ...
+# Subtest: logger: secret-named fields and registered secret values are redacted everywhere
+ok 132 - logger: secret-named fields and registered secret values are redacted everywhere
+  ---
+  duration_ms: 0.5807
+  type: 'test'
+  ...
+# Subtest: shipped example providers file validates; settings type accepts provider routes
+ok 133 - shipped example providers file validates; settings type accepts provider routes
+  ---
+  duration_ms: 1.5617
+  type: 'test'
+  ...
+# Subtest: takeOutputFormat: three spellings normalise; output_config keeps effort; text = none; two spellings = error
+ok 134 - takeOutputFormat: three spellings normalise; output_config keeps effort; text = none; two spellings = error
+  ---
+  duration_ms: 3.073
+  type: 'test'
+  ...
+# Subtest: native: openai-chat gets response_format json_schema (passthrough from either spelling) + reasoning_effort from output_config.effort
+ok 135 - native: openai-chat gets response_format json_schema (passthrough from either spelling) + reasoning_effort from output_config.effort
+  ---
+  duration_ms: 1.7109
+  type: 'test'
+  ...
+# Subtest: native: responses gets text.format; anthropic gets output_config.format (also from response_format)
+ok 136 - native: responses gets text.format; anthropic gets output_config.format (also from response_format)
+  ---
+  duration_ms: 0.9755
+  type: 'test'
+  ...
+# Subtest: tool mode: one forced tool per protocol, no native field; caller tools kept
+ok 137 - tool mode: one forced tool per protocol, no native field; caller tools kept
+  ---
+  duration_ms: 0.7508
+  type: 'test'
+  ...
+# Subtest: off mode drops the format and reports it
+ok 138 - off mode drops the format and reports it
+  ---
+  duration_ms: 0.2979
+  type: 'test'
+  ...
+# Subtest: extractText: structured tool call wins (anthropic tool_use / chat tool_calls / responses function_call); JSON normalised
+ok 139 - extractText: structured tool call wins (anthropic tool_use / chat tool_calls / responses function_call); JSON normalised
+  ---
+  duration_ms: 0.5933
+  type: 'test'
+  ...
+# Subtest: MiniMax preset uses tool mode; user file can switch to native
+ok 140 - MiniMax preset uses tool mode; user file can switch to native
+  ---
+  duration_ms: 15.3613
+  type: 'test'
+  ...
+# Subtest: end-to-end (mock): openai-chat provider in tool mode — wire body carries the forced tool, result is the JSON
+ok 141 - end-to-end (mock): openai-chat provider in tool mode — wire body carries the forced tool, result is the JSON
+  ---
+  duration_ms: 66.3597
+  type: 'test'
+  ...
+# Subtest: session:deletionPlan / session:delete (L39205/L39248): plan lists jobs/<id>, a running turn blocks, delete moves the job into .videoclaw-trash and drops the row
+ok 142 - session:deletionPlan / session:delete (L39205/L39248): plan lists jobs/<id>, a running turn blocks, delete moves the job into .videoclaw-trash and drops the row
+  ---
+  duration_ms: 69.8363
+  type: 'test'
+  ...
+# Subtest: session:retry (L42565): an errored turn keeps its input; retry re-delivers the same text into a resumed runtime; nothing to retry → false
+ok 143 - session:retry (L42565): an errored turn keeps its input; retry re-delivers the same text into a resumed runtime; nothing to retry → false
+  ---
+  duration_ms: 48.2546
+  type: 'test'
+  ...
+# Subtest: session:startContinuation + job:adopt (L38972/L47802): the finalized video's job moves into a deterministic continuation chat; idempotent; adopt(null) clears the offer
+ok 144 - session:startContinuation + job:adopt (L38972/L47802): the finalized video's job moves into a deterministic continuation chat; idempotent; adopt(null) clears the offer
+  ---
+  duration_ms: 41.6618
+  type: 'test'
+  ...
+# Subtest: spend:get / spend:setCeiling (L45686/L47158): new videos start unlimited; a ceiling is capped + persisted (spend-budgets.json) + pushed; Bypass refuses without consent
+ok 145 - spend:get / spend:setCeiling (L45686/L47158): new videos start unlimited; a ceiling is capped + persisted (spend-budgets.json) + pushed; Bypass refuses without consent
+  ---
+  duration_ms: 12.4564
+  type: 'test'
+  ...
+# Subtest: materials (L44876/L44932): a journaled arrival is published once (material_arrived + materials:changed + display row) and materialPreview resolves the file
+ok 146 - materials (L44876/L44932): a journaled arrival is published once (material_arrived + materials:changed + display row) and materialPreview resolves the file
+  ---
+  duration_ms: 63.3713
+  type: 'test'
+  ...
+# Subtest: job:originalContext (L45675): reads the bound job's promise.json brief + the first user prompt; unbound → null
+ok 147 - job:originalContext (L45675): reads the bound job's promise.json brief + the first user prompt; unbound → null
+  ---
+  duration_ms: 93.9183
+  type: 'test'
+  ...
+# Subtest: quickstart:start (L61294 → QuickstartStartCoordinator L33623): one durable destination with meta.quickstart, the starter prompt delivered once, firstTurn.submittedAt recorded, duplicate converges
+ok 148 - quickstart:start (L61294 → QuickstartStartCoordinator L33623): one durable destination with meta.quickstart, the starter prompt delivered once, firstTurn.submittedAt recorded, duplicate converges
+  ---
+  duration_ms: 52.0031
+  type: 'test'
+  ...
+# Subtest: local-channels-26: library tenant guard + setTenant + seedPack (README with the brief), voices answer the account-less branch, hfPreview/feedback absent fallbacks
+ok 149 - local-channels-26: library tenant guard + setTenant + seedPack (README with the brief), voices answer the account-less branch, hfPreview/feedback absent fallbacks
+  ---
+  duration_ms: 24.3252
+  type: 'test'
+  ...
+# Subtest: LocalResetController (L5826) + runPendingLocalReset (L5960): prepare plans, a stale plan is refused, commit writes the marker + relaunches, the next start archives the workspace and clears userData
+ok 150 - LocalResetController (L5826) + runPendingLocalReset (L5960): prepare plans, a stale plan is refused, commit writes the marker + relaunches, the next start archives the workspace and clears userData
+  ---
+  duration_ms: 59.6288
+  type: 'test'
+  ...
+# Subtest: bootstrap:revertEngine (L10240): one engine → 'No previous engine is available.'; a retained N-1 that passes doctor becomes active and the rest are pruned
+ok 151 - bootstrap:revertEngine (L10240): one engine → 'No previous engine is available.'; a retained N-1 that passes doctor becomes active and the rest are pruned
+  ---
+  duration_ms: 24.8085
+  type: 'test'
+  ...
+# Subtest: feedback:capture / discard (FeedbackService L57172): no gateway key → blockedRoute, no screenshot, consentRequired; discard forgets the capture
+ok 152 - feedback:capture / discard (FeedbackService L57172): no gateway key → blockedRoute, no screenshot, consentRequired; discard forgets the capture
+  ---
+  duration_ms: 1.645
+  type: 'test'
+  ...
+# Subtest: hfPreview (L56487): availability true only for a job-owned composition with the pinned runtime copy; editApply rewrites the element text atomically
+ok 153 - hfPreview (L56487): availability true only for a job-owned composition with the pinned runtime copy; editApply rewrites the element text atomically
+  ---
+  duration_ms: 171.2778
+  type: 'test'
+  ...
+# Subtest: attachment:pasteImage / preview (L62269/L62253): a clipboard PNG is written to the intake dir and staged as a paste chip; non-PNG bytes are refused
+ok 154 - attachment:pasteImage / preview (L62269/L62253): a clipboard PNG is written to the intake dir and staged as a paste chip; non-PNG bytes are refused
+  ---
+  duration_ms: 48.3148
+  type: 'test'
+  ...
+# Subtest: docs/26: handler wiring of the M9 channels the UI run could not reach — voice:approve/remove (account-less branch), library:scan (tenant guard + engine error), characters:retry, input:respond, media:discardVoice
+ok 155 - docs/26: handler wiring of the M9 channels the UI run could not reach — voice:approve/remove (account-less branch), library:scan (tenant guard + engine error), characters:retry, input:respond, media:discardVoice
+  ---
+  duration_ms: 3.2847
+  type: 'test'
+  ...
+# Subtest: media:voiceDictationStatus (L61910) = voiceDictationStatus(voiceTools()): ffmpeg but no on-device helper → attach-only
+ok 156 - media:voiceDictationStatus (L61910) = voiceDictationStatus(voiceTools()): ffmpeg but no on-device helper → attach-only
+  ---
+  duration_ms: 10.4022
+  type: 'test'
+  ...
+# Subtest: session:history replays the SDK transcript through the ORIGINAL historyToEvents: typed text (display sidecar), assistant text, tool rows; sdkSessionId captured
+ok 157 - session:history replays the SDK transcript through the ORIGINAL historyToEvents: typed text (display sidecar), assistant text, tool rows; sdkSessionId captured
+  ---
+  duration_ms: 473.5391
+  type: 'test'
+  ...
+# Subtest: historyToEvents (verbatim): no SDK transcript → display rows only; legacy app preambles stripped; unanswered tool closes as abandoned
+ok 158 - historyToEvents (verbatim): no SDK transcript → display rows only; legacy app preambles stripped; unanswered tool closes as abandoned
+  ---
+  duration_ms: 7.4766
+  type: 'test'
+  ...
+# Subtest: session:rename / session:reorder / session:setPermissionMode / removeSession (AgentHost, original L38915 / L38482 / L43987 / L39046)
+ok 159 - session:rename / session:reorder / session:setPermissionMode / removeSession (AgentHost, original L38915 / L38482 / L43987 / L39046)
+  ---
+  duration_ms: 43.6325
+  type: 'test'
+  ...
+# Subtest: client:rename / client:reorder / client:remove (SessionRegistry L36332-36423): validation, rollback, tombstones survive the whole-file write
+ok 160 - client:rename / client:reorder / client:remove (SessionRegistry L36332-36423): validation, rollback, tombstones survive the whole-file write
+  ---
+  duration_ms: 6.5617
+  type: 'test'
+  ...
+# Subtest: local channels: quit:rendererState / permission:shown / file:openExternal / media:requestMic / analytics / revealSetupLog / stageEtas
+ok 161 - local channels: quit:rendererState / permission:shown / file:openExternal / media:requestMic / analytics / revealSetupLog / stageEtas
+  ---
+  duration_ms: 1.9187
+  type: 'test'
+  ...
+# Subtest: taste:list / taste:commit / taste:decline (verbatim taste module): scopes, COMMITMENTS round-trip, ANTI-COMMITMENTS
+ok 162 - taste:list / taste:commit / taste:decline (verbatim taste module): scopes, COMMITMENTS round-trip, ANTI-COMMITMENTS
+  ---
+  duration_ms: 9.5406
+  type: 'test'
+  ...
+# Subtest: characters:create / approve / discard / delete over the verbatim CharacterStore (+ exposeCharacter grants)
+ok 163 - characters:create / approve / discard / delete over the verbatim CharacterStore (+ exposeCharacter grants)
+  ---
+  duration_ms: 42.7234
+  type: 'test'
+  ...
+# Subtest: quickstart:mark / impression / previewed (L61250-61293) over the shipped catalog: validation + local latency ring, no outbox
+ok 164 - quickstart:mark / impression / previewed (L61250-61293) over the shipped catalog: validation + local latency ring, no outbox
+  ---
+  duration_ms: 55.3996
+  type: 'test'
+  ...
+# Subtest: docs/26: a composer turn is delivered with uuid composerTurnMessageUuid(clientTurnId) (pushInput L23073) — the ORIGINAL renderer's optimistic row id — so history re-fetches do not duplicate the live user bubble
+ok 165 - docs/26: a composer turn is delivered with uuid composerTurnMessageUuid(clientTurnId) (pushInput L23073) — the ORIGINAL renderer's optimistic row id — so history re-fetches do not duplicate the live user bubble
+  ---
+  duration_ms: 25.5704
+  type: 'test'
+  ...
+# Subtest: memory:read/update/undo/openSource: the verbatim ProjectMemoryStore bound to the verified authority; refusal without one
+ok 166 - memory:read/update/undo/openSource: the verbatim ProjectMemoryStore bound to the verified authority; refusal without one
+  ---
+  duration_ms: 212.5642
+  type: 'test'
+  ...
+# Subtest: sessionPlan:read/choose/retry: no plan can exist (propose_session_plan is studio MCP) → null / the original missing-state reply
+ok 167 - sessionPlan:read/choose/retry: no plan can exist (propose_session_plan is studio MCP) → null / the original missing-state reply
+  ---
+  duration_ms: 1.9037
+  type: 'test'
+  ...
+# Subtest: workflowSubmit:start: invalid id / name / eligibility branches of WorkflowSubmissionService.run (L59760)
+ok 168 - workflowSubmit:start: invalid id / name / eligibility branches of WorkflowSubmissionService.run (L59760)
+  ---
+  duration_ms: 0.7026
+  type: 'test'
+  ...
+# Subtest: engine:saveAgentProviderKey: the original validation; stored in the vault, never validated or sent
+ok 169 - engine:saveAgentProviderKey: the original validation; stored in the vault, never validated or sent
+  ---
+  duration_ms: 0.7004
+  type: 'test'
+  ...
+# Subtest: app:update:preferences/channel/check: createUpdatePreferences + startUpdateCheck against the shim's release feed
+ok 170 - app:update:preferences/channel/check: createUpdatePreferences + startUpdateCheck against the shim's release feed
+  ---
+  duration_ms: 112.8215
+  type: 'test'
+  ...
+# Subtest: library:search/sync: the scoped lease (credentialsForBudgetedTools → shim PUT /v1/budgets) reaches the engine call; no proxy → paid-work-unavailable
+ok 171 - library:search/sync: the scoped lease (credentialsForBudgetedTools → shim PUT /v1/budgets) reaches the engine call; no proxy → paid-work-unavailable
+  ---
+  duration_ms: 74.8934
+  type: 'test'
+  ...
+# Subtest: credits: a Claude usage-limit failure → accountLimit card → creditHandoffOffer available → continueOnCredits = a gateway-route continuation
+ok 172 - credits: a Claude usage-limit failure → accountLimit card → creditHandoffOffer available → continueOnCredits = a gateway-route continuation
+  ---
+  duration_ms: 51.8451
+  type: 'test'
+  ...
+# Subtest: media:transcribeVoice: the original session checks, then VoiceDictation's unavailable branch
+ok 173 - media:transcribeVoice: the original session checks, then VoiceDictation's unavailable branch
+  ---
+  duration_ms: 3.9341
+  type: 'test'
+  ...
+# Subtest: outbox / telemetry / feedback / sheets: authority snapshot, replay binding validation + durable session index, feedback passthrough, sheet plan/build guards
+ok 174 - outbox / telemetry / feedback / sheets: authority snapshot, replay binding validation + durable session index, feedback passthrough, sheet plan/build guards
+  ---
+  duration_ms: 1.3961
+  type: 'test'
+  ...
+# Subtest: M12 credits precondition: modelAccountLimit classifies the Claude usage limit; the e2e injection seam is inert outside UI-e2e
+ok 175 - M12 credits precondition: modelAccountLimit classifies the Claude usage limit; the e2e injection seam is inert outside UI-e2e
+  ---
+  duration_ms: 0.6595
+  type: 'test'
+  ...
+# (node:1016) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: pricing: MiniMax-M3.1-Flash fallback is 0.15 / 0.6 / cache-read 0.015 per M tokens; the sample call costs half the old flat table
+ok 176 - pricing: MiniMax-M3.1-Flash fallback is 0.15 / 0.6 / cache-read 0.015 per M tokens; the sample call costs half the old flat table
+  ---
+  duration_ms: 2.4297
+  type: 'test'
+  ...
+# Subtest: pricing: owner override (env JSON) beats models.dev, which beats the MiniMax fallback; bad JSON is ignored
+ok 177 - pricing: owner override (env JSON) beats models.dev, which beats the MiniMax fallback; bad JSON is ignored
+  ---
+  duration_ms: 41.821
+  type: 'test'
+  ...
+# Subtest: ledger: cache-read tokens reported by MiniMax are recorded and charged at the cache-read price (JSON and SSE)
+ok 178 - ledger: cache-read tokens reported by MiniMax are recorded and charged at the cache-read price (JSON and SSE)
+  ---
+  duration_ms: 100.037
+  type: 'test'
+  ...
+# Subtest: shim sinks: feedback (+ bound screenshot PUT), blocked feedback without a key, telemetry deliveries, final-video PUT, uploads, release feed, paid-tool refusal
+ok 179 - shim sinks: feedback (+ bound screenshot PUT), blocked feedback without a key, telemetry deliveries, final-video PUT, uploads, release feed, paid-tool refusal
+  ---
+  duration_ms: 152.4005
+  type: 'test'
+  ...
+# Subtest: m14 catalog: official MiniMax input names, proven list-price bounds (CNY list × models.dev 0.1494)
+ok 180 - m14 catalog: official MiniMax input names, proven list-price bounds (CNY list × models.dev 0.1494)
+  ---
+  duration_ms: 2.9142
+  type: 'test'
+  ...
+# Subtest: m14 proxy+shim: search, operation context, local admission, exact quote, durable model_call → signed asset + ledger charge
+ok 181 - m14 proxy+shim: search, operation context, local admission, exact quote, durable model_call → signed asset + ledger charge
+  ---
+  duration_ms: 170.775
+  type: 'test'
+  ...
+# Subtest: m14 image-to-video: the engine's uploaded first frame is inlined for MiniMax; async task → poll → mp4 asset
+ok 182 - m14 image-to-video: the engine's uploaded first frame is inlined for MiniMax; async task → poll → mp4 asset
+  ---
+  duration_ms: 101.1417
+  type: 'test'
+  ...
+# Subtest: m14 non-fitting paid tools keep the original failure branches: mint_video is not durable here (503 before any quote), and its quote is TOOL_NOT_OFFERED
+ok 183 - m14 non-fitting paid tools keep the original failure branches: mint_video is not durable here (503 before any quote), and its quote is TOOL_NOT_OFFERED
+  ---
+  duration_ms: 32.2414
+  type: 'test'
+  ...
+# Subtest: sanitizedAgentEnv drops an innocuously named variable that embeds a secret value
+ok 184 - sanitizedAgentEnv drops an innocuously named variable that embeds a secret value
+  ---
+  duration_ms: 0.6412
+  type: 'test'
+  ...
+# Subtest: shim (docs/31 §5): a client that leaves mid-stream is drained and charged; llm_in_flight shows it meanwhile; a call whose client left while queued is never sent
+ok 185 - shim (docs/31 §5): a client that leaves mid-stream is drained and charged; llm_in_flight shows it meanwhile; a call whose client left while queued is never sent
+  ---
+  duration_ms: 402.3835
+  type: 'test'
+  ...
+# Subtest: m15 cancel: a call still queued behind the media gate is canceled before it is sent ($0); a sent synchronous call cannot be cancelled and is charged once
+ok 186 - m15 cancel: a call still queued behind the media gate is canceled before it is sent ($0); a sent synchronous call cannot be cancelled and is charged once
+  ---
+  duration_ms: 222.3038
+  type: 'test'
+  ...
+# Subtest: m15 cancel: a submitted video task MiniMax still queues is cancelled upstream (DELETE /v2/video_generation/{task_id}) — no download, no charge
+ok 187 - m15 cancel: a submitted video task MiniMax still queues is cancelled upstream (DELETE /v2/video_generation/{task_id}) — no download, no charge
+  ---
+  duration_ms: 127.1831
+  type: 'test'
+  ...
+# Subtest: m15 cancel: MiniMax refuses to cancel a running video task → it finishes and is charged exactly once (never hidden)
+ok 188 - m15 cancel: MiniMax refuses to cancel a running video task → it finishes and is charged exactly once (never hidden)
+  ---
+  duration_ms: 84.8176
+  type: 'test'
+  ...
+# Subtest: m15 durable resume: the gateway dies mid-operation; on restart a video task is resumed by polling (never re-submitted, charged once), a sent sync call settles $0 with recorded exposure, an unsent one settles $0
+ok 189 - m15 durable resume: the gateway dies mid-operation; on restart a video task is resumed by polling (never re-submitted, charged once), a sent sync call settles $0 with recorded exposure, an unsent one settles $0
+  ---
+  duration_ms: 276.3213
+  type: 'test'
+  ...
+# Subtest: m15 ask_each: leaving Bypass makes the video ask before each paid operation (spendPolicyForMaterialChange); deny / allow once (permit) / always (unlimited)
+ok 190 - m15 ask_each: leaving Bypass makes the video ask before each paid operation (spendPolicyForMaterialChange); deny / allow once (permit) / always (unlimited)
+  ---
+  duration_ms: 197.9126
+  type: 'test'
+  ...
+# Subtest: m15 raise: a capped video whose remaining budget cannot cover the exact quote shows 'Raise spending limit?'; deny keeps the cap, allow installs exactly the needed ceiling
+ok 191 - m15 raise: a capped video whose remaining budget cannot cover the exact quote shows 'Raise spending limit?'; deny keeps the cap, allow installs exactly the needed ceiling
+  ---
+  duration_ms: 93.4568
+  type: 'test'
+  ...
+# Subtest: m15 raise card: 'set a budget' on the card (setApprovalSpendCeiling) keeps the waiting operation; a settings edit while a card waits retires it as SPEND_POLICY_CHANGED
+ok 192 - m15 raise card: 'set a budget' on the card (setApprovalSpendCeiling) keeps the waiting operation; a settings edit while a card waits retires it as SPEND_POLICY_CHANGED
+  ---
+  duration_ms: 117.3483
+  type: 'test'
+  ...
+# Subtest: M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend
+ok 193 - M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+  ---
+  duration_ms: 0.8043
+  type: 'test'
+  ...
+# Subtest: M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row untouched; an operation the open tool may own gets no late line
+ok 194 - M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row untouched; an operation the open tool may own gets no late line # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+  ---
+  duration_ms: 0.1117
+  type: 'test'
+  ...
+# Subtest: M16 busy collection of an operation older than every open tool is late (mayBelongToOpenTool margin)
+ok 195 - M16 busy collection of an operation older than every open tool is late (mayBelongToOpenTool margin) # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+  ---
+  duration_ms: 0.0769
+  type: 'test'
+  ...
+# Subtest: M16 dropCollectorMarks: a tool start drops a mark the journal has not moved past; restore drops backoff + parking
+ok 196 - M16 dropCollectorMarks: a tool start drops a mark the journal has not moved past; restore drops backoff + parking # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+  ---
+  duration_ms: 0.0647
+  type: 'test'
+  ...
+# Subtest: M16 a provider failure the collector learned → late 'failed' line + failure report; three import failures → import_failed
+ok 197 - M16 a provider failure the collector learned → late 'failed' line + failure report; three import failures → import_failed # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+  ---
+  duration_ms: 0.1943
+  type: 'test'
+  ...
+# Subtest: M16 verbatim helpers: busyCollectorArgs / readOperationJournal / lateResultReportNote
+ok 198 - M16 verbatim helpers: busyCollectorArgs / readOperationJournal / lateResultReportNote
+  ---
+  duration_ms: 2.1418
+  type: 'test'
+  ...
+# Subtest: AlphaConsentCoordinator: a verified active key gets one consent record + one durable alpha-consent beacon; alphaConsentAt only after the beacon is queued
+ok 199 - AlphaConsentCoordinator: a verified active key gets one consent record + one durable alpha-consent beacon; alphaConsentAt only after the beacon is queued
+  ---
+  duration_ms: 3.1644
+  type: 'test'
+  ...
+# Subtest: AlphaConsentCoordinator: telemetry off / another key / another gateway → nothing; a failed beacon keeps the record un-queued and retries
+ok 200 - AlphaConsentCoordinator: telemetry off / another key / another gateway → nothing; a failed beacon keeps the record un-queued and retries
+  ---
+  duration_ms: 0.9853
+  type: 'test'
+  ...
+# Subtest: materializeGatewaySpendPolicy: writes the saved policy once per key (through the real proxy → shim authority), again after a change
+ok 201 - materializeGatewaySpendPolicy: writes the saved policy once per key (through the real proxy → shim authority), again after a change
+  ---
+  duration_ms: 102.1203
+  type: 'test'
+  ...
+# Subtest: adopted job (gatewaySpendPolicyResetJobId): always re-written, mark cleared on success, kept on failure; restore heals stale marks
+ok 202 - adopted job (gatewaySpendPolicyResetJobId): always re-written, mark cleared on success, kept on failure; restore heals stale marks
+  ---
+  duration_ms: 61.0406
+  type: 'test'
+  ...
+# Subtest: putGatewaySpendPolicy: writes for one job are serialized and invalidate that job's materialized keys
+ok 203 - putGatewaySpendPolicy: writes for one job are serialized and invalidate that job's materialized keys
+  ---
+  duration_ms: 52.2436
+  type: 'test'
+  ...
+# Subtest: createAppUpdater: Linux / unpackaged / untrusted gateway → disabled with the original copy, driver untouched
+ok 204 - createAppUpdater: Linux / unpackaged / untrusted gateway → disabled with the original copy, driver untouched
+  ---
+  duration_ms: 1.652
+  type: 'test'
+  ...
+# Subtest: createAppUpdater: enabled → generic feed per channel; download publishes checking → downloading → progress → downloaded
+ok 205 - createAppUpdater: enabled → generic feed per channel; download publishes checking → downloading → progress → downloaded
+  ---
+  duration_ms: 0.9071
+  type: 'test'
+  ...
+# Subtest: createAppUpdater: refuses non-newer / wrong-channel versions; a changed release is an error; a failed download says so
+ok 206 - createAppUpdater: refuses non-newer / wrong-channel versions; a changed release is an error; a failed download says so
+  ---
+  duration_ms: 0.4573
+  type: 'test'
+  ...
+# Subtest: install → beginQuit → QuitCoordinator(update) with no blockers → beginInstall → finishInstall → driver.quitAndInstall once
+ok 207 - install → beginQuit → QuitCoordinator(update) with no blockers → beginInstall → finishInstall → driver.quitAndInstall once
+  ---
+  duration_ms: 0.7628
+  type: 'test'
+  ...
+# Subtest: Restart to update with blockers asks first (update copy); Cancel keeps the payload, Restart proceeds
+ok 208 - Restart to update with blockers asks first (update copy); Cancel keeps the payload, Restart proceeds
+  ---
+  duration_ms: 11.9209
+  type: 'test'
+  ...
+# Subtest: install guards: stale payload resets; installBlocker surfaces its message; quitAndInstall throwing recovers
+ok 209 - install guards: stale payload resets; installBlocker surfaces its message; quitAndInstall throwing recovers
+  ---
+  duration_ms: 0.5994
+  type: 'test'
+  ...
+# Subtest: M17 stopAuthenticatedWork (L43256): running turn interrupted → idle, runtime retired, proxy revoked; paused stays paused (L43232)
+ok 210 - M17 stopAuthenticatedWork (L43256): running turn interrupted → idle, runtime retired, proxy revoked; paused stays paused (L43232)
+  ---
+  duration_ms: 72.9983
+  type: 'test'
+  ...
+# Subtest: M17 authenticatedWorkPaused gates: send shows the original error card, retry/fence/transcribe/spend writes refuse, no new runtime
+ok 211 - M17 authenticatedWorkPaused gates: send shows the original error card, retry/fence/transcribe/spend writes refuse, no new runtime
+  ---
+  duration_ms: 15.5967
+  type: 'test'
+  ...
+# Subtest: M17 readQuitState (L62681): staged/copying attachment counts come from ComposerAttachmentStore.draftCounts; assessQuit names them
+ok 212 - M17 readQuitState (L62681): staged/copying attachment counts come from ComposerAttachmentStore.draftCounts; assessQuit names them
+  ---
+  duration_ms: 58.6193
+  type: 'test'
+  ...
+# Subtest: M17 window:state (L60574-60580): enter/leave-full-screen and did-finish-load push {fullscreen}; a stale/destroyed window pushes nothing
+ok 213 - M17 window:state (L60574-60580): enter/leave-full-screen and did-finish-load push {fullscreen}; a stale/destroyed window pushes nothing
+  ---
+  duration_ms: 6.676
+  type: 'test'
+  ...
+# Subtest: M17 engine:updated: background engine update installs alongside, parks while a video runs, flips when idle → onEngineUpdated (L10304-10430)
+not ok 214 - M17 engine:updated: background engine update installs alongside, parks while a video runs, flips when idle → onEngineUpdated (L10304-10430)
+  ---
+  duration_ms: 16.7818
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\m17-leftovers.test.cjs:40832:27'
+  failureType: 'testCodeFailure'
+  error: 'spawnSync tar ENOENT'
+  code: 'ENOENT'
+  stack: |-
+    Object.spawnSync (node:internal/child_process:1120:20)
+    spawnSync (node:child_process:902:24)
+    execFileSync (node:child_process:945:15)
+    engineTarball (Z:\workspace\videoclaw\repo\port\dist-test\m17-leftovers.test.cjs:40829:47)
+    TestContext.<anonymous> (Z:\workspace\videoclaw\repo\port\dist-test\m17-leftovers.test.cjs:40845:18)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  ...
+# Subtest: M17 characters:voices:changed (L45041-45063): approve and remove emit the scope; the store is the verbatim CharacterVoiceStore
+ok 215 - M17 characters:voices:changed (L45041-45063): approve and remove emit the scope; the store is the verbatim CharacterVoiceStore
+  ---
+  duration_ms: 671.1858
+  type: 'test'
+  ...
+# Subtest: docs/34: relaunchOptions — inside an AppImage relaunch the AppImage file (not the temporary runtime mount); elsewhere Electron's default
+ok 216 - docs/34: relaunchOptions — inside an AppImage relaunch the AppImage file (not the temporary runtime mount); elsewhere Electron's default
+  ---
+  duration_ms: 0.4798
+  type: 'test'
+  ...
+# Subtest: renderer consumers: L31748 reads charactersList(cwd).find, L39778 reads getHistory(id).length (the two M5 TypeErrors)
+ok 217 - renderer consumers: L31748 reads charactersList(cwd).find, L39778 reads getHistory(id).length (the two M5 TypeErrors)
+  ---
+  duration_ms: 1.5566
+  type: 'test'
+  ...
+# Subtest: characters:list — the ORIGINAL CharacterStore returns an ARRAY (empty workspace → []), approved + pending with sheet/refs
+ok 218 - characters:list — the ORIGINAL CharacterStore returns an ARRAY (empty workspace → []), approved + pending with sheet/refs
+  ---
+  duration_ms: 28.1004
+  type: 'test'
+  ...
+# Subtest: session:history — an ARRAY for a video without an SDK transcript (original !sdkSessionId branch → []); unknown id rejects
+ok 219 - session:history — an ARRAY for a video without an SDK transcript (original !sdkSessionId branch → []); unknown id rejects
+  ---
+  duration_ms: 7.8236
+  type: 'test'
+  ...
+# Subtest: quickstart:catalog — the ORIGINAL store validates + serves the shipped bundled catalog (cold, then warm)
+ok 220 - quickstart:catalog — the ORIGINAL store validates + serves the shipped bundled catalog (cold, then warm)
+  ---
+  duration_ms: 82.9902
+  type: 'test'
+  ...
+# Subtest: quickstart:catalog — no valid root → the original rejects (renderer shows its error card, not a forever 'Loading')
+ok 221 - quickstart:catalog — no valid root → the original rejects (renderer shows its error card, not a forever 'Loading')
+  ---
+  duration_ms: 1.5581
+  type: 'test'
+  ...
+# Subtest: session titles — verbatim helpers + the system prompt is byte-identical to the bundle
+ok 222 - session titles — verbatim helpers + the system prompt is byte-identical to the bundle
+  ---
+  duration_ms: 2.1853
+  type: 'test'
+  ...
+# Subtest: AgentHost names the video on first send (fallback, verbatim) and then takes ONE provider-route proposal (automatic)
+ok 223 - AgentHost names the video on first send (fallback, verbatim) and then takes ONE provider-route proposal (automatic)
+  ---
+  duration_ms: 31.6078
+  type: 'test'
+  ...
+# Subtest: AgentHost titles: claude-code route keeps the fallback (original requests only with a subscription login — NOT PORTED); opt-out; failed proposal keeps fallback
+ok 224 - AgentHost titles: claude-code route keeps the fallback (original requests only with a subscription login — NOT PORTED); opt-out; failed proposal keeps fallback
+  ---
+  duration_ms: 101.1463
+  type: 'test'
+  ...
+# Subtest: proposeProviderSessionTitle: rejected / aborted proposals yield no title
+ok 225 - proposeProviderSessionTitle: rejected / aborted proposals yield no title
+  ---
+  duration_ms: 0.8786
+  type: 'test'
+  ...
+# Subtest: every invoke/send channel registers once; fake backend answers or logs
+ok 226 - every invoke/send channel registers once; fake backend answers or logs
+  ---
+  duration_ms: 484.8763
+  type: 'test'
+  ...
+# Subtest: minimaxConfig: defaults, trimming, trailing slash, concurrency clamp 1..2, null without key
+ok 227 - minimaxConfig: defaults, trimming, trailing slash, concurrency clamp 1..2, null without key
+  ---
+  duration_ms: 10.7378
+  type: 'test'
+  ...
+# Subtest: resolvedLlmRoute / settings validation: differential vs original L320 + L5397 for non-minimax values; minimax accepted
+ok 228 - resolvedLlmRoute / settings validation: differential vs original L320 + L5397 for non-minimax values; minimax accepted
+  ---
+  duration_ms: 2.8595
+  type: 'test'
+  ...
+# Subtest: sanitizedAgentEnv: differential vs original L16026; it strips MINIMAX_API_KEY so the route must inject it
+ok 229 - sanitizedAgentEnv: differential vs original L16026; it strips MINIMAX_API_KEY so the route must inject it
+  ---
+  duration_ms: 1.8648
+  type: 'test'
+  ...
+# Subtest: claudeRouteEnv minimax: base URL, explicit auth token from MINIMAX_API_KEY, all aliases → MiniMax-M3.1-Flash, isolated profile, no gateway headers
+ok 230 - claudeRouteEnv minimax: base URL, explicit auth token from MINIMAX_API_KEY, all aliases → MiniMax-M3.1-Flash, isolated profile, no gateway headers
+  ---
+  duration_ms: 1.2015
+  type: 'test'
+  ...
+# Subtest: resolveHelperCreds: gateway branch differential vs original L22343; minimax → {base}/v1/messages + Bearer (preset auth; x-api-key also verified in docs/14)
+ok 231 - resolveHelperCreds: gateway branch differential vs original L22343; minimax → {base}/v1/messages + Bearer (preset auth; x-api-key also verified in docs/14)
+  ---
+  duration_ms: 1.5119
+  type: 'test'
+  ...
+# Subtest: backoff: 2s,4s,8s,16s,32s (jitter 0), capped; retry-after seconds/date honoured
+ok 232 - backoff: 2s,4s,8s,16s,32s (jitter 0), capped; retry-after seconds/date honoured
+  ---
+  duration_ms: 0.6349
+  type: 'test'
+  ...
+# {"ts":"2026-10-21T23:56:57.695Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":1,"delayMs":0,"status":429}
+# {"ts":"2026-10-21T23:56:57.717Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":2,"delayMs":4000,"status":529}
+# {"ts":"2026-10-21T23:56:57.736Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":3,"delayMs":0,"status":429}
+# Subtest: anthropicMessages via minimax creds (mock): URL, headers, model override, 429/529 backoff then success; thinking blocks ignored
+ok 233 - anthropicMessages via minimax creds (mock): URL, headers, model override, 429/529 backoff then success; thinking blocks ignored
+  ---
+  duration_ms: 151.2246
+  type: 'test'
+  ...
+# {"ts":"2026-10-21T23:56:57.788Z","level":"warn","event":"llm.request_failed","provider":"minimax","code":"PROVIDER_CREDENTIAL_MISCONFIGURED","status":401,"ms":25}
+# {"ts":"2026-10-21T23:56:57.808Z","level":"warn","event":"llm.request_failed","provider":"minimax","code":"PROVIDER_CREDENTIAL_MISCONFIGURED","status":400,"ms":19}
+# {"ts":"2026-10-21T23:56:57.826Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":1,"delayMs":2000,"status":429}
+# {"ts":"2026-10-21T23:56:57.844Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":2,"delayMs":4000,"status":429}
+# {"ts":"2026-10-21T23:56:57.865Z","level":"warn","event":"llm.request_failed","provider":"minimax","code":"RATE_LIMITED","status":429,"ms":57}
+# Subtest: minimax: 401 / code 1008 are not retried and map to PROVIDER_CREDENTIAL_MISCONFIGURED without leaking the key; retries exhaust → RATE_LIMITED
+ok 234 - minimax: 401 / code 1008 are not retried and map to PROVIDER_CREDENTIAL_MISCONFIGURED without leaking the key; retries exhaust → RATE_LIMITED
+  ---
+  duration_ms: 108.7091
+  type: 'test'
+  ...
+# Subtest: minimax: process-wide gate keeps concurrency at 1 across parallel helper calls (backoff sleeps hold the slot)
+ok 235 - minimax: process-wide gate keeps concurrency at 1 across parallel helper calls (backoff sleeps hold the slot)
+  ---
+  duration_ms: 100.5799
+  type: 'test'
+  ...
+# Subtest: ConcurrencyLimiter(2) never exceeds 2 and releases on throw; withMiniMaxRetry passes non-retryable errors through
+ok 236 - ConcurrencyLimiter(2) never exceeds 2 and releases on throw; withMiniMaxRetry passes non-retryable errors through
+  ---
+  duration_ms: 21.2354
+  type: 'test'
+  ...
+# (node:1440) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: fixture is a real models.dev capture with the expected shape
+ok 237 - fixture is a real models.dev capture with the expected shape
+  ---
+  duration_ms: 2.049
+  type: 'test'
+  ...
+# Subtest: parseCatalog: providers/models normalised; malformed entries skipped not fatal; root must be an object
+ok 238 - parseCatalog: providers/models normalised; malformed entries skipped not fatal; root must be an object
+  ---
+  duration_ms: 11.8201
+  type: 'test'
+  ...
+# Subtest: DB: migration creates schema v1 once; reopening is a no-op; newer schema refuses to open
+ok 239 - DB: migration creates schema v1 once; reopening is a no-op; newer schema refuses to open
+  ---
+  duration_ms: 9.9747
+  type: 'test'
+  ...
+# Subtest: DB: replaceCatalog is idempotent and prunes rows missing from the next snapshot
+ok 240 - DB: replaceCatalog is idempotent and prunes rows missing from the next snapshot
+  ---
+  duration_ms: 4.437
+  type: 'test'
+  ...
+# Subtest: DB: lookup order (exact, provider/model, canonical, model id) and metadata view incl. tiered pricing
+ok 241 - DB: lookup order (exact, provider/model, canonical, model id) and metadata view incl. tiered pricing
+  ---
+  duration_ms: 2.6054
+  type: 'test'
+  ...
+# Subtest: provider framework → models.dev metadata (preset modelsDev key, defaults, explicit override)
+ok 242 - provider framework → models.dev metadata (preset modelsDev key, defaults, explicit override)
+  ---
+  duration_ms: 8.5419
+  type: 'test'
+  ...
+# Subtest: sync: 200 → updated; etag → 304 not-modified; same bytes → unchanged; force rewrites
+ok 243 - sync: 200 → updated; etag → 304 not-modified; same bytes → unchanged; force rewrites
+  ---
+  duration_ms: 26.3924
+  type: 'test'
+  ...
+# Subtest: sync is offline-safe: network/timeout/HTTP/JSON/sanity failures keep the last good data and record the error
+ok 244 - sync is offline-safe: network/timeout/HTTP/JSON/sanity failures keep the last good data and record the error
+  ---
+  duration_ms: 29.1984
+  type: 'test'
+  ...
+# Subtest: sync: validators are only sent to the URL they came from
+ok 245 - sync: validators are only sent to the URL they came from
+  ---
+  duration_ms: 2.6982
+  type: 'test'
+  ...
+# Subtest: CLI: models-sync / models-list / models-show / llm-model-info against a temp DB (mock fetch)
+ok 246 - CLI: models-sync / models-list / models-show / llm-model-info against a temp DB (mock fetch)
+  ---
+  duration_ms: 34.254
+  type: 'test'
+  ...
+# (node:1468) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: builderConfig (linux): asar app = dist + package.json only; SDK as extraResources → resources/claude-agent-sdk/node_modules; AppImage+deb; own identity
+ok 247 - builderConfig (linux): asar app = dist + package.json only; SDK as extraResources → resources/claude-agent-sdk/node_modules; AppImage+deb; own identity
+  ---
+  duration_ms: 3.0938
+  type: 'test'
+  ...
+# Subtest: builderConfig (win/mac): nsis + portable / dmg targets configured but marked unverified on the box
+ok 248 - builderConfig (win/mac): nsis + portable / dmg targets configured but marked unverified on the box
+  ---
+  duration_ms: 0.2872
+  type: 'test'
+  ...
+# Subtest: sdkResourceFilter: keeps the target native package, drops every other platform (incl. musl)
+ok 249 - sdkResourceFilter: keeps the target native package, drops every other platform (incl. musl)
+  ---
+  duration_ms: 0.2371
+  type: 'test'
+  ...
+# Subtest: packaged layout ↔ discovery: what extraResources produces is found as source 'resources' with the native binary (no env, no vendor, no ~/.videoclaw)
+ok 250 - packaged layout ↔ discovery: what extraResources produces is found as source 'resources' with the native binary (no env, no vendor, no ~/.videoclaw)
+  ---
+  duration_ms: 24.0255
+  type: 'test'
+  ...
+# Subtest: validateSdkStaging: missing / wrong version / missing native binary for the TARGET platform
+ok 251 - validateSdkStaging: missing / wrong version / missing native binary for the TARGET platform
+  ---
+  duration_ms: 9.4183
+  type: 'test'
+  ...
+# Subtest: package.json / repo hygiene for packaging: no runtime deps (all bundled), scripts, electron-builder pinned, outputs gitignored
+ok 252 - package.json / repo hygiene for packaging: no runtime deps (all bundled), scripts, electron-builder pinned, outputs gitignored
+  ---
+  duration_ms: 0.4761
+  type: 'test'
+  ...
+# Subtest: portDiagnostics: app facts + node:sqlite probe + SDK status (no secrets)
+ok 253 - portDiagnostics: app facts + node:sqlite probe + SDK status (no secrets)
+  ---
+  duration_ms: 1.3769
+  type: 'test'
+  ...
+# Subtest: interpretPdfKitOutput identical to original source on all statuses
+ok 254 - interpretPdfKitOutput identical to original source on all statuses
+  ---
+  duration_ms: 5.8116
+  type: 'test'
+  ...
+# Subtest: stub backend reproduces the original non-darwin result
+ok 255 - stub backend reproduces the original non-darwin result
+  ---
+  duration_ms: 3.4944
+  type: 'test'
+  ...
+# Subtest: pathDelimiter
+ok 256 - pathDelimiter
+  ---
+  duration_ms: 2.0093
+  type: 'test'
+  ...
+# Subtest: composeEnginePath: POSIX output identical to original enginePath_
+ok 257 - composeEnginePath: POSIX output identical to original enginePath_
+  ---
+  duration_ms: 0.3137
+  type: 'test'
+  ...
+# Subtest: composeEnginePath: win32 uses ; and accepts node.exe at node root
+ok 258 - composeEnginePath: win32 uses ; and accepts node.exe at node root
+  ---
+  duration_ms: 0.2772
+  type: 'test'
+  ...
+# Subtest: composeEngineChildPath dedupes (case-insensitive on win32)
+ok 259 - composeEngineChildPath dedupes (case-insensitive on win32)
+  ---
+  duration_ms: 0.1891
+  type: 'test'
+  ...
+# Subtest: pathEnvKey finds Windows 'Path'
+ok 260 - pathEnvKey finds Windows 'Path'
+  ---
+  duration_ms: 0.1467
+  type: 'test'
+  ...
+# Subtest: venvPython
+ok 261 - venvPython
+  ---
+  duration_ms: 0.1676
+  type: 'test'
+  ...
+# Subtest: exeName
+ok 262 - exeName
+  ---
+  duration_ms: 0.2878
+  type: 'test'
+  ...
+# Subtest: extraPaths POSIX matches original EXTRA_PATHS
+ok 263 - extraPaths POSIX matches original EXTRA_PATHS
+  ---
+  duration_ms: 0.7411
+  type: 'test'
+  ...
+# Subtest: which: POSIX
+ok 264 - which: POSIX
+  ---
+  duration_ms: 0.6061
+  type: 'test'
+  ...
+# Subtest: which: win32 PATHEXT + Path key + quoted dirs
+ok 265 - which: win32 PATHEXT + Path key + quoted dirs
+  ---
+  duration_ms: 0.6864
+  type: 'test'
+  ...
+# Subtest: resolveBootstrapToolRoots order + VIDEOCLAW_ENGINE_DIST
+ok 266 - resolveBootstrapToolRoots order + VIDEOCLAW_ENGINE_DIST
+  ---
+  duration_ms: 0.3133
+  type: 'test'
+  ...
+# Subtest: bootstrapTool: exe suffix + port-only override
+ok 267 - bootstrapTool: exe suffix + port-only override
+  ---
+  duration_ms: 0.1991
+  type: 'test'
+  ...
+# Subtest: bashShell: POSIX is /bin/bash; win32 prefers Git bash, skips WSL launcher, falls back to cmd (degraded)
+ok 268 - bashShell: POSIX is /bin/bash; win32 prefers Git bash, skips WSL launcher, falls back to cmd (degraded)
+  ---
+  duration_ms: 0.314
+  type: 'test'
+  ...
+# Subtest: spawnDetachedForGroup mirrors original
+ok 269 - spawnDetachedForGroup mirrors original
+  ---
+  duration_ms: 0.0831
+  type: 'test'
+  ...
+# Subtest: parsePsOutput (original regex)
+ok 270 - parsePsOutput (original regex)
+  ---
+  duration_ms: 0.3504
+  type: 'test'
+  ...
+# Subtest: parseWin32ProcessJson handles single object, array, null CommandLine
+ok 271 - parseWin32ProcessJson handles single object, array, null CommandLine
+  ---
+  duration_ms: 0.2013
+  type: 'test'
+  ...
+# Subtest: processCwd on win32 is an explicit unsupported (undefined)
+ok 272 - processCwd on win32 is an explicit unsupported (undefined)
+  ---
+  duration_ms: 0.1316
+  type: 'test'
+  ...
+# Subtest: killTree: POSIX signals the process group (-pid)
+ok 273 - killTree: POSIX signals the process group (-pid)
+  ---
+  duration_ms: 0.205
+  type: 'test'
+  ...
+# Subtest: killTree: win32 uses taskkill /T (+/F for SIGKILL)
+ok 274 - killTree: win32 uses taskkill /T (+/F for SIGKILL)
+  ---
+  duration_ms: 0.2693
+  type: 'test'
+  ...
+# Subtest: pdfReaderFor: non-darwin = original's unread/unavailable
+ok 275 - pdfReaderFor: non-darwin = original's unread/unavailable
+  ---
+  duration_ms: 0.2239
+  type: 'test'
+  ...
+# Subtest: voiceDictationStatus without helper = original's message
+ok 276 - voiceDictationStatus without helper = original's message
+  ---
+  duration_ms: 0.1622
+  type: 'test'
+  ...
+# Subtest: needsNativePythonProbe only on darwin/arm64
+ok 277 - needsNativePythonProbe only on darwin/arm64
+  ---
+  duration_ms: 0.0728
+  type: 'test'
+  ...
+# Subtest: exactly one exposeInMainWorld('videoclaw', bridge)
+ok 278 - exactly one exposeInMainWorld('videoclaw', bridge)
+  ---
+  duration_ms: 1.5151
+  type: 'test'
+  ...
+# Subtest: member list identical (order + names)
+ok 279 - member list identical (order + names)
+  ---
+  duration_ms: 0.4218
+  type: 'test'
+  ...
+# Subtest: every IPC key referenced by the original preload has the identical channel in the port
+ok 280 - every IPC key referenced by the original preload has the identical channel in the port
+  ---
+  duration_ms: 1.9547
+  type: 'test'
+  ...
+# Subtest: non-bridge preload residue is not reachable from the bridge
+ok 281 - non-bridge preload residue is not reachable from the bridge
+  ---
+  duration_ms: 0.2679
+  type: 'test'
+  ...
+# Subtest: original preload parsed completely
+ok 282 - original preload parsed completely
+  ---
+  duration_ms: 0.7826
+  type: 'test'
+  ...
+# Subtest: every generated bridge member reproduces the original ipcRenderer call
+ok 283 - every generated bridge member reproduces the original ipcRenderer call
+  ---
+  duration_ms: 4.3374
+  type: 'test'
+  ...
+# Subtest: pathForFile stays local (webUtils)
+ok 284 - pathForFile stays local (webUtils)
+  ---
+  duration_ms: 0.1222
+  type: 'test'
+  ...
+# Subtest: writeProjectStream (Node) writes, never overwrites, numbers duplicates, leaves no staging files
+ok 285 - writeProjectStream (Node) writes, never overwrites, numbers duplicates, leaves no staging files
+  ---
+  duration_ms: 17.0724
+  type: 'test'
+  ...
+# Subtest: identity change → 73 / original message; stream error → 76 rethrows the stream error
+ok 286 - identity change → 73 / original message; stream error → 76 rethrows the stream error
+  ---
+  duration_ms: 2.9945
+  type: 'test'
+  ...
+# Subtest: differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes)
+ok 287 - differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes) # SKIP the original script's linux branch needs GNU coreutils
+  ---
+  duration_ms: 0.2084
+  type: 'test'
+  ...
+# Subtest: runBash: success / non-zero exit text identical to original strings
+not ok 288 - runBash: success / non-zero exit text identical to original strings
+  ---
+  duration_ms: 256.7115
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\run-bash.test.cjs:401:27'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        isError: false,
+    +   output: 'hi\r\n'
+    -   output: 'hi\n'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    output: |-
+      hi
+      
+    isError: false
+  actual:
+    output: |-
+      hi
+      
+    isError: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (Z:\workspace\videoclaw\repo\port\dist-test\run-bash.test.cjs:402:25)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: runBash: output-pipeline commands get pipefail (failure is not masked by tail)
+not ok 289 - runBash: output-pipeline commands get pipefail (failure is not masked by tail)
+  ---
+  duration_ms: 263.222
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\run-bash.test.cjs:405:27'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Command exited with code 7$/. Input:
+    
+    'Environment variable -o pipefail\n' +
+      "sh -c 'exit 7'  not defined\r\n" +
+      "Can't recognize 'tail -n 1' as an internal or external command, or batch script.\r\n" +
+      '\n' +
+      '\n' +
+      'Command exited with code 1'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    Environment variable -o pipefail
+    sh -c 'exit 7'  not defined
+    Can't recognize 'tail -n 1' as an internal or external command, or batch script.
+    
+    
+    Command exited with code 1
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (Z:\workspace\videoclaw\repo\port\dist-test\run-bash.test.cjs:408:25)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: runBash: timeout kills the process group
+ok 290 - runBash: timeout kills the process group
+  ---
+  duration_ms: 355.0211
+  type: 'test'
+  ...
+# Subtest: runBash: abort
+not ok 291 - runBash: abort
+  ---
+  duration_ms: 732.5996
+  type: 'test'
+  location: 'Z:\\workspace\\videoclaw\\repo\\port\\dist-test\\run-bash.test.cjs:414:27'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        isError: true,
+    +   output: "Can't recognize 'sleep 5' as an internal or external command, or batch script.\r\n" +
+    +     '\n' +
+    +     '\n' +
+    +     'Command aborted'
+    -   output: 'Command aborted'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    output: 'Command aborted'
+    isError: true
+  actual:
+    output: |-
+      Can't recognize 'sleep 5' as an internal or external command, or batch script.
+      
+      
+      Command aborted
+    isError: true
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (Z:\workspace\videoclaw\repo\port\dist-test\run-bash.test.cjs:418:25)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: runBash on win32 routes through the chosen shell + taskkill (mocked)
+ok 292 - runBash on win32 routes through the chosen shell + taskkill (mocked)
+  ---
+  duration_ms: 34.4735
+  type: 'test'
+  ...
+# Subtest: truncate keeps head+tail like the original
+ok 293 - truncate keeps head+tail like the original
+  ---
+  duration_ms: 0.4269
+  type: 'test'
+  ...
+# Subtest: voice-guard constants equal the shipped chunk exports (B, V)
+ok 294 - voice-guard constants equal the shipped chunk exports (B, V)
+  ---
+  duration_ms: 57.4445
+  type: 'test'
+  ...
+# Subtest: verbatim-slice modules are current (tools/gen-verbatim.mjs --check)
+ok 295 - verbatim-slice modules are current (tools/gen-verbatim.mjs --check)
+  ---
+  duration_ms: 506.1545
+  type: 'test'
+  ...
+# Subtest: validateEngineSessionContext accepts the real engine context files
+ok 296 - validateEngineSessionContext accepts the real engine context files
+  ---
+  duration_ms: 110.2659
+  type: 'test'
+  ...
+# Subtest: engineSessionEnv: differential vs original L9380 (epoch excluded)
+ok 297 - engineSessionEnv: differential vs original L9380 (epoch excluded)
+  ---
+  duration_ms: 122.4915
+  type: 'test'
+  ...
+# Subtest: SessionRegistry: loadRegistry healing subset + listSessions ordering
+ok 298 - SessionRegistry: loadRegistry healing subset + listSessions ordering
+  ---
+  duration_ms: 2.7457
+  type: 'test'
+  ...
+# Subtest: money compat: PAID_GEN_TOOLS/unpriced equal the chunk; inspect runs the engine python (stub)
+ok 299 - money compat: PAID_GEN_TOOLS/unpriced equal the chunk; inspect runs the engine python (stub) # SKIP sh stub
+  ---
+  duration_ms: 0.1025
+  type: 'test'
+  ...
+# Subtest: routeRow: status badges (key/agent/helper/structured), selectability, reasons; built-ins
+ok 300 - routeRow: status badges (key/agent/helper/structured), selectability, reasons; built-ins
+  ---
+  duration_ms: 1.8428
+  type: 'test'
+  ...
+# Subtest: controller: load → ready rows; select persists via setLlmRoute and re-queries; no-op for current; key-missing refused without IPC
+ok 301 - controller: load → ready rows; select persists via setLlmRoute and re-queries; no-op for current; key-missing refused without IPC
+  ---
+  duration_ms: 0.9467
+  type: 'test'
+  ...
+# Subtest: controller: main process drops the route (unregistered meanwhile) → error notice, page shows the real current route
+ok 302 - controller: main process drops the route (unregistered meanwhile) → error notice, page shows the real current route
+  ---
+  duration_ms: 0.5716
+  type: 'test'
+  ...
+# Subtest: controller: concurrent select ignored while pending; stale refresh response cannot overwrite a newer one; push applies immediately; load error
+ok 303 - controller: concurrent select ignored while pending; stale refresh response cannot overwrite a newer one; push applies immediately; load error
+  ---
+  duration_ms: 0.6173
+  type: 'test'
+  ...
+# Subtest: main: port:llm:routesChanged pushed on settings:set route change and on providers-file reload (deduped, no secrets)
+ok 304 - main: port:llm:routesChanged pushed on settings:set route change and on providers-file reload (deduped, no secrets)
+  ---
+  duration_ms: 52.6888
+  type: 'test'
+  ...
+# Subtest: withOutputPipefail is identical to the shipped bundle (chunk export a6) on a corpus
+ok 305 - withOutputPipefail is identical to the shipped bundle (chunk export a6) on a corpus
+  ---
+  duration_ms: 27.4486
+  type: 'test'
+  ...
+# Subtest: tokenizer / splitter basics
+ok 306 - tokenizer / splitter basics
+  ---
+  duration_ms: 0.7403
+  type: 'test'
+  ...
+# (node:1744) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: pricing: the MiniMax endpoint picks its models.dev provider row (minimaxi.com → minimax-cn first); reseller / $0 plan rows never price a call; the resolved source is logged once per model
+ok 307 - pricing: the MiniMax endpoint picks its models.dev provider row (minimaxi.com → minimax-cn first); reseller / $0 plan rows never price a call; the resolved source is logged once per model
+  ---
+  duration_ms: 37.3503
+  type: 'test'
+  ...
+# Subtest: pricing: a catalog synced after startup is picked up (only positive lookups are cached); the startup sync honours freshness and the opt-out
+ok 308 - pricing: a catalog synced after startup is picked up (only positive lookups are cached); the startup sync honours freshness and the opt-out
+  ---
+  duration_ms: 24.0518
+  type: 'test'
+  ...
+# Subtest: shim: calls carrying X-VideoClaw-Client-Job are metered per job; GET /v1/spend-authorities/{job} answers readGatewaySpend's contract (L48020)
+ok 309 - shim: calls carrying X-VideoClaw-Client-Job are metered per job; GET /v1/spend-authorities/{job} answers readGatewaySpend's contract (L48020)
+  ---
+  duration_ms: 85.6676
+  type: 'test'
+  ...
+# Subtest: gate proxy UsageMeter: Anthropic SSE / JSON, OpenAI Responses SSE (cached tokens split out) and Chat Completions JSON
+ok 310 - gate proxy UsageMeter: Anthropic SSE / JSON, OpenAI Responses SSE (cached tokens split out) and Chat Completions JSON
+  ---
+  duration_ms: 2.0879
+  type: 'test'
+  ...
+# (node:1808) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: capability probe on this runtime: ok + SQLite version + minimums
+ok 311 - capability probe on this runtime: ok + SQLite version + minimums
+  ---
+  duration_ms: 1.9425
+  type: 'test'
+  ...
+# Subtest: runtime WITHOUT node:sqlite → SqliteUnavailableError (code, runtime, minimum) from ModelsDb and the probe; recovers when restored
+ok 312 - runtime WITHOUT node:sqlite → SqliteUnavailableError (code, runtime, minimum) from ModelsDb and the probe; recovers when restored
+  ---
+  duration_ms: 1.1117
+  type: 'test'
+  ...
+# Subtest: studio toolset: 11 tools registered as the original's dynamic specs + one alwaysLoad SDK MCP server named studio
+ok 313 - studio toolset: 11 tools registered as the original's dynamic specs + one alwaysLoad SDK MCP server named studio
+  ---
+  duration_ms: 15.6065
+  type: 'test'
+  ...
+# Subtest: studio input tools: rights card → receipt; files card copies into the confined dest; Codex dynamic tools route only studio names
+ok 314 - studio input tools: rights card → receipt; files card copies into the confined dest; Codex dynamic tools route only studio names
+  ---
+  duration_ms: 82.5007
+  type: 'test'
+  ...
+# Subtest: session plan: propose (bound to job + account, awaiting decision) → Build it dispatches the original plan turn → accepted; production refusal lifts only then
+ok 315 - session plan: propose (bound to job + account, awaiting decision) → Build it dispatches the original plan turn → accepted; production refusal lifts only then
+  ---
+  duration_ms: 26.2055
+  type: 'test'
+  ...
+# Subtest: session plan: invalid args explain themselves; no job → SESSION_PLAN_JOB_MISSING; failed dispatch persists and Retry re-sends the same choice
+ok 316 - session plan: invalid args explain themselves; no job → SESSION_PLAN_JOB_MISSING; failed dispatch persists and Retry re-sends the same choice
+  ---
+  duration_ms: 12.9833
+  type: 'test'
+  ...
+# Subtest: UI-e2e mode always loads the ORIGINAL renderer, even with VIDEOCLAW_PORT_SMOKE=1
+ok 317 - UI-e2e mode always loads the ORIGINAL renderer, even with VIDEOCLAW_PORT_SMOKE=1
+  ---
+  duration_ms: 1.2785
+  type: 'test'
+  ...
+# Subtest: UI-e2e mode answers the native dialogs from the env presets; otherwise the real dialog is used
+ok 318 - UI-e2e mode answers the native dialogs from the env presets; otherwise the real dialog is used
+  ---
+  duration_ms: 1.011
+  type: 'test'
+  ...
+# Subtest: CDP client: id correlation, errors, events, eval by value, socket close rejects pending
+ok 319 - CDP client: id correlation, errors, events, eval by value, socket close rejects pending
+  ---
+  duration_ms: 2.6773
+  type: 'test'
+  ...
+# Subtest: real-input helpers emit Input.* events (mouse press/release, insertText, Enter with \\r, OS drag with files)
+ok 320 - real-input helpers emit Input.* events (mouse press/release, insertText, Enter with \\r, OS drag with files)
+  ---
+  duration_ms: 16.3207
+  type: 'test'
+  ...
+# Subtest: driver geometry + verdict helpers
+ok 321 - driver geometry + verdict helpers
+  ---
+  duration_ms: 0.492
+  type: 'test'
+  ...
+# Subtest: evidence redaction scrubs secrets and run paths
+ok 322 - evidence redaction scrubs secrets and run paths
+  ---
+  duration_ms: 0.35
+  type: 'test'
+  ...
+# Subtest: ui-e2e driver parses (node --check)
+ok 323 - ui-e2e driver parses (node --check)
+  ---
+  duration_ms: 320.6476
+  type: 'test'
+  ...
+# Subtest: answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposals' file content (qcardQ1) does not
+ok 324 - answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposals' file content (qcardQ1) does not
+  ---
+  duration_ms: 1.4976
+  type: 'test'
+  ...
+1..324
+# tests 324
+# suites 0
+# pass 309
+# fail 6
+# cancelled 2
+# skipped 7
+# todo 0
+# duration_ms 6757.0732
