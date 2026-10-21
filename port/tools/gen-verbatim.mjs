@@ -598,6 +598,42 @@ export const SPECS = [
     subs: [],
     exports: ["readPromiseBrief", "assembleOriginalVideoContext"],
   },
+  // docs/27: the Codex app-server PROTOCOL layer the original drives `codex app-server --listen stdio://`
+  // with — thread/provider config (L23419-23527), message phases, notification / approval / dynamic-tool /
+  // history normalisation, model-catalog normalisation (L24243-24689), the Codex developer instructions
+  // (L24690-24771) and the Codex event → SDK message mapping createCodexRuntime feeds consume() (L25089-25250).
+  {
+    out: "src/main/codex/codex-protocol.generated.ts",
+    imports: [
+      'import { realpathSync } from "node:fs";',
+      'import { sanitizedAgentEnv } from "../llm/llm-route";',
+      'import { ENGINE_TOOL_LAUNCHER } from "../agent/session-assembly.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const CODEX_OPENROUTER_ENV = /, /^const CODEX_OPENAI_ENV = /),
+      slice("main", /^function codexOpenRouterConfig\(/, /^}$/, /^function codexVideoConfig\(/),
+      slice("main", /^const MAX_TRACKED_PHASE_TURNS = 8;$/, /^}$/, /^class CodexMessagePhases \{/),
+      slice("main", /^function isDynamicToolResponse\(/, /^}$/),
+      slice("main", /^function normalizeCodexNotification\(/, /^}$/, /^function codexAppServerVersion\(/),
+      slice("main", /^const PREPARE_PRODUCTION_NO_PIPE = /, /^const PREPARE_PRODUCTION_NO_PIPE = /),
+      slice("main", /^const CODEX_VIDEO_INSTRUCTIONS = `$/, /^}$/, /^function codexDeveloperInstructions\(/),
+      slice("main", /^function codexEventToSdkMessages\(/, /^}$/, /^function sdkUserText\(/),
+    ],
+    subs: [],
+    exports: ["CODEX_OPENROUTER_ENV", "CODEX_OPENAI_ENV", "codexOpenRouterConfig", "codexOpenAiConfig", "codexChildEnv", "codexVideoConfig", "CodexMessagePhases", "isDynamicToolResponse", "normalizeCodexNotification", "normalizeCompletedItem", "normalizeCodexApproval", "normalizeDynamicToolCall", "normalizeCodexHistory", "codexToolKind", "codexToolTitle", "MAX_CODEX_MODEL_PAGES", "normalizedCodexModel", "normalizedReasoningEfforts", "redactDiagnostic", "assertCompatibleServer", "codexAppServerVersion", "CODEX_VIDEO_INSTRUCTIONS", "CODEX_TOOL_MAPPING", "codexDeveloperInstructions", "codexEventToSdkMessages", "sdkUserText"],
+  },
+  // docs/27: the agent-route evidence ledger + Codex route qualification / containment / effort rules
+  // (workbookContents chunk L829-1104) that createSession, codexRouteRefusal, codexModels and
+  // setSessionReasoningEffort consult. AgentHost.codexEvidence (L35100) defaults to AGENT_ROUTE_EVIDENCE.
+  {
+    out: "src/main/codex/codex-routes.generated.ts",
+    imports: [],
+    slices: () => [
+      slice("wb", /^const DEFAULT_ELIGIBLE_ROUTE_LEVELS = /, /^}$/, /^function partitionDiscoveredCodexModels\(/),
+    ],
+    subs: [],
+    exports: ["DEFAULT_ELIGIBLE_ROUTE_LEVELS", "agentRouteId", "AGENT_ROUTE_EVIDENCE", "codexRouteEvidence", "codexRouteQualification", "isQualifiedCodexRoute", "recommendedCodexReasoningEffort", "codexEffortDiagnostic", "resolveCodexReasoningEffort", "CODEX_CONTAINMENT", "CODEX_HOST_APPROVAL", "resolveCodexContainment", "CODEX_PROVIDER_LABELS", "codexRouteDiagnostic", "resolveCodexRuntimeDefault", "isDiscoveredCodexModel", "codexModelUnavailableDiagnostic", "codexModelUnverifiedDiagnostic", "codexModelVerdict", "codexPinRefusal", "partitionDiscoveredCodexModels"],
+  },
 ];
 
 export function render(spec) {

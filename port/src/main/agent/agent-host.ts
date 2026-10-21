@@ -56,6 +56,13 @@ import {
   type CanUseToolResult, type EnginePolicyHost, type EngineSessionDeps, type PermissionRequest,
 } from "./engine-session";
 import { fallbackSessionTitle, NEW_VIDEO_TITLE } from "./session-title.generated";
+import { CodexAppServerClient, CodexProcessCapacityError } from "../codex/app-server-client";
+import { codexChildEnv, codexEventToSdkMessages } from "../codex/codex-protocol.generated";
+import { codexRouteDiagnostic, isQualifiedCodexRoute } from "../codex/codex-routes.generated";
+import { codexQuery, createCodexRuntime } from "../codex/codex-runtime";
+import { ensureCodexProfile, startCodexMiniMaxBackend, type CodexMiniMaxBackend } from "../codex/codex-minimax";
+import { CodexRouteController, DEFAULT_CODEX_PROVIDER, resolvedAgentHarness, resolvedCodexProvider } from "../codex/codex-host";
+import type { ResolvedProvider } from "../llm/provider-registry";
 import { PORT_PROVIDER_TITLES_ENV, proposeProviderSessionTitle, type HelperComplete } from "./session-title";
 import {
   appendDisplayMaterial, appendDisplayStop, appendDisplayTranscript, displayTranscriptPath, historyToEvents, isDisplayTurnId, isFlattenedClaudeCompactedHistory,
@@ -72,7 +79,11 @@ export interface AgentSessionMeta {
   totalCostUsd: number;
   createdAt: number;
   clientId: string;
-  agentHarness: "claude-code";
+  agentHarness: "claude-code" | "codex-app-server";
+  /** docs/27: the Codex inference account slot (createSession L38764) */
+  codexProvider?: string;
+  modelOverride?: string;
+  codexReasoningEffort?: string;
   llmRoute?: LlmRouteId;
   /** Bound production job (commitBind L47615). */
   jobId?: string;
@@ -154,6 +165,21 @@ export interface AgentHostDeps {
   registry?: { addTrashWorkspace(path: string): void; flush(): boolean; markRemoved(sessionId: string): void; unmarkRemoved(sessionId: string): void };
   /** docs/26: setJobBusyProbe (L39083) — an editor render / HyperFrames preview holding a job's files. */
   jobBusyProbe?: (jobId: string) => boolean;
+  /** docs/27: the Codex harness (agentHarness "codex-app-server"), backed by MiniMax through the gate proxy. */
+  codex?: AgentHostCodexDeps;
+}
+export interface AgentHostCodexDeps {
+  /** settings.get() — agentHarness / codexProvider / codexModel (resolvedAgentHarness L324) */
+  settings(): Record<string, unknown>;
+  profileDir(): string;
+  executable(): string;
+  appVersion?: string;
+  provider(): ResolvedProvider | null;
+  /** tests: a fake backend / client */
+  startBackend?: (p: ResolvedProvider) => Promise<CodexMiniMaxBackend>;
+  createClient?: Parameters<typeof createCodexRuntime>[0]["createClient"];
+  discoverModels?: ConstructorParameters<typeof CodexRouteController>[0]["discoverModels"];
+  accountStatus?: ConstructorParameters<typeof CodexRouteController>[0]["accountStatus"];
 }
 
 export class ComposerDeliveryError extends Error { constructor(m: string) { super(m); this.name = "ComposerDeliveryError"; } }
@@ -253,8 +279,18 @@ export class AgentHost {
   private spendBudgetFile?: string;
   /** #479 quickstartResume (setQuickstartResume L38880). */
   private quickstartResume?: (meta: AgentSessionMeta) => boolean;
+  /** docs/27: the Codex-route half of the original AgentHost (codex-host.ts). */
+  readonly codex?: CodexRouteController;
   constructor(private readonly d: AgentHostDeps) {
     this.log = (d.logger ?? getLogger()).child({ component: "agent-host" });
+    if (d.codex) {
+      const c = d.codex;
+      this.codex = new CodexRouteController({
+        settings: () => c.settings(), profileDir: () => c.profileDir(), executable: () => c.executable(), appVersion: c.appVersion, provider: () => c.provider(),
+        discoverModels: c.discoverModels, accountStatus: c.accountStatus,
+        persist: () => this.saveRegistry(), sessionsChanged: () => this.d.emit.sessionsChanged(this.listSessions()),
+      });
+    }
     this.tools = d.tools ?? DEFAULT_AGENT_TOOLS;
     this.now = d.now ?? Date.now;
     if (d.engine && d.stateDir) {
@@ -417,7 +453,17 @@ export class AgentHost {
       // a small fixture so a read-only tool call has something to find (PORT-NEW)
       writeFileSync(join(cwd, "README.txt"), "Videoclaw port agent session folder.\n");
     }
-    const llmRoute = continued ? continued.meta.llmRoute : this.d.service.newSessionLlmRoute({});
+    // createSession L38755-38800: the harness + Codex account slot + model pin of a new video
+    const codexSettings = this.d.codex?.settings() ?? {};
+    const agentHarness = continued ? (continued.meta.agentHarness ?? "claude-code") : (this.codex ? resolvedAgentHarness(codexSettings) : "claude-code");
+    const codexProvider = continued ? ((continued.meta.codexProvider as string | undefined) ?? DEFAULT_CODEX_PROVIDER) : resolvedCodexProvider(codexSettings);
+    const codexModelOverride = agentHarness === "codex-app-server" ? (continued ? (continued.meta.modelOverride as string | undefined) : this.codex!.accountCodexModel(codexProvider)) : undefined;
+    if (agentHarness === "codex-app-server") {
+      if (!this.codex) throw new Error("Codex is unavailable right now.");
+      this.codex.assertEnabled();
+      if (codexProvider !== "chatgpt" && !isQualifiedCodexRoute(codexProvider, codexModelOverride, this.codex.evidence)) throw new Error((codexRouteDiagnostic as any)(codexProvider, codexModelOverride, this.codex.evidence));
+    }
+    const llmRoute = agentHarness !== "claude-code" ? undefined : continued ? continued.meta.llmRoute : this.d.service.newSessionLlmRoute({});
     const clientId = continued?.meta.clientId ?? (typeof req?.clientId === "string" ? req.clientId : "personal");
     const existingSidebarOrders = [...this.sessions.values()].filter((o) => o.meta.clientId === clientId).map((o) => o.meta.sidebarOrder as number | undefined).filter((order): order is number => order !== undefined);
     const sidebarOrder = existingSidebarOrders.length ? Math.min(...existingSidebarOrders) - 1 : undefined;
@@ -425,14 +471,16 @@ export class AgentHost {
     const meta: AgentSessionMeta = {
       sessionId, title, ...(continued || (typeof req?.title === "string" && req.title) ? { titleOrigin: "manual" } : {}), cwd, status: "idle",
       permissionMode: typeof req?.permissionMode === "string" ? req.permissionMode : "auto", totalCostUsd: 0, createdAt: this.now(),
-      clientId, ...(sidebarOrder !== undefined ? { sidebarOrder } : {}), agentHarness: "claude-code", ...(llmRoute ? { llmRoute } : {}),
+      clientId, ...(sidebarOrder !== undefined ? { sidebarOrder } : {}), agentHarness,
+      ...(agentHarness === "codex-app-server" ? { codexProvider, ...(codexModelOverride ? { modelOverride: codexModelOverride } : {}) } : {}),
+      ...(llmRoute ? { llmRoute } : {}),
       ...(quickstart ? { quickstart } : {}),
       ...(continued?.meta.jobId ? { adoptCandidate: { jobId: continued.meta.jobId, reason: "owned", ownerSessionId: continued.meta.sessionId, ownerTitle: continued.meta.title } } : {}),
       portAgentHost: true,
     };
     this.sessions.set(sessionId, { meta, openTools: new Set(), clientTurns: new Set(), staleResults: 0, epoch: 0, ...(this.d.engine ? { preexistingJobs: listJobIds(cwd) } : {}) });
     if (!continued) { try { this.spendBudgets.setUnlimited(sessionId); } catch (e) { this.log.warn("agent.spend.set_unlimited_failed", { sessionId, error: e }); } } // L38866
-    this.log.info("agent.session.created", { sessionId, llmRoute, engine: !!this.d.engine, continued: !!continued, quickstart: !!quickstart });
+    this.log.info("agent.session.created", { sessionId, llmRoute, agentHarness, engine: !!this.d.engine, continued: !!continued, quickstart: !!quickstart });
     if (continued && !internal?.deferJobAdoption) continued.meta.continuation = { clientActionId: `recovery:${sessionId}`, sessionId };
     if (continued?.meta.jobId && !internal?.deferJobAdoption) return (this.adoptJob(sessionId, continued.meta.jobId) ?? meta) as AgentSessionMeta;
     this.saveRegistry();
@@ -557,6 +605,22 @@ export class AgentHost {
   private async deliver(s: Session, input: DeliveredInput, release: () => void = () => {}): Promise<boolean> {
     const sessionId = s.meta.sessionId;
     s.inflight = [input];
+    if (s.meta.agentHarness === "codex-app-server") {
+      // deliver L42003-42030: catalog capacity, route refusal, exact model pin, reasoning-effort pin
+      let refusal: string | undefined;
+      try {
+        if (!this.codex) throw new Error("Codex is unavailable right now.");
+        refusal = await this.codex.turnRefusal(s.meta);
+      } catch (e: any) {
+        refusal = e instanceof CodexProcessCapacityError ? e.message : redactText(String(e?.message ?? e));
+      }
+      if (refusal) {
+        release();
+        if ((s.meta.status as SessionStatus) !== "running") return false;
+        this.blockCodexRoute(s, input, refusal);
+        return false;
+      }
+    }
     let rt: Runtime;
     try {
       rt = await this.ensureRuntime(s);
@@ -701,6 +765,21 @@ export class AgentHost {
     const composerMaterials = this.attachmentStore ? this.attachmentStore.materials(sessionId) : [];
     const displayIndex = readDisplayTranscript(this.d.stateDir ? displayTranscriptPath(this.d.stateDir, sessionId) : "", composerMaterials);
     if (!s.meta.sdkSessionId) return this.restoreHistoryState(s, historyToEvents([], displayIndex, undefined));
+    if (s.meta.agentHarness === "codex-app-server") { // getHistory L43729: thread/read → codexEventToSdkMessages → historyToEvents
+      let client: CodexAppServerClient | undefined;
+      try {
+        const c = this.d.codex!;
+        const p = c.provider();
+        if (p) ensureCodexProfile(c.profileDir(), p.model);
+        client = new CodexAppServerClient({ appVersion: c.appVersion, executable: c.executable(), profileDir: c.profileDir(), env: codexChildEnv(undefined, {}, c.profileDir()) });
+        const providerEvents = await client.readHistory(String(s.meta.sdkSessionId));
+        const codexEntries: any[] = providerEvents.flatMap((e: any) => codexEventToSdkMessages(e) as any[]);
+        return this.restoreHistoryState(s, historyToEvents(codexEntries, displayIndex, s.meta.rejectedMessageIds));
+      } catch (e) {
+        this.log.warn("agent.history.codex_read_failed", { sessionId, error: e });
+        return this.restoreHistoryState(s, historyToEvents([], displayIndex, undefined));
+      } finally { client?.close(); }
+    }
     try {
       const { sdk } = await this.loadSdk();
       const getSessionMessages = (sdk as any).getSessionMessages as (id: string, o: Record<string, unknown>) => Promise<any[]>;
@@ -739,6 +818,7 @@ export class AgentHost {
   private resumableSdkSession(s: Session): string | undefined {
     const id = s.meta.sdkSessionId as string | undefined;
     if (!id) return undefined;
+    if (s.meta.agentHarness === "codex-app-server") return id; // a Codex thread id (thread/resume), not a Claude transcript
     if (this.rawClaudeTranscript(id)) return id;
     this.log.warn("agent.history.stale_resume_dropped", { sessionId: s.meta.sessionId });
     s.meta.sdkSessionId = undefined;
@@ -757,6 +837,7 @@ export class AgentHost {
 
   /** spawnLocal (L39454) + createLocalRuntime (L23059) minimal slice. */
   private async spawn(s: Session): Promise<Runtime> {
+    if (s.meta.agentHarness === "codex-app-server") return this.spawnCodex(s);
     const epoch = s.epoch;
     const meta: SessionMetaLike = { llmRoute: s.meta.llmRoute, agentHarness: "claude-code" };
     const readiness = await this.d.service.llmRouteReadiness(meta);
@@ -807,6 +888,112 @@ export class AgentHost {
     return rt;
   }
 
+  /** spawnLocal L39500-39533 (codex-app-server branch) → createCodexRuntime, with the MiniMax backend:
+   *  a per-runtime gate proxy (surface "openai") is the child's only upstream (docs/27 §3). */
+  private async spawnCodex(s: Session): Promise<Runtime> {
+    const epoch = s.epoch;
+    const c = this.d.codex;
+    if (!c || !this.codex) throw new Error("Codex is unavailable right now.");
+    this.codex.assertEnabled();
+    const p = c.provider();
+    if (!p) throw new Error(this.codex.runtimeGate().message);
+    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch) : undefined;
+    if (engineSpawn?.contextEpoch && engineSpawn.contextEpoch !== s.contextEpoch) { s.contextEpoch = engineSpawn.contextEpoch; this.saveRegistry(); }
+    ensureCodexProfile(c.profileDir(), p.model);
+    const backend = await (c.startBackend ?? ((pp: ResolvedProvider) => startCodexMiniMaxBackend(pp, { logger: this.log })))(p);
+    if (s.epoch !== epoch) { await backend.close().catch(() => {}); throw new Error("The session was reset before the agent started."); }
+    const handle: AgentRuntimeHandle = { llmRoute: "codex" as LlmRouteId, model: s.meta.modelOverride, env: {}, proxy: backend.proxy, close: () => backend.close() };
+    const rt: Runtime = { query: undefined as unknown as AgentQuery, handle, llmRoute: handle.llmRoute, queue: [], wake: null, inputClosed: false, dead: false, launched: false, consumed: Promise.resolve() };
+    const input: AsyncIterable<Record<string, unknown>> = {
+      async *[Symbol.asyncIterator]() {
+        while (!rt.inputClosed) {
+          const m = rt.queue.shift();
+          if (m) { yield m; continue; }
+          await new Promise<void>((r) => { rt.wake = r; });
+        }
+      },
+    };
+    let stderr = "";
+    const sessionId = s.meta.sessionId;
+    let canUseTool: (name: string, toolInput: Record<string, unknown>, o: { signal: AbortSignal; requestId?: string; toolUseID?: string }) => Promise<any>;
+    if (this.d.engine && engineSpawn) {
+      const engineCan = makeEngineCanUseTool(this.d.engine, this.enginePolicyHost(), sessionId, engineSpawn.engineEnv);
+      canUseTool = (name, toolInput, o) => engineCan(name, toolInput, o as any);
+    } else {
+      const policy = confinedToolPolicy(s.meta.cwd, this.tools);
+      canUseTool = async (name, toolInput) => { const v = policy(name, toolInput); this.log.info("agent.tool.permission", { sessionId, tool: name, allowed: v.allowed }); return v.allowed ? { behavior: "allow", updatedInput: toolInput } : { behavior: "deny", message: v.reason ?? "not allowed" }; };
+    }
+    let codexRt;
+    try {
+      codexRt = createCodexRuntime({
+        sessionId, cwd: s.meta.cwd, resume: this.resumableSdkSession(s), model: s.meta.modelOverride,
+        ...(s.meta.codexReasoningEffort ? { reasoningEffort: s.meta.codexReasoningEffort } : {}),
+        permissionMode: String(s.meta.permissionMode || "auto"), provider: s.meta.codexProvider ?? DEFAULT_CODEX_PROVIDER, backend,
+        sessionContext: { append: engineSpawn?.append ?? "", assembled: !!engineSpawn, lawsVersion: engineSpawn?.lawsVersion },
+        engineEnv: engineSpawn?.engineEnv ?? { PATH: process.env.PATH ?? "/usr/bin:/bin" }, profileDir: c.profileDir(), appVersion: c.appVersion, executable: c.executable(),
+        canUseTool, createClient: c.createClient,
+        onWarning: (m) => { stderr = (stderr + m + "\n").slice(-4000); },
+      });
+    } catch (e) { await backend.close().catch(() => {}); throw e; }
+    rt.query = codexQuery(codexRt, input) as unknown as AgentQuery;
+    s.runtime = rt;
+    this.send(s, { kind: "port_runtime", phase: "started", llmRoute: "codex", model: s.meta.modelOverride, gateProxy: true });
+    this.log.info("agent.runtime.started", { sessionId, harness: "codex-app-server", codexProvider: s.meta.codexProvider, model: s.meta.modelOverride, effort: s.meta.codexReasoningEffort, resumed: !!codexRt.resumedFrom, engine: !!engineSpawn });
+    rt.consumed = this.consume(s, rt, () => stderr);
+    return rt;
+  }
+  /** blockCodexRoute L42229 (no outbox beacon in the port). */
+  private blockCodexRoute(s: Session, input: DeliveredInput, reason: string): void {
+    if (s.runtime) this.teardownRuntime(s, "codex-route-unavailable");
+    s.inflight = undefined;
+    s.failedTurnCanRetry = undefined;
+    s.failedInputs = [input];
+    this.send(s, { kind: "error", message: `${reason} Pick a validated model in Account, or start a new video.`, canRetry: true });
+    this.setStatus(s, "error");
+  }
+  /** setSessionModel L40895: the Codex half validates against discovery + the evidence ledger and pins
+   *  the exact id; the Claude half (provider routes) only records the pick (claudeModelVerdict not ported). */
+  async setSessionModel(sessionId: string, model: unknown): Promise<AgentSessionMeta | null> {
+    const s = this.sessions.get(sessionId);
+    if (!s) return null;
+    let selected = typeof model === "string" && model ? model : undefined;
+    if (s.meta.agentHarness === "codex-app-server") {
+      if (!this.codex) throw new Error("Codex is unavailable right now.");
+      selected = await this.codex.pickModel(s.meta, selected);
+    }
+    if (this.sessions.get(sessionId) !== s) return null;
+    const unchanged = s.meta.modelOverride === selected;
+    s.meta.modelOverride = selected;
+    this.d.emit.sessionsChanged(this.listSessions());
+    this.saveRegistry();
+    const rt = s.runtime;
+    if (s.meta.agentHarness === "codex-app-server") {
+      if (rt && !rt.dead && !unchanged) void (rt.query as any).setModel?.(selected)?.catch?.(() => {});
+      return { ...s.meta };
+    }
+    if (rt && !rt.dead && !unchanged && s.meta.status !== "running" && s.meta.status !== "awaiting_permission") this.teardownRuntime(s, "model-changed");
+    return { ...s.meta };
+  }
+  /** setSessionReasoningEffort L51735 (Codex half; the Claude-effort half is NOT PORTED). */
+  async setSessionReasoningEffort(sessionId: string, effort: unknown): Promise<AgentSessionMeta | null> {
+    const s = this.sessions.get(sessionId);
+    if (!s) return null;
+    const wanted = typeof effort === "string" && effort.trim() ? effort.trim() : undefined;
+    if (s.meta.agentHarness !== "codex-app-server") throw new Error("Claude effort is not available in this build.");
+    if (!this.codex) throw new Error("Codex is unavailable right now.");
+    const model = s.meta.modelOverride;
+    await this.codex.checkEffort(s.meta, wanted);
+    if (this.sessions.get(sessionId) !== s) return null;
+    if (s.meta.modelOverride !== model) throw new Error("This video’s model changed while VideoClaw checked its efforts. Choose the effort again.");
+    if (s.meta.codexReasoningEffort === wanted) return { ...s.meta };
+    s.meta.codexReasoningEffort = wanted;
+    // the effort is thread-local config (model_reasoning_effort): an idle live thread respawns with it
+    if (s.runtime && !s.runtime.dead && s.meta.status !== "running" && s.meta.status !== "awaiting_permission") this.teardownRuntime(s, "effort-changed");
+    this.d.emit.sessionsChanged(this.listSessions());
+    this.saveRegistry();
+    return { ...s.meta };
+  }
+
   /** consume (L50152) slice. */
   private async consume(s: Session, rt: Runtime, stderr: () => string): Promise<void> {
     try {
@@ -828,7 +1015,7 @@ export class AgentHost {
       if (wasStopping) { if (s.meta.status !== "idle") this.setStatus(s, "idle"); return; }
       const tail = stderr();
       this.log.warn("agent.turn_error", { sessionId: s.meta.sessionId, error: e, stderrTail: tail ? redactText(tail.slice(-800)) : undefined });
-      this.send(s, { kind: "error", message: rt.launched ? redactText(String(e?.message ?? e)).slice(0, 500) : "The studio couldn't start — try again in a moment, or check Setup.", canRetry: true }); // L50245
+      this.send(s, { kind: "error", message: rt.launched || rt.llmRoute === "codex" ? redactText(String(e?.message ?? e)).slice(0, 500) : "The studio couldn't start — try again in a moment, or check Setup.", canRetry: true }); // L50245
       this.setStatus(s, "error");
     }
   }
@@ -895,11 +1082,8 @@ export class AgentHost {
     s.openTools.clear();
   }
 
-  /** createLocalRuntime options (L23237-23314) for an engine session. */
-  private engineQueryOptions(s: Session, handle: AgentRuntimeHandle, sp: { engineEnv: Record<string, string>; append: string }, executable: string | undefined, stderr: (t: string) => void): Record<string, unknown> {
-    const sessionId = s.meta.sessionId;
-    const engine = this.d.engine!;
-    const policyHost: EnginePolicyHost = {
+  private enginePolicyHost(): EnginePolicyHost {
+    return {
       sessionCwd: (id) => this.sessions.get(id)?.meta.cwd,
       sessionJobId: (id) => this.sessions.get(id)?.meta.jobId,
       sessionPlanRefusal: () => undefined, // no plan can exist (propose_session_plan not ported) → L45xxx returns undefined
@@ -907,6 +1091,12 @@ export class AgentHost {
       paidRefusal: () => PORT_PAID_REFUSAL,
       log: (event, detail) => this.log.info(event, detail),
     };
+  }
+  /** createLocalRuntime options (L23237-23314) for an engine session. */
+  private engineQueryOptions(s: Session, handle: AgentRuntimeHandle, sp: { engineEnv: Record<string, string>; append: string }, executable: string | undefined, stderr: (t: string) => void): Record<string, unknown> {
+    const sessionId = s.meta.sessionId;
+    const engine = this.d.engine!;
+    const policyHost = this.enginePolicyHost();
     const permissionMode = String(s.meta.permissionMode || "auto");
     return {
       cwd: s.meta.cwd,
@@ -1084,6 +1274,7 @@ export class AgentHost {
     const interrupted: AgentSessionMeta[] = [];
     for (const s of this.sessions.values()) {
       if (s.meta.llmRoute === "claude-code" || s.meta.llmRoute === "gateway") continue;
+      if (s.meta.agentHarness === "codex-app-server") continue; // capabilities.usesAppLlmRoute false (createCodexRuntime L25031)
       if (!s.runtime && !s.spawning) continue;
       const wasActive = s.meta.status === "running" || s.meta.status === "awaiting_permission";
       if (wasActive) interrupted.push({ ...s.meta });
@@ -1659,6 +1850,19 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       if (persisted) s.materialsDigest = digest;
       this.d.emit.materials?.(sessionId, ledger);
     } catch {}
+  }
+  /** codexDisconnectImpact L52416: Codex videos with a live runtime mid-turn. */
+  codexRunningVideoCount(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.agentHarness === "codex-app-server" && s.runtime && (s.meta.status === "running" || s.meta.status === "awaiting_permission")) n++; return n; }
+  /** retireCodexRuntimes (runCodexDisconnect L52467): tear down every Codex runtime; returns how many were mid-turn. */
+  retireCodexRuntimes(): number {
+    let stopped = 0;
+    for (const s of this.sessions.values()) {
+      if (s.meta.agentHarness !== "codex-app-server" || !s.runtime) continue;
+      const active = s.meta.status === "running" || s.meta.status === "awaiting_permission";
+      this.teardownRuntime(s, "codex-disconnect");
+      if (active) { stopped++; this.send(s, { kind: "error", message: "Codex was disconnected before this turn finished.", canRetry: true }); this.setStatus(s, "error"); }
+    }
+    return stopped;
   }
   /** runningVideoCount (local reset prepare). */
   runningVideoCount(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.status === "running" || s.meta.status === "awaiting_permission") n++; return n; }

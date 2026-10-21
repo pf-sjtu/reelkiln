@@ -56,6 +56,9 @@ import { PORT_IPC, PORT_PUSH, type PortInvokeChannel } from "../shared/port-ipc"
 import { portDiagnostics } from "./port-diagnostics";
 import { AgentHost } from "./agent/agent-host";
 import { agentHostEmit, agentIpcHandlers, agentToolsFromEnv, PORT_AGENT_TOOLS_ENV } from "./agent/agent-ipc";
+import { codexChannels } from "./codex/codex-channels";
+import { resolveCodexExecutable, resolveMiniMaxCodexProvider } from "./codex/codex-minimax";
+import { codexProcessesStopped } from "./codex/app-server-client";
 import { claudeCodeExecutableFor, loadClaudeAgentSdk } from "./llm/agent-sdk";
 import { accountSnapshot, bootstrapStatus, replayPendingInteractions, workflowSubmitEligibility } from "./home-boot";
 import type { EngineSessionDeps } from "./agent/engine-session";
@@ -351,7 +354,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     blockPaidWork: () => {},
     stopAuthenticatedWork: () => {},
     stopEditorRendering: () => { try { const st: any = editorRender.state(); if (st?.requestId) void editorRender.cancel(st.requestId); } catch {} hfPreview.stop("closed"); return []; },
-    codexProcessesStopped: async () => true, // no codex harness in the port
+    codexProcessesStopped: (timeoutMs: number) => codexProcessesStopped(timeoutMs), // docs/27: the port's codex process slots (L23382)
     stopEngineChildren: () => hostRef?.closeAll() ?? [],
     processesExited: async () => true,
     flushOutbox: async () => {},
@@ -451,6 +454,14 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         clientOrder: () => registry.listClients().map((c) => c.clientId),
         providerTitles: process.env[PORT_PROVIDER_TITLES_ENV] !== "0",
         tools: agentToolsFromEnv(process.env[PORT_AGENT_TOOLS_ENV]),
+        // docs/27: the Codex harness on MiniMax (codex 0.160.1 external binary + per-runtime gate proxy)
+        codex: {
+          settings: () => llm.settings.get() as Record<string, unknown>,
+          profileDir: () => join(app.getPath("userData"), "codex-profile"), // codexProfileDir
+          executable: () => resolveCodexExecutable({ resourcesPath: app.isPackaged ? process.resourcesPath : undefined, appRoot: app.getAppPath() }),
+          appVersion: app.getVersion(),
+          provider: () => resolveMiniMaxCodexProvider(),
+        },
         // PORT-NEW: VIDEOCLAW_PORT_TURN_TIMEOUT_MS overrides the per-turn safety net (engine default 20 min)
         ...(Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) > 0 ? { turnTimeoutMs: Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) } : {}),
       });
@@ -463,6 +474,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       }
       hostRef = h;
       Object.assign(handlers, agentIpcHandlers(h, allSessions));
+      Object.assign(handlers, codexChannels(h) as Partial<Record<InvokeChannel, Handler>>); // docs/27
       bindLocal(h);
       if (engineDeps) {
         // QuickstartStartCoordinator wiring (L61195); prepareNewSession = studio bundle revalidation (not ported → no-op)

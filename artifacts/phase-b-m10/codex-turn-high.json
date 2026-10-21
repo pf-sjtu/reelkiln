@@ -1,0 +1,196 @@
+{
+  "summary": {
+    "at": "2026-10-21T12:07:03.261Z",
+    "codexExecutable": "<port>/vendor/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+    "effort": "high",
+    "structured": false,
+    "account": {
+      "harness": "codex-app-server",
+      "provider": "openai",
+      "authenticated": true,
+      "mode": "external"
+    },
+    "models": [
+      {
+        "id": "MiniMax-M3.1-Flash",
+        "isDefault": true,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M3",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2.7",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2.7-highspeed",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2.5",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2.5-highspeed",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2.1",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2.1-highspeed",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      {
+        "id": "MiniMax-M2",
+        "isDefault": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ]
+      }
+    ],
+    "init": {
+      "type": "system",
+      "subtype": "init",
+      "session_id": "01a15e5b-8c56-7e51-9e3b-f0b62669595a",
+      "model": "MiniMax-M3.1-Flash"
+    },
+    "toolUses": [
+      {
+        "name": "provider_command",
+        "input": {
+          "summary": "Run bash",
+          "command": "/bin/bash -lc 'cat hello.txt'"
+        }
+      }
+    ],
+    "toolResults": [
+      {
+        "is_error": false,
+        "content": "Run bash"
+      }
+    ],
+    "finalText": "I'll read that file now.\nThe secret fruit is mango.",
+    "result": {
+      "subtype": "success",
+      "session_id": "01a15e5b-8c56-7e51-9e3b-f0b62669595a"
+    },
+    "approvalsAsked": 0,
+    "gateProxy": {
+      "requests": 2,
+      "rejected": 0,
+      "maxInflight": 1,
+      "inflight": 0,
+      "structuredEmulated": 0,
+      "structuredJsonOk": 0
+    },
+    "durationMs": 4326,
+    "pass": true
+  },
+  "log": [
+    {
+      "t": 1404,
+      "warning": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"/tmp\" (codex_home: AbsolutePathBuf(\"/tmp/[credential]/codex-profile\"))"
+    },
+    {
+      "t": 1513,
+      "type": "system",
+      "subtype": "init",
+      "content": "\"MiniMax-M3.1-Flash\""
+    },
+    {
+      "t": 1516,
+      "warning": "Model metadata for `MiniMax-M3.1-Flash` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+    },
+    {
+      "t": 2737,
+      "type": "stream_event",
+      "content": "\"\""
+    },
+    {
+      "t": 2989,
+      "type": "stream_event",
+      "content": "\"\""
+    },
+    {
+      "t": 2993,
+      "type": "assistant",
+      "content": "[{\"type\":\"text\",\"text\":\"I'll read that file now.\"}]"
+    },
+    {
+      "t": 3061,
+      "type": "assistant",
+      "content": "[{\"type\":\"tool_use\",\"id\":\"call_function_22t1ffxye7tk_1\",\"name\":\"provider_command\",\"input\":{\"summary\":\"Run bash\",\"command\":\"/bin/bash -lc 'cat hello.txt'\"}}]"
+    },
+    {
+      "t": 3062,
+      "type": "user",
+      "content": "[{\"type\":\"tool_result\",\"tool_use_id\":\"call_function_22t1ffxye7tk_1\",\"content\":\"Run bash\",\"is_error\":false}]"
+    },
+    {
+      "t": 4181,
+      "type": "stream_event",
+      "content": "\"\""
+    },
+    {
+      "t": 4200,
+      "type": "stream_event",
+      "content": "\"\""
+    },
+    {
+      "t": 4202,
+      "type": "assistant",
+      "content": "[{\"type\":\"text\",\"text\":\"The secret fruit is mango.\"}]"
+    },
+    {
+      "t": 4326,
+      "type": "result",
+      "subtype": "success",
+      "content": "\"\""
+    }
+  ]
+}

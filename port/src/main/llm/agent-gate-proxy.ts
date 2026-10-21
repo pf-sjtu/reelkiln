@@ -18,6 +18,7 @@ import { authHeaders } from "./protocols";
 import type { ResolvedProvider } from "./provider-registry";
 import { providerGate, type ConcurrencyLimiter } from "./retry";
 import { rewriteStructuredMessage, rewriteStructuredRequest, StructuredSseRewriter } from "./structured-emulation";
+import { ResponsesStructuredSseRewriter, rewriteResponsesStructuredJson, rewriteResponsesStructuredRequest } from "./structured-emulation-responses";
 
 export interface AgentGateProxy {
   url: string;
@@ -39,6 +40,12 @@ export interface AgentGateProxyOptions {
   fetchImpl?: typeof fetch;
   logger?: Logger;
   maxBodyBytes?: number;
+  /** docs/27: which client surface the proxy serves. "anthropic" (default): Claude Code →
+   *  /v1/messages, upstream = baseUrl + path. "openai": a Codex child (OpenAI-compatible, base_url =
+   *  <proxy>/v1) → /v1/responses (+ /v1/models, /v1/chat/completions), upstream = baseUrl (which ends in
+   *  /v1) + path without the /v1 prefix; errors in the OpenAI shape; structured outputs emulated on the
+   *  Responses API (structured-emulation-responses.ts). */
+  surface?: "anthropic" | "openai";
 }
 
 const HOP_BY_HOP = new Set(["host", "connection", "keep-alive", "content-length", "transfer-encoding", "accept-encoding", "authorization", "x-api-key", "proxy-authorization", "upgrade", "te", "trailer"]);
@@ -55,10 +62,10 @@ function sameToken(a: string | undefined, b: string): boolean {
   const x = Buffer.from(a), y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
 }
-function jsonError(res: ServerResponse, status: number, type: string, message: string): void {
+function jsonError(res: ServerResponse, status: number, type: string, message: string, surface: "anthropic" | "openai" = "anthropic"): void {
   if (res.headersSent) { res.destroy(); return; }
   res.writeHead(status, { "content-type": "application/json" });
-  res.end(JSON.stringify({ type: "error", error: { type, message } }));
+  res.end(JSON.stringify(surface === "openai" ? { error: { type, message, code: type } } : { type: "error", error: { type, message } }));
 }
 
 export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "baseUrl" | "auth" | "key" | "headers" | "maxConcurrency" | "gateKey"> & Partial<Pick<ResolvedProvider, "agentCompat">>, o: AgentGateProxyOptions = {}): Promise<AgentGateProxy> {
@@ -72,6 +79,9 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
   let requests = 0, rejected = 0, inflight = 0, maxInflight = 0, structuredEmulated = 0, structuredJsonOk = 0;
   const emulate = o.emulateStructuredOutputs ?? !!p.agentCompat?.emulateStructuredOutputs;
   const jsonOk = (t: string) => { try { JSON.parse(t); return true; } catch { return false; } };
+  const surface = o.surface ?? "anthropic";
+  const fail = (res: ServerResponse, status: number, type: string, message: string) => jsonError(res, status, type, message, surface);
+  const upstreamUrl = (path: string) => (surface === "openai" ? p.baseUrl + path.replace(/^\/v1(?=\/|\?|$)/, "") : p.baseUrl + path);
 
   const server = createServer(async (req, res) => {
     const t0 = Date.now();
@@ -79,18 +89,19 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
     // Only the Messages API surface is forwarded; Claude Code's unauthenticated HEAD /api/hello
     // reachability probe and anything else is answered locally (never forwarded with the real key).
     if (!/^\/v1\//.test(path)) { req.resume(); res.writeHead(req.method === "HEAD" ? 200 : 404); res.end(); return; }
-    if (!sameToken(presented(req), token)) { rejected++; req.resume(); return jsonError(res, 401, "authentication_error", "invalid gate-proxy session token"); }
+    if (!sameToken(presented(req), token)) { rejected++; req.resume(); return fail(res, 401, "authentication_error", "invalid gate-proxy session token"); }
     const chunks: Buffer[] = [];
     let size = 0;
     try {
-      for await (const c of req) { size += (c as Buffer).length; if (size > maxBody) return jsonError(res, 413, "request_too_large", "request body too large"); chunks.push(c as Buffer); }
+      for await (const c of req) { size += (c as Buffer).length; if (size > maxBody) return fail(res, 413, "request_too_large", "request body too large"); chunks.push(c as Buffer); }
     } catch { return; }
     let reqBody = Buffer.concat(chunks);
     let emulated = false;
-    if (emulate && req.method === "POST" && /^\/v1\/messages(\?|$)/.test(path)) {
+    const structuredPath = surface === "openai" ? /^\/v1\/responses(\?|$)/ : /^\/v1\/messages(\?|$)/;
+    if (emulate && req.method === "POST" && structuredPath.test(path)) {
       let parsed: unknown;
       try { parsed = JSON.parse(reqBody.toString("utf8")); } catch { parsed = undefined; }
-      const rewritten = rewriteStructuredRequest(parsed);
+      const rewritten = surface === "openai" ? rewriteResponsesStructuredRequest(parsed) : rewriteStructuredRequest(parsed);
       if (rewritten) { reqBody = Buffer.from(JSON.stringify(rewritten)); emulated = true; structuredEmulated++; }
     }
     const abort = new AbortController();
@@ -107,13 +118,13 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
           for (const [k, v] of Object.entries(req.headers)) if (!HOP_BY_HOP.has(k) && typeof v === "string") headers[k] = v;
           Object.assign(headers, extra, authHeaders(p.auth, p.key));
           const method = req.method ?? "GET";
-          const upstream = await doFetch(p.baseUrl + path, { method, headers, body: method === "GET" || method === "HEAD" ? undefined : reqBody, signal: abort.signal });
+          const upstream = await doFetch(upstreamUrl(path), { method, headers, body: method === "GET" || method === "HEAD" ? undefined : reqBody, signal: abort.signal });
           const rh: Record<string, string> = {};
           upstream.headers.forEach((v, k) => { if (!RESPONSE_DROP.has(k)) rh[k] = v; });
           const write = async (c: string | Uint8Array) => { if (c.length && !res.write(c)) await new Promise((r) => res.once("drain", r)); };
           if (emulated && upstream.status === 200 && /text\/event-stream/i.test(upstream.headers.get("content-type") ?? "")) {
             res.writeHead(upstream.status, rh);
-            const rw = new StructuredSseRewriter();
+            const rw = surface === "openai" ? new ResponsesStructuredSseRewriter() : new StructuredSseRewriter();
             const dec = new TextDecoder();
             if (upstream.body) for await (const c of upstream.body as any) await write(rw.push(dec.decode(c, { stream: true })));
             await write(rw.push(dec.decode()) + rw.flush());
@@ -123,9 +134,15 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
             const text = await upstream.text();
             let outText = text;
             try {
-              const r = rewriteStructuredMessage(JSON.parse(text));
-              outText = JSON.stringify(r.msg);
-              if (r.json !== undefined) structuredJsonOk++;
+              if (surface === "openai") {
+                const r = rewriteResponsesStructuredJson(JSON.parse(text));
+                outText = JSON.stringify(r.resp);
+                if (r.json !== undefined && jsonOk(r.json)) structuredJsonOk++;
+              } else {
+                const r = rewriteStructuredMessage(JSON.parse(text));
+                outText = JSON.stringify(r.msg);
+                if (r.json !== undefined) structuredJsonOk++;
+              }
             } catch { /* not JSON: pass through */ }
             res.writeHead(upstream.status, rh);
             await write(outText);
@@ -141,12 +158,12 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
     } catch (e: any) {
       if (abort.signal.aborted) { res.destroy(); return; }
       log.warn("agent_proxy.upstream_failed", { path: path.split("?")[0], error: e });
-      jsonError(res, 502, "api_error", "gate proxy could not reach the provider");
+      fail(res, 502, "api_error", "gate proxy could not reach the provider");
     }
   });
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", () => resolve()); });
   const port = (server.address() as AddressInfo).port;
-  log.info("agent_proxy.started", { port, maxConcurrency: p.maxConcurrency });
+  log.info("agent_proxy.started", { port, maxConcurrency: p.maxConcurrency, surface });
   return {
     url: `http://127.0.0.1:${port}`,
     token,

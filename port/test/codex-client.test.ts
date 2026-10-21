@@ -29,7 +29,7 @@ test("initialize handshake: exact params, version gate 0.160.1, then `initialize
 });
 
 test("version mismatch rejects with the original message; errors/unknown ids/server requests handled", async () => {
-  assert.throws(() => assertCompatibleServer({ userAgent: "Codex Desktop/0.161.0" }, "0.160.1"), /Unsupported Codex app-server protocol \(0\.161\.0\); VideoClaw requires 0\.160\.1\. Server identity: Codex Desktop\/0\.161\.0\./);
+  assert.throws(() => assertCompatibleServer({ userAgent: "Codex Desktop/0.161.0" }, "0.160.1", undefined), /Unsupported Codex app-server protocol \(0\.161\.0\); VideoClaw requires 0\.160\.1\. Server identity: Codex Desktop\/0\.161\.0\./);
   assert.equal(codexAppServerVersion("videoclaw_desktop/0.160.1"), "0.160.1");
   const events: any[] = [];
   const f = fakeCodex((m, reply) => {
@@ -41,10 +41,13 @@ test("version mismatch rejects with the original message; errors/unknown ids/ser
   f.stdout.write(JSON.stringify({ id: 99, result: 1 }) + "\n");
   f.stdout.write(JSON.stringify({ id: "s1", method: "item/commandExecution/requestApproval", params: {} }) + "\n");
   f.stdout.write(JSON.stringify({ id: "s2", method: "item/tool/call", params: {} }) + "\n");
-  f.stdout.write(JSON.stringify({ method: "turn/started", params: { threadId: "t" } }) + "\n");
+  f.stdout.write(JSON.stringify({ method: "turn/started", params: { threadId: "t", turn: { id: "u" } } }) + "\n");
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(events[0], { kind: "warning", message: "Codex app server returned an unknown response." });
-  assert.deepEqual(events[1], { kind: "notification", method: "turn/started", params: { threadId: "t" } });
+  // docs/27: notifications are normalized by the verbatim normalizeCodexNotification (L24268)
+  assert.equal(events[1]?.kind, "turn_started");
+  assert.equal(events[1]?.threadId, "t");
+  assert.equal(events[1]?.turnId, "u");
   assert.deepEqual(f.written.at(-2), { id: "s1", error: { code: -32601, message: "Unsupported server request." } });
   assert.equal(f.written.at(-1).result.success, false);
   c.close();

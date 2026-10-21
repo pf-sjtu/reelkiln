@@ -16,7 +16,8 @@
     "package:linux:dir": "npm run build && node tools/package.mjs --platform linux --targets dir",
     "package:win": "npm run build && node tools/package.mjs --platform win --arch x64",
     "package:mac": "npm run build && node tools/package.mjs --platform mac --arch arm64",
-    "package:smoke": "node tools/packaged-smoke.mjs"
+    "package:smoke": "node tools/packaged-smoke.mjs",
+    "codex:install": "node tools/install-codex.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
