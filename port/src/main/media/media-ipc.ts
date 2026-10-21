@@ -63,7 +63,9 @@ export interface DialogLike {
 export interface ShellLike { showItemInFolder(p: string): void; openPath(p: string): Promise<string> }
 
 export function smokeDialog(real: DialogLike, env: NodeJS.ProcessEnv = process.env, log: (m: string) => void = () => {}): DialogLike {
-  if (env.VIDEOCLAW_PORT_SMOKE !== "1") return real;
+  // docs/23 M5: the UI-e2e mode (VIDEOCLAW_PORT_UI_E2E=1, CDP-driven original UI) answers the native
+  // dialogs the same way — a headless run has no one to click the GTK dialog.
+  if (env.VIDEOCLAW_PORT_SMOKE !== "1" && env.VIDEOCLAW_PORT_UI_E2E !== "1") return real;
   return {
     showSaveDialog: async (opts) => {
       const p = env.VIDEOCLAW_PORT_SMOKE_SAVE_AS;

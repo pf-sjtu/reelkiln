@@ -168,7 +168,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     // docs/22 M3/M4: file:* + intake:pickFiles (original L61917-62001, L62157)
     ...(fileIpcHandlers({
       dialog: smokeDialog({ showSaveDialog: (o) => dialog.showSaveDialog(o), showOpenDialog: (o) => dialog.showOpenDialog(o as any) }, process.env, log),
-      shell: { showItemInFolder: (p) => { if (process.env.VIDEOCLAW_PORT_SMOKE === "1") { log(`[smoke] showItemInFolder ${p}`); return; } shell.showItemInFolder(p); }, openPath: (p) => shell.openPath(p) },
+      shell: { showItemInFolder: (p) => { if (process.env.VIDEOCLAW_PORT_SMOKE === "1" || process.env.VIDEOCLAW_PORT_UI_E2E === "1") { log(`[smoke] showItemInFolder ${p}`); return; } shell.showItemInFolder(p); }, openPath: (p) => shell.openPath(p) },
       downloadsDir: () => app.getPath("downloads"),
       media: mediaCapabilities,
       sessionIds: () => (handlers["session:list"]?.() as any[] ?? []).map((m: any) => m.sessionId),

@@ -608,7 +608,7 @@ export class AgentHost {
     });
   }
   /** respondPermission (L44432) for ordinary permission / question cards. */
-  respondPermission(requestId: string, response: { behavior?: string; message?: string; updatedInput?: Record<string, unknown>; answers?: unknown } | undefined): void {
+  respondPermission(requestId: string, response: { behavior?: string; message?: string; updatedInput?: Record<string, unknown>; answers?: unknown; selections?: unknown } | undefined): void {
     const pending = this.pendingPermissions.get(String(requestId));
     if (!pending) return;
     this.pendingPermissions.delete(String(requestId));
@@ -616,10 +616,14 @@ export class AgentHost {
     if (s) this.send(s, { kind: "permission_resolved", requestId: pending.request.requestId });
     if (s && s.meta.status === "awaiting_permission") this.setStatus(s, "running"); // resumeAfterInteraction
     this.log.info("agent.permission.response", { sessionId: pending.sessionId, requestId, behavior: response?.behavior });
-    if (response?.behavior === "allow") {
-      const base = response.updatedInput ?? pending.request.input;
-      pending.resolve({ behavior: "allow", updatedInput: response.answers !== undefined ? { ...base, answers: response.answers } : base });
-    } else pending.resolve({ behavior: "deny", message: response?.message || "The user declined this step." });
+    // original L37581-37617: the question card answers with behavior "answers" (renderer answerQuestion
+    // L40098) → allow with { ...input, answers }; "allow" → allow with the request's own input; anything
+    // else → deny ("Denied by user" when no message). docs/23: found by the M5 UI-e2e (the card's answer
+    // was being turned into a deny).
+    const input = pending.request.input as Record<string, unknown>;
+    if (response?.behavior === "answers") pending.resolve({ behavior: "allow", updatedInput: { ...input, answers: response.answers } });
+    else if (response?.behavior === "allow") pending.resolve({ behavior: "allow", updatedInput: input });
+    else pending.resolve({ behavior: "deny", message: response?.message ?? "Denied by user" });
   }
   /** listPendingInteractions (L38511) → interaction:replayPending. */
   listPendingInteractions(): Array<{ kind: "permission"; request: PermissionRequest; order: number }> {

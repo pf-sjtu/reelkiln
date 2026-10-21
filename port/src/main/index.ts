@@ -18,7 +18,11 @@ import { redactText } from "./llm/logger";
 // PORT-NEW smoke helper: surface renderer-side exceptions instead of an opaque "Script failed to execute"
 const catchingScript = (script: string) => `(async () => { try { return await ${script}; } catch (e) { return { ok: false, error: String((e && e.stack) || e), events: [] }; } })()`;
 
-const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1"; // PORT-NEW
+/** PORT-NEW docs/23 M5: UI-e2e mode — the original renderer is driven from OUTSIDE over the Chrome
+ *  DevTools Protocol (port/tools/ui-e2e.mjs); main injects no script. Only the native dialogs are
+ *  answered from env (same presets as the smoke) and pushes are logged. Overrides VIDEOCLAW_PORT_SMOKE. */
+const UI_E2E = process.env.VIDEOCLAW_PORT_UI_E2E === "1";
+const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1" && !UI_E2E; // PORT-NEW
 /** PORT-NEW: append every session:event / permission:request push (redacted JSONL) — evidence capture. */
 const EVENT_LOG = process.env.VIDEOCLAW_PORT_EVENT_LOG;
 
@@ -36,8 +40,8 @@ function registerIpc() {
     if (!EVENT_LOG || !/^(session:event|session:changed|permission:request)$/.test(ch)) return;
     try { appendFileSync(EVENT_LOG, redactText(JSON.stringify({ t: new Date().toISOString(), ch, payload: a[0] })) + "\n"); } catch {}
   };
-  const push = SMOKE || EVENT_LOG
-    ? (ch: string, ...a: unknown[]) => { record(ch, a); if (SMOKE) log(`[smoke] push ${ch} ${JSON.stringify(a).slice(0, 400)}`); return sendToRenderer(ch as any, ...(a as [])); }
+  const push = SMOKE || EVENT_LOG || UI_E2E
+    ? (ch: string, ...a: unknown[]) => { record(ch, a); if (SMOKE || UI_E2E) log(`[smoke] push ${ch} ${JSON.stringify(a).slice(0, 400)}`); return sendToRenderer(ch as any, ...(a as [])); }
     : sendToRenderer;
   const real = createRealHandlers(push as typeof sendToRenderer, log);
   for (const ch of INVOKE_CHANNELS) {
@@ -141,7 +145,10 @@ app.whenReady().then(async () => {
   const real = registerIpc();
   // PORT-NEW smoke: preselect + acknowledge an LLM route (what the user does once in the first-launch
   // route picker / port Settings page) so the original home opens on that route.
-  const route = SMOKE && (process.env.VIDEOCLAW_PORT_SMOKE_HOME || process.env.VIDEOCLAW_PORT_SMOKE_S1 || process.env.VIDEOCLAW_PORT_SMOKE_RELOAD) ? process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE : undefined;
+  if (UI_E2E) log(`[ui-e2e] mode on: original renderer, no injected script; dialogs answered from env (save-as ${process.env.VIDEOCLAW_PORT_SMOKE_SAVE_AS ? "preset" : "real"}, pick-files ${process.env.VIDEOCLAW_PORT_SMOKE_PICK_FILES ? "preset" : "real"})`);
+  // UI_E2E: the original first-launch picker only offers Codex / Claude Code / credits; the box's only
+  // agent route (minimax) is a PORT-NEW provider route chosen on the port Settings page, so it is preset here.
+  const route = (UI_E2E || SMOKE) && (UI_E2E || process.env.VIDEOCLAW_PORT_SMOKE_HOME || process.env.VIDEOCLAW_PORT_SMOKE_S1 || process.env.VIDEOCLAW_PORT_SMOKE_RELOAD) ? process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE : undefined;
   if (route && real["settings:set"]) { try { await real["settings:set"]({ llmRoute: route, llmRouteAcknowledgedAt: Date.now() }); log(`[smoke] llmRoute preset ${route}`); } catch (e) { log(`[smoke] llmRoute preset failed ${String(e)}`); } }
   createWindow();
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

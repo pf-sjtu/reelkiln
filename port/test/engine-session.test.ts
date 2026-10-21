@@ -164,11 +164,19 @@ test("AgentHost ENGINE: permission card round-trip (canUseTool → permission:re
     const p3 = opt.canUseTool("AskUserQuestion", { questions: [{ question: "Which?" }] }, { requestId: "req-3" });
     await until(() => h.perms.length === 3);
     assert.equal(h.perms[2].kind, "question");
-    h.host.respondPermission("req-3", { behavior: "allow", answers: { Which: "A" } });
-    assert.deepEqual(((await p3) as any).updatedInput.answers, { Which: "A" });
+    // original renderer answerQuestion (L40098) sends behavior "answers" (+ selections) — main L37581 → allow
+    h.host.respondPermission("req-3", { behavior: "answers", answers: { "Which?": "A" }, selections: { "Which?": { chosen: ["A"] } } });
+    const r3 = (await p3) as any;
+    assert.equal(r3.behavior, "allow");
+    assert.deepEqual(r3.updatedInput, { questions: [{ question: "Which?" }], answers: { "Which?": "A" } });
+    // the question card's ✕ (dismissQuestion) denies with its own message; a bare deny gets the original default
+    const p3b = opt.canUseTool("AskUserQuestion", { questions: [{ question: "Again?" }] }, { requestId: "req-3b" });
+    await until(() => h.perms.length === 4);
+    h.host.respondPermission("req-3b", { behavior: "deny" });
+    assert.deepEqual(await p3b, { behavior: "deny", message: "Denied by user" });
     // pending card aborted by Stop
     const p4 = opt.canUseTool("Write", { file_path: "z" }, { requestId: "req-4" });
-    await until(() => h.perms.length === 4);
+    await until(() => h.perms.length === 5);
     await h.host.interrupt(meta.sessionId, "stop");
     assert.equal((await p4).behavior, "deny");
     assert.equal(h.host.listPendingInteractions().length, 0);
