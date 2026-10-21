@@ -1,0 +1,83 @@
+{
+ "phase": "retry",
+ "started": "2026-10-21T11:37:03.716Z",
+ "steps": {
+  "paste_image_send": {
+   "ok": true,
+   "paste": "[{\"id\":\"701f1922-317f-4a51-9ec5-a3c8cb4c9dbc\",\"sessionId\":\"86e7ff16-b457-42cd-a918-fde58a0e65b9\",\"name\":\"Pasted image 0c0471.png\",\"sizeBytes\":283,\"destination\":\"video\",\"status\":\"uploading\",\"copiedByte",
+   "materialPreview": "{\"entry\":{\"id\":\"701f1922-317f-4a51-9ec5-a3c8cb4c9dbc\",\"name\":\"Pasted image 0c0471.png\",\"kind\":\"image\",\"origin\":\"paste\",\"destination\":\"video\",\"addedAtMs\":1792582626646,\"state\":\"present\",\"sizeBytes\":283",
+   "materialsChanged": 3
+  },
+  "session_retry": {
+   "ok": true,
+   "errCard": "Retry",
+   "retry": [
+    "true"
+   ],
+   "deliveredBefore": 1,
+   "deliveredAfter": 2,
+   "retriedLog": [
+    "{\"ts\":\"2026-10-21T11:37:14.629Z\",\"level\":\"info\",\"event\":\"agent.turn.retried\",\"component\":\"agent-host\",\"sessionId\":\"86e7ff16-b457-42cd-a918-fde58a0e65b9\",\"jobId\":\"video-20261021-86e7ff\",\"sdkSessionId\":\"95835917-7065-4bac-a5c8-e78803024608\",\"resent\":1}"
+   ]
+  },
+  "quickstart_start": {
+   "ok": true,
+   "start": [
+    "{\"session\":{\"sessionId\":\"bd3b9eba-2d91-4855-89d7-520f767ca44d\",\"title\":\"Founder camera story\",\"titleOrigin\":\"manual\",\"cwd\":\"<RUN>/Videoclaw\",\"status\":\"idle\",\"permissionMode\":\"auto\",\"totalC"
+   ],
+   "meta": {
+    "title": "Founder camera story",
+    "starterId": "starter.founder-camera-story",
+    "firstTurnSubmitted": false,
+    "coreFileStates": [
+     "vc-warm-open.bin:failed"
+    ],
+    "status": "error"
+   },
+   "mark": [
+    "[\"destination_ready\",66.5,\"4e9269bf-ebbd-4c01-a91e-22415394f"
+   ]
+  }
+ },
+ "landing": "restored",
+ "retrySession": "86e7ff16-b457-42cd-a918-fde58a0e65b9",
+ "clipboardTargets": [
+  "TARGETS",
+  "image/png"
+ ],
+ "quickstartCoreFiles": "[{\"id\":\"3a58e97c-3034-4a26-a652-92ce58d1fdb7\",\"sessionId\":\"bd3b9eba-2d91-4855-89d7-520f767ca44d\",\"name\":\"vc-warm-open.bin\",\"sizeBytes\":779,\"destination\":\"video\",\"status\":\"failed\",\"copiedBytes\":0,\"canRetry\":false,\"error\":\"I work with video, images, audio, scripts, vector art, and archives — .bin file",
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "attachment:pasteImage",
+  "attachment:preview",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "materials:preview",
+  "quickstart:catalog",
+  "quickstart:impression",
+  "quickstart:mark",
+  "quickstart:previewed",
+  "quickstart:start",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:retry",
+  "session:send",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T11:39:11.105Z"
+}

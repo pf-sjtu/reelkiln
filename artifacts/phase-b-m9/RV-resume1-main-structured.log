@@ -1,0 +1,11 @@
+{"ts":"2026-10-21T11:36:23.864Z","level":"info","event":"llm.runtime.ready","component":"llm-runtime","route":"minimax","providers":["minimax"],"watching":null}
+{"ts":"2026-10-21T11:36:24.361Z","level":"info","event":"agent.history.replayed","component":"agent-host","sessionId":"199f47c2-fe51-4794-baa0-434c37e87d4b","sdkMessages":97,"displayRows":6,"events":81}
+{"ts":"2026-10-21T11:36:26.159Z","level":"info","event":"agent.session.created","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","llmRoute":"minimax","engine":true,"continued":false,"quickstart":false}
+{"ts":"2026-10-21T11:36:27.083Z","level":"info","event":"agent.job.bound","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","jobId":"4729-20261021-1cf66a","via":"first-message"}
+{"ts":"2026-10-21T11:36:27.195Z","level":"info","event":"agent_proxy.started","component":"agent-gate-proxy","provider":"minimax","port":42595,"maxConcurrency":1}
+{"ts":"2026-10-21T11:36:27.211Z","level":"info","event":"agent.runtime.started","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","llmRoute":"minimax","model":"MiniMax-M3.1-Flash","gateProxy":true,"engine":true,"boundJob":"4729-20261021-1cf66a","lawsVersion":"1.20.0","appendBytes":79120}
+{"ts":"2026-10-21T11:36:27.212Z","level":"info","event":"agent.turn.delivered","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","resumed":false,"sdkSessionId":null}
+{"ts":"2026-10-21T11:36:27.212Z","level":"info","event":"agent.title.request","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","llmRoute":"minimax"}
+{"ts":"2026-10-21T11:36:32.183Z","level":"info","event":"agent.title.automatic","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","chars":6}
+{"ts":"2026-10-21T11:36:35.399Z","level":"info","event":"agent.history.replayed","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","sdkMessages":2,"displayRows":1,"events":2}
+{"ts":"2026-10-21T11:36:37.810Z","level":"info","event":"agent.runtime.closed","component":"agent-host","sessionId":"1cf66a56-fbf7-4361-ba37-bda653c327c3","reason":"dispose","gateProxy":{"requests":1,"rejected":0,"maxInflight":1,"inflight":0,"structuredEmulated":0,"structuredJsonOk":0}}

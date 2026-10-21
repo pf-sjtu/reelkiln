@@ -1,0 +1,53 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  },
+  {
+   "clientId": "s1-ui-e2e",
+   "name": "M8 项目 0133"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "f1abd955-7e1c-4c51-870f-f27756a5ab17",
+   "title": "New video",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "acceptEdits",
+   "totalCostUsd": 0,
+   "createdAt": 1792582643781,
+   "clientId": "s1-ui-e2e",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "sidebarOrder": 1
+  },
+  {
+   "sessionId": "199f47c2-fe51-4794-baa0-434c37e87d4b",
+   "title": "M8 重命名 19743",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792577560599,
+   "clientId": "s1-ui-e2e",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "manual",
+   "sdkSessionId": "ae09475f-473b-4220-89ee-15c987ac4e6a",
+   "finalizedAtMs": 1792577893287,
+   "interruptedAtMs": 1792577969637,
+   "interruptedFromStatus": "running",
+   "sidebarOrder": 0,
+   "continuation": {
+    "clientActionId": "0cb8ceb8-c534-4298-b040-22c6265dde30",
+    "sessionId": "d93f1ded-0f3c-59bf-97d5-604c31de78eb"
+   },
+   "priorJobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-199f47"
+  }
+ ],
+ "trashWorkspaces": [
+  "<RUN>/Videoclaw"
+ ]
+}

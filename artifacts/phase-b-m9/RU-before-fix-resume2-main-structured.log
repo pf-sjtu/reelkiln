@@ -1,0 +1,8 @@
+{"ts":"2026-10-21T11:33:00.450Z","level":"info","event":"llm.runtime.ready","component":"llm-runtime","route":"minimax","providers":["minimax"],"watching":null}
+{"ts":"2026-10-21T11:33:00.872Z","level":"info","event":"agent.history.replayed","component":"agent-host","sessionId":"e4d04641-ac43-4d1d-983c-21d5652fcd47","sdkMessages":2,"displayRows":1,"events":2}
+{"ts":"2026-10-21T11:33:03.882Z","level":"info","event":"agent_proxy.started","component":"agent-gate-proxy","provider":"minimax","port":35315,"maxConcurrency":1}
+{"ts":"2026-10-21T11:33:03.899Z","level":"info","event":"agent.runtime.started","component":"agent-host","sessionId":"e4d04641-ac43-4d1d-983c-21d5652fcd47","llmRoute":"minimax","model":"MiniMax-M3.1-Flash","gateProxy":true,"engine":true,"boundJob":"4729-20261021-e4d046","lawsVersion":"1.20.0","appendBytes":79120}
+{"ts":"2026-10-21T11:33:03.899Z","level":"info","event":"agent.turn.delivered","component":"agent-host","sessionId":"e4d04641-ac43-4d1d-983c-21d5652fcd47","resumed":true,"sdkSessionId":"23967f7e-2bde-4d9a-a483-89d92570d666"}
+{"ts":"2026-10-21T11:33:03.916Z","level":"info","event":"agent.history.replayed","component":"agent-host","sessionId":"e4d04641-ac43-4d1d-983c-21d5652fcd47","sdkMessages":2,"displayRows":2,"events":3}
+{"ts":"2026-10-21T11:33:47.351Z","level":"info","event":"agent.history.replayed","component":"agent-host","sessionId":"e4d04641-ac43-4d1d-983c-21d5652fcd47","sdkMessages":5,"displayRows":2,"events":4}
+{"ts":"2026-10-21T11:33:49.540Z","level":"info","event":"agent.runtime.closed","component":"agent-host","sessionId":"e4d04641-ac43-4d1d-983c-21d5652fcd47","reason":"dispose","gateProxy":{"requests":1,"rejected":0,"maxInflight":1,"inflight":0,"structuredEmulated":0,"structuredJsonOk":0}}

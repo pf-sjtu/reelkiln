@@ -1,0 +1,254 @@
+{"t":701,"cdp":"Page.enable","params":{}}
+{"t":963,"cdp":"Runtime.enable","params":{}}
+{"t":2334,"note":"landing restored"}
+{"t":2455,"note":"hyperframes fixture true"}
+{"t":2459,"action":"click","desc":"open video M8 重命名 19743","selector":"button.session","at":{"x":132,"y":310},"element":{"x":21,"y":294,"width":221,"height":31,"label":"M8 重命名 19743"}}
+{"t":2459,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":310}}
+{"t":2466,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":2469,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":4101,"note":"STEP materials_preview: PASS {\"calls\":4,\"okCalls\":4,\"sample\":\"{\\\"entry\\\":{\\\"id\\\":\\\"0bc73ddc-53ae-4b7d-bbf8-d21925568714\\\",\\\"name\\\":\\\"clip_a.mp4\\\",\\\"kind\\\":\\\"video\\\",\\\"origin\\\":\\\"upload\\\",\\\"destination\\\":\\\"video\\\",\\\"addedAtMs\\\":1792577560989,\\\"stat\"}"}
+{"t":4104,"action":"click","desc":"Set production budget","selector":"button.vs-budget-set","at":{"x":685,"y":71},"element":{"x":604.46875,"y":56,"width":161.546875,"height":30,"label":"Set production budget"}}
+{"t":4104,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":685,"y":71}}
+{"t":4108,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":685,"y":71,"button":"left","clickCount":1}}
+{"t":4110,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":685,"y":71,"button":"left","clickCount":1}}
+{"t":4123,"action":"click","desc":"budget input","selector":"input[aria-label='Total video budget in dollars']","at":{"x":658,"y":138},"element":{"x":586.290283203125,"y":130.04624938964844,"width":144.3509521484375,"height":15.67999267578125,"label":"Total video budget in dollars"}}
+{"t":4123,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":658,"y":138}}
+{"t":4131,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":658,"y":138,"button":"left","clickCount":1}}
+{"t":4132,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":658,"y":138,"button":"left","clickCount":1}}
+{"t":4133,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":4134,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":4135,"cdp":"Input.insertText","params":{"text":"4.5"}}
+{"t":4243,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":4248,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":5133,"note":"STEP spend_set_ceiling: PASS {\"opened\":\"Set production budget\",\"get\":1,\"set\":[\"{\\\"snapshot\\\":{\\\"policy\\\":\\\"capped\\\",\\\"ceilingUsd\\\":4.5,\\\"spentUsd\\\":0,\\\"reservedUsd\\\":0,\\\"remainingUsd\\\":4.5,\\\"unknownSpend\\\":false}}\"],\"stripShows45\":true,\"diskEntry\":{\"policy\":\"capped\",\"ceilingCents\":450}}"}
+{"t":5219,"action":"click","desc":"Fine-tune (HyperFrames)","selector":"button","at":{"x":1085,"y":448},"element":{"x":992.96875,"y":433.046875,"width":183.0625,"height":30,"label":"Fine-tune (HyperFrames)"}}
+{"t":5219,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1085,"y":448}}
+{"t":5222,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1085,"y":448,"button":"left","clickCount":1}}
+{"t":5225,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1085,"y":448,"button":"left","clickCount":1}}
+{"t":7170,"action":"click","desc":"edit textarea","selector":".hfe-textarea","at":{"x":602,"y":232},"element":{"x":457,"y":207.5,"width":290,"height":48,"label":"原始标题"}}
+{"t":7170,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":602,"y":232}}
+{"t":7172,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":602,"y":232,"button":"left","clickCount":1}}
+{"t":7185,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":602,"y":232,"button":"left","clickCount":1}}
+{"t":7188,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":7190,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":7192,"cdp":"Input.insertText","params":{"text":"M9 新标题"}}
+{"t":7197,"action":"click","desc":"Apply","selector":"button.hfe-btn.primary","at":{"x":602,"y":290},"element":{"x":457,"y":272.1875,"width":290,"height":35,"label":"Apply edit"}}
+{"t":7198,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":602,"y":290}}
+{"t":7229,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":602,"y":290,"button":"left","clickCount":1}}
+{"t":7232,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":602,"y":290,"button":"left","clickCount":1}}
+{"t":8561,"action":"click","desc":"Close editor","selector":"button.hfe-close","at":{"x":1157,"y":78},"element":{"x":1143,"y":63.5,"width":28,"height":28,"label":""}}
+{"t":8561,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1157,"y":78}}
+{"t":8564,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1157,"y":78,"button":"left","clickCount":1}}
+{"t":8567,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1157,"y":78,"button":"left","clickCount":1}}
+{"t":9375,"note":"STEP hf_preview_edit: PASS {\"available\":[\"{\\\"available\\\":false}\",\"{\\\"available\\\":true}\"],\"start\":[\"{\\\"requestId\\\":\\\"355f9907-39ab-47f1-848d-3e05c92b4dad\\\",\\\"accepted\\\":true,\\\"ready\\\":{\\\"requestId\\\":\\\"355f9907-39ab-47f1-848d-3e05c92b4dad\\\",\\\"jobId\\\":\\\"6-5-9-16-a-b-c-a-0-5-3-\"],\"edit\":[\"{\\\"requestId\\\":\\\"aa4f553a-e2b6-4e54-8262-e8aa9f46c79a\\\",\\\"jobId\\\":\\\"6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-199f47\\\",\\\"ok\\\":true,\\\"meta\\\":{\\\"compositionId\\\":\\\"m9-dem\"],\"stopSent\":1}"}
+{"t":9379,"action":"click","desc":"Report a problem","selector":"button[aria-label='Report a problem']","at":{"x":804,"y":768},"element":{"x":755.953125,"y":751,"width":97.046875,"height":34,"label":"Feedback"}}
+{"t":9379,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":804,"y":768}}
+{"t":9381,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":804,"y":768,"button":"left","clickCount":1}}
+{"t":9384,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":804,"y":768,"button":"left","clickCount":1}}
+{"t":10081,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":10085,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":10984,"note":"STEP feedback_capture: PASS {\"capture\":[\"{\\\"reportId\\\":\\\"cca3bf51-9d3d-4723-b554-c557b08b44b0\\\",\\\"screenshotPath\\\":null,\\\"canSend\\\":false,\\\"telemetryEnabled\\\":false,\\\"consentRequired\\\":true,\\\"blockedRoute\\\":true,\\\"contact\\\":\\\"\\\"}\"],\"discard\":1}"}
+{"t":10987,"action":"click","desc":"project actions","selector":"summary.client-new-chat","at":{"x":199,"y":278},"element":{"x":186,"y":265.5,"width":25,"height":25,"label":"Project actions for M8 项目 0133"}}
+{"t":10987,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":278}}
+{"t":11290,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":199,"y":278}}
+{"t":11293,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":199,"y":278,"button":"left","clickCount":1}}
+{"t":11295,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":199,"y":278,"button":"left","clickCount":1}}
+{"t":11300,"action":"click","desc":"Edit project","selector":"details.client-menu[open] .client-menu-options button","at":{"x":146,"y":338},"element":{"x":86,"y":323.5,"width":120,"height":28,"label":"Edit project"}}
+{"t":11300,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":146,"y":338}}
+{"t":11314,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":146,"y":338,"button":"left","clickCount":1}}
+{"t":11316,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":146,"y":338,"button":"left","clickCount":1}}
+{"t":11349,"action":"click","desc":"add a rule","selector":"dialog.project-dialog button.t-add","at":{"x":640,"y":521},"element":{"x":416,"y":503.609375,"width":448,"height":34,"label":"add a rule"}}
+{"t":11349,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":640,"y":521}}
+{"t":11365,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":640,"y":521,"button":"left","clickCount":1}}
+{"t":11366,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":640,"y":521,"button":"left","clickCount":1}}
+{"t":11370,"cdp":"Input.insertText","params":{"text":"M9：片头不要超过两秒"}}
+{"t":11374,"action":"click","desc":"Save rule","selector":"dialog.project-dialog button.t-save","at":{"x":457,"y":436},"element":{"x":429,"y":423.34375,"width":56.4375,"height":26,"label":"Save"}}
+{"t":11374,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":457,"y":436}}
+{"t":11381,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":457,"y":436,"button":"left","clickCount":1}}
+{"t":11384,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":457,"y":436,"button":"left","clickCount":1}}
+{"t":12280,"action":"click","desc":"close project dialog","selector":"dialog.project-dialog button.remove-cancel","at":{"x":775,"y":555},"element":{"x":739.84375,"y":539.5,"width":70.515625,"height":31,"label":"Cancel"}}
+{"t":12280,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":775,"y":555}}
+{"t":12282,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":775,"y":555,"button":"left","clickCount":1}}
+{"t":12283,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":775,"y":555,"button":"left","clickCount":1}}
+{"t":12795,"note":"STEP taste_commit: PASS {\"list\":2,\"commit\":[\"{\\\"committed\\\":true,\\\"filesUpdated\\\":1}\"],\"files\":[\"<RUN>/Videoclaw/taste/packs/s1-ui-e2e/README.md\"]}"}
+{"t":12798,"action":"click","desc":"Create project","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"label":"Create project"}}
+{"t":12798,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":12801,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":12804,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":12819,"cdp":"Input.insertText","params":{"text":"M9 拖拽 5490"}}
+{"t":12821,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":12823,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":13239,"action":"click","desc":"Set up project","selector":"button.walkthrough-primary","at":{"x":704,"y":718},"element":{"x":606.484375,"y":697.8125,"width":194.328125,"height":40,"label":"Set up M9 拖拽 5490"}}
+{"t":13239,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":704,"y":718}}
+{"t":13248,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":704,"y":718,"button":"left","clickCount":1}}
+{"t":13250,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":704,"y":718,"button":"left","clickCount":1}}
+{"t":13272,"action":"click","desc":"brief input","selector":".starter-input","at":{"x":766,"y":463},"element":{"x":506,"y":420.703125,"width":520,"height":84,"label":""}}
+{"t":13272,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":463}}
+{"t":13281,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":463,"button":"left","clickCount":1}}
+{"t":13282,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":463,"button":"left","clickCount":1}}
+{"t":13283,"cdp":"Input.insertText","params":{"text":"每周烹饪短视频——节奏快、温馨、不拖沓"}}
+{"t":13286,"action":"click","desc":"Continue","selector":"button.starter-primary","at":{"x":718,"y":542},"element":{"x":658.625,"y":522.703125,"width":119.203125,"height":39,"label":"Continue"}}
+{"t":13286,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":718,"y":542}}
+{"t":13298,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":718,"y":542,"button":"left","clickCount":1}}
+{"t":13299,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":718,"y":542,"button":"left","clickCount":1}}
+{"t":14184,"note":"STEP project_seed_pack: PASS {\"client\":{\"clientId\":\"m9-5490\"},\"seed\":\"{\\\"client\\\":{\\\"clientId\\\":\\\"m9-5490\\\",\\\"name\\\":\\\"M9 拖拽 5490\\\",\\\"tenant\\\":\\\"m9-5490\\\"},\\\"packPath\\\":\\\"<RUN>/Videoclaw/taste/packs/m9-5490/README.md\\\"}\",\"files\":[\"<RUN>/Videoclaw/taste/packs/m9-5490/README.md\"]}"}
+{"t":14187,"action":"click","desc":"Add yourself","selector":"button.starter-seed-btn","at":{"x":958,"y":526},"element":{"x":905.59375,"y":509.109375,"width":105.40625,"height":33,"label":"Add yourself"}}
+{"t":14187,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":958,"y":526}}
+{"t":14198,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":958,"y":526,"button":"left","clickCount":1}}
+{"t":14200,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":958,"y":526,"button":"left","clickCount":1}}
+{"t":15417,"action":"click","desc":"Add yourself (panel)","selector":"button.empty-cta","at":{"x":1081,"y":526},"element":{"x":957.5625,"y":508.734375,"width":245.875,"height":35,"label":"Add yourself from a few photos"}}
+{"t":15417,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1081,"y":526}}
+{"t":15419,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1081,"y":526,"button":"left","clickCount":1}}
+{"t":15421,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1081,"y":526,"button":"left","clickCount":1}}
+{"t":15425,"action":"click","desc":"name","selector":"input.char-name-in","at":{"x":1081,"y":330},"element":{"x":910,"y":311.171875,"width":341,"height":37,"label":""}}
+{"t":15425,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1081,"y":330}}
+{"t":15431,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1081,"y":330,"button":"left","clickCount":1}}
+{"t":15431,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1081,"y":330,"button":"left","clickCount":1}}
+{"t":15432,"cdp":"Input.insertText","params":{"text":"M9 测试角色"}}
+{"t":15437,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":1081,"y":451,"data":{"items":[],"files":["<RUN>/out-m9-local/m9-photo-1.png","<RUN>/out-m9-local/m9-photo-2.png","<RUN>/out-m9-local/m9-photo-3.png"],"dragOperationsMask":19}}}
+{"t":15439,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":1081,"y":451,"data":{"items":[],"files":["<RUN>/out-m9-local/m9-photo-1.png","<RUN>/out-m9-local/m9-photo-2.png","<RUN>/out-m9-local/m9-photo-3.png"],"dragOperationsMask":19}}}
+{"t":15440,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":1081,"y":451,"data":{"items":[],"files":["<RUN>/out-m9-local/m9-photo-1.png","<RUN>/out-m9-local/m9-photo-2.png","<RUN>/out-m9-local/m9-photo-3.png"],"dragOperationsMask":19}}}
+{"t":15556,"action":"click","desc":"Create","selector":"button.char-form-create","at":{"x":1193,"y":522},"element":{"x":1134.78125,"y":506.671875,"width":116.21875,"height":31,"label":"Add character"}}
+{"t":15556,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1193,"y":522}}
+{"t":15565,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1193,"y":522,"button":"left","clickCount":1}}
+{"t":15567,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1193,"y":522,"button":"left","clickCount":1}}
+{"t":17142,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1137,"y":337}}
+{"t":17147,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1137,"y":337,"button":"left","clickCount":1}}
+{"t":17149,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1137,"y":337,"button":"left","clickCount":1}}
+{"t":18307,"action":"click","desc":"close characters","selector":".characters-panel button.t-close","at":{"x":1249,"y":24},"element":{"x":1233,"y":14,"width":31,"height":19,"label":""}}
+{"t":18308,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1249,"y":24}}
+{"t":18310,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1249,"y":24,"button":"left","clickCount":1}}
+{"t":18312,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1249,"y":24,"button":"left","clickCount":1}}
+{"t":18716,"note":"STEP characters_create_delete: PASS {\"list\":5,\"create\":\"{\\\"slug\\\":\\\"m9\\\",\\\"name\\\":\\\"M9 测试角色\\\",\\\"createdAt\\\":1792582638270,\\\"approved\\\":false,\\\"isSelf\\\":true,\\\"outfits\\\":[],\\\"state\\\":\\\"pending\\\",\\\"dir\\\":\\\"<RUN>/Videoclaw/characters/pending/m9\\\",\\\"refs\\\":[\\\"<RUN>\",\"removed\":{\"ch\":\"characters:discard\",\"result\":\"true\"}}"}
+{"t":18721,"action":"click","desc":"New video in project","selector":"button.client-new-chat","at":{"x":227,"y":278},"element":{"x":214,"y":265.5,"width":25,"height":25,"label":"New video in M8 项目 0133"}}
+{"t":18721,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":278}}
+{"t":19023,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":278}}
+{"t":19027,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":278,"button":"left","clickCount":1}}
+{"t":19029,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":278,"button":"left","clickCount":1}}
+{"t":20141,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":20141,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":20148,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":20152,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":20153,"cdp":"Input.insertText","params":{"text":"M9 草稿 1"}}
+{"t":20762,"action":"click","desc":"New video in project","selector":"button.client-new-chat","at":{"x":227,"y":278},"element":{"x":214,"y":265.5,"width":25,"height":25,"label":"New video in M8 项目 0133"}}
+{"t":20762,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":278}}
+{"t":21065,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":278}}
+{"t":21082,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":278,"button":"left","clickCount":1}}
+{"t":21084,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":278,"button":"left","clickCount":1}}
+{"t":22194,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":22194,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":22197,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":22200,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":22201,"cdp":"Input.insertText","params":{"text":"M9 草稿 2"}}
+{"t":22886,"cdp":"Input.setInterceptDrags","params":{"enabled":true}}
+{"t":22887,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":374}}
+{"t":22898,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":374,"button":"left","buttons":1,"clickCount":1}}
+{"t":22900,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":369.1875,"button":"left","buttons":1}}
+{"t":22916,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":364.375,"button":"left","buttons":1}}
+{"t":22930,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":359.5625,"button":"left","buttons":1}}
+{"t":22948,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":354.75,"button":"left","buttons":1}}
+{"t":22963,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":349.9375,"button":"left","buttons":1}}
+{"t":22981,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":345.125,"button":"left","buttons":1}}
+{"t":22997,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":340.3125,"button":"left","buttons":1}}
+{"t":23014,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":335.5,"button":"left","buttons":1}}
+{"t":23030,"cdp":"Input.setInterceptDrags","params":{"enabled":false}}
+{"t":23031,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":132,"y":297,"data":{"items":[{"mimeType":"application/x-videoclaw-video","data":"{\"sessionId\":\"199f47c2-fe51-4794-baa0-434c37e87d4b\",\"clientId\":\"s1-ui-e2e\"}"}],"dragOperationsMask":16}}}
+{"t":23032,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":132,"y":297,"data":{"items":[{"mimeType":"application/x-videoclaw-video","data":"{\"sessionId\":\"199f47c2-fe51-4794-baa0-434c37e87d4b\",\"clientId\":\"s1-ui-e2e\"}"}],"dragOperationsMask":16}}}
+{"t":23033,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":132,"y":297,"data":{"items":[{"mimeType":"application/x-videoclaw-video","data":"{\"sessionId\":\"199f47c2-fe51-4794-baa0-434c37e87d4b\",\"clientId\":\"s1-ui-e2e\"}"}],"dragOperationsMask":16}}}
+{"t":23037,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":297,"button":"left","buttons":0,"clickCount":1}}
+{"t":24318,"note":"STEP session_reorder_drag: PASS {\"mime\":[\"application/x-videoclaw-video\"],\"rowsBefore\":[\"Draft\",\"Draft\",\"M8 重命名 19743\"],\"rowsAfter\":[\"M8 重命名 19743\",\"Draft\",\"Draft\"],\"disk\":[{\"id\":\"f1abd955\",\"sidebarOrder\":1},{\"id\":\"e461a35c\",\"sidebarOrder\":2},{\"id\":\"199f47c2\",\"sidebarOrder\":0}]}"}
+{"t":24320,"cdp":"Input.setInterceptDrags","params":{"enabled":true}}
+{"t":24320,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":412}}
+{"t":24331,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":95,"y":412,"button":"left","buttons":1,"clickCount":1}}
+{"t":24333,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":402.875,"button":"left","buttons":1}}
+{"t":24348,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":393.75,"button":"left","buttons":1}}
+{"t":24363,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":384.625,"button":"left","buttons":1}}
+{"t":24381,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":375.5,"button":"left","buttons":1}}
+{"t":24397,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":366.375,"button":"left","buttons":1}}
+{"t":24414,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":357.25,"button":"left","buttons":1}}
+{"t":24431,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":348.125,"button":"left","buttons":1}}
+{"t":24449,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":339,"button":"left","buttons":1}}
+{"t":24464,"cdp":"Input.setInterceptDrags","params":{"enabled":false}}
+{"t":24464,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":95,"y":266,"data":{"items":[{"mimeType":"application/x-videoclaw-project","data":"m9-5490"}],"dragOperationsMask":16}}}
+{"t":24465,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":95,"y":266,"data":{"items":[{"mimeType":"application/x-videoclaw-project","data":"m9-5490"}],"dragOperationsMask":16}}}
+{"t":24466,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":95,"y":266,"data":{"items":[{"mimeType":"application/x-videoclaw-project","data":"m9-5490"}],"dragOperationsMask":16}}}
+{"t":24471,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":95,"y":266,"button":"left","buttons":0,"clickCount":1}}
+{"t":25559,"note":"STEP client_reorder_drag: PASS {\"mime\":[\"application/x-videoclaw-project\"],\"before\":[\"Personal\",\"M8 项目 0133\",\"M9 拖拽 5490\"],\"after\":[\"Personal\",\"M9 拖拽 5490\",\"M8 项目 0133\"]}"}
+{"t":25560,"action":"click","desc":"draft video row","selector":"button.session","at":{"x":132,"y":381},"element":{"x":21,"y":365,"width":221,"height":31,"label":"Draft"}}
+{"t":25561,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":381}}
+{"t":25565,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":381,"button":"left","clickCount":1}}
+{"t":25567,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":381,"button":"left","clickCount":1}}
+{"t":26573,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":429,"y":768}}
+{"t":26581,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":429,"y":768,"button":"left","clickCount":1}}
+{"t":26592,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":429,"y":768,"button":"left","clickCount":1}}
+{"t":26994,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"ArrowUp","code":"ArrowUp","windowsVirtualKeyCode":38,"nativeVirtualKeyCode":38,"modifiers":0}}
+{"t":26997,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"ArrowUp","code":"ArrowUp","windowsVirtualKeyCode":38,"nativeVirtualKeyCode":38,"modifiers":0}}
+{"t":26998,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":27001,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":27884,"note":"STEP set_permission_mode: PASS {\"shownBefore\":\"auto\",\"requested\":\"acceptEdits\",\"disk\":\"acceptEdits\",\"shown\":\"acceptEdits\",\"draftSession\":1}"}
+{"t":27886,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":413}}
+{"t":28198,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":226,"y":413}}
+{"t":28214,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":226,"y":413,"button":"left","clickCount":1}}
+{"t":28217,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":226,"y":413,"button":"left","clickCount":1}}
+{"t":28623,"action":"click","desc":"Delete video…","selector":".row-menu .row-menu-item.danger","at":{"x":312,"y":464},"element":{"x":232,"y":449,"width":160,"height":29,"label":"Delete video…"}}
+{"t":28623,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":312,"y":464}}
+{"t":28631,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":312,"y":464,"button":"left","clickCount":1}}
+{"t":28633,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":312,"y":464,"button":"left","clickCount":1}}
+{"t":29020,"action":"click","desc":"Delete","selector":".remove-dialog button.remove-confirm","at":{"x":774,"y":439},"element":{"x":738.375,"y":424.0703125,"width":70.625,"height":29,"label":"Delete"}}
+{"t":29020,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":774,"y":439}}
+{"t":29032,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":774,"y":439,"button":"left","clickCount":1}}
+{"t":29033,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":774,"y":439,"button":"left","clickCount":1}}
+{"t":29717,"note":"STEP session_delete: PASS {\"plan\":[\"{\\\"sessionId\\\":\\\"e461a35c-00a2-4b6a-bed9-3a8ca8926206\\\",\\\"title\\\":\\\"New video\\\",\\\"items\\\":[],\\\"totalBytes\\\":0,\\\"exact\\\":true}\"],\"del\":\"{\\\"ok\\\":true,\\\"trashedBytes\\\":0,\\\"retentionDays\\\":7}\",\"draftSession\":0}"}
+{"t":29721,"action":"click","desc":"project actions","selector":"summary.client-new-chat","at":{"x":199,"y":278},"element":{"x":186,"y":265.5,"width":25,"height":25,"label":"Project actions for M9 拖拽 5490"}}
+{"t":29721,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":278}}
+{"t":30033,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":199,"y":278}}
+{"t":30049,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":199,"y":278,"button":"left","clickCount":1}}
+{"t":30050,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":199,"y":278,"button":"left","clickCount":1}}
+{"t":30053,"action":"click","desc":"Delete project","selector":"details.client-menu[open] .client-menu-options button.client-menu-danger","at":{"x":146,"y":366},"element":{"x":86,"y":351.5,"width":120,"height":28,"label":"Delete project"}}
+{"t":30053,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":146,"y":366}}
+{"t":30065,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":146,"y":366,"button":"left","clickCount":1}}
+{"t":30066,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":146,"y":366,"button":"left","clickCount":1}}
+{"t":30087,"action":"click","desc":"Remove","selector":"dialog.project-dialog button.remove-confirm","at":{"x":839,"y":465},"element":{"x":798.984375,"y":450.140625,"width":80.015625,"height":29,"label":"Remove"}}
+{"t":30087,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":839,"y":465}}
+{"t":30097,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":839,"y":465,"button":"left","clickCount":1}}
+{"t":30099,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":839,"y":465,"button":"left","clickCount":1}}
+{"t":30660,"note":"STEP client_remove: PASS {\"remove\":[\"[{\\\"clientId\\\":\\\"personal\\\",\\\"name\\\":\\\"Personal\\\"},{\\\"clientId\\\":\\\"s1-ui-e2e\\\",\\\"name\\\":\\\"M8 项目 0133\\\"}]\"]}"}
+{"t":30662,"action":"click","desc":"Quickstarts","selector":"button.quickstart-entry","at":{"x":126,"y":119},"element":{"x":9,"y":103,"width":233,"height":31,"label":"Quickstarts"}}
+{"t":30662,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":119}}
+{"t":30665,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":30666,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":31496,"action":"click","desc":"category filter","selector":".qs-filters button","at":{"x":374,"y":82},"element":{"x":327.890625,"y":70,"width":92.765625,"height":24,"label":"Founder Story"}}
+{"t":31496,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":374,"y":82}}
+{"t":31499,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":374,"y":82,"button":"left","clickCount":1}}
+{"t":31501,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":374,"y":82,"button":"left","clickCount":1}}
+{"t":32307,"action":"click","desc":"open a starter","selector":".qs-card .qs-view, .qs-card button, .qs-card","at":{"x":521,"y":319},"element":{"x":286,"y":112,"width":470,"height":414.75,"label":"Founder camera story\n\nTurn a founder's real point of view into a direct-to-camer"}}
+{"t":32307,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":521,"y":319}}
+{"t":32309,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":521,"y":319,"button":"left","clickCount":1}}
+{"t":32311,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":521,"y":319,"button":"left","clickCount":1}}
+{"t":33641,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":33644,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":34248,"note":"STEP quickstart_gallery_beacons: PASS {\"impression\":[],\"previewed\":1,\"mark\":[\"[\\\"category_switch\\\",28.600000008940697,\\\"ea1f6f15-687c-4245-a8e3-2727107f5d84\\\"]\"],\"filters\":[\"All\",\"Founder Story\"]}"}
+{"t":34251,"action":"click","desc":"open video M8 重命名 19743","selector":"button.session","at":{"x":132,"y":310},"element":{"x":21,"y":294,"width":221,"height":31,"label":"M8 重命名 19743"}}
+{"t":34251,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":310}}
+{"t":34254,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":34256,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":35812,"action":"click","desc":"Start New Video","selector":".chat-closed-actions button.primary","at":{"x":440,"y":717},"element":{"x":386.875,"y":702,"width":107.21875,"height":29,"label":"Start New Video"}}
+{"t":35812,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":440,"y":717}}
+{"t":35815,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":440,"y":717,"button":"left","clickCount":1}}
+{"t":35817,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":440,"y":717,"button":"left","clickCount":1}}
+{"t":37449,"note":"STEP start_continuation: PASS {\"next\":{\"sessionId\":\"d93f1ded-0f3c-59bf-97d5-604c31de78eb\",\"title\":\"M8 重命名 19743 · continued\",\"jobId\":true},\"source\":{\"jobId\":null,\"priorJobId\":true,\"continuation\":{\"clientActionId\":\"0cb8ceb8-c534-4298-b040-22c6265dde30\",\"sessionId\":\"d93f1ded-0f3c-59bf-97d5-604c31de78eb\"}},\"titleInSidebar\":true}"}
+{"t":37451,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":310}}
+{"t":37768,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":226,"y":310}}
+{"t":37782,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":226,"y":310,"button":"left","clickCount":1}}
+{"t":37785,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":226,"y":310,"button":"left","clickCount":1}}
+{"t":38195,"action":"click","desc":"Delete video…","selector":".row-menu .row-menu-item.danger","at":{"x":312,"y":361},"element":{"x":232,"y":346,"width":160,"height":29,"label":"Delete video…"}}
+{"t":38195,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":312,"y":361}}
+{"t":38197,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":312,"y":361,"button":"left","clickCount":1}}
+{"t":38199,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":312,"y":361,"button":"left","clickCount":1}}
+{"t":39020,"action":"click","desc":"Delete","selector":".remove-dialog button.remove-confirm","at":{"x":774,"y":473},"element":{"x":738.375,"y":458.140625,"width":70.625,"height":29,"label":"Delete"}}
+{"t":39020,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":774,"y":473}}
+{"t":39032,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":774,"y":473,"button":"left","clickCount":1}}
+{"t":39034,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":774,"y":473,"button":"left","clickCount":1}}
+{"t":40197,"note":"STEP session_delete_with_job: PASS {\"planText\":\"The chat and this video’s own files go to the trash for 7 days, then are removed\",\"del\":\"{\\\"ok\\\":true,\\\"trashedBytes\\\":77548751,\\\"retentionDays\\\":7}\",\"jobDirGone\":true,\"trashEntries\":1,\"trashWorkspaces\":[\"<RUN>/Videoclaw\"]}"}
+{"t":40273,"note":"app exited 0"}
+{"t":40514,"note":"DONE allPass=true steps=materials_preview:ok spend_set_ceiling:ok hf_preview_edit:ok feedback_capture:ok taste_commit:ok project_seed_pack:ok characters_create_delete:ok session_reorder_drag:ok client_reorder_drag:ok set_permission_mode:ok session_delete:ok client_remove:ok quickstart_gallery_beacons:ok start_continuation:ok session_delete_with_job:ok"}

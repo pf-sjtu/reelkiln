@@ -1,0 +1,83 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  },
+  {
+   "clientId": "s1-ui-e2e",
+   "name": "M8 项目 0133"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "bd3b9eba-2d91-4855-89d7-520f767ca44d",
+   "title": "Founder camera story",
+   "titleOrigin": "manual",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "error",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792582729104,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "quickstart": {
+    "schema": "videoclaw.quickstart-session/v1",
+    "catalogGeneration": "local-ab227565c177046e",
+    "catalogSha256": "ab227565c177046e0889bdcf6d88f79a42ca07edfe9e4b59abda1663d10661fb",
+    "starterId": "starter.founder-camera-story",
+    "starterVersion": "0.1.0",
+    "promptSha256": "c13b050fb54fc206c827f0bc554384fb66de17c31fb01f4e72f5fd104eed2855",
+    "coreReferenceIds": [
+     "vc-warm-open",
+     "vc-proof-cutaway"
+    ],
+    "advisoryWorkflowIds": [
+     "workflow.consented-creator-clone",
+     "workflow.founder-product-launch-film",
+     "workflow.safe-social-delivery"
+    ],
+    "entryPoint": "quickstart-gallery",
+    "journeyId": "4e9269bf-ebbd-4c01-a91e-22415394f1a7",
+    "activationId": "6b15a2e8-46bc-4fa9-bd79-da37f199ec48",
+    "startedAt": 1792582729104
+   }
+  },
+  {
+   "sessionId": "86e7ff16-b457-42cd-a918-fde58a0e65b9",
+   "title": "图片查看确认",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792582625487,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "automatic",
+   "jobId": "video-20261021-86e7ff",
+   "sdkSessionId": "95835917-7065-4bac-a5c8-e78803024608",
+   "contextEpoch": "64b592cc-5884-4a73-a190-00d520067f41"
+  },
+  {
+   "sessionId": "199f47c2-fe51-4794-baa0-434c37e87d4b",
+   "title": "M8 重命名 19743",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792577560599,
+   "clientId": "s1-ui-e2e",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "manual",
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-199f47",
+   "sdkSessionId": "ae09475f-473b-4220-89ee-15c987ac4e6a",
+   "finalizedAtMs": 1792577893287,
+   "interruptedAtMs": 1792577969637,
+   "interruptedFromStatus": "running"
+  }
+ ],
+ "trashWorkspaces": []
+}

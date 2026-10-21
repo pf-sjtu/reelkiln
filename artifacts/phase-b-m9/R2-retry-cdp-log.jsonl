@@ -1,0 +1,39 @@
+{"t":650,"cdp":"Page.enable","params":{}}
+{"t":738,"cdp":"Runtime.enable","params":{}}
+{"t":2372,"note":"landing restored"}
+{"t":2473,"action":"click","desc":"New video in Personal","selector":"button.client-new-chat","at":{"x":227,"y":241},"element":{"x":214,"y":228,"width":25,"height":25,"label":"New video in Personal"}}
+{"t":2474,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":241}}
+{"t":2783,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":241}}
+{"t":2785,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":2788,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":3909,"note":"X clipboard targets [\"TARGETS\",\"image/png\"]"}
+{"t":3912,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":3912,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":3917,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":3919,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":3920,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"v","code":"KeyV","windowsVirtualKeyCode":86,"nativeVirtualKeyCode":86,"modifiers":2}}
+{"t":3928,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"v","code":"KeyV","windowsVirtualKeyCode":86,"nativeVirtualKeyCode":86,"modifiers":2}}
+{"t":5517,"cdp":"Input.insertText","params":{"text":"看一下这张图，只回复“收到”两个字，不要调用任何工具。"}}
+{"t":5522,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":5523,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":6751,"note":"STEP paste_image_send: PASS {\"paste\":\"[{\\\"id\\\":\\\"701f1922-317f-4a51-9ec5-a3c8cb4c9dbc\\\",\\\"sessionId\\\":\\\"86e7ff16-b457-42cd-a918-fde58a0e65b9\\\",\\\"name\\\":\\\"Pasted image 0c0471.png\\\",\\\"sizeBytes\\\":283,\\\"destination\\\":\\\"video\\\",\\\"status\\\":\\\"uploading\\\",\\\"copiedByte\",\"materialPreview\":\"{\\\"entry\\\":{\\\"id\\\":\\\"701f1922-317f-4a51-9ec5-a3c8cb4c9dbc\\\",\\\"name\\\":\\\"Pasted image 0c0471.png\\\",\\\"kind\\\":\\\"image\\\",\\\"origin\\\":\\\"paste\\\",\\\"destination\\\":\\\"video\\\",\\\"addedAtMs\\\":1792582626646,\\\"state\\\":\\\"present\\\",\\\"sizeBytes\\\":283\",\"materialsChanged\":3}"}
+{"t":11928,"action":"click","desc":"Retry","selector":"button.failure-retry","at":{"x":352,"y":340},"element":{"x":316,"y":326.609375,"width":72.4375,"height":26,"label":"Retry"}}
+{"t":11929,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":352,"y":340}}
+{"t":11931,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":352,"y":340,"button":"left","clickCount":1}}
+{"t":11932,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":352,"y":340,"button":"left","clickCount":1}}
+{"t":14113,"note":"STEP session_retry: PASS {\"errCard\":\"Retry\",\"retry\":[\"true\"],\"deliveredBefore\":1,\"deliveredAfter\":2,\"retriedLog\":[\"{\\\"ts\\\":\\\"2026-10-21T11:37:14.629Z\\\",\\\"level\\\":\\\"info\\\",\\\"event\\\":\\\"agent.turn.retried\\\",\\\"component\\\":\\\"agent-host\\\",\\\"sessionId\\\":\\\"86e7ff16-b457-42cd-a918-fde58a0e65b9\\\",\\\"jobId\\\":\\\"video-20261021-86e7ff\\\",\\\"sdkSessionId\\\":\\\"95835917-7065-4bac-a5c8-e78803024608\\\",\\\"resent\\\":1}\"]}"}
+{"t":104222,"action":"click","desc":"Quickstarts","selector":"button.quickstart-entry","at":{"x":126,"y":119},"element":{"x":9,"y":103,"width":233,"height":31,"label":"Quickstarts"}}
+{"t":104222,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":119}}
+{"t":104227,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":104229,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":105069,"action":"click","desc":"open a starter","selector":".qs-card .qs-view, .qs-card button, .qs-card","at":{"x":521,"y":319},"element":{"x":286,"y":112,"width":470,"height":414.75,"label":"Founder camera story\n\nTurn a founder's real point of view into a direct-to-camer"}}
+{"t":105069,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":521,"y":319}}
+{"t":105072,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":521,"y":319,"button":"left","clickCount":1}}
+{"t":105074,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":521,"y":319,"button":"left","clickCount":1}}
+{"t":106403,"action":"click","desc":"Try this template","selector":"button.qs-modal-try","at":{"x":1091,"y":746},"element":{"x":931,"y":708,"width":319,"height":76,"label":"Try this template"}}
+{"t":106404,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1091,"y":746}}
+{"t":106406,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1091,"y":746,"button":"left","clickCount":1}}
+{"t":106407,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1091,"y":746,"button":"left","clickCount":1}}
+{"t":128407,"note":"STEP quickstart_start: PASS {\"start\":[\"{\\\"session\\\":{\\\"sessionId\\\":\\\"bd3b9eba-2d91-4855-89d7-520f767ca44d\\\",\\\"title\\\":\\\"Founder camera story\\\",\\\"titleOrigin\\\":\\\"manual\\\",\\\"cwd\\\":\\\"<RUN>/Videoclaw\\\",\\\"status\\\":\\\"idle\\\",\\\"permissionMode\\\":\\\"auto\\\",\\\"totalC\"],\"meta\":{\"title\":\"Founder camera story\",\"starterId\":\"starter.founder-camera-story\",\"firstTurnSubmitted\":false,\"coreFileStates\":[\"vc-warm-open.bin:failed\"],\"status\":\"error\"},\"mark\":[\"[\\\"destination_ready\\\",66.5,\\\"4e9269bf-ebbd-4c01-a91e-22415394f\"]}"}
+{"t":128493,"note":"app exited 0"}
+{"t":128735,"note":"DONE allPass=true steps=paste_image_send:ok session_retry:ok quickstart_start:ok"}

@@ -1,0 +1,49 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  },
+  {
+   "clientId": "s1-ui-e2e",
+   "name": "M8 项目 0133"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "1cf66a56-fbf7-4361-ba37-bda653c327c3",
+   "title": "蓝色松鼠项目",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792582586158,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "automatic",
+   "jobId": "4729-20261021-1cf66a",
+   "sdkSessionId": "43622a60-ff91-4f4b-a4cd-5635f98f1cc9",
+   "contextEpoch": "d0b86804-6325-4679-8b8b-612d655af77d"
+  },
+  {
+   "sessionId": "199f47c2-fe51-4794-baa0-434c37e87d4b",
+   "title": "M8 重命名 19743",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792577560599,
+   "clientId": "s1-ui-e2e",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "manual",
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-199f47",
+   "sdkSessionId": "ae09475f-473b-4220-89ee-15c987ac4e6a",
+   "finalizedAtMs": 1792577893287,
+   "interruptedAtMs": 1792577969637,
+   "interruptedFromStatus": "running"
+  }
+ ],
+ "trashWorkspaces": []
+}

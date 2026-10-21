@@ -1,0 +1,97 @@
+{
+ "phase": "resume2",
+ "started": "2026-10-21T11:33:00.581Z",
+ "steps": {
+  "resume_turn2": {
+   "ok": true,
+   "before": {
+    "sdkSessionId": "23967f7e-2bde-4d9a-a483-89d92570d666",
+    "transcriptFiles": [
+     "ae09475f-473b-4220-89ee-15c987ac4e6a.jsonl",
+     "23967f7e-2bde-4d9a-a483-89d92570d666.jsonl"
+    ]
+   },
+   "after": {
+    "status": "idle",
+    "sdkSessionId": "23967f7e-2bde-4d9a-a483-89d92570d666",
+    "transcriptFiles": [
+     "ae09475f-473b-4220-89ee-15c987ac4e6a.jsonl",
+     "23967f7e-2bde-4d9a-a483-89d92570d666.jsonl"
+    ]
+   },
+   "answer": "蓝色松鼠-4729",
+   "answerInDomAfterAsk": true,
+   "resumedRow": true,
+   "noFreshSession": true,
+   "priorTurnInSameTranscript": true,
+   "turn2PromptHasCode": false,
+   "staleDropped": 0,
+   "delivered": [
+    "{\"ts\":\"2026-10-21T11:33:03.899Z\",\"level\":\"info\",\"event\":\"agent.turn.delivered\",\"component\":\"agent-host\",\"sessionId\":\"e4d04641-ac43-4d1d-983c-21d5652fcd47\",\"resumed\":true,\"sdkSessionId\":\"23967f7e-2bde-4d9a-a483-89d92570d666\"}"
+   ]
+  }
+ },
+ "landing": "restored",
+ "sessionId": "e4d04641-ac43-4d1d-983c-21d5652fcd47",
+ "before": {
+  "sdkSessionId": "23967f7e-2bde-4d9a-a483-89d92570d666",
+  "transcriptFiles": [
+   "ae09475f-473b-4220-89ee-15c987ac4e6a.jsonl",
+   "23967f7e-2bde-4d9a-a483-89d92570d666.jsonl"
+  ]
+ },
+ "result": {
+  "kind": "result",
+  "isError": false,
+  "totalCostUsd": 0,
+  "numTurns": 1,
+  "durationMs": 43083
+ },
+ "after": {
+  "status": "idle",
+  "sdkSessionId": "23967f7e-2bde-4d9a-a483-89d92570d666",
+  "transcriptFiles": [
+   "ae09475f-473b-4220-89ee-15c987ac4e6a.jsonl",
+   "23967f7e-2bde-4d9a-a483-89d92570d666.jsonl"
+  ]
+ },
+ "delivered": [
+  "{\"ts\":\"2026-10-21T11:33:03.899Z\",\"level\":\"info\",\"event\":\"agent.turn.delivered\",\"component\":\"agent-host\",\"sessionId\":\"e4d04641-ac43-4d1d-983c-21d5652fcd47\",\"resumed\":true,\"sdkSessionId\":\"23967f7e-2bde-4d9a-a483-89d92570d666\"}"
+ ],
+ "sdkTranscript": {
+  "file": "23967f7e-2bde-4d9a-a483-89d92570d666.jsonl",
+  "rows": 32,
+  "userTextTurns": [
+   " for this id before planning or paid work.\n\n请记住这个暗号：蓝色松鼠-4729。现在只回复“好的”，不要调用任何工具，也不要写任何文件。",
+   "production for this id before planning or paid work.\n\n我在上一条消息里让你记住的暗号是什么？只回复暗号本身，不要调用任何工具。"
+  ],
+  "sessionIdsInRows": [
+   "23967f7e-2bde-4d9a-a483-89d92570d666"
+  ]
+ },
+ "answer": "蓝色松鼠-4729",
+ "staleDropped": 0,
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "interaction:replayPending",
+  "job:get",
+  "session:history",
+  "session:list",
+  "session:send",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T11:33:49.528Z"
+}

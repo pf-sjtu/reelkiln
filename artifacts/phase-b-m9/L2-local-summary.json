@@ -1,0 +1,236 @@
+{
+ "phase": "local",
+ "started": "2026-10-21T11:37:03.702Z",
+ "steps": {
+  "materials_preview": {
+   "ok": true,
+   "calls": 4,
+   "okCalls": 4,
+   "sample": "{\"entry\":{\"id\":\"0bc73ddc-53ae-4b7d-bbf8-d21925568714\",\"name\":\"clip_a.mp4\",\"kind\":\"video\",\"origin\":\"upload\",\"destination\":\"video\",\"addedAtMs\":1792577560989,\"stat"
+  },
+  "spend_set_ceiling": {
+   "ok": true,
+   "opened": "Set production budget",
+   "get": 1,
+   "set": [
+    "{\"snapshot\":{\"policy\":\"capped\",\"ceilingUsd\":4.5,\"spentUsd\":0,\"reservedUsd\":0,\"remainingUsd\":4.5,\"unknownSpend\":false}}"
+   ],
+   "stripShows45": true,
+   "diskEntry": {
+    "policy": "capped",
+    "ceilingCents": 450
+   }
+  },
+  "hf_preview_edit": {
+   "ok": true,
+   "available": [
+    "{\"available\":false}",
+    "{\"available\":true}"
+   ],
+   "start": [
+    "{\"requestId\":\"355f9907-39ab-47f1-848d-3e05c92b4dad\",\"accepted\":true,\"ready\":{\"requestId\":\"355f9907-39ab-47f1-848d-3e05c92b4dad\",\"jobId\":\"6-5-9-16-a-b-c-a-0-5-3-"
+   ],
+   "edit": [
+    "{\"requestId\":\"aa4f553a-e2b6-4e54-8262-e8aa9f46c79a\",\"jobId\":\"6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-199f47\",\"ok\":true,\"meta\":{\"compositionId\":\"m9-dem"
+   ],
+   "stopSent": 1
+  },
+  "feedback_capture": {
+   "ok": true,
+   "capture": [
+    "{\"reportId\":\"cca3bf51-9d3d-4723-b554-c557b08b44b0\",\"screenshotPath\":null,\"canSend\":false,\"telemetryEnabled\":false,\"consentRequired\":true,\"blockedRoute\":true,\"contact\":\"\"}"
+   ],
+   "discard": 1
+  },
+  "taste_commit": {
+   "ok": true,
+   "list": 2,
+   "commit": [
+    "{\"committed\":true,\"filesUpdated\":1}"
+   ],
+   "files": [
+    "<RUN>/Videoclaw/taste/packs/s1-ui-e2e/README.md"
+   ]
+  },
+  "project_seed_pack": {
+   "ok": true,
+   "client": {
+    "clientId": "m9-5490"
+   },
+   "seed": "{\"client\":{\"clientId\":\"m9-5490\",\"name\":\"M9 拖拽 5490\",\"tenant\":\"m9-5490\"},\"packPath\":\"<RUN>/Videoclaw/taste/packs/m9-5490/README.md\"}",
+   "files": [
+    "<RUN>/Videoclaw/taste/packs/m9-5490/README.md"
+   ]
+  },
+  "characters_create_delete": {
+   "ok": true,
+   "list": 5,
+   "create": "{\"slug\":\"m9\",\"name\":\"M9 测试角色\",\"createdAt\":1792582638270,\"approved\":false,\"isSelf\":true,\"outfits\":[],\"state\":\"pending\",\"dir\":\"<RUN>/Videoclaw/characters/pending/m9\",\"refs\":[\"<RUN>",
+   "removed": {
+    "ch": "characters:discard",
+    "result": "true"
+   }
+  },
+  "session_reorder_drag": {
+   "ok": true,
+   "mime": [
+    "application/x-videoclaw-video"
+   ],
+   "rowsBefore": [
+    "Draft",
+    "Draft",
+    "M8 重命名 19743"
+   ],
+   "rowsAfter": [
+    "M8 重命名 19743",
+    "Draft",
+    "Draft"
+   ],
+   "disk": [
+    {
+     "id": "f1abd955",
+     "sidebarOrder": 1
+    },
+    {
+     "id": "e461a35c",
+     "sidebarOrder": 2
+    },
+    {
+     "id": "199f47c2",
+     "sidebarOrder": 0
+    }
+   ]
+  },
+  "client_reorder_drag": {
+   "ok": true,
+   "mime": [
+    "application/x-videoclaw-project"
+   ],
+   "before": [
+    "Personal",
+    "M8 项目 0133",
+    "M9 拖拽 5490"
+   ],
+   "after": [
+    "Personal",
+    "M9 拖拽 5490",
+    "M8 项目 0133"
+   ]
+  },
+  "set_permission_mode": {
+   "ok": true,
+   "shownBefore": "auto",
+   "requested": "acceptEdits",
+   "disk": "acceptEdits",
+   "shown": "acceptEdits",
+   "draftSession": 1
+  },
+  "session_delete": {
+   "ok": true,
+   "plan": [
+    "{\"sessionId\":\"e461a35c-00a2-4b6a-bed9-3a8ca8926206\",\"title\":\"New video\",\"items\":[],\"totalBytes\":0,\"exact\":true}"
+   ],
+   "del": "{\"ok\":true,\"trashedBytes\":0,\"retentionDays\":7}",
+   "draftSession": 0
+  },
+  "client_remove": {
+   "ok": true,
+   "remove": [
+    "[{\"clientId\":\"personal\",\"name\":\"Personal\"},{\"clientId\":\"s1-ui-e2e\",\"name\":\"M8 项目 0133\"}]"
+   ]
+  },
+  "quickstart_gallery_beacons": {
+   "ok": true,
+   "impression": [],
+   "previewed": 1,
+   "mark": [
+    "[\"category_switch\",28.600000008940697,\"ea1f6f15-687c-4245-a8e3-2727107f5d84\"]"
+   ],
+   "filters": [
+    "All",
+    "Founder Story"
+   ]
+  },
+  "start_continuation": {
+   "ok": true,
+   "next": {
+    "sessionId": "d93f1ded-0f3c-59bf-97d5-604c31de78eb",
+    "title": "M8 重命名 19743 · continued",
+    "jobId": true
+   },
+   "source": {
+    "jobId": null,
+    "priorJobId": true,
+    "continuation": {
+     "clientActionId": "0cb8ceb8-c534-4298-b040-22c6265dde30",
+     "sessionId": "d93f1ded-0f3c-59bf-97d5-604c31de78eb"
+    }
+   },
+   "titleInSidebar": true
+  },
+  "session_delete_with_job": {
+   "ok": true,
+   "planText": "The chat and this video’s own files go to the trash for 7 days, then are removed",
+   "del": "{\"ok\":true,\"trashedBytes\":77548751,\"retentionDays\":7}",
+   "jobDirGone": true,
+   "trashEntries": 1,
+   "trashWorkspaces": [
+    "<RUN>/Videoclaw"
+   ]
+  }
+ },
+ "landing": "restored",
+ "consoleErrorCount": 2,
+ "consoleErrors": [
+  "Error: Error invoking remote method 'job:get': Error: Unknown session: d93f1ded-0f3c-59bf-97d5-604c31de78eb",
+  "Error: Error invoking remote method 'session:history': Error: Unknown session: d93f1ded-0f3c-59bf-97d5-604c31de78eb"
+ ],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "characters:create",
+  "characters:discard",
+  "characters:list",
+  "characters:sheetStates",
+  "client:create",
+  "client:list",
+  "client:remove",
+  "client:reorder",
+  "editorRender:state",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "feedback:capture",
+  "feedback:discard",
+  "gateway:meter",
+  "hfPreview:available",
+  "hfPreview:editApply",
+  "hfPreview:start",
+  "hfPreview:stop",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "materials:preview",
+  "project:seedPack",
+  "quickstart:catalog",
+  "quickstart:mark",
+  "quickstart:previewed",
+  "session:create",
+  "session:delete",
+  "session:deletionPlan",
+  "session:history",
+  "session:list",
+  "session:reorder",
+  "session:setPermissionMode",
+  "session:startContinuation",
+  "settings:get",
+  "spend:get",
+  "spend:setCeiling",
+  "taste:commit",
+  "taste:list",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T11:37:42.893Z"
+}

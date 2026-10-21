@@ -1,0 +1,18 @@
+{"t":650,"cdp":"Page.enable","params":{}}
+{"t":721,"cdp":"Runtime.enable","params":{}}
+{"t":2269,"note":"landing restored"}
+{"t":2395,"action":"click","desc":"New video in Personal","selector":"button.client-new-chat","at":{"x":227,"y":241},"element":{"x":214,"y":228,"width":25,"height":25,"label":"New video in Personal"}}
+{"t":2395,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":241}}
+{"t":2701,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":241}}
+{"t":2705,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":2709,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":3521,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":3521,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":3532,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":3535,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":3536,"cdp":"Input.insertText","params":{"text":"请记住这个暗号：蓝色松鼠-4729。现在只回复“好的”，不要调用任何工具，也不要写任何文件。"}}
+{"t":3625,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":3628,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":14353,"note":"STEP resume_turn1: PASS {\"sessionId\":\"1cf66a56-fbf7-4361-ba37-bda653c327c3\",\"sdkSessionId\":\"43622a60-ff91-4f4b-a4cd-5635f98f1cc9\",\"answer\":\"好的\",\"delivered\":[\"{\\\"ts\\\":\\\"2026-10-21T11:36:27.212Z\\\",\\\"level\\\":\\\"info\\\",\\\"event\\\":\\\"agent.turn.delivered\\\",\\\"component\\\":\\\"agent-host\\\",\\\"sessionId\\\":\\\"1cf66a56-fbf7-4361-ba37-bda653c327c3\\\",\\\"resumed\\\":false,\\\"sdkSessionId\\\":null}\"]}"}
+{"t":14439,"note":"app exited 0"}
+{"t":14664,"note":"DONE allPass=true steps=resume_turn1:ok"}

@@ -1,0 +1,80 @@
+{
+ "phase": "resume1",
+ "started": "2026-10-21T11:36:24.364Z",
+ "steps": {
+  "resume_turn1": {
+   "ok": true,
+   "sessionId": "1cf66a56-fbf7-4361-ba37-bda653c327c3",
+   "sdkSessionId": "43622a60-ff91-4f4b-a4cd-5635f98f1cc9",
+   "answer": "好的",
+   "delivered": [
+    "{\"ts\":\"2026-10-21T11:36:27.212Z\",\"level\":\"info\",\"event\":\"agent.turn.delivered\",\"component\":\"agent-host\",\"sessionId\":\"1cf66a56-fbf7-4361-ba37-bda653c327c3\",\"resumed\":false,\"sdkSessionId\":null}"
+   ]
+  }
+ },
+ "landing": "restored",
+ "sessionId": "1cf66a56-fbf7-4361-ba37-bda653c327c3",
+ "before": {
+  "sdkSessionId": null,
+  "transcriptFiles": [
+   "ae09475f-473b-4220-89ee-15c987ac4e6a.jsonl"
+  ]
+ },
+ "result": {
+  "kind": "result",
+  "isError": false,
+  "totalCostUsd": 0,
+  "numTurns": 1,
+  "durationMs": 7791
+ },
+ "after": {
+  "status": "idle",
+  "sdkSessionId": "43622a60-ff91-4f4b-a4cd-5635f98f1cc9",
+  "transcriptFiles": [
+   "ae09475f-473b-4220-89ee-15c987ac4e6a.jsonl",
+   "43622a60-ff91-4f4b-a4cd-5635f98f1cc9.jsonl"
+  ]
+ },
+ "delivered": [
+  "{\"ts\":\"2026-10-21T11:36:27.212Z\",\"level\":\"info\",\"event\":\"agent.turn.delivered\",\"component\":\"agent-host\",\"sessionId\":\"1cf66a56-fbf7-4361-ba37-bda653c327c3\",\"resumed\":false,\"sdkSessionId\":null}"
+ ],
+ "sdkTranscript": {
+  "file": "43622a60-ff91-4f4b-a4cd-5635f98f1cc9.jsonl",
+  "rows": 24,
+  "userTextTurns": [
+   " for this id before planning or paid work.\n\n请记住这个暗号：蓝色松鼠-4729。现在只回复“好的”，不要调用任何工具，也不要写任何文件。"
+  ],
+  "sessionIdsInRows": [
+   "43622a60-ff91-4f4b-a4cd-5635f98f1cc9"
+  ]
+ },
+ "answer": "好的",
+ "staleDropped": 0,
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "materials:preview",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T11:36:37.800Z"
+}
