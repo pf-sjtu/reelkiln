@@ -8,7 +8,7 @@
 //  - sanity guard: a catalog with no providers, or with less than half the previous model count,
 //    or where more than half of the models fail validation, is rejected (keeps the last good data).
 import { createHash } from "node:crypto";
-import { getLogger, type Logger } from "../llm/logger";
+import { getLogger, redactText, type Logger } from "../llm/logger";
 import { CatalogFormatError, parseCatalog } from "./catalog";
 import type { ModelsDb } from "./db";
 
@@ -45,12 +45,39 @@ class SyncError extends Error {
   constructor(readonly code: SyncErrorCode, message: string, readonly httpStatus?: number) { super(message); }
 }
 
+async function readCapped(res: Response, max: number): Promise<ArrayBuffer> {
+  if (!res.body) return new ArrayBuffer(0);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  const reader = res.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) { await reader.cancel().catch(() => {}); throw new SyncError("TOO_LARGE", `catalog exceeds ${max} bytes`); }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+  return out.buffer;
+}
+
 export async function syncModelsDev(db: ModelsDb, o: SyncOptions = {}): Promise<SyncResult> {
-  const url = o.url ?? MODELS_DEV_URL;
+  const rawUrl = o.url ?? MODELS_DEV_URL;
+  // a custom --url could carry credentials (userinfo / ?key=): only the scrubbed form is logged,
+  // returned or stored; the raw URL is used for the request only.
+  const url = redactText(rawUrl);
+  if (!/^https?:\/\//i.test(rawUrl)) {
+    return { ok: false, status: "failed", url, providers: 0, models: 0, durationMs: 0, error: { code: "NETWORK", message: "url must be http(s)" } };
+  }
   const log = (o.logger ?? getLogger()).child({ component: "models-dev-sync" });
   const now = o.now ?? (() => new Date());
   const t0 = Date.now();
-  const prev = db.getMeta(MODELS_DEV_SOURCE);
+  let prev: ReturnType<ModelsDb["getMeta"]>;
+  try { prev = db.getMeta(MODELS_DEV_SOURCE); } catch (e) {
+    return { ok: false, status: "failed", url, providers: 0, models: 0, durationMs: Date.now() - t0, error: { code: "DB_ERROR", message: redactText(e instanceof Error ? e.message : String(e)) } };
+  }
   const attemptAt = now().toISOString();
   const finish = (r: Omit<SyncResult, "url" | "providers" | "models" | "durationMs" | "lastSyncedAt">): SyncResult => {
     const c = db.counts();
@@ -67,16 +94,16 @@ export async function syncModelsDev(db: ModelsDb, o: SyncOptions = {}): Promise<
     const timer = setTimeout(() => controller.abort(), o.timeoutMs ?? 60_000);
     let res: Response, buf: ArrayBuffer;
     try {
-      res = await (o.fetchImpl ?? fetch)(url, { headers, signal: controller.signal });
+      res = await (o.fetchImpl ?? fetch)(rawUrl, { headers, signal: controller.signal });
       const len = Number(res.headers.get("content-length"));
-      if (Number.isFinite(len) && len > MAX_BYTES) throw new SyncError("TOO_LARGE", `catalog is ${len} bytes (> ${MAX_BYTES})`);
-      buf = await res.arrayBuffer();
+      if (Number.isFinite(len) && len > MAX_BYTES) { await res.body?.cancel().catch(() => {}); throw new SyncError("TOO_LARGE", `catalog is ${len} bytes (> ${MAX_BYTES})`); }
+      buf = await readCapped(res, MAX_BYTES); // also caps chunked/compressed bodies without content-length
     } catch (e) {
       if (e instanceof SyncError) throw e;
       if (controller.signal.aborted) throw new SyncError("TIMEOUT", `timed out after ${o.timeoutMs ?? 60_000}ms`);
       const c = (e as { cause?: { code?: string; errors?: Array<{ code?: string }> } })?.cause;
       const cause = c?.code ?? c?.errors?.find((x) => x.code)?.code ?? (c as { message?: string } | undefined)?.message;
-      throw new SyncError("NETWORK", `${e instanceof Error ? e.message : String(e)}${cause ? ` (${cause})` : ""}`);
+      throw new SyncError("NETWORK", redactText(`${e instanceof Error ? e.message : String(e)}${cause ? ` (${cause})` : ""}`));
     } finally {
       clearTimeout(timer);
     }

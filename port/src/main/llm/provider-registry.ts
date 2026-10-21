@@ -5,7 +5,7 @@
 import { unwatchFile, watchFile, type Stats } from "node:fs";
 import { LlmProviderError } from "./errors";
 import { getLogger, registerSecret } from "./logger";
-import { loadProvidersFile, parseProviderConfigs, parseProvidersFile, type AuthConfig, type LlmProtocol, type ProviderConfig, type ProviderConfigInput, BUILTIN_PRESETS } from "./provider-config";
+import { baseUrlProblem, loadProvidersFile, parseProviderConfigs, parseProvidersFile, type AuthConfig, type LlmProtocol, type ProviderConfig, type ProviderConfigInput, BUILTIN_PRESETS } from "./provider-config";
 import type { RetryPolicy } from "./retry";
 
 export interface ModelAliases { opus: string; sonnet: string; haiku: string; smallFast: string; subagent: string }
@@ -83,10 +83,31 @@ export class ProviderRegistry {
   }
 }
 
+const warned = new Set<string>();
+function warnOnce(event: string, fields: Record<string, unknown>): void {
+  const k = `${event}:${JSON.stringify(fields)}`;
+  if (warned.has(k)) return;
+  warned.add(k);
+  getLogger().warn(event, fields);
+}
+
 function resolveNonSecretFields(c: ProviderConfig, env: NodeJS.ProcessEnv): { baseUrl: string; model: string; maxConcurrency: number } {
   const ov = c.envOverrides;
-  const baseUrl = ((ov.baseUrl && env[ov.baseUrl]?.trim()) || c.baseUrl).replace(/\/+$/, "");
-  const model = (ov.model && env[ov.model]?.trim()) || c.model;
+  let baseUrl = c.baseUrl;
+  const envBase = ov.baseUrl ? env[ov.baseUrl]?.trim() : undefined;
+  if (envBase) {
+    const problem = baseUrlProblem(envBase, c.allowInsecureHttp);
+    // an invalid override is ignored (graceful degradation) — logged by env NAME, never by value
+    if (problem) warnOnce("llm.provider.env_override_ignored", { provider: c.name, env: ov.baseUrl, problem });
+    else baseUrl = envBase;
+  }
+  baseUrl = baseUrl.replace(/\/+$/, "");
+  let model = c.model;
+  const envModel = ov.model ? env[ov.model]?.trim() : undefined;
+  if (envModel) {
+    if (envModel.length <= 200 && !/[\u0000-\u001f\u007f]/.test(envModel)) model = envModel;
+    else warnOnce("llm.provider.env_override_ignored", { provider: c.name, env: ov.model, problem: "invalid model id" });
+  }
   let maxConcurrency = c.concurrency.max;
   if (ov.maxConcurrency && env[ov.maxConcurrency] !== undefined) {
     const n = Math.floor(Number(env[ov.maxConcurrency]));
@@ -96,10 +117,18 @@ function resolveNonSecretFields(c: ProviderConfig, env: NodeJS.ProcessEnv): { ba
   return { baseUrl, model, maxConcurrency };
 }
 
+/** A key with whitespace/control characters inside would corrupt the auth header (or, for the
+ *  header scheme, ANTHROPIC_CUSTOM_HEADERS) — treated as not configured. */
+const KEY_SHAPE = /^[\x21-\x7e]+$/;
+
 export function resolveProviderConfig(c: ProviderConfig, env: NodeJS.ProcessEnv = process.env): ResolvedProvider | null {
   const key = env[c.apiKeyEnv]?.trim();
   if (!key) return null;
   registerSecret(key);
+  if (!KEY_SHAPE.test(key) || key.length > 4096) {
+    warnOnce("llm.provider.key_invalid", { provider: c.name, keyEnv: c.apiKeyEnv, problem: "contains whitespace/non-ASCII/control characters or is too long" });
+    return null;
+  }
   const { baseUrl, model, maxConcurrency } = resolveNonSecretFields(c, env);
   const a = c.aliases;
   return {

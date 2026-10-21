@@ -12,7 +12,7 @@
 //    explicitly (ANTHROPIC_AUTH_TOKEN / ANTHROPIC_API_KEY / ANTHROPIC_CUSTOM_HEADERS).
 import type { BuiltinLlmRoute, LlmRouteId } from "../../shared/llm-types";
 import { LlmProviderError } from "./errors";
-import { getLogger } from "./logger";
+import { getLogger, redactText } from "./logger";
 import { ANTHROPIC_VERSION, buildRequestBody, claudeAgentEnv, endpointUrl, extractText, requestHeaders } from "./protocols";
 import type { LlmProtocol } from "./provider-config";
 import { getProviderRegistry, type ProviderRegistry, type ResolvedProvider } from "./provider-registry";
@@ -168,12 +168,48 @@ export function resolveHelperCreds(cfg: HelperCfg, env: NodeJS.ProcessEnv = proc
 }
 
 export type AnthropicResult = { ok: true; text: string } | { ok: false; status?: number; reason: string; code?: string };
-export interface AnthropicOpts { timeoutMs: number; fetchImpl?: typeof fetch; retry?: RetryOptions }
+export interface AnthropicOpts {
+  timeoutMs: number;
+  fetchImpl?: typeof fetch;
+  retry?: RetryOptions;
+  /** PORT-NEW (provider routes): overall budget across attempts + backoff sleeps → TIMEOUT. */
+  deadlineMs?: number;
+  /** PORT-NEW (provider routes): caller cancellation (e.g. session closed). */
+  signal?: AbortSignal;
+}
+/** Responses larger than this are refused (BAD_RESPONSE) for provider routes. */
+export const MAX_PROVIDER_RESPONSE_BYTES = 16 * 1024 * 1024;
+
+function netCause(e: unknown): string {
+  const c = (e as { cause?: { code?: string; message?: string; errors?: Array<{ code?: string }> } })?.cause;
+  return c?.code ?? c?.errors?.find((x) => x.code)?.code ?? (typeof c?.message === "string" ? c.message.slice(0, 200) : "");
+}
+async function readCapped(res: Response, max: number): Promise<ArrayBuffer> {
+  const len = Number(res.headers.get("content-length"));
+  if (Number.isFinite(len) && len > max) { await res.body?.cancel().catch(() => {}); throw new LlmProviderError("BAD_RESPONSE", `response too large (${len} bytes)`); }
+  if (!res.body) return new ArrayBuffer(0);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  const reader = res.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) { await reader.cancel().catch(() => {}); throw new LlmProviderError("BAD_RESPONSE", `response too large (> ${max} bytes)`); }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.byteLength; }
+  return out.buffer;
+}
 
 /** L22362. Unchanged for gateway. PORT-NEW for provider creds: the Anthropic-shaped body is
  *  translated to the provider's protocol (body.model := creds.model, defaultParams merged under),
  *  the call runs inside the provider's process-wide gate, and retryable statuses/body codes are
- *  retried with backoff per the provider's policy (timeoutMs applies per attempt). */
+ *  retried with backoff per the provider's policy (timeoutMs applies per attempt; optional
+ *  deadlineMs/signal bound the whole call). Provider failures are typed (`code`), responses are
+ *  size-capped, unparseable bodies are BAD_RESPONSE, and every reason string is secret-scrubbed. */
 export async function anthropicMessages(creds: HelperCreds, body: Record<string, unknown>, opts: AnthropicOpts): Promise<AnthropicResult> {
   const doFetch = opts.fetchImpl ?? fetch;
   const protocol: LlmProtocol = creds.protocol ?? "anthropic-messages";
@@ -185,41 +221,67 @@ export async function anthropicMessages(creds: HelperCreds, body: Record<string,
       ? buildRequestBody(protocol, body, { model: creds.model, defaultParams: creds.defaultParams, provider: creds.provider, maxTokensField: creds.chatMaxTokensField, onDropped: (fields) => log.debug("llm.request.dropped_fields", { fields }) })
       : creds.model ? { ...body, model: creds.model } : body;
   } catch (err) {
-    if (err instanceof LlmProviderError) return { ok: false, reason: err.message, code: err.code };
+    if (err instanceof LlmProviderError) return { ok: false, reason: redactText(err.message), code: err.code };
     throw err;
   }
+  // overall cancellation (provider routes only; the gateway path keeps the original surface)
+  const overall = new AbortController();
+  const deadline = isProvider && opts.deadlineMs ? setTimeout(() => overall.abort(new LlmProviderError("TIMEOUT", `request exceeded its ${opts.deadlineMs}ms deadline`, { provider: creds.provider })), opts.deadlineMs) : undefined;
+  const onCallerAbort = () => overall.abort(new LlmProviderError("TIMEOUT", "request cancelled by caller", { provider: creds.provider }));
+  if (isProvider && opts.signal) { if (opts.signal.aborted) onCallerAbort(); else opts.signal.addEventListener("abort", onCallerAbort, { once: true }); }
   const once = async (): Promise<Response> => {
+    if (overall.signal.aborted) throw overall.signal.reason;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
+    const relay = () => controller.abort();
+    overall.signal.addEventListener("abort", relay, { once: true });
     try {
       const res = await doFetch(creds.url, { method: "POST", signal: controller.signal, headers: creds.headers, body: JSON.stringify(payload) });
       // read the body inside the timeout window so retry/parse see a complete Response
-      const buf = await res.arrayBuffer();
+      const buf = isProvider ? await readCapped(res, MAX_PROVIDER_RESPONSE_BYTES) : await res.arrayBuffer();
       return new Response(buf, { status: res.status, statusText: res.statusText, headers: res.headers });
     } catch (e) {
       if (!isProvider) throw e; // gateway: original error surface unchanged
+      if (e instanceof LlmProviderError) throw e;
+      if (overall.signal.aborted) throw overall.signal.reason;
       if (controller.signal.aborted) throw new LlmProviderError("TIMEOUT", `request timed out after ${opts.timeoutMs}ms`, { retryable: true, provider: creds.provider, cause: e });
-      throw new LlmProviderError("NETWORK", `network error: ${e instanceof Error ? e.message : String(e)}`, { retryable: true, provider: creds.provider, cause: e });
+      const cause = netCause(e);
+      throw new LlmProviderError("NETWORK", `network error: ${e instanceof Error ? e.message : String(e)}${cause ? ` (${cause})` : ""}`, { retryable: true, provider: creds.provider, cause: e });
     } finally {
       clearTimeout(timer);
+      overall.signal.removeEventListener("abort", relay);
     }
   };
+  const t0 = Date.now();
   try {
     const res = isProvider
       ? await providerGate(creds.provider!, creds.maxConcurrency ?? 1).run(() => withRetry(once, creds.retry, {
         ...opts.retry,
+        signal: overall.signal,
         onRetry: (i) => { log.warn("llm.retry", i); opts.retry?.onRetry?.(i); },
       }, { provider: creds.provider, keyEnv: creds.keyEnv }))
       : await once();
-    if (!res.ok) return { ok: false, status: res.status, reason: `http ${res.status}` };
-    const text = extractText(protocol, await res.json(), creds.provider);
+    if (!res.ok) {
+      if (isProvider) log.warn("llm.request_failed", { status: res.status, ms: Date.now() - t0 });
+      return { ok: false, status: res.status, reason: `http ${res.status}` };
+    }
+    let data: unknown;
+    if (isProvider) {
+      try { data = JSON.parse(await res.text()); } catch { throw new LlmProviderError("BAD_RESPONSE", `response is not valid JSON (http ${res.status})`, { status: res.status, provider: creds.provider }); }
+    } else data = await res.json();
+    const text = extractText(protocol, data, creds.provider);
+    if (isProvider) log.debug("llm.request_ok", { ms: Date.now() - t0, protocol });
     return { ok: true, text };
   } catch (err) {
-    if (err instanceof LlmProviderError) {
-      log.warn("llm.request_failed", { code: err.code, status: err.status });
-      return { ok: false, ...(err.status ? { status: err.status } : {}), reason: err.message, code: err.code };
+    const e = err instanceof LlmProviderError ? err : overall.signal.aborted && overall.signal.reason instanceof LlmProviderError ? overall.signal.reason : err;
+    if (e instanceof LlmProviderError) {
+      log.warn("llm.request_failed", { code: e.code, status: e.status, ms: Date.now() - t0 });
+      return { ok: false, ...(e.status ? { status: e.status } : {}), reason: redactText(e.message), code: e.code };
     }
-    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+    return { ok: false, reason: isProvider ? redactText(e instanceof Error ? e.message : String(e)) : e instanceof Error ? e.message : String(e) };
+  } finally {
+    clearTimeout(deadline);
+    opts.signal?.removeEventListener("abort", onCallerAbort);
   }
 }
 /** Protocol-neutral alias of anthropicMessages for new callers. */

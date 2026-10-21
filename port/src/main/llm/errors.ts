@@ -1,6 +1,7 @@
 // PORT-NEW: typed errors for the generic LLM provider framework (docs/15).
 // Messages may name env vars / provider names / HTTP statuses, but NEVER a key or a response body.
 import { PROVIDER_CREDENTIAL_CODE } from "../gateway/agent-gateway-proxy";
+import { redactText } from "./logger";
 
 export type LlmErrorCode =
   | "CONFIG_INVALID" // providers file unreadable / fails schema validation
@@ -28,7 +29,7 @@ export class LlmProviderError extends Error {
     this.provider = o.provider;
   }
   toJSON(): Record<string, unknown> {
-    return { name: this.name, code: this.code, status: this.status, retryable: this.retryable, provider: this.provider, message: this.message };
+    return { name: this.name, code: this.code, status: this.status, retryable: this.retryable, provider: this.provider, message: redactText(this.message) };
   }
 }
 

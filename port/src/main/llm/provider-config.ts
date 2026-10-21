@@ -16,17 +16,32 @@ export const RESERVED_ROUTE_NAMES = ["claude-code", "gateway"] as const;
 
 const ENV_NAME = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "must be an environment variable name");
 const HEADER_NAME = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]*$/, "must be an HTTP header name");
+const NO_CRLF = /^[^\r\n\u0000]*$/;
 const SECRETISH_HEADER = /^(authorization|x-api-key|api-key|cookie|proxy-authorization)$/i;
 
 export const AuthSchema = z.discriminatedUnion("scheme", [
   z.strictObject({ scheme: z.literal("x-api-key") }),
   z.strictObject({ scheme: z.literal("bearer") }),
   /** `<header>: <prefix><key>`, e.g. { header: "api-key" } (Azure) or { header: "X-Auth", prefix: "Token " }. */
-  z.strictObject({ scheme: z.literal("header"), header: HEADER_NAME, prefix: z.string().max(64).default("") }),
+  z.strictObject({ scheme: z.literal("header"), header: HEADER_NAME, prefix: z.string().max(64).regex(NO_CRLF, "must not contain line breaks").default("") }),
 ]);
 export type AuthConfig = z.infer<typeof AuthSchema>;
 
-const MODEL_ID = z.string().trim().min(1).max(200);
+const MODEL_ID = z.string().trim().min(1).max(200).regex(/^[^\u0000-\u001f\u007f]+$/, "must not contain control characters");
+
+/** Base URL rules shared by the schema and env overrides (production hardening, docs/15 §3.5):
+ *  http(s) only; no userinfo (credentials belong in apiKeyEnv); no query/fragment (the protocol
+ *  path is appended); plain http only for loopback hosts unless allowInsecureHttp. */
+export function baseUrlProblem(raw: string, allowInsecureHttp = false): string | undefined {
+  let u: URL;
+  try { u = new URL(raw); } catch { return "must be an absolute URL"; }
+  if (u.protocol !== "https:" && u.protocol !== "http:") return "must be http(s)";
+  if (u.username || u.password) return "must not contain credentials (use apiKeyEnv)";
+  if (u.search || u.hash) return "must not contain a query string or fragment";
+  const loopback = u.hostname === "localhost" || u.hostname === "::1" || u.hostname === "[::1]" || /^127\./.test(u.hostname);
+  if (u.protocol === "http:" && !loopback && !allowInsecureHttp) return "plain http is only allowed for localhost (set allowInsecureHttp: true to override)";
+  return undefined;
+}
 
 export const ProviderConfigSchema = z.strictObject({
   name: z.string().regex(/^[a-z0-9][a-z0-9._-]{0,63}$/, "lowercase letters, digits, . _ - (max 64)")
@@ -36,6 +51,8 @@ export const ProviderConfigSchema = z.strictObject({
   /** Root the protocol path is appended to: anthropic → {baseUrl}/v1/messages,
    *  openai-chat-completions → {baseUrl}/chat/completions, openai-responses → {baseUrl}/responses. */
   baseUrl: z.url({ protocol: /^https?$/ }).transform((u) => u.replace(/\/+$/, "")),
+  /** Allow plain http to a non-loopback host (e.g. an in-cluster proxy). Default false. */
+  allowInsecureHttp: z.boolean().default(false),
   auth: AuthSchema.prefault({ scheme: "bearer" }),
   apiKeyEnv: ENV_NAME,
   model: MODEL_ID,
@@ -44,7 +61,7 @@ export const ProviderConfigSchema = z.strictObject({
   /** Merged UNDER every helper request body (request fields win), e.g. {"thinking":{...}} or {"reasoning_effort":"low"}. */
   defaultParams: z.record(z.string(), z.unknown()).prefault({}),
   /** Extra NON-secret request headers. Auth headers are rejected here — use `auth` + `apiKeyEnv`. */
-  headers: z.record(HEADER_NAME, z.string().max(2000)).prefault({})
+  headers: z.record(HEADER_NAME, z.string().max(2000).regex(NO_CRLF, "must not contain line breaks")).prefault({})
     .refine((h) => !Object.keys(h).some((k) => SECRETISH_HEADER.test(k)), "must not contain auth headers (use auth/apiKeyEnv)"),
   /** Claude Agent SDK effort level for the child runtime (CLAUDE_CODE_EFFORT_LEVEL). */
   agentEffort: z.enum(["low", "medium", "high", "xhigh", "max"]).optional(),
@@ -71,6 +88,9 @@ export const ProviderConfigSchema = z.strictObject({
   modelsDev: z.strictObject({ provider: z.string().min(1).optional(), model: z.string().min(1).optional() }).prefault({}),
   /** Names of env vars that may override fields at resolve time (kept for MINIMAX_* compatibility). */
   envOverrides: z.strictObject({ baseUrl: ENV_NAME, model: ENV_NAME, maxConcurrency: ENV_NAME }).partial().prefault({}),
+}).superRefine((c, ctx) => {
+  const problem = baseUrlProblem(c.baseUrl, c.allowInsecureHttp);
+  if (problem) ctx.addIssue({ code: "custom", path: ["baseUrl"], message: problem });
 });
 export type ProviderConfig = z.output<typeof ProviderConfigSchema>;
 export type ProviderConfigInput = z.input<typeof ProviderConfigSchema>;
