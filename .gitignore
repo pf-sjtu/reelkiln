@@ -29,3 +29,7 @@ __pycache__/
 
 # Claude Agent SDK + native claude binary installed by `npm run agent-sdk:install` (docs/17) — never commit
 port/vendor/
+
+# electron-builder output + cross-platform SDK staging (docs/18) — never commit
+port/release/
+port/build/

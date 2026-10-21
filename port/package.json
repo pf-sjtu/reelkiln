@@ -11,18 +11,28 @@
     "build": "npm run gen && npm run typecheck && npm run bundle",
     "test": "node tools/build.mjs --tests && node --test \"dist-test/*.test.cjs\"",
     "start": "electron .",
-    "agent-sdk:install": "node tools/install-agent-sdk.mjs"
+    "agent-sdk:install": "node tools/install-agent-sdk.mjs",
+    "package:linux": "npm run build && node tools/package.mjs --platform linux",
+    "package:linux:dir": "npm run build && node tools/package.mjs --platform linux --targets dir",
+    "package:win": "npm run build && node tools/package.mjs --platform win --arch x64",
+    "package:mac": "npm run build && node tools/package.mjs --platform mac --arch arm64",
+    "package:smoke": "node tools/packaged-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "electron": "42.11.9",
+    "electron-builder": "26.15.3",
     "esbuild": "^0.28.2",
-    "typescript": "~5.9.3"
-  },
-  "dependencies": {
+    "typescript": "~5.9.3",
     "zod": "^4.6.7"
   },
+  "dependencies": {},
   "config": {
     "claudeAgentSdkVersion": "0.3.305"
-  }
+  },
+  "author": {
+    "name": "Videoclaw port",
+    "email": "port@videoclaw.invalid"
+  },
+  "homepage": "https://github.com/pf-sjtu/videoclaw-reverse"
 }
