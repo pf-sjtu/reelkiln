@@ -35,5 +35,7 @@ Videoclaw 是一个 **Electron + React 桌面应用**，由 AI agent 驱动的�
 
 ## Windows port (scaffold)
 
+**功能重建路线图（覆盖表 / 主流程验收场景 / 里程碑）：`docs/20-reconstruction-roadmap.md`。**
+
 `port/` — faithful Electron+TS Windows port scaffold (typed IPC contract, fake backend,
 platform layer). Plan and status: `docs/07-windows-port-plan.md`.

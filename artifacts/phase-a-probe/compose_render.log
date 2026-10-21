@@ -1,0 +1,246 @@
+Bundling 6%
+Bundling 16%
+Bundling 61%
+Bundling 69%
+Bundling 74%
+Bundling 80%
+Bundling 85%
+Bundling 90%
+Bundling 95%
+Bundling 100%
+Getting composition
+Composition          Captioned
+Codec                h264
+Output               /tmp/p20/l0/ws/jobs/accept-s1-l0-000001/.final.692733.1792562217713579465.partial.mp4
+Concurrency          2x
+Rendered 0/195
+[Tab 0, @remotion/media] Use the `objectFit` prop instead of the `style` prop.
+[Tab 1, @remotion/media] Use the `objectFit` prop instead of the `style` prop.
+[http://localhost:3000/public/_jobs/accept-s1-l0-000001/transcript.json] Failed to load resource: the server responded with a status of 404 (Not Found)
+[http://localhost:3000/public/_jobs/accept-s1-l0-000001/transcript.json] Failed to load resource: the server responded with a status of 404 (Not Found)
+Rendered 1/195, time remaining: 1m 4s
+Rendered 2/195, time remaining: 40s
+Rendered 3/195, time remaining: 33s
+Rendered 4/195, time remaining: 26s
+Rendered 5/195, time remaining: 22s
+Rendered 6/195, time remaining: 21s
+Rendered 7/195, time remaining: 18s
+Rendered 8/195, time remaining: 18s
+Rendered 9/195, time remaining: 17s
+Rendered 10/195, time remaining: 16s
+Rendered 11/195, time remaining: 16s
+Rendered 12/195, time remaining: 14s
+Rendered 13/195, time remaining: 15s
+Rendered 14/195, time remaining: 14s
+Rendered 15/195, time remaining: 14s
+Rendered 16/195, time remaining: 13s
+Rendered 17/195, time remaining: 13s
+Rendered 18/195, time remaining: 13s
+Rendered 19/195, time remaining: 12s
+Rendered 20/195, time remaining: 12s
+Rendered 21/195, time remaining: 12s
+Rendered 22/195, time remaining: 12s
+Rendered 23/195, time remaining: 12s
+Rendered 24/195, time remaining: 11s
+Rendered 25/195, time remaining: 11s
+Rendered 26/195, time remaining: 11s
+Rendered 27/195, time remaining: 11s
+Rendered 28/195, time remaining: 11s
+Rendered 29/195, time remaining: 11s
+Rendered 30/195, time remaining: 11s
+Rendered 31/195, time remaining: 10s
+Rendered 32/195, time remaining: 10s
+Rendered 33/195, time remaining: 10s
+Rendered 34/195, time remaining: 10s
+Rendered 35/195, time remaining: 10s
+Rendered 36/195, time remaining: 10s
+Rendered 37/195, time remaining: 10s
+Rendered 38/195, time remaining: 10s
+Rendered 39/195, time remaining: 10s
+Rendered 40/195, time remaining: 9s
+Rendered 41/195, time remaining: 9s
+Rendered 42/195, time remaining: 9s
+Rendered 43/195, time remaining: 9s
+Rendered 44/195, time remaining: 9s
+Rendered 45/195, time remaining: 9s
+Rendered 46/195, time remaining: 9s
+Rendered 47/195, time remaining: 9s
+Rendered 48/195, time remaining: 9s
+Rendered 49/195, time remaining: 9s
+Rendered 50/195, time remaining: 8s
+Rendered 51/195, time remaining: 8s
+Rendered 52/195, time remaining: 8s
+Rendered 53/195, time remaining: 8s
+Rendered 54/195, time remaining: 8s
+Rendered 55/195, time remaining: 8s
+Rendered 56/195, time remaining: 8s
+Rendered 57/195, time remaining: 8s
+Rendered 58/195, time remaining: 8s
+Rendered 59/195, time remaining: 8s
+Rendered 60/195, time remaining: 8s
+Rendered 61/195, time remaining: 8s
+Rendered 62/195, time remaining: 8s
+Rendered 63/195, time remaining: 8s
+Rendered 64/195, time remaining: 7s
+Rendered 65/195, time remaining: 7s
+Rendered 66/195, time remaining: 7s
+Rendered 67/195, time remaining: 7s
+Rendered 68/195, time remaining: 7s
+Rendered 69/195, time remaining: 7s
+Rendered 70/195, time remaining: 7s
+Rendered 71/195, time remaining: 7s
+Rendered 72/195, time remaining: 7s
+Rendered 73/195, time remaining: 7s
+Rendered 74/195, time remaining: 7s
+Rendered 75/195, time remaining: 7s
+Rendered 76/195, time remaining: 7s
+Rendered 77/195, time remaining: 7s
+Rendered 78/195, time remaining: 6s
+Rendered 79/195, time remaining: 6s
+Rendered 80/195, time remaining: 6s
+Rendered 81/195, time remaining: 6s
+Rendered 82/195, time remaining: 6s
+Rendered 83/195, time remaining: 6s
+Rendered 84/195, time remaining: 6s
+Rendered 85/195, time remaining: 6s
+Rendered 86/195, time remaining: 6s
+Rendered 87/195, time remaining: 6s
+Rendered 88/195, time remaining: 6s
+Rendered 89/195, time remaining: 6s
+Rendered 90/195, time remaining: 6s
+Rendered 91/195, time remaining: 6s
+Rendered 92/195, time remaining: 6s
+Rendered 92/195, time remaining: 6s
+Rendered 93/195, time remaining: 6s
+Rendered 94/195, time remaining: 6s
+Rendered 95/195, time remaining: 6s
+Rendered 96/195, time remaining: 5s
+Rendered 97/195, time remaining: 5s
+Rendered 98/195, time remaining: 5s
+Rendered 99/195, time remaining: 5s
+Rendered 100/195, time remaining: 5s
+Rendered 100/195, time remaining: 5s
+Rendered 101/195, time remaining: 5s
+Rendered 102/195, time remaining: 5s
+Rendered 103/195, time remaining: 5s
+Rendered 104/195, time remaining: 5s
+Rendered 105/195, time remaining: 5s
+Rendered 106/195, time remaining: 5s
+Rendered 107/195, time remaining: 5s
+Rendered 108/195, time remaining: 5s
+Rendered 108/195, time remaining: 5s
+Rendered 109/195, time remaining: 5s
+Rendered 110/195, time remaining: 5s
+Rendered 111/195, time remaining: 5s
+Rendered 112/195, time remaining: 4s
+Rendered 113/195, time remaining: 4s
+Rendered 114/195, time remaining: 4s
+Rendered 115/195, time remaining: 4s
+Rendered 116/195, time remaining: 4s
+Rendered 117/195, time remaining: 4s
+Rendered 117/195, time remaining: 4s
+Rendered 118/195, time remaining: 4s
+Rendered 119/195, time remaining: 4s
+Rendered 120/195, time remaining: 4s
+Rendered 121/195, time remaining: 4s
+Rendered 122/195, time remaining: 4s
+Rendered 123/195, time remaining: 4s
+Rendered 124/195, time remaining: 4s
+Rendered 125/195, time remaining: 4s
+Rendered 126/195, time remaining: 4s
+Rendered 126/195, time remaining: 4s
+Rendered 127/195, time remaining: 4s
+Rendered 128/195, time remaining: 3s
+Rendered 129/195, time remaining: 3s
+Rendered 130/195, time remaining: 3s
+Rendered 131/195, time remaining: 3s
+Rendered 132/195, time remaining: 3s
+Rendered 133/195, time remaining: 3s
+Rendered 134/195, time remaining: 3s
+Rendered 135/195, time remaining: 3s
+Rendered 136/195, time remaining: 3s
+Rendered 136/195, time remaining: 3s
+Rendered 137/195, time remaining: 3s
+Rendered 138/195, time remaining: 3s
+Rendered 139/195, time remaining: 3s
+Rendered 140/195, time remaining: 3s
+Rendered 141/195, time remaining: 3s
+Rendered 142/195, time remaining: 3s
+Rendered 143/195, time remaining: 3s
+Rendered 143/195, time remaining: 3s
+Rendered 144/195, time remaining: 3s
+Rendered 145/195, time remaining: 2s
+Rendered 146/195, time remaining: 2s
+Rendered 147/195, time remaining: 2s
+Rendered 148/195, time remaining: 2s
+Rendered 149/195, time remaining: 2s
+Rendered 149/195, time remaining: 2s
+Rendered 150/195, time remaining: 2s
+Rendered 151/195, time remaining: 2s
+Rendered 152/195, time remaining: 2s
+Rendered 153/195, time remaining: 2s
+Rendered 154/195, time remaining: 2s
+Rendered 155/195, time remaining: 2s
+Rendered 156/195, time remaining: 2s
+Rendered 157/195, time remaining: 2s
+Rendered 157/195, time remaining: 2s
+Rendered 158/195, time remaining: 2s
+Rendered 159/195, time remaining: 2s
+Rendered 160/195, time remaining: 2s
+Rendered 161/195, time remaining: 2s
+Rendered 162/195, time remaining: 1s
+Rendered 162/195, time remaining: 1s
+Rendered 163/195, time remaining: 1s
+Rendered 164/195, time remaining: 1s
+Rendered 165/195, time remaining: 1s
+Rendered 166/195, time remaining: 1s
+Rendered 167/195, time remaining: 1s
+Rendered 168/195, time remaining: 1s
+Rendered 169/195, time remaining: 1s
+Rendered 169/195, time remaining: 1s
+Rendered 170/195, time remaining: 1s
+Rendered 171/195, time remaining: 1s
+Rendered 172/195, time remaining: 1s
+Rendered 173/195, time remaining: 1s
+Rendered 174/195, time remaining: 1s
+Rendered 175/195, time remaining: 1s
+Rendered 176/195, time remaining: 1s
+Rendered 176/195, time remaining: 1s
+Rendered 177/195, time remaining: 1s
+Rendered 178/195, time remaining: 1s
+Rendered 179/195, time remaining: 0s
+Rendered 180/195, time remaining: 0s
+Rendered 181/195, time remaining: 0s
+Rendered 182/195, time remaining: 0s
+Rendered 183/195, time remaining: 0s
+Rendered 183/195, time remaining: 0s
+Rendered 184/195, time remaining: 0s
+Rendered 185/195, time remaining: 0s
+Rendered 186/195, time remaining: 0s
+Rendered 187/195, time remaining: 0s
+Rendered 188/195, time remaining: 0s
+Rendered 189/195, time remaining: 0s
+Rendered 190/195, time remaining: 0s
+Rendered 190/195, time remaining: 0s
+Rendered 191/195, time remaining: 0s
+Rendered 192/195, time remaining: 0s
+Rendered 193/195, time remaining: 0s
+Rendered 194/195, time remaining: 0s
+Encoded 106/195
+Encoded 132/195
+Encoded 156/195
+Encoded 195/195
++                    /tmp/p20/l0/ws/jobs/accept-s1-l0-000001/.final.692733.1792562217713579465.partial.mp4 12.3 MB
+Mode:   render  (usage_role)
+Job:    /tmp/p20/l0/ws/jobs/accept-s1-l0-000001
+Linked: /workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d/remotion/public/_jobs/accept-s1-l0-000001 → /tmp/p20/l0/ws/jobs/accept-s1-l0-000001
+JobOverlays: stub (none authored)
+No <job_dir>/overlays.tsx authored; rendering the intentional captions-only/minimal path.
+Canvas: 1080x1920, following the source's orientation (a video_transform keeps 1080x1920). Set width and height in style_directives.json for another shape.
+  Running: npx --no-install remotion render src/index.ts Captioned ... /tmp/p20/l0/ws/jobs/accept-s1-l0-000001/.final.692733.1792562217713579465.partial.mp4
+  Props (truncated): videoPath=_jobs/accept-s1-l0-000001/final_raw.mp4, duration=6.5s, overlays=0
+  Source audio carried through verbatim from final_raw.mp4
+  Finishing pass applied: scale→720×1280
+
+✓ Final video: /tmp/p20/l0/ws/jobs/accept-s1-l0-000001/final.mp4 (5MB)
+  ▶ WATCH → file:///tmp/p20/l0/ws/jobs/accept-s1-l0-000001/final.mp4

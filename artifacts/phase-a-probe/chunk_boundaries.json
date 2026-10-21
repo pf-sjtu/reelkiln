@@ -1,0 +1,55 @@
+{
+  "source": "assemble.py",
+  "chunks": [
+    {
+      "name": "b1_open",
+      "start_sec": 0.0,
+      "end_sec": 2.5,
+      "role": "broll",
+      "beat_source": "footage/clip_a.mp4",
+      "source_kind": "real",
+      "framing": {
+        "strategy": "center_crop",
+        "reason": "no stable subject was detected; keep natural footage full-bleed",
+        "frameMode": "subject",
+        "faceCount": 0,
+        "sampledFaceDetections": 0,
+        "requestedPunch": 1.0,
+        "appliedPunch": 1.0
+      }
+    },
+    {
+      "name": "b2_mid",
+      "start_sec": 2.5,
+      "end_sec": 4.5,
+      "role": "broll",
+      "beat_source": "footage/clip_b.mp4",
+      "source_kind": "real",
+      "framing": {
+        "strategy": "center_crop",
+        "reason": "caller deliberately requested geometric center crop",
+        "frameMode": "center",
+        "faceCount": 0,
+        "requestedPunch": 1.0,
+        "appliedPunch": 1.0
+      }
+    },
+    {
+      "name": "b3_end",
+      "start_sec": 4.5,
+      "end_sec": 6.5,
+      "role": "broll",
+      "beat_source": "footage/clip_c.mp4",
+      "source_kind": "real",
+      "framing": {
+        "strategy": "center_crop",
+        "reason": "no stable subject was detected; keep natural footage full-bleed",
+        "frameMode": "subject",
+        "faceCount": 0,
+        "sampledFaceDetections": 0,
+        "requestedPunch": 1.0,
+        "appliedPunch": 1.0
+      }
+    }
+  ]
+}

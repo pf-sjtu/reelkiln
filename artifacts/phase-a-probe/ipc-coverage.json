@@ -1,0 +1,1472 @@
+[
+ {
+  "channel": "sessionPlan:read",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "readSessionPlan"
+  ]
+ },
+ {
+  "channel": "sessionPlan:choose",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "chooseSessionPlan"
+  ]
+ },
+ {
+  "channel": "sessionPlan:retry",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "retrySessionPlan"
+  ]
+ },
+ {
+  "channel": "sessionPlan:changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onSessionPlanChanged"
+  ]
+ },
+ {
+  "channel": "memory:read",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "readProjectMemory"
+  ]
+ },
+ {
+  "channel": "memory:update",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "updateProjectMemory"
+  ]
+ },
+ {
+  "channel": "memory:undo",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "undoProjectMemory"
+  ]
+ },
+ {
+  "channel": "memory:openSource",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "openProjectMemorySource"
+  ]
+ },
+ {
+  "channel": "memory:changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onProjectMemoryChanged"
+  ]
+ },
+ {
+  "channel": "quickstart:catalog",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "quickstartCatalog"
+  ]
+ },
+ {
+  "channel": "quickstart:impression",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "quickstartImpression"
+  ]
+ },
+ {
+  "channel": "quickstart:previewed",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "quickstartPreviewed"
+  ]
+ },
+ {
+  "channel": "quickstart:start",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "quickstartStart"
+  ]
+ },
+ {
+  "channel": "quickstart:mark",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "quickstartMark"
+  ]
+ },
+ {
+  "channel": "session:create",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "createSession"
+  ]
+ },
+ {
+  "channel": "session:list",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "listSessions"
+  ]
+ },
+ {
+  "channel": "session:reorder",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "reorderSessions"
+  ]
+ },
+ {
+  "channel": "session:rename",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "renameSession"
+  ]
+ },
+ {
+  "channel": "session:deletionPlan",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "projectDeletionPlan"
+  ]
+ },
+ {
+  "channel": "session:delete",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "deleteProject"
+  ]
+ },
+ {
+  "channel": "session:send",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "sendMessage"
+  ]
+ },
+ {
+  "channel": "session:retry",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "retryTurn"
+  ]
+ },
+ {
+  "channel": "session:interrupt",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "interrupt"
+  ]
+ },
+ {
+  "channel": "session:setPermissionMode",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "setPermissionMode"
+  ]
+ },
+ {
+  "channel": "session:setModel",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "setSessionModel"
+  ]
+ },
+ {
+  "channel": "session:setReasoningEffort",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "setSessionReasoningEffort"
+  ]
+ },
+ {
+  "channel": "permission:respond",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "respondPermission"
+  ]
+ },
+ {
+  "channel": "permission:shown",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "notePermissionShown"
+  ]
+ },
+ {
+  "channel": "quit:rendererState",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "noteQuitState"
+  ]
+ },
+ {
+  "channel": "interaction:replayPending",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "replayPendingInteractions"
+  ]
+ },
+ {
+  "channel": "session:history",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "getHistory"
+  ]
+ },
+ {
+  "channel": "file:openPath",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "openPath"
+  ]
+ },
+ {
+  "channel": "file:openExternal",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "openExternal"
+  ]
+ },
+ {
+  "channel": "file:revealItem",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "revealItem"
+  ]
+ },
+ {
+  "channel": "file:saveItemAs",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "saveItemAs"
+  ]
+ },
+ {
+  "channel": "analytics:playbackCompleted",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "playbackCompleted"
+  ]
+ },
+ {
+  "channel": "client:list",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "listClients"
+  ]
+ },
+ {
+  "channel": "client:create",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "createClient"
+  ]
+ },
+ {
+  "channel": "client:rename",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "renameClient"
+  ]
+ },
+ {
+  "channel": "client:remove",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "removeClient"
+  ]
+ },
+ {
+  "channel": "client:reorder",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "reorderClients"
+  ]
+ },
+ {
+  "channel": "project:seedPack",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "seedProjectPack"
+  ]
+ },
+ {
+  "channel": "taste:list",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "listTaste"
+  ]
+ },
+ {
+  "channel": "taste:commit",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "commitTaste"
+  ]
+ },
+ {
+  "channel": "taste:decline",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "declineProposal"
+  ]
+ },
+ {
+  "channel": "taste:titles",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "tasteTitles"
+  ]
+ },
+ {
+  "channel": "characters:list",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersList"
+  ]
+ },
+ {
+  "channel": "characters:voices:list",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "characterVoicesList"
+  ]
+ },
+ {
+  "channel": "characters:voice:approve",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "characterVoiceApprove"
+  ]
+ },
+ {
+  "channel": "characters:voice:remove",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "characterVoiceRemove"
+  ]
+ },
+ {
+  "channel": "characters:voices:changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onCharacterVoicesChanged"
+  ]
+ },
+ {
+  "channel": "characters:create",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersCreate"
+  ]
+ },
+ {
+  "channel": "characters:sheetPlan",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersSheetPlan"
+  ]
+ },
+ {
+  "channel": "characters:sheetBuild",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersSheetBuild"
+  ]
+ },
+ {
+  "channel": "characters:sheetStates",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersSheetStates"
+  ]
+ },
+ {
+  "channel": "characters:approve",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersApprove"
+  ]
+ },
+ {
+  "channel": "characters:retry",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersRetry"
+  ]
+ },
+ {
+  "channel": "characters:discard",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersDiscard"
+  ]
+ },
+ {
+  "channel": "characters:delete",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "charactersDelete"
+  ]
+ },
+ {
+  "channel": "job:get",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "getJobSnapshot"
+  ]
+ },
+ {
+  "channel": "job:originalContext",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "getOriginalContext"
+  ]
+ },
+ {
+  "channel": "job:snapshot",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onJobSnapshot"
+  ]
+ },
+ {
+  "channel": "spend:get",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "getSpendSnapshot"
+  ]
+ },
+ {
+  "channel": "outbox:authoritySnapshot",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "outboxAuthoritySnapshot"
+  ]
+ },
+ {
+  "channel": "telemetry:bindReplay",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "telemetryBindReplay"
+  ]
+ },
+ {
+  "channel": "spend:setCeiling",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "setSpendCeiling"
+  ]
+ },
+ {
+  "channel": "spend:snapshot",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onSpendSnapshot"
+  ]
+ },
+ {
+  "channel": "job:adopt",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "adoptJob"
+  ]
+ },
+ {
+  "channel": "version:approve",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "approveVersion"
+  ]
+ },
+ {
+  "channel": "version:revertFinal",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "revertFinal"
+  ]
+ },
+ {
+  "channel": "session:unfinalize",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "unfinalizeSession"
+  ]
+ },
+ {
+  "channel": "session:startContinuation",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "startContinuationChat"
+  ]
+ },
+ {
+  "channel": "job:historicalSnapshot",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "historicalJobSnapshot"
+  ]
+ },
+ {
+  "channel": "settings:get",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "getSettings"
+  ]
+ },
+ {
+  "channel": "settings:set",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "setSettings"
+  ]
+ },
+ {
+  "channel": "settings:saveGatewayKey",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "saveGatewayKey"
+  ]
+ },
+ {
+  "channel": "settings:switchGateway",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "switchGateway"
+  ]
+ },
+ {
+  "channel": "app:restart",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "restartApp"
+  ]
+ },
+ {
+  "channel": "app:update:preferences",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "getAppUpdatePreferences"
+  ]
+ },
+ {
+  "channel": "app:update:channel",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "setAppUpdateChannel"
+  ]
+ },
+ {
+  "channel": "app:update:state",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "getAppUpdateState"
+  ]
+ },
+ {
+  "channel": "app:update:state-changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onAppUpdateState"
+  ]
+ },
+ {
+  "channel": "app:update:download",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "downloadAppUpdate"
+  ]
+ },
+ {
+  "channel": "app:update:install",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "installAppUpdate"
+  ]
+ },
+ {
+  "channel": "app:update:get",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "getUpdateInfo"
+  ]
+ },
+ {
+  "channel": "app:update:check",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "checkForUpdates"
+  ]
+ },
+ {
+  "channel": "app:update",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onUpdateInfo"
+  ]
+ },
+ {
+  "channel": "gateway:verify",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "verifyGatewayKey"
+  ]
+ },
+ {
+  "channel": "account:snapshot",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountSnapshot"
+  ]
+ },
+ {
+  "channel": "account:refresh",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountRefresh"
+  ]
+ },
+ {
+  "channel": "account:signInGoogle",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountSignInGoogle"
+  ]
+ },
+ {
+  "channel": "account:signInEmail",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountSignInEmail"
+  ]
+ },
+ {
+  "channel": "account:resendEmail",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountResendEmail"
+  ]
+ },
+ {
+  "channel": "account:cancelSignIn",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountCancelSignIn"
+  ]
+ },
+ {
+  "channel": "account:emailSent",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onAccountEmailSent"
+  ]
+ },
+ {
+  "channel": "account:signOut",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountSignOut"
+  ]
+ },
+ {
+  "channel": "account:consent",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountConsent"
+  ]
+ },
+ {
+  "channel": "account:ensureAccess",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountEnsureAccess"
+  ]
+ },
+ {
+  "channel": "account:mintKey",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountMintKey"
+  ]
+ },
+ {
+  "channel": "account:claimKey",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountClaimKey"
+  ]
+ },
+ {
+  "channel": "account:localResetPrepare",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountLocalResetPrepare"
+  ]
+ },
+ {
+  "channel": "account:localResetCommit",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "accountLocalResetCommit"
+  ]
+ },
+ {
+  "channel": "account:changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onAccountChanged"
+  ]
+ },
+ {
+  "channel": "gateway:meter",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "keyMeter"
+  ]
+ },
+ {
+  "channel": "gateway:topup",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "topUp"
+  ]
+ },
+ {
+  "channel": "engine:claudeCodeStatus",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "claudeCodeStatus"
+  ]
+ },
+ {
+  "channel": "engine:claudeCodeConnect",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "claudeCodeConnect"
+  ]
+ },
+ {
+  "channel": "engine:claudeCodeConnectCancel",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "claudeCodeConnectCancel"
+  ]
+ },
+ {
+  "channel": "engine:claudeCodeSignOutImpact",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "claudeCodeSignOutImpact"
+  ]
+ },
+ {
+  "channel": "engine:claudeCodeSignOut",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "claudeCodeSignOut"
+  ]
+ },
+ {
+  "channel": "engine:llmRouteReadiness",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "llmRouteReadiness"
+  ]
+ },
+ {
+  "channel": "engine:codexStatus",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "codexStatus"
+  ]
+ },
+ {
+  "channel": "engine:codexConnectChatGpt",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "codexConnectChatGpt"
+  ]
+ },
+ {
+  "channel": "engine:codexConnectCancel",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "codexConnectCancel"
+  ]
+ },
+ {
+  "channel": "engine:codexDisconnectImpact",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "codexDisconnectImpact"
+  ]
+ },
+ {
+  "channel": "engine:codexDisconnectChatGpt",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "codexDisconnectChatGpt"
+  ]
+ },
+ {
+  "channel": "engine:codexModels",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "codexModels"
+  ]
+ },
+ {
+  "channel": "engine:claudeModels",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "claudeModels"
+  ]
+ },
+ {
+  "channel": "engine:codexHandoffOffer",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "codexHandoffOffer"
+  ]
+ },
+ {
+  "channel": "engine:continueOnCodex",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "continueOnCodex"
+  ]
+ },
+ {
+  "channel": "engine:creditHandoffOffer",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "creditHandoffOffer"
+  ]
+ },
+ {
+  "channel": "engine:continueOnCredits",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "continueOnCredits"
+  ]
+ },
+ {
+  "channel": "engine:agentProviderKeyStatus",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "agentProviderKeyStatus"
+  ]
+ },
+ {
+  "channel": "engine:saveAgentProviderKey",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "saveAgentProviderKey"
+  ]
+ },
+ {
+  "channel": "input:respond",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "respondInput"
+  ]
+ },
+ {
+  "channel": "media:requestMic",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "requestMicAccess"
+  ]
+ },
+ {
+  "channel": "media:voiceDictationStatus",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "voiceDictationStatus"
+  ]
+ },
+ {
+  "channel": "media:transcribeVoice",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "transcribeVoice"
+  ]
+ },
+ {
+  "channel": "media:discardVoice",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "discardVoice"
+  ]
+ },
+ {
+  "channel": "file:pathForFile",
+  "dir": "\u2014",
+  "category": "local",
+  "bridge": []
+ },
+ {
+  "channel": "library:stats",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "libraryStats"
+  ]
+ },
+ {
+  "channel": "library:scan",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "libraryScan"
+  ]
+ },
+ {
+  "channel": "library:addSource",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "libraryAddSource"
+  ]
+ },
+ {
+  "channel": "library:removeSource",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "libraryRemoveSource"
+  ]
+ },
+ {
+  "channel": "library:sync",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "librarySync"
+  ]
+ },
+ {
+  "channel": "library:search",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "librarySearch"
+  ]
+ },
+ {
+  "channel": "library:preview",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "libraryPreview"
+  ]
+ },
+ {
+  "channel": "library:setTenant",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "librarySetTenant"
+  ]
+ },
+ {
+  "channel": "bootstrap:status",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "bootstrapStatus"
+  ]
+ },
+ {
+  "channel": "bootstrap:run",
+  "dir": "R\u2192M",
+  "category": "real-env",
+  "bridge": [
+   "bootstrapRun"
+  ]
+ },
+ {
+  "channel": "bootstrap:revertEngine",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "bootstrapRevertEngine"
+  ]
+ },
+ {
+  "channel": "bootstrap:revealSetupLog",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "bootstrapRevealSetupLog"
+  ]
+ },
+ {
+  "channel": "engine:pendingToast",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "enginePendingToast"
+  ]
+ },
+ {
+  "channel": "engine:updated",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onEngineUpdated"
+  ]
+ },
+ {
+  "channel": "intake:pickFiles",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "intakePickFiles"
+  ]
+ },
+ {
+  "channel": "attachment:stage",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentStage"
+  ]
+ },
+ {
+  "channel": "attachment:list",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentList"
+  ]
+ },
+ {
+  "channel": "attachment:ownership",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentOwnership"
+  ]
+ },
+ {
+  "channel": "attachment:remove",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentRemove"
+  ]
+ },
+ {
+  "channel": "attachment:retry",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentRetry"
+  ]
+ },
+ {
+  "channel": "attachment:destination",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentDestination"
+  ]
+ },
+ {
+  "channel": "attachment:pasteImage",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentPasteImage"
+  ]
+ },
+ {
+  "channel": "attachment:voiceNote",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentVoiceNote"
+  ]
+ },
+ {
+  "channel": "materials:preview",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "materialPreview"
+  ]
+ },
+ {
+  "channel": "attachment:captureMoment",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentCaptureMoment"
+  ]
+ },
+ {
+  "channel": "attachment:momentPreview",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentMomentPreview"
+  ]
+ },
+ {
+  "channel": "attachment:preview",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "attachmentPreview"
+  ]
+ },
+ {
+  "channel": "stats:stageEtas",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "getStageEtas"
+  ]
+ },
+ {
+  "channel": "session:event",
+  "dir": "M\u2192R",
+  "category": "push-real",
+  "bridge": [
+   "onSessionEvent"
+  ]
+ },
+ {
+  "channel": "session:changed",
+  "dir": "M\u2192R",
+  "category": "push-real",
+  "bridge": [
+   "onSessionsChanged"
+  ]
+ },
+ {
+  "channel": "permission:request",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onPermissionRequest"
+  ]
+ },
+ {
+  "channel": "input:request",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onInputRequest"
+  ]
+ },
+ {
+  "channel": "library:syncProgress",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onLibrarySync"
+  ]
+ },
+ {
+  "channel": "bootstrap:progress",
+  "dir": "M\u2192R",
+  "category": "push-real",
+  "bridge": [
+   "onBootstrapProgress"
+  ]
+ },
+ {
+  "channel": "window:state",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onWindowState"
+  ]
+ },
+ {
+  "channel": "attachment:changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onAttachmentChanged"
+  ]
+ },
+ {
+  "channel": "materials:changed",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onMaterialsChanged"
+  ]
+ },
+ {
+  "channel": "quickstart:catalogChanged",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onQuickstartCatalogChanged"
+  ]
+ },
+ {
+  "channel": "characters:build",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onCharacterBuild"
+  ]
+ },
+ {
+  "channel": "feedback:capture",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "feedbackCapture"
+  ]
+ },
+ {
+  "channel": "feedback:submit",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "feedbackSubmit"
+  ]
+ },
+ {
+  "channel": "feedback:discard",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "feedbackDiscard"
+  ]
+ },
+ {
+  "channel": "feedback:grantUsageSharing",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "feedbackGrantUsageSharing"
+  ]
+ },
+ {
+  "channel": "workflowSubmit:eligibility",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "workflowSubmitEligibility"
+  ]
+ },
+ {
+  "channel": "workflowSubmit:start",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "workflowSubmit"
+  ]
+ },
+ {
+  "channel": "editorRender:start",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "editorRenderStart"
+  ]
+ },
+ {
+  "channel": "editorRender:cancel",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "editorRenderCancel"
+  ]
+ },
+ {
+  "channel": "editorRender:state",
+  "dir": "R\u2192M",
+  "category": "real",
+  "bridge": [
+   "editorRenderState"
+  ]
+ },
+ {
+  "channel": "editorRender:event",
+  "dir": "M\u2192R",
+  "category": "push-real",
+  "bridge": [
+   "onEditorRenderEvent"
+  ]
+ },
+ {
+  "channel": "hfPreview:available",
+  "dir": "R\u2192M",
+  "category": "fixture",
+  "bridge": [
+   "hfPreviewAvailable"
+  ]
+ },
+ {
+  "channel": "hfPreview:start",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "hfPreviewStart"
+  ]
+ },
+ {
+  "channel": "hfPreview:stop",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "hfPreviewStop"
+  ]
+ },
+ {
+  "channel": "hfPreview:editApply",
+  "dir": "R\u2192M",
+  "category": "stub",
+  "bridge": [
+   "hfEditApply"
+  ]
+ },
+ {
+  "channel": "hfPreview:event",
+  "dir": "M\u2192R",
+  "category": "push-none",
+  "bridge": [
+   "onHfPreviewEvent"
+  ]
+ }
+]

@@ -1,0 +1,29 @@
+{
+  "manifestSha256": "3960f3af28c71c934cfb2e69d284099b583886f5b24d79caea621f7a140dbd44",
+  "output": {
+    "durationSec": 6.507,
+    "height": 1280,
+    "mtimeNs": 1792562234608181104,
+    "path": "final.mp4",
+    "sha256": "d4156bf7f86758a1a06c8c5e125d2ca061cde9a532882659c214effc0738dac8",
+    "sizeBytes": 5740827,
+    "width": 720
+  },
+  "postComposeBroll": [],
+  "schema": "videoclaw.render-manifest/v4",
+  "source": {
+    "durationSec": 6.5,
+    "height": 1920,
+    "mtimeNs": 1792562217104181104,
+    "path": "final_raw.mp4",
+    "sha256": "1df56b5758819ec50478b62d4b9823e5a1a54a872a46cf2c0b03b81224dea732",
+    "sizeBytes": 9239674,
+    "width": 1080
+  },
+  "treatment": {
+    "backgroundBlurPx": 0.0,
+    "fit": "contain",
+    "layout": "canvas",
+    "zoomed": false
+  }
+}

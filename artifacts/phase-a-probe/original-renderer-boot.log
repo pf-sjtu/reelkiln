@@ -1,0 +1,9 @@
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list
+[port] registered 157 handle + 3 on; fake-implemented: 13
+[fake-backend] NOT IMPLEMENTED account:snapshot(0 args) → undefined
+[fake-backend] NOT IMPLEMENTED account:snapshot(0 args) → undefined
+[fake-backend] NOT IMPLEMENTED interaction:replayPending(0 args) → undefined
+[fake-backend] NOT IMPLEMENTED app:update:get(0 args) → undefined
+[fake-backend] NOT IMPLEMENTED engine:llmRouteReadiness(1 args) → undefined
+[fake-backend] NOT IMPLEMENTED workflowSubmit:eligibility(0 args) → undefined
+[fake-backend] NOT IMPLEMENTED quickstart:catalog(0 args) → undefined
