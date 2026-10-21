@@ -16,4 +16,5 @@ export function mouseMove(cdp: Cdp, x: number, y: number): Promise<void>;
 export function typeText(cdp: Cdp, text: string): Promise<void>;
 export function pressKey(cdp: Cdp, key: string, o?: { code?: string; keyCode?: number; modifiers?: number; text?: string }): Promise<void>;
 export function dropFiles(cdp: Cdp, x: number, y: number, files: string[]): Promise<void>;
+export function dragElement(cdp: Cdp, from: { x: number; y: number }, to: { x: number; y: number }, o?: { steps?: number }): Promise<any>;
 export function screenshot(cdp: Cdp): Promise<Buffer>;

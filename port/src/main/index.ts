@@ -25,6 +25,15 @@ const UI_E2E = process.env.VIDEOCLAW_PORT_UI_E2E === "1";
 const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1" && !UI_E2E; // PORT-NEW
 /** PORT-NEW: append every session:event / permission:request push (redacted JSONL) — evidence capture. */
 const EVENT_LOG = process.env.VIDEOCLAW_PORT_EVENT_LOG;
+/** PORT-NEW docs/26: evidence of which invoke channels the ORIGINAL renderer called (UI-e2e). One redacted
+ *  JSONL row per call: channel, real/fake, outcome, ms and a short redacted shape of the args/result. */
+const IPC_LOG = process.env.VIDEOCLAW_PORT_IPC_LOG;
+function shapeOf(v: unknown): string { try { return redactText(JSON.stringify(v, (_k, x) => (x instanceof ArrayBuffer || ArrayBuffer.isView(x) ? `<bytes ${(x as ArrayBuffer).byteLength}>` : x)) ?? "undefined").slice(0, 300); } catch { return "<unserializable>"; } }
+async function logInvoke(ch: string, real: boolean, args: unknown[], run: (a: unknown[]) => unknown): Promise<unknown> {
+  const t0 = Date.now();
+  const row = (o: Record<string, unknown>) => { try { appendFileSync(IPC_LOG!, JSON.stringify({ t: new Date().toISOString(), ch, real, ms: Date.now() - t0, args: shapeOf(args), ...o }) + "\n"); } catch {} };
+  try { const r = await run(args); row({ ok: true, result: shapeOf(r) }); return r; } catch (e) { row({ ok: false, error: redactText(String((e as Error)?.message ?? e)).slice(0, 300) }); throw e; }
+}
 
 // docs/22 M3: original L60356 — vcmedia:// is a privileged, streamable, CSP-bypassing scheme
 protocol.registerSchemesAsPrivileged([VCMEDIA_SCHEME as any]);
@@ -46,7 +55,8 @@ function registerIpc() {
   const real = createRealHandlers(push as typeof sendToRenderer, log);
   for (const ch of INVOKE_CHANNELS) {
     const h = real[ch as InvokeChannel];
-    ipc.handle(ch, (_e: unknown, ...args: unknown[]) => (h ? h(...args) : backend.invoke(ch as InvokeChannel, args)));
+    const run = (args: unknown[]) => (h ? h(...args) : backend.invoke(ch as InvokeChannel, args));
+    ipc.handle(ch, (_e: unknown, ...args: unknown[]) => (IPC_LOG ? logInvoke(ch, !!h, args, run) : run(args)));
   }
   log(`[port] real (ported) handlers: ${Object.keys(real).join(", ")}`);
   // PORT-NEW channels (docs/17 §5) — not part of the original contract

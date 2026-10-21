@@ -81,3 +81,26 @@ export async function screenshot(cdp) {
   const r = await cdp.send("Page.captureScreenshot", { format: "png" });
   return Buffer.from(r.data, "base64");
 }
+/** docs/26: a REAL drag of a renderer element. Drags are intercepted (Input.setInterceptDrags) so the page's
+ *  own dragstart handler fills the DataTransfer (e.g. the original sidebar's custom MIME
+ *  application/x-videoclaw-video); that exact drag data is then delivered at `to` with dragEnter → dragOver →
+ *  drop, so the page's dragover/drop handlers run as they would for an OS drag. Returns the intercepted data. */
+export async function dragElement(cdp, from, to, { steps = 8 } = {}) {
+  await cdp.send("Input.setInterceptDrags", { enabled: true });
+  let off = () => {};
+  const got = new Promise((res) => { off = cdp.on("Input.dragIntercepted", (p) => res(p.data)); setTimeout(() => res(null), 5000); });
+  await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x, y: from.y });
+  await cdp.send("Input.dispatchMouseEvent", { type: "mousePressed", x: from.x, y: from.y, button: "left", buttons: 1, clickCount: 1 });
+  for (let i = 1; i <= steps; i++) {
+    await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: from.x + ((to.x - from.x) * i) / (steps * 2), y: from.y + ((to.y - from.y) * i) / (steps * 2), button: "left", buttons: 1 });
+  }
+  const data = await got; off();
+  await cdp.send("Input.setInterceptDrags", { enabled: false });
+  if (data) {
+    await cdp.send("Input.dispatchDragEvent", { type: "dragEnter", x: to.x, y: to.y, data });
+    await cdp.send("Input.dispatchDragEvent", { type: "dragOver", x: to.x, y: to.y, data });
+    await cdp.send("Input.dispatchDragEvent", { type: "drop", x: to.x, y: to.y, data });
+  }
+  await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: to.x, y: to.y, button: "left", buttons: 0, clickCount: 1 });
+  return data;
+}
