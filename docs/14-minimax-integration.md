@@ -86,6 +86,7 @@ curl https://api.minimaxi.com/anthropic/v1/messages \
 ### 2.3 OpenAI 兼容（备用，不作为主路径）
 
 `POST https://api.minimaxi.com/v1/chat/completions`（官方文档 host 为 `api.minimax.cn` / `api.minimax.io`），`Authorization: Bearer`，图片用 `{"type":"image_url","image_url":{"url":"data:image/png;base64,..."}}`，思考深度字段为 `reasoning_effort`，思考内容在 `message.reasoning_content`。另有 OpenAI Responses 兼容端点（Codex `wire_api: "responses"` 理论上可用，未实测）。
+> **2026-10-21 实测（docs/15 §0）**：OpenAI 兼容 chat 端点 `https://api.minimaxi.com/v1` 已通过通用框架（`openai-chat-completions`，`chatMaxTokensField: "max_completion_tokens"`，Bearer）发过 1 次带 base64 PNG 的请求，返回正确。配置见 `port/config/llm-providers.example.json` 的 `minimax-openai`（与内置 `minimax` preset 共用 `MINIMAX_API_KEY`；并发闸门按 key env 共享、取最小 `max`，所以两者同时启用时账号级并发仍为 1）。内置 preset 仍走 Anthropic 兼容端点，行为未变。
 
 ### 2.4 错误码 / 限流
 
