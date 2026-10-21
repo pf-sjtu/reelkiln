@@ -1,0 +1,82 @@
+{
+ "phase": "codex",
+ "started": "2026-10-21T16:49:38.719Z",
+ "steps": {
+  "studio_tool_on_route": {
+   "ok": false,
+   "error": "timeout waiting for Remembered something"
+  },
+  "usage_display": {
+   "ok": false,
+   "metered": [
+    {
+     "meter": "proxy",
+     "totalUsd": 0.005819742,
+     "runtimeUsd": 0.005819742,
+     "sdkEstimateUsd": 0,
+     "sources": "\"models.dev:minimax-cn/MiniMax-M3.1-Flash\""
+    }
+   ],
+   "proxyRequestLogs": 1,
+   "chip": "$0.01 spent",
+   "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\nUnlimited for this video · account limits still apply",
+   "displayedTotalCostUsd": 0.005819742,
+   "reasoningRow": "0.01",
+   "expectedReasoningRow": "0.01",
+   "spend": null
+  }
+ },
+ "code": "VCBEKI7",
+ "landing": "home",
+ "session": {
+  "sessionId": "ee096175-6192-45d4-894c-b35ec30b995e",
+  "llmRoute": null,
+  "agentHarness": "codex-app-server",
+  "codexProvider": "chatgpt"
+ },
+ "usage": {
+  "metered": [
+   {
+    "meter": "proxy",
+    "totalUsd": 0.005819742,
+    "runtimeUsd": 0.005819742,
+    "sdkEstimateUsd": 0,
+    "sources": "\"models.dev:minimax-cn/MiniMax-M3.1-Flash\""
+   }
+  ],
+  "proxyRequestLogs": 1,
+  "chip": "$0.01 spent",
+  "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\nUnlimited for this video · account limits still apply",
+  "displayedTotalCostUsd": 0.005819742,
+  "reasoningRow": "0.01",
+  "expectedReasoningRow": "0.01",
+  "spend": null
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": false,
+ "finished": "2026-10-21T16:55:44.760Z"
+}

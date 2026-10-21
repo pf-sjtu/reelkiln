@@ -1,0 +1,144 @@
+{
+ "phase": "codex",
+ "started": "2026-10-21T16:18:47.731Z",
+ "steps": {
+  "studio_tool_on_route": {
+   "ok": false,
+   "sessionId": "affa0bf3-3a32-419c-968d-f53aebaec7cb",
+   "llmRoute": null,
+   "agentHarness": "codex-app-server",
+   "codexProvider": "chatgpt",
+   "tools": [
+    "provider_dynamic",
+    "provider_dynamic",
+    "provider_dynamic",
+    "provider_dynamic",
+    "provider_dynamic"
+   ],
+   "notice": "Remembered something\n片尾统一使用白色字幕\nEdit\nUndo",
+   "onDisk": true,
+   "result": {
+    "kind": "result",
+    "isError": false,
+    "totalCostUsd": 0.008106128,
+    "numTurns": 1,
+    "durationMs": 13947
+   }
+  },
+  "usage_display": {
+   "ok": false,
+   "metered": [
+    {
+     "meter": "proxy",
+     "totalUsd": 0.008106128,
+     "runtimeUsd": 0.008106128,
+     "sdkEstimateUsd": 0,
+     "sources": "\"models.dev:minimax-cn/MiniMax-M3.1-Flash\""
+    }
+   ],
+   "proxyRequestLogs": 0,
+   "chip": "$0.01 spent",
+   "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\n$0.01 in progress · paid work allowed",
+   "displayedTotalCostUsd": 0,
+   "spend": {
+    "sessionId": "affa0bf3-3a32-419c-968d-f53aebaec7cb",
+    "accountingEpoch": 1,
+    "policy": "unlimited_for_video",
+    "coveredPlans": [],
+    "committedCents": 0,
+    "reservedCents": 0,
+    "provisionalLlmCents": 1,
+    "provisionalLlmRevision": 1,
+    "nextGatewayReconciliationSequence": 1,
+    "lastAppliedGatewayReconciliationSequence": 0,
+    "gatewayReservedCents": 0,
+    "committedUnknownSpend": false,
+    "pendingReservations": []
+   }
+  }
+ },
+ "code": "VC4IHID",
+ "landing": "home",
+ "session": {
+  "sessionId": "affa0bf3-3a32-419c-968d-f53aebaec7cb",
+  "llmRoute": null,
+  "agentHarness": "codex-app-server",
+  "codexProvider": "chatgpt"
+ },
+ "tool": {
+  "tools": [
+   "provider_dynamic",
+   "provider_dynamic",
+   "provider_dynamic",
+   "provider_dynamic",
+   "provider_dynamic"
+  ],
+  "notice": "Remembered something\n片尾统一使用白色字幕\nEdit\nUndo",
+  "onDisk": true,
+  "result": {
+   "kind": "result",
+   "isError": false,
+   "totalCostUsd": 0.008106128,
+   "numTurns": 1,
+   "durationMs": 13947
+  }
+ },
+ "usage": {
+  "metered": [
+   {
+    "meter": "proxy",
+    "totalUsd": 0.008106128,
+    "runtimeUsd": 0.008106128,
+    "sdkEstimateUsd": 0,
+    "sources": "\"models.dev:minimax-cn/MiniMax-M3.1-Flash\""
+   }
+  ],
+  "proxyRequestLogs": 0,
+  "chip": "$0.01 spent",
+  "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\n$0.01 in progress · paid work allowed",
+  "displayedTotalCostUsd": 0,
+  "spend": {
+   "sessionId": "affa0bf3-3a32-419c-968d-f53aebaec7cb",
+   "accountingEpoch": 1,
+   "policy": "unlimited_for_video",
+   "coveredPlans": [],
+   "committedCents": 0,
+   "reservedCents": 0,
+   "provisionalLlmCents": 1,
+   "provisionalLlmRevision": 1,
+   "nextGatewayReconciliationSequence": 1,
+   "lastAppliedGatewayReconciliationSequence": 0,
+   "gatewayReservedCents": 0,
+   "committedUnknownSpend": false,
+   "pendingReservations": []
+  }
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": false,
+ "finished": "2026-10-21T16:20:11.491Z"
+}
