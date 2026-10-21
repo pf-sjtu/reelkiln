@@ -1,0 +1,33 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  },
+  {
+   "clientId": "s1-ui-e2e",
+   "name": "M8 \u9879\u76ee 0133"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "199f47c2-fe51-4794-baa0-434c37e87d4b",
+   "title": "M8 \u91cd\u547d\u540d 19743",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792577560599,
+   "clientId": "s1-ui-e2e",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "manual",
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-199f47",
+   "sdkSessionId": "ae09475f-473b-4220-89ee-15c987ac4e6a",
+   "finalizedAtMs": 1792577893287,
+   "interruptedAtMs": 1792577969637,
+   "interruptedFromStatus": "running"
+  }
+ ],
+ "trashWorkspaces": []
+}

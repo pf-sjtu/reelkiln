@@ -1,0 +1,67 @@
+{
+ "started": "2026-10-21T10:23:35.125Z",
+ "mode": "AppImage",
+ "disk": {
+  "sessionId": "199f47c2-fe51-4794-baa0-434c37e87d4b",
+  "title": "M8 重命名 95522",
+  "sdkSessionId": "ae09475f-473b-4220-89ee-15c987ac4e6a",
+  "sdkTranscript": true,
+  "sdkRows": 175,
+  "assistantTexts": 7,
+  "toolUses": 34,
+  "displayRows": 2,
+  "typedPrefix": "我有三段短素材和一段配乐。帮我做一个 6.5 秒"
+ },
+ "steps": {
+  "history_replay": {
+   "ok": true,
+   "want": {
+    "typed": "我有三段短素材和一段配乐。帮我做一个 6.5 秒",
+    "assistant": "Locked: A only, at both projec"
+   },
+   "typedVisible": true,
+   "waitedMs": 1576,
+   "dom": {
+    "toolRows": 15,
+    "userBubbles": 6,
+    "versionPills": 2
+   },
+   "replayed": [
+    {
+     "ts": "2026-10-21T10:23:35.124Z",
+     "level": "info",
+     "event": "agent.history.replayed",
+     "component": "agent-host",
+     "sessionId": "199f47c2-fe51-4794-baa0-434c37e87d4b",
+     "sdkMessages": 97,
+     "displayRows": 2,
+     "events": 77
+    }
+   ]
+  },
+  "session_rename": {
+   "ok": true,
+   "newTitle": "M8 重命名 19743",
+   "disk": {
+    "title": "M8 重命名 19743",
+    "titleOrigin": "manual"
+   },
+   "inDom": true
+  },
+  "client_rename": {
+   "ok": true,
+   "newName": "M8 项目 0133",
+   "onDisk": true,
+   "inDom": true
+  }
+ },
+ "landing": "restored-active-video",
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "allPass": true,
+ "finished": "2026-10-21T10:23:41.319Z"
+}

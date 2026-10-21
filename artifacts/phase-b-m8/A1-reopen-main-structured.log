@@ -1,0 +1,2 @@
+{"ts":"2026-10-21T10:23:34.663Z","level":"info","event":"llm.runtime.ready","component":"llm-runtime","route":"minimax","providers":["minimax"],"watching":null}
+{"ts":"2026-10-21T10:23:35.124Z","level":"info","event":"agent.history.replayed","component":"agent-host","sessionId":"199f47c2-fe51-4794-baa0-434c37e87d4b","sdkMessages":97,"displayRows":2,"events":77}

@@ -1,0 +1,15 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "beats": [
+    {"name": "b1_a", "source": "footage/clip_a_v.mp4", "in": 0.5, "out": 3.0, "role": "hook"},
+    {"name": "b2_b", "source": "footage/clip_b_v.mp4", "in": 0.0, "out": 2.0, "role": "broll"},
+    {"name": "b3_c", "source": "footage/clip_c_v.mp4", "in": 0.5, "out": 2.5, "role": "broll"}
+  ],
+  "audio": {
+    "from_beats": false,
+    "bed": {"source": "audio/music.mp3"}
+  },
+  "output": "final_raw.mp4"
+}

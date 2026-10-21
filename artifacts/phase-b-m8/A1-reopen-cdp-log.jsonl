@@ -1,0 +1,43 @@
+{"t":40,"note":"disk {\"sessionId\":\"199f47c2-fe51-4794-baa0-434c37e87d4b\",\"title\":\"M8 重命名 95522\",\"sdkSessionId\":\"ae09475f-473b-4220-89ee-15c987ac4e6a\",\"sdkTranscript\":true,\"sdkRows\":175,\"assistantTexts\":7,\"toolUses\":34,\"displayRows\":2,\"typedPrefix\":\"我有三段短素材和一段配乐。帮我做一个 6.5 秒\"}"}
+{"t":4305,"cdp":"Page.enable","params":{}}
+{"t":4363,"cdp":"Runtime.enable","params":{}}
+{"t":4687,"note":"landing restored-active-video"}
+{"t":6012,"action":"click","desc":"sidebar Quickstarts","selector":"button.quickstart-entry","at":{"x":126,"y":119},"element":{"x":9,"y":103,"width":233,"height":31,"label":"Quickstarts"}}
+{"t":6012,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":119}}
+{"t":6026,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":6028,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":7587,"action":"click","desc":"prior video in sidebar","selector":"button.session","at":{"x":132,"y":310},"element":{"x":21,"y":294,"width":221,"height":31,"label":"M8 重命名 95522"}}
+{"t":7587,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":310}}
+{"t":7591,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":7593,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":9181,"note":"STEP history_replay: PASS {\"want\":{\"typed\":\"我有三段短素材和一段配乐。帮我做一个 6.5 秒\",\"assistant\":\"Locked: A only, at both projec\"},\"typedVisible\":true,\"waitedMs\":1576,\"dom\":{\"toolRows\":15,\"userBubbles\":6,\"versionPills\":2},\"replayed\":[{\"ts\":\"2026-10-21T10:23:35.124Z\",\"level\":\"info\",\"event\":\"agent.history.replayed\",\"component\":\"agent-host\",\"sessionId\":\"199f47c2-fe51-4794-baa0-434c37e87d4b\",\"sdkMessages\":97,\"displayRows\":2,\"events\":77}]}"}
+{"t":9182,"action":"click","desc":"double-click video row","selector":"button.session.active","at":{"x":132,"y":310},"element":{"x":21,"y":294,"width":221,"height":31,"label":"M8 重命名 95522"}}
+{"t":9182,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":310}}
+{"t":9183,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":9185,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":310,"button":"left","clickCount":1}}
+{"t":9186,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":132,"y":310}}
+{"t":9190,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":132,"y":310,"button":"left","clickCount":2}}
+{"t":9191,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":132,"y":310,"button":"left","clickCount":2}}
+{"t":9198,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":9199,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":9200,"cdp":"Input.insertText","params":{"text":"M8 重命名 19743"}}
+{"t":9204,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":9209,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":9571,"note":"STEP session_rename: PASS {\"newTitle\":\"M8 重命名 19743\",\"disk\":{\"title\":\"M8 重命名 19743\",\"titleOrigin\":\"manual\"},\"inDom\":true}"}
+{"t":9573,"action":"click","desc":"project actions","selector":"summary.client-new-chat","at":{"x":199,"y":278},"element":{"x":186,"y":265.5,"width":25,"height":25,"label":"Project actions for M8 项目 5934"}}
+{"t":9573,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":278}}
+{"t":9876,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":199,"y":278}}
+{"t":9878,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":199,"y":278,"button":"left","clickCount":1}}
+{"t":9880,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":199,"y":278,"button":"left","clickCount":1}}
+{"t":10358,"action":"click","desc":"Rename project","selector":"details.client-menu[open] .client-menu-options button","at":{"x":146,"y":310},"element":{"x":86,"y":295.5,"width":120,"height":28,"label":"Rename"}}
+{"t":10358,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":146,"y":310}}
+{"t":10361,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":146,"y":310,"button":"left","clickCount":1}}
+{"t":10363,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":146,"y":310,"button":"left","clickCount":1}}
+{"t":10374,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":10377,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":10377,"cdp":"Input.insertText","params":{"text":"M8 项目 0133"}}
+{"t":10379,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":10380,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":10757,"note":"STEP client_rename: PASS {\"newName\":\"M8 项目 0133\",\"onDisk\":true,\"inDom\":true}"}
+{"t":10921,"note":"app exited 0"}
+{"t":11043,"note":"DONE allPass=true"}
