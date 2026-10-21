@@ -2,13 +2,17 @@
 // Drives the REAL renderer → preload (window.videoclaw) → ipcMain path from inside the page
 // via webContents.executeJavaScript, so every call crosses the same IPC boundary the UI uses.
 // Optional: VIDEOCLAW_PORT_SMOKE_SESSION + VIDEOCLAW_PORT_SMOKE_JOB select an editorRender job.
-export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: string; renderTimeoutMs: number }): string {
+// Optional (PORT-NEW, docs/15): VIDEOCLAW_PORT_SMOKE_LLM_ROUTE=<route> → settings:set({llmRoute}) + readiness.
+export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: string; renderTimeoutMs: number; llmRoute?: string }): string {
   return `(async () => {
     const api = window.videoclaw; const out = [];
     const rec = async (name, fn) => { const t0 = Date.now(); try { const v = await fn(); out.push({ name, ok: true, ms: Date.now() - t0, value: v }); return v; } catch (e) { out.push({ name, ok: false, ms: Date.now() - t0, error: String(e && e.message || e) }); } };
     out.push({ name: "preload", ok: !!api, value: api ? Object.keys(api).length : 0 });
     await rec("media:voiceDictationStatus", () => api.voiceDictationStatus());
     await rec("session:list", () => api.listSessions());
+    await rec("settings:get", () => api.getSettings());
+    ${o.llmRoute ? `await rec("settings:set(llmRoute)", () => api.setSettings({ llmRoute: ${JSON.stringify(o.llmRoute)} }));` : ""}
+    await rec("engine:llmRouteReadiness", () => api.llmRouteReadiness(undefined));
     ${o.runBootstrap ? `await rec("bootstrap:run", () => api.bootstrapRun());` : ""}
     ${o.session && o.job ? `
     const events = [];

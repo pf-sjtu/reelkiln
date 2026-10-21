@@ -13,6 +13,9 @@
 //                                      SessionRegistry over userData/sessions.json (no agent runtime).
 //   editorRender getSession          — original liveSession L62403 → SessionRegistry.liveSession;
 //   editorRender resolveEngine       — original resolveEditorRenderEngine + engineSessionEnv L9380.
+//   settings:get / settings:set /    — original Settings (L5291) + setSettings (L61680) + host.llmRouteReadiness
+//   engine:llmRouteReadiness           (L51052) with PORT-NEW custom-provider routes (docs/15 §3.4) — llm-runtime.ts.
+//                                      PORT-NEW opt-out: VIDEOCLAW_PORT_FAKE_SETTINGS=1 keeps the QA fixtures.
 import { app, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -28,6 +31,7 @@ import { assertEngineMoneyCompatibility } from "./engine/money-compat.generated"
 import { validateEngineSessionContext } from "./engine/session-context.generated";
 import { assertInstalledEngineProductionContract, inspectInstalledEngineProductionContract } from "./engine/production-contract.generated";
 import { bootstrapTool, killTree, resolveBootstrapToolRoots } from "./platform";
+import { createLlmRuntime } from "./llm-runtime";
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
@@ -106,5 +110,19 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     "session:list": () => registry.listSessions(),
   };
   if (process.env[PORT_REAL_BOOTSTRAP_ENV] === "1") handlers["bootstrap:run"] = () => core.runAll();
+  if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1") {
+    try {
+      const llm = createLlmRuntime({
+        userData: app.getPath("userData"),
+        sessionMeta: (id) => registry.sessions.get(id)?.meta as any,
+        onLlmRouteChanged: () => log("[port] llmRoute changed — AgentHost.onLlmRouteChanged (runtime teardown) NOT PORTED"),
+      });
+      Object.assign(handlers, llm.handlers);
+      app.on("will-quit", () => llm.dispose());
+    } catch (e) {
+      // graceful degradation: the fake settings fixtures stay in place
+      log(`[port] LLM runtime failed to start, settings stay on the fake backend: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
   return handlers;
 }

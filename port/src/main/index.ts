@@ -62,6 +62,7 @@ function createWindow() {
           session: process.env.VIDEOCLAW_PORT_SMOKE_SESSION,
           job: process.env.VIDEOCLAW_PORT_SMOKE_JOB,
           renderTimeoutMs: 10 * 60_000,
+          llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE,
         }));
         for (const r of results) log(`[smoke] ${JSON.stringify(r).slice(0, 1500)}`);
         const failed = results.filter((r: any) => !r.ok).map((r: any) => r.name);
