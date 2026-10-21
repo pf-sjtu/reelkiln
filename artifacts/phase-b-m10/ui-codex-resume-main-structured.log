@@ -1,0 +1,5 @@
+{"ts":"2026-10-21T12:19:22.481Z","level":"info","event":"llm.runtime.ready","component":"llm-runtime","route":"minimax","providers":["minimax"],"watching":null}
+{"ts":"2026-10-21T12:19:29.737Z","level":"info","event":"agent_proxy.started","component":"agent-gate-proxy","provider":"minimax-codex","port":35263,"maxConcurrency":1,"surface":"openai"}
+{"ts":"2026-10-21T12:19:29.744Z","level":"info","event":"agent.runtime.started","component":"agent-host","sessionId":"3e497c84-b2e5-4313-aa8c-05b36e00674a","harness":"codex-app-server","codexProvider":"chatgpt","model":"MiniMax-M3.1-Flash","effort":"high","resumed":true,"engine":true}
+{"ts":"2026-10-21T12:19:29.745Z","level":"info","event":"agent.turn.delivered","component":"agent-host","sessionId":"3e497c84-b2e5-4313-aa8c-05b36e00674a","resumed":true,"sdkSessionId":"01a15e66-b57d-7b91-9f1e-2c5ddfe48b33"}
+{"ts":"2026-10-21T12:19:31.460Z","level":"info","event":"agent.runtime.closed","component":"agent-host","sessionId":"3e497c84-b2e5-4313-aa8c-05b36e00674a","reason":"stream-ended","gateProxy":{"requests":1,"rejected":0,"maxInflight":1,"inflight":0,"structuredEmulated":0,"structuredJsonOk":0}}

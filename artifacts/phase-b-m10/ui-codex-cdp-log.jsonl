@@ -1,0 +1,78 @@
+{"t":854,"cdp":"Page.enable","params":{}}
+{"t":967,"cdp":"Runtime.enable","params":{}}
+{"t":2286,"note":"landing restored"}
+{"t":2399,"action":"click","desc":"profile button","selector":"button.profile-button","at":{"x":126,"y":778},"element":{"hitOk":true,"hit":"SPAN.profile-copy","x":9,"y":756,"width":233,"height":44,"label":"Your account\nLocal studio"}}
+{"t":2399,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":778}}
+{"t":2413,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":2415,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":2828,"action":"click","desc":"Settings","selector":"button[role='menuitem']","at":{"x":126,"y":609},"element":{"hitOk":true,"hit":"BUTTON.","x":16,"y":594.40625,"width":219,"height":30,"label":"Settings"}}
+{"t":2828,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":609}}
+{"t":2831,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":609,"button":"left","clickCount":1}}
+{"t":2832,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":609,"button":"left","clickCount":1}}
+{"t":2896,"action":"click","desc":"Agent & models nav","selector":"button","at":{"x":283,"y":186},"element":{"hitOk":true,"hit":"BUTTON.","x":193,"y":169,"width":180,"height":33,"label":"Agent & models"}}
+{"t":2896,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":283,"y":186}}
+{"t":2912,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":283,"y":186,"button":"left","clickCount":1}}
+{"t":2913,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":283,"y":186,"button":"left","clickCount":1}}
+{"t":3596,"action":"click","desc":"Codex radio","selector":"button.llm-route-option","at":{"x":738,"y":319},"element":{"hitOk":true,"hit":"SPAN.","x":414,"y":276.6875,"width":648,"height":83.9375,"label":"Codex\nOpenAI’s coding agent, with VideoClaw’s video tools and approval controls."}}
+{"t":3596,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":738,"y":319}}
+{"t":3599,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":738,"y":319,"button":"left","clickCount":1}}
+{"t":3600,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":738,"y":319,"button":"left","clickCount":1}}
+{"t":4793,"action":"click","desc":"Cancel (keep this video)","selector":"button","at":{"x":668,"y":459},"element":{"hitOk":true,"hit":"BUTTON.remove-cancel","x":633.078125,"y":443.2109375,"width":70.515625,"height":31,"label":"Cancel"}}
+{"t":4793,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":668,"y":459}}
+{"t":4795,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":668,"y":459,"button":"left","clickCount":1}}
+{"t":4796,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":668,"y":459,"button":"left","clickCount":1}}
+{"t":5402,"note":"STEP select_codex_harness: PASS {\"codexStatus\":[\"{\\\"available\\\":true,\\\"authenticated\\\":true,\\\"mode\\\":\\\"external\\\"}\",\"{\\\"available\\\":true,\\\"authenticated\\\":true,\\\"mode\\\":\\\"external\\\"}\"],\"setSettings\":[\"[{\\\"agentHarness\\\":\\\"codex-app-server\\\"}]\"]}"}
+{"t":5405,"action":"click","desc":"profile button","selector":"button.profile-button","at":{"x":126,"y":778},"element":{"hitOk":true,"hit":"SPAN.profile-copy","x":9,"y":756,"width":233,"height":44,"label":"Your account\nLocal studio"}}
+{"t":5405,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":778}}
+{"t":5407,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":5409,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":5816,"action":"click","desc":"Settings","selector":"button[role='menuitem']","at":{"x":126,"y":609},"element":{"hitOk":true,"hit":"BUTTON.","x":16,"y":594.40625,"width":219,"height":30,"label":"Settings"}}
+{"t":5816,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":609}}
+{"t":5818,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":609,"button":"left","clickCount":1}}
+{"t":5819,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":609,"button":"left","clickCount":1}}
+{"t":5884,"action":"click","desc":"Agent & models nav","selector":"button","at":{"x":283,"y":186},"element":{"hitOk":true,"hit":"BUTTON.","x":193,"y":169,"width":180,"height":33,"label":"Agent & models"}}
+{"t":5884,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":283,"y":186}}
+{"t":5898,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":283,"y":186,"button":"left","clickCount":1}}
+{"t":5900,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":283,"y":186,"button":"left","clickCount":1}}
+{"t":7980,"saveButton":{"disabled":false,"text":"Use for new videos"}}
+{"t":8953,"action":"click","desc":"Use for new videos","selector":"button.am-save","at":{"x":487,"y":440},"element":{"hitOk":true,"hit":"BUTTON.am-save","x":414,"y":423.625,"width":146.53125,"height":33,"label":"Use for new videos"}}
+{"t":8953,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":487,"y":440}}
+{"t":8955,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":487,"y":440,"button":"left","clickCount":1}}
+{"t":8957,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":487,"y":440,"button":"left","clickCount":1}}
+{"t":9925,"note":"STEP codex_provider_model: PASS {\"options\":[{\"v\":\"\",\"t\":\"Codex default (MiniMax-M3.1-Flash)\",\"d\":false},{\"v\":\"MiniMax-M3.1-Flash\",\"t\":\"MiniMax-M3.1-Flash\",\"d\":false},{\"v\":\"MiniMax-M3\",\"t\":\"MiniMax-M3\",\"d\":false},{\"v\":\"MiniMax-M2.7\",\"t\":\"MiniMax-M2.7\",\"d\":false},{\"v\":\"MiniMax-M2.7-highspeed\",\"t\":\"MiniMax-M2.7-highspeed\",\"d\":false},{\"v\":\"MiniMax-M2.5\",\"t\":\"MiniMax-M2.5\",\"d\":false},{\"v\":\"MiniMax-M2.5-highspeed\",\"t\":\"MiniMax-M2.5-highspeed\",\"d\":false},{\"v\":\"MiniMax-M2.1\",\"t\":\"MiniMax-M2.1\",\"d\":false},{\"v\":\"MiniMax-M2.1-highspeed\",\"t\":\"MiniMax-M2.1-highspeed\",\"d\":false},{\"v\":\"MiniMax-M2\",\"t\":\"MiniMax-M2\",\"d\":false}],\"models\":[\"{\\"}
+{"t":9925,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":9931,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":10737,"action":"click","desc":"New video in Personal","selector":"button.client-new-chat","at":{"x":227,"y":241},"element":{"hitOk":true,"hit":"svg.[object SVGAnimatedString]","x":214,"y":228,"width":25,"height":25,"label":"New video in Personal"}}
+{"t":10737,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":241}}
+{"t":11040,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":241}}
+{"t":11043,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":11046,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":12129,"note":"STEP codex_new_video: PASS {\"sessionId\":\"3e497c84-b2e5-4313-aa8c-05b36e00674a\",\"agentHarness\":\"codex-app-server\",\"codexProvider\":\"chatgpt\",\"modelOverride\":null,\"llmRoute\":null}"}
+{"t":12132,"action":"click","desc":"model button","selector":"button.model-btn","at":{"x":549,"y":768},"element":{"hitOk":true,"hit":"SPAN.","x":494,"y":756,"width":110.3125,"height":24,"label":"Codex default"}}
+{"t":12132,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":549,"y":768}}
+{"t":12147,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":549,"y":768,"button":"left","clickCount":1}}
+{"t":12148,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":549,"y":768,"button":"left","clickCount":1}}
+{"t":14354,"action":"click","desc":"MiniMax-M3.1-Flash","selector":"div.model-menu button.model-menu-item","at":{"x":651,"y":490},"element":{"hitOk":true,"hit":"BUTTON.model-menu-item ","x":500,"y":475,"width":302.53125,"height":29,"label":"MiniMax-M3.1-Flash\nMiniMax-M3.1-Flash"}}
+{"t":14354,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":651,"y":490}}
+{"t":14362,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":651,"y":490,"button":"left","clickCount":1}}
+{"t":14364,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":651,"y":490,"button":"left","clickCount":1}}
+{"t":15233,"note":"STEP composer_model_pick: PASS {\"items\":[\"Codex default | MiniMax-M3.1-Flash\",\"MiniMax-M3.1-Flash | MiniMax-M3.1-Flash\",\"MiniMax-M3 | MiniMax-M3\",\"MiniMax-M2.7 | MiniMax-M2.7\",\"MiniMax-M2.7-highspeed | MiniMax-M2.7-highspeed\",\"MiniMax-M2.5 | MiniMax-M2.5\",\"MiniMax-M2.5-highspeed | MiniMax-M2.5-highspeed\",\"MiniMax-M2.1 | MiniMax-M2.1\",\"MiniMax-M2.1-highspeed | MiniMax-M2.1-highspeed\",\"MiniMax-M2 | MiniMax-M2\"],\"setModel\":{\"args\":\"[\\\"3e497c84-b2e5-4313-aa8c-05b36e00674a\\\",\\\"MiniMax-M3.1-Flash\\\"]\",\"modelOverride\":\"MiniMax-M3.1-Flash\",\"agentHarness\":\"codex-app-server\"}}"}
+{"t":15235,"action":"click","desc":"effort button","selector":"div.model-picker button.model-btn","at":{"x":678,"y":768},"element":{"hitOk":true,"hit":"SPAN.","x":639.078125,"y":756,"width":77.8125,"height":24,"label":"medium"}}
+{"t":15235,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":678,"y":768}}
+{"t":15237,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":678,"y":768,"button":"left","clickCount":1}}
+{"t":15238,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":678,"y":768,"button":"left","clickCount":1}}
+{"t":15815,"action":"click","desc":"high","selector":"div.model-menu button.model-menu-item","at":{"x":737,"y":683},"element":{"hitOk":true,"hit":"BUTTON.model-menu-item ","x":645.078125,"y":668.21875,"width":184,"height":29,"label":"high"}}
+{"t":15815,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":737,"y":683}}
+{"t":15831,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":737,"y":683,"button":"left","clickCount":1}}
+{"t":15832,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":737,"y":683,"button":"left","clickCount":1}}
+{"t":16711,"note":"STEP composer_effort_pick: PASS {\"items\":[\"low\",\"medium\",\"high\"],\"setEffort\":{\"args\":\"[\\\"3e497c84-b2e5-4313-aa8c-05b36e00674a\\\",\\\"high\\\"]\",\"codexReasoningEffort\":\"high\",\"modelOverride\":\"MiniMax-M3.1-Flash\"}}"}
+{"t":16713,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"hitOk":true,"hit":"TEXTAREA.","x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":16713,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":16729,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":16731,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":16732,"cdp":"Input.insertText","params":{"text":"请用一个只读的 shell 命令（例如 pwd）看一下当前目录，然后只回复：完成 青柠檬-6153。不要写任何文件。"}}
+{"t":16800,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":16801,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":24444,"note":"STEP codex_turn: PASS {\"result\":{\"kind\":\"result\",\"isError\":false,\"totalCostUsd\":0,\"numTurns\":1,\"durationMs\":4019},\"tools\":[{\"toolName\":\"provider_command\",\"summary\":\"provider_command /bin/bash -lc pwd\"}],\"text\":\"完成 青柠檬-6153\",\"meta\":{\"status\":\"idle\",\"agentHarness\":\"codex-app-server\",\"modelOverride\":\"MiniMax-M3.1-Flash\",\"codexReasoningEffort\":\"high\",\"sdkSessionId\":\"01a15e66-b57d-7b91-9f1e-2c5ddfe48b33\"},\"proxyStarted\":1,\"rtStarted\":[\"{\\\"ts\\\":\\\"2026-10-21T12:19:11.776Z\\\",\\\"level\\\":\\\"info\\\",\\\"event\\\":\\\"agent.runtime.started\\\",\\\"component\\\":\\\"agent-host\\\",\\\"sessionId\\\":\\\"3e497c84-b2e5-4313-aa8c-05b36e00674a\\\",\\\"harness\\\""}
+{"t":24511,"note":"app exited 0"}
+{"t":24749,"note":"DONE allPass=true steps=select_codex_harness:ok codex_provider_model:ok codex_new_video:ok composer_model_pick:ok composer_effort_pick:ok codex_turn:ok"}
