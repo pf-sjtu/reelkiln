@@ -7,7 +7,7 @@
 // describeProvider() are the only representations meant for output.
 import { LlmProviderError } from "./errors";
 import { MINIMAX_PRESET, parseProviderConfigs } from "./provider-config";
-import { describeProvider, resolveProviderConfig, type ResolvedProvider } from "./provider-registry";
+import { describeProvider, gateKeyFor, resolveProviderConfig, type ResolvedProvider } from "./provider-registry";
 import { ConcurrencyLimiter, providerGate, resetProviderGatesForTests, withRetry, type RetryOptions } from "./retry";
 
 export const MINIMAX_ROUTE = "minimax" as const;
@@ -26,7 +26,8 @@ export function minimaxConfig(env: NodeJS.ProcessEnv = process.env): MiniMaxConf
 export function describeMiniMaxConfig(mm: MiniMaxConfig | null) { return describeProvider(mm); }
 
 export { ConcurrencyLimiter, LlmProviderError as MiniMaxError, type RetryOptions };
-export const minimaxGate = (mm: Pick<MiniMaxConfig, "maxConcurrency">) => providerGate(MINIMAX_ROUTE, mm.maxConcurrency);
+/** Same account-level gate the generic path uses for MINIMAX_API_KEY (shared with any other provider on that key). */
+export const minimaxGate = (mm: Pick<MiniMaxConfig, "maxConcurrency">) => providerGate(gateKeyFor("MINIMAX_API_KEY"), mm.maxConcurrency);
 export const resetMiniMaxGateForTests = resetProviderGatesForTests;
 /** docs/14 retry behaviour = the preset's policy. */
 export function withMiniMaxRetry(attempt: () => Promise<Response>, o: RetryOptions = {}): Promise<Response> {

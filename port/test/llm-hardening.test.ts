@@ -174,3 +174,28 @@ test("models sync: credentials in a custom URL are never returned/stored; non-ht
     assert.equal(db.counts().models, 0);
   } finally { db.close(); }
 });
+
+test("providers sharing one key env share ONE account-level gate sized by the smallest limit (minimax + minimax-openai)", async () => {
+  setLoggerForTests(createLogger({ level: "silent" }));
+  resetProviderGatesForTests();
+  let inFlight = 0, peak = 0;
+  const s = await server((req, res) => {
+    inFlight++; peak = Math.max(peak, inFlight);
+    setTimeout(() => { inFlight--; res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify(req.url!.includes("chat") ? { choices: [{ message: { content: "c" } }] } : { content: [{ type: "text", text: "a" }] })); }, 40);
+  });
+  try {
+    const reg = loadProviderRegistry({ json: { providers: [
+      { name: "minimax", baseUrl: `${s.url}/anthropic`, concurrency: { max: 2, cap: 2 } },
+      { name: "mm-chat", protocol: "openai-chat-completions", baseUrl: `${s.url}/v1`, apiKeyEnv: "MINIMAX_API_KEY", model: "m", concurrency: { max: 1 } },
+    ] } });
+    const env = { MINIMAX_API_KEY: KEY };
+    const a = resolveHelperCreds({ llmRoute: "minimax", gatewayUrl: "x" }, env, reg)!;
+    const b = resolveHelperCreds({ llmRoute: "mm-chat", gatewayUrl: "x" }, env, reg)!;
+    assert.equal(a.gateKey, "key:MINIMAX_API_KEY");
+    assert.equal(b.gateKey, a.gateKey);
+    assert.equal(a.maxConcurrency, 1);
+    const rs = await Promise.all([a, b, a, b].map((c) => anthropicMessages(c, BODY, { timeoutMs: 5000 })));
+    assert.ok(rs.every((r) => r.ok));
+    assert.equal(peak, 1);
+  } finally { await s.close(); setLoggerForTests(undefined); }
+});

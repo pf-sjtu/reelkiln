@@ -26,6 +26,8 @@ export interface ResolvedProvider {
   maxConcurrency: number;
   retry: RetryPolicy;
   timeoutMs: number;
+  /** Concurrency gate id: one gate per key env var (account-level), see ProviderRegistry.resolve. */
+  gateKey?: string;
   /** openai-chat-completions output-token field (default max_tokens). */
   chatMaxTokensField?: "max_tokens" | "max_completion_tokens";
   modelsDev: { provider: string; model: string };
@@ -61,7 +63,15 @@ export class ProviderRegistry {
   /** Returns null when the key env var is missing/blank (so callers can degrade like the original
    *  gateway branch does without a key). Throws UNKNOWN_PROVIDER for unregistered names. */
   resolve(name: string, env: NodeJS.ProcessEnv = process.env): ResolvedProvider | null {
-    return resolveProviderConfig(this.require(name), env);
+    const c = this.require(name);
+    const r = resolveProviderConfig(c, env);
+    if (!r) return r;
+    // Providers sharing one key env var share ONE account-level gate (gateKey); its size is the
+    // smallest limit any of them declares, so adding a second endpoint for the same key (e.g.
+    // minimax + minimax-openai) can never raise the account's concurrency.
+    let max = r.maxConcurrency;
+    for (const o of this.configs) if (o.name !== c.name && o.apiKeyEnv === c.apiKeyEnv) max = Math.min(max, resolveNonSecretFields(o, env).maxConcurrency);
+    return { ...r, maxConcurrency: max };
   }
   /** Like resolve() but a missing key is a typed KEY_MISSING error. */
   resolveOrThrow(name: string, env: NodeJS.ProcessEnv = process.env): ResolvedProvider {
@@ -82,6 +92,9 @@ export class ProviderRegistry {
     });
   }
 }
+
+/** Account-level concurrency gate id for a key env var. */
+export const gateKeyFor = (apiKeyEnv: string): string => `key:${apiKeyEnv}`;
 
 const warned = new Set<string>();
 function warnOnce(event: string, fields: Record<string, unknown>): void {
@@ -135,7 +148,7 @@ export function resolveProviderConfig(c: ProviderConfig, env: NodeJS.ProcessEnv 
     name: c.name, protocol: c.protocol, baseUrl, auth: c.auth, keyEnv: c.apiKeyEnv, key, model,
     aliases: { opus: a.opus ?? model, sonnet: a.sonnet ?? model, haiku: a.haiku ?? model, smallFast: a.smallFast ?? model, subagent: a.subagent ?? model },
     defaultParams: c.defaultParams, headers: c.headers, ...(c.agentEffort ? { agentEffort: c.agentEffort } : {}),
-    maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs, chatMaxTokensField: c.chatMaxTokensField,
+    maxConcurrency, retry: c.retry, timeoutMs: c.timeoutMs, chatMaxTokensField: c.chatMaxTokensField, gateKey: gateKeyFor(c.apiKeyEnv),
     modelsDev: { provider: c.modelsDev.provider ?? c.name, model: c.modelsDev.model ?? model },
   };
 }

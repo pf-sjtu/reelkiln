@@ -139,6 +139,8 @@ export interface HelperCreds {
   keyEnv?: string;
   timeoutMs?: number;
   chatMaxTokensField?: "max_tokens" | "max_completion_tokens";
+  /** Concurrency gate id (one per key env var); defaults to the provider name. */
+  gateKey?: string;
 }
 export interface HelperCfg { llmRoute?: unknown; gatewayUrl: string; gatewayKey?: string }
 
@@ -147,6 +149,7 @@ export function helperCredsForProvider(p: ResolvedProvider): HelperCreds {
     url: endpointUrl(p.protocol, p.baseUrl), headers: requestHeaders(p), model: p.model, provider: p.name, protocol: p.protocol,
     maxConcurrency: p.maxConcurrency, retry: p.retry, defaultParams: p.defaultParams, keyEnv: p.keyEnv, timeoutMs: p.timeoutMs,
     ...(p.chatMaxTokensField ? { chatMaxTokensField: p.chatMaxTokensField } : {}),
+    ...(p.gateKey ? { gateKey: p.gateKey } : {}),
   };
 }
 
@@ -255,7 +258,7 @@ export async function anthropicMessages(creds: HelperCreds, body: Record<string,
   const t0 = Date.now();
   try {
     const res = isProvider
-      ? await providerGate(creds.provider!, creds.maxConcurrency ?? 1).run(() => withRetry(once, creds.retry, {
+      ? await providerGate(creds.gateKey ?? creds.provider!, creds.maxConcurrency ?? 1).run(() => withRetry(once, creds.retry, {
         ...opts.retry,
         signal: overall.signal,
         onRetry: (i) => { log.warn("llm.retry", i); opts.retry?.onRetry?.(i); },
