@@ -16,7 +16,7 @@
 //     bundled catalog is served. trustedKeys is therefore never consulted ({} here).
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { beginQuickstartLatency, QuickstartCatalogStore, sameQuickstartCatalogView } from "./quickstart-catalog.generated";
+import { beginQuickstartLatency, milestoneDurationMs, quickstartLatencyMark, QuickstartCatalogStore, recordQuickstartLatency, sameQuickstartCatalogView } from "./quickstart-catalog.generated";
 
 export interface QuickstartDeps {
   packaged: boolean;
@@ -28,6 +28,10 @@ export interface QuickstartDeps {
   gatewayUrl?: () => string | undefined;
   push: (channel: string, ...a: unknown[]) => unknown;
   log?: (kind: string, detail: string) => void;
+  /** The original's telemetry outbox (gateway beacons). The port has none → `outbox?.enqueue` is the
+   *  original's own no-outbox branch (docs/25: the local latency ring is still recorded). */
+  outbox?: { enqueue(kind: string, payload: unknown): void };
+  appVersion?: () => string;
 }
 
 export function quickstartCandidateRoots(d: Pick<QuickstartDeps, "packaged" | "env" | "resourcesPath" | "appPath">): string[] {
@@ -79,5 +83,34 @@ export function createQuickstartCatalog(d: QuickstartDeps): { store: any; handle
     served({ ok: true, path: "warm", source: cached.source });
     return cached;
   };
-  return { store, handlers: { "quickstart:catalog": catalog } };
+  const outbox = d.outbox;
+  // docs/25: original L61250-61293 verbatim (beacon detail built only when an outbox exists)
+  const handlers: Record<string, (...a: any[]) => unknown> = {
+    "quickstart:catalog": catalog,
+    "quickstart:mark": (stage: unknown, durationMs: unknown, journeyId: unknown) => {
+      const mark = quickstartLatencyMark(stage, durationMs, journeyId);
+      recordQuickstartLatency(mark.stage, mark.durationMs, mark.attributes);
+    },
+    "quickstart:impression": (journeyId: any, catalogSha256: unknown, durationMs: unknown) => {
+      const loaded = store.load();
+      if (!/^[0-9a-f-]{36}$/i.test(journeyId) || loaded.catalogSha256 !== catalogSha256) {
+        throw new Error("Invalid Quickstart impression.");
+      }
+      const galleryMs = milestoneDurationMs(durationMs);
+      if (galleryMs !== void 0) {
+        recordQuickstartLatency("gallery_ready", galleryMs, { journeyId, source: loaded.source });
+      }
+      outbox?.enqueue("beacon", { kind: "product-milestone", detail: { event: "starter_gallery_impression", journeyId, app_version: d.appVersion?.(), ...(galleryMs === void 0 ? {} : { duration_ms: galleryMs }), catalog_generation: loaded.generation, source: "quickstart-gallery" } });
+    },
+    "quickstart:previewed": (journeyId: any, starterId: unknown, durationMs: unknown) => {
+      const starter = store.starter(starterId);
+      if (!/^[0-9a-f-]{36}$/i.test(journeyId)) throw new Error("Invalid Quickstart preview.");
+      const previewMs = milestoneDurationMs(durationMs);
+      if (previewMs !== void 0) {
+        recordQuickstartLatency("preview_ready", previewMs, { journeyId });
+      }
+      outbox?.enqueue("beacon", { kind: "product-milestone", detail: { event: "starter_previewed", starter_id: starter.id, starter_version: starter.version, journeyId, ...(previewMs === void 0 ? {} : { duration_ms: previewMs }) } });
+    },
+  };
+  return { store, handlers };
 }

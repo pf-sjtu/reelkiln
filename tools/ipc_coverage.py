@@ -21,10 +21,13 @@ chans = json.loads((R / "artifacts/manifests/ipc-channels.json").read_text())
 src = lambda p: (R / "port/src/main" / p).read_text()
 key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
 assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
-real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts")))
+real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts")))
 real_env = {"bootstrap:run"}
-# docs/24: session:history serves the original's no-SDK-transcript branch ([]); transcript replay is NOT PORTED
-PARTIAL = {"session:history": "no display/SDK transcript replay (historyToEvents over [] only)"}
+# docs/24 → docs/25: session:history now replays the display transcript + SDK transcript (real).
+# docs/25 real-partial: original handler shape, some original branches not ported (reason given).
+PARTIAL = {
+    "session:setPermissionMode": "no spend-policy / codex-containment branches (port has no spend ledger, no Codex harness)",
+}
 fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()
 for f in (R / "port/src/main").rglob("*.ts"):

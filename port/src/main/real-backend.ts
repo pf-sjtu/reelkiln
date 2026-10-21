@@ -35,8 +35,8 @@
 //   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
 //   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
 //   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
-import { app, dialog, shell, utilityProcess } from "electron";
-import { existsSync } from "node:fs";
+import { app, dialog, shell, systemPreferences, utilityProcess } from "electron";
+import { appendFileSync, existsSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { InvokeChannel } from "../shared/ipc-contract";
@@ -62,6 +62,7 @@ import { createMediaCapabilities, exposeJobSnapshot, fileIpcHandlers, smokeDialo
 import { CharacterStore } from "./characters/character-store.generated";
 import { createQuickstartCatalog } from "./quickstart/quickstart-ipc";
 import { PORT_PROVIDER_TITLES_ENV } from "./agent/session-title";
+import { localChannelHandlers } from "./local-channels";
 
 /** exposeCharacters (L60415): grant each character's sheet + refs to vcmedia. */
 export function exposeCharacters<T extends { sheetPath?: string; refs: string[] }>(media: { grant(p: string, s: string): boolean; grantMany(p: string[], s: string): void }, characters: T[]): T[] {
@@ -113,6 +114,15 @@ export const portHandlers: Partial<Record<PortInvokeChannel, Handler>> = {
   [PORT_IPC.diagnostics]: () => portDiagnostics({ version: app.getVersion(), packaged: app.isPackaged, resourcesPath: process.resourcesPath ?? null, appPath: app.getAppPath(), userData: app.getPath("userData") }),
 };
 
+/** appendSetupLog (L9850, verbatim body): the plain-text setup trail bootstrap:revealSetupLog reveals (docs/25). */
+function appendSetupLog(line: string): void {
+  try {
+    const file = join(app.getPath("userData"), "setup.log");
+    if (existsSync(file) && statSync(file).size > 512 * 1024) rmSync(file, { force: true });
+    appendFileSync(file, `${new Date().toISOString()} ${line}\n`, { mode: 384 });
+  } catch {}
+}
+
 export function createRealHandlers(push: (channel: string, ...a: unknown[]) => boolean, log: (m: string) => void): Partial<Record<InvokeChannel, Handler>> {
   const roots = resolveBootstrapToolRoots({ resourcesPath: process.resourcesPath ?? "", appPath: app.getAppPath(), packaged: app.isPackaged });
   // workspaceRoot (main/index.js L9176-9180): join(homedir(), workspaceLeafForChannel("prod")),
@@ -143,7 +153,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     }),
     createRunner(),
     (p) => push("bootstrap:progress", p),
-    (line) => log(`[setup] ${line}`),
+    (line) => { log(`[setup] ${line}`); appendSetupLog(line); },
   );
   // AgentHost registry file: join(app.getPath("userData"), "sessions.json") (original L61106).
   const registry = new SessionRegistry(join(app.getPath("userData"), "sessions.json"));
@@ -174,6 +184,12 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     registryTimer = setTimeout(() => { registryTimer = null; registry.writeRegistry(pendingRows()); }, 250);
   };
   const flushRegistry = () => { if (registryTimer) { clearTimeout(registryTimer); registryTimer = null; } return registry.writeRegistry(pendingRows()); };
+  // smoke / UI-e2e runs never open a real file manager or browser (the call is logged instead)
+  const smoke = () => process.env.VIDEOCLAW_PORT_SMOKE === "1" || process.env.VIDEOCLAW_PORT_UI_E2E === "1";
+  const guardedShell = {
+    showItemInFolder: (p: string) => { if (smoke()) { log(`[smoke] showItemInFolder ${p}`); return; } shell.showItemInFolder(p); },
+    openExternal: async (url: string) => { if (smoke()) { log(`[smoke] openExternal ${url.slice(0, 200)}`); return; } await shell.openExternal(url); },
+  };
   const handlers: Partial<Record<InvokeChannel, Handler>> = {
     "editorRender:start": (req: unknown) => editorRender.start(req as any),
     "editorRender:cancel": (requestId: unknown) => editorRender.cancel(requestId as string),
@@ -191,16 +207,34 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     "characters:list": (cwd: unknown) => exposeCharacters(mediaCapabilities as any, characterStore.list(absCwd(cwd as string))),
     // docs/24 (C1): original L61215 over the bundled catalog
     "quickstart:catalog": () => quickstart.handlers["quickstart:catalog"](),
+    // docs/25: original L61250-61293 (local latency ring; no outbox → no beacon)
+    "quickstart:mark": (...a: unknown[]) => quickstart.handlers["quickstart:mark"](...a),
+    "quickstart:impression": (...a: unknown[]) => quickstart.handlers["quickstart:impression"](...a),
+    "quickstart:previewed": (...a: unknown[]) => quickstart.handlers["quickstart:previewed"](...a),
     // docs/22 M3/M4: file:* + intake:pickFiles (original L61917-62001, L62157)
     ...(fileIpcHandlers({
       dialog: smokeDialog({ showSaveDialog: (o) => dialog.showSaveDialog(o), showOpenDialog: (o) => dialog.showOpenDialog(o as any) }, process.env, log),
-      shell: { showItemInFolder: (p) => { if (process.env.VIDEOCLAW_PORT_SMOKE === "1" || process.env.VIDEOCLAW_PORT_UI_E2E === "1") { log(`[smoke] showItemInFolder ${p}`); return; } shell.showItemInFolder(p); }, openPath: (p) => shell.openPath(p) },
+      shell: { showItemInFolder: guardedShell.showItemInFolder, openPath: (p) => shell.openPath(p) },
       downloadsDir: () => app.getPath("downloads"),
       media: mediaCapabilities,
       sessionIds: () => (handlers["session:list"]?.() as any[] ?? []).map((m: any) => m.sessionId),
     }) as Partial<Record<InvokeChannel, Handler>>),
   };
   if (process.env[PORT_REAL_BOOTSTRAP_ENV] === "1") handlers["bootstrap:run"] = () => core.runAll();
+  // docs/25: local / no-credential channels (local-channels.ts). Host-backed entries are re-bound below
+  // once the AgentHost exists; without one they refuse instead of returning undefined.
+  const localDeps = {
+    registry, saveRegistry, flushRegistry, shell: guardedShell, platform: process.platform, systemPreferences: systemPreferences as any,
+    absCwd, userData: app.getPath("userData"), characterStore,
+    exposeCharacter: (c: any) => { if (c) exposeCharacters(mediaCapabilities as any, [c]); return c; }, // L60422
+    log,
+  };
+  const bindLocal = (host?: AgentHost) => {
+    const local = localChannelHandlers({ ...localDeps, host });
+    Object.assign(handlers, local.invoke);
+    Object.assign(sendHandlers, local.send);
+  };
+  bindLocal();
   if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1") {
     try {
       let host: AgentHost | undefined;
@@ -243,6 +277,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         service: llm.service,
         loadSdk: async () => { const l = await loadClaudeAgentSdk(); log(`[port] Claude Agent SDK ${l.version} from ${l.source}`); return { sdk: l.sdk, version: l.version, executable: claudeCodeExecutableFor(l.packageDir) }; },
         sessionsRoot: join(app.getPath("userData"), "agent-sessions"),
+        // docs/25: the child's CLAUDE_CONFIG_DIR (llm-runtime profileDir, L52521) — session:history reads the SDK transcript there
+        engineProfileDir: () => join(app.getPath("userData"), "engine-profile"),
+        clientOrder: () => registry.listClients().map((c) => c.clientId),
         providerTitles: process.env[PORT_PROVIDER_TITLES_ENV] !== "0",
         tools: agentToolsFromEnv(process.env[PORT_AGENT_TOOLS_ENV]),
         // PORT-NEW: VIDEOCLAW_PORT_TURN_TIMEOUT_MS overrides the per-turn safety net (engine default 20 min)
@@ -256,6 +293,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         log(`[port] AgentHost ENGINE mode; restored ${restored} session(s) from sessions.json`);
       }
       Object.assign(handlers, agentIpcHandlers(h, allSessions));
+      bindLocal(h);
       if (engineDeps) {
         mediaRoots.chatMediaRoot = (sessionId) => h.chatMediaRoot(sessionId);
         const attachmentChanged = (attachment: unknown) => { push("attachment:changed", attachment); }; // L62190

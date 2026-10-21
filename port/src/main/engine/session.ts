@@ -189,12 +189,67 @@ export class SessionRegistry {
     save();
     return client;
   }
+  /** docs/25: removeClient's tombstones (original removedClientIds / removedSessionIds) so a whole-file
+   *  write never resurrects a removed project or its videos from the on-disk copy. */
+  removedClientIds = new Set<string>();
+  removedSessionIds = new Set<string>();
+  getClient(clientId: string) { return this.clients.find((c) => c.clientId === clientId); } // L36380
+  /** reorderClients (L36332) — client:reorder. */
+  reorderClients(clientIds: unknown, save: () => void) {
+    const ids = Array.isArray(clientIds) ? clientIds : [];
+    const current = new Set(this.clients.map((client) => client.clientId));
+    if (
+      ids.length !== this.clients.length ||
+      new Set(ids).size !== ids.length ||
+      ids.some((clientId) => !current.has(clientId))
+    ) {
+      throw new Error("project reorder must contain every project exactly once");
+    }
+    const byId = new Map(this.clients.map((client) => [client.clientId, client]));
+    this.clients = ids.map((clientId) => byId.get(clientId)!);
+    save();
+    return this.listClients();
+  }
+  /** renameClient (L36367) — client:rename. `flush` = writeRegistry(); false → roll back. */
+  renameClient(clientId: string, name: unknown, flush: () => boolean) {
+    const client = this.getClient(clientId);
+    if (!client) return { error: "This project is no longer available." };
+    const error = projectNameError(name, this.clients, clientId);
+    if (error) return { error };
+    const previous = client.name;
+    client.name = (name as string).trim();
+    if (!flush()) {
+      client.name = previous;
+      return { error: "The project name could not be saved. Try again." };
+    }
+    return { ...client };
+  }
+  /** removeClient (L36384) — client:remove: sidebar records only; files and media stay on disk.
+   *  `busy(sessionIds)` stands in for the original's deletion/recovery blockers (port: a running turn). */
+  removeClient(clientId: string, sessionIds: string[], busy: boolean, flush: () => boolean, removeSession: (id: string) => void) {
+    if (clientId === "personal" || !this.getClient(clientId)) {
+      return { error: "This project cannot be removed." };
+    }
+    if (busy) return { error: "Finish running or recovering work in this project before removing it." };
+    const previous = this.clients;
+    this.clients = previous.filter((client) => client.clientId !== clientId);
+    this.removedClientIds.add(clientId);
+    for (const id of sessionIds) this.removedSessionIds.add(id);
+    if (!flush()) {
+      this.clients = previous;
+      this.removedClientIds.delete(clientId);
+      for (const id of sessionIds) this.removedSessionIds.delete(id);
+      return { error: "The project could not be removed. Your chats are still here; try again." };
+    }
+    for (const id of sessionIds) { this.sessions.delete(id); removeSession(id); }
+    return this.listClients();
+  }
   /** writeRegistry (L36199) for `rows` (the AgentHost's registryRows()): whole-file write that
    *  carries through disk rows/clients this instance never saw; tmp → fsync → rename → fsync dir. */
   writeRegistry(rows: Array<Record<string, any>>, ownIds: Set<string> = new Set(rows.map((r) => r.sessionId))): boolean {
     try {
       mkdirSync(dirname(this.registryFile), { recursive: true });
-      const sessions = [...rows];
+      const sessions = rows.filter((r) => !this.removedSessionIds.has(r.sessionId));
       const clients = [...this.clients];
       let migrations: unknown, trashWorkspaces: unknown[] = [];
       try {
@@ -202,14 +257,14 @@ export class SessionRegistry {
         const diskSessions = Array.isArray(disk) ? disk : (disk?.sessions ?? []);
         for (const meta of diskSessions) {
           if (!meta || typeof meta.sessionId !== "string") continue;
-          if (ownIds.has(meta.sessionId) || this.sessions.has(meta.sessionId)) continue;
+          if (ownIds.has(meta.sessionId) || this.sessions.has(meta.sessionId) || this.removedSessionIds.has(meta.sessionId)) continue;
           sessions.push(meta);
         }
         if (!Array.isArray(disk)) { migrations = disk?.migrations; if (Array.isArray(disk?.trashWorkspaces)) trashWorkspaces = disk.trashWorkspaces.filter((r: unknown) => typeof r === "string" && isAbsolute(r)); }
         const diskClients = Array.isArray(disk) ? [] : (disk?.clients ?? []);
         for (const c of diskClients) {
           if (!c || typeof c.clientId !== "string") continue;
-          if (!clients.some((k) => k.clientId === c.clientId)) clients.push(c);
+          if (!clients.some((k) => k.clientId === c.clientId) && !this.removedClientIds.has(c.clientId)) clients.push(c);
         }
       } catch {}
       sessions.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));

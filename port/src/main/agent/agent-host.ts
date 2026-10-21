@@ -29,12 +29,13 @@
 // docs/21 M2 added engine sessions, job binding, permission cards, sessions.json; docs/22 M3/M4 add
 //   the original VersionStore + JobWatchers (job snapshots, versions, approve/finalize) and the
 //   ComposerAttachmentStore (stage → materialize on Send).
-// docs/24: session titles (fallback naming verbatim + PORT-NEW provider-route proposal, session-title.ts)
-//   and session:history (the original's no-SDK-transcript branch → []; transcript replay NOT PORTED).
-// DEFERRED: display transcript / SDK history replay, resume, spend gates, studio MCP,
+// docs/24: session titles (fallback naming verbatim + PORT-NEW provider-route proposal, session-title.ts).
+// docs/25: session:history replays the display-transcript sidecar + the SDK transcript (resume on respawn).
+// DEFERRED: spend gates, studio MCP,
 //   steer/queued turns, retry, setModel/setPermissionMode, materials ledger, done-accounting.
 import { randomUUID } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { isAbsolute, join, relative, resolve as resolvePath } from "node:path";
 import { JobWatcher, VersionStore, resolveCut, scanJob } from "../jobs/version-store.generated";
 import { attachmentContextLines, ComposerAttachmentStore } from "../attachments/composer-attachments.generated";
@@ -50,6 +51,10 @@ import {
 } from "./engine-session";
 import { fallbackSessionTitle, NEW_VIDEO_TITLE } from "./session-title.generated";
 import { PORT_PROVIDER_TITLES_ENV, proposeProviderSessionTitle, type HelperComplete } from "./session-title";
+import {
+  appendDisplayStop, appendDisplayTranscript, displayTranscriptPath, historyToEvents, isDisplayTurnId, isFlattenedClaudeCompactedHistory,
+  readDisplayTranscript, rejectedFallbackMessageIds, sdkUserMessageText, visibleInSdkHistory,
+} from "./history.generated";
 
 export type SessionStatus = "idle" | "running" | "awaiting_permission" | "error";
 export interface AgentSessionMeta {
@@ -129,6 +134,11 @@ export interface AgentHostDeps {
    *  (engine mode), the host owns the ORIGINAL VersionStore (versions.json, L34848) + JobWatchers
    *  and the ComposerAttachmentStore (composer-attachments.json, L34841). */
   stateDir?: string;
+  /** docs/25: the engine runtime profile dir (route-service profileDir = userData/engine-profile, the child's
+   *  CLAUDE_CONFIG_DIR) — where the SDK writes the per-video transcript that session:history replays. */
+  engineProfileDir?: () => string;
+  /** docs/25: the project order (clients) listSessions (L38348) ranks videos by. */
+  clientOrder?: () => string[];
 }
 
 export class ComposerDeliveryError extends Error { constructor(m: string) { super(m); this.name = "ComposerDeliveryError"; } }
@@ -168,11 +178,15 @@ interface Session {
   /** nameSession / cancelSessionTitle (L41772-41805). */
   titleRequest?: AbortController;
   titleCancellation?: number;
+  /** docs/25: last assistant message id (display-transcript anchor, persistDisplayTurn L41820). */
+  lastAssistantMessageId?: string;
 }
 interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void }
 
 export const DEFAULT_AGENT_TOOLS = ["Read", "Glob", "Grep"];
 const PATH_KEYS = ["file_path", "path", "notebook_path"];
+/** FALLBACK_EVIDENCE_MARKERS (L34378). */
+const FALLBACK_EVIDENCE_MARKERS = ["supersedes", "retractedMessageUuids", "retracted_message_uuids"];
 const ROUTE_CHANGED_MESSAGE = "The language-model account changed before this turn finished. Retry to continue with the account you selected."; // L43142
 
 /** canUseTool: allow-listed tool AND every path-like input inside the session cwd. */
@@ -224,8 +238,88 @@ export class AgentHost {
   }
 
   listSessions(): AgentSessionMeta[] {
-    // listSessions L38348: meta + liveWork snapshot + media recovery (not ported → [] / false)
-    return [...this.sessions.values()].sort((a, b) => b.meta.createdAt - a.meta.createdAt).map((s) => ({ ...s.meta, ...(this.d.engine ? { liveWork: [], mediaRecoveryNeeded: false } : {}) }));
+    // listSessions L38348: meta + liveWork snapshot + media recovery (not ported → [] / false), ordered by
+    // project rank, then sidebarOrder (session:reorder), then newest first (docs/25: verbatim sort)
+    const projectRank = new Map((this.d.clientOrder?.() ?? []).map((clientId, index) => [clientId, index]));
+    return [...this.sessions.values()]
+      .map((s) => ({ ...s.meta, ...(this.d.engine ? { liveWork: [], mediaRecoveryNeeded: false } : {}) }) as AgentSessionMeta)
+      .sort((a, b) => {
+        const projectDelta = (projectRank.get(a.clientId) ?? Number.MAX_SAFE_INTEGER) - (projectRank.get(b.clientId) ?? Number.MAX_SAFE_INTEGER);
+        if (projectDelta !== 0) return projectDelta;
+        const aOrder = a.sidebarOrder as number | undefined;
+        const bOrder = b.sidebarOrder as number | undefined;
+        if (aOrder !== void 0 || bOrder !== void 0) {
+          if (aOrder === void 0) return 1;
+          if (bOrder === void 0) return -1;
+          if (aOrder !== bOrder) return aOrder - bOrder;
+        }
+        return b.createdAt - a.createdAt;
+      });
+  }
+  /** reorderSessions (L38482) — session:reorder. */
+  reorderSessions(clientId: string, sessionIds: string[]): AgentSessionMeta[] {
+    const owned = [...this.sessions.values()].filter((session2) => session2.meta.clientId === clientId).map((session2) => session2.meta.sessionId);
+    const current = new Set(owned);
+    if (sessionIds.length !== owned.length || new Set(sessionIds).size !== sessionIds.length || sessionIds.some((sessionId) => !current.has(sessionId))) {
+      throw new Error("video reorder must contain every video in one project exactly once");
+    }
+    sessionIds.forEach((sessionId, sidebarOrder) => {
+      const session2 = this.sessions.get(sessionId);
+      if (!session2 || session2.meta.clientId !== clientId) throw new Error("video reorder cannot move a video between projects");
+      session2.meta.sidebarOrder = sidebarOrder;
+    });
+    const next = this.listSessions();
+    this.d.emit.sessionsChanged(next);
+    this.saveRegistry();
+    return next;
+  }
+  /** renameSession (L38915) — session:rename: inline sidebar rename, persisted. */
+  renameSession(sessionId: string, title: string): AgentSessionMeta | null {
+    const s = this.sessions.get(sessionId);
+    if (!s) return null;
+    const next = String(title ?? "").trim();
+    if (!next) return s.meta;
+    this.cancelSessionTitle(s);
+    s.meta.titleOrigin = "manual";
+    s.meta.title = next.length > 80 ? next.slice(0, 79) + "…" : next;
+    this.d.emit.sessionsChanged(this.listSessions());
+    this.saveRegistry();
+    return s.meta;
+  }
+  /** setPermissionMode (L43987) + deferPermissionMode (L44025) + applyPermissionMode slice — session:setPermissionMode.
+   *  NOT PORTED: spend policy (no spend ledger → never "capped"), codex containment, credit handoffs,
+   *  applyPendingPermissionMode at turn end (a deferred pick applies on the next send). */
+  async setPermissionMode(sessionId: string, mode: string, _options?: { confirmSpendLimitRemoval?: boolean }): Promise<void> {
+    const s = this.mustGet(sessionId);
+    if (typeof mode !== "string" || !["default", "acceptEdits", "auto", "plan", "bypassPermissions"].includes(mode)) throw new Error("Invalid permission mode.");
+    delete s.meta.permissionModeSwitchFailed;
+    if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(sessionId)) {
+      if (mode === s.meta.permissionMode) delete s.meta.pendingPermissionMode;
+      else s.meta.pendingPermissionMode = mode;
+      this.saveRegistry();
+      this.d.emit.sessionsChanged(this.listSessions());
+      return;
+    }
+    delete s.meta.pendingPermissionMode;
+    const runtime = s.runtime && !s.runtime.dead ? s.runtime : undefined;
+    if (runtime) {
+      try { await (runtime.query as any).setPermissionMode?.(mode); } catch { if (s.runtime === runtime) this.teardownRuntime(s, "permission-mode"); }
+    }
+    s.meta.permissionMode = mode;
+    this.saveRegistry();
+    this.d.emit.sessionsChanged(this.listSessions());
+  }
+  /** removeSession (L39046) slice for client:remove — sidebar record only; files stay on disk. */
+  removeSession(sessionId: string): boolean {
+    const s = this.sessions.get(sessionId);
+    if (!s) return false;
+    this.teardownRuntime(s, "removed");
+    this.retireWatcher(sessionId);
+    this.cancelSessionTitle(s);
+    this.sessions.delete(sessionId);
+    this.d.emit.sessionsChanged(this.listSessions());
+    this.saveRegistry();
+    return true;
   }
   /** writeRegistry (L36199) projection: what goes to sessions.json (no live/port-only fields). */
   registryRows(): Array<Record<string, unknown>> {
@@ -304,7 +398,7 @@ export class AgentHost {
   /** sendMessage (L41400) / submitMessage / submitPreparedMessage (L41559) slice. Resolves when the
    *  message is queued into the runtime. docs/22 M4: composer attachments are materialized into the
    *  session's destination (secureComposerDestination L44705) and listed ahead of the turn text. */
-  async sendMessage(sessionId: string, input: string | { text: string; clientTurnId?: string; attachmentIds?: string[] }): Promise<{ submitted: true; duplicate: boolean; attachmentIds: string[] }> {
+  async sendMessage(sessionId: string, input: string | { text: string; clientTurnId?: string; attachmentIds?: string[] }, displayTexts?: string[]): Promise<{ submitted: true; duplicate: boolean; attachmentIds: string[] }> {
     const composer = typeof input !== "string";
     if (composer && this.sessions.get(sessionId)?.meta.finalizedAtMs) { // L41425
       throw new ComposerDeliveryError("This video is finalized. Undo Final to reopen it, or start a new video for this one.");
@@ -372,6 +466,7 @@ export class AgentHost {
       throw e;
     }
     this.preparing.delete(sessionId);
+    if (typeof s.meta.pendingPermissionMode === "string") { s.meta.permissionMode = s.meta.pendingPermissionMode; delete s.meta.pendingPermissionMode; if (s.runtime && !s.runtime.dead) this.teardownRuntime(s, "permission-mode"); this.saveRegistry(); } // applyPendingPermissionMode (before a send)
     this.setStatus(s, "running");
     let rt: Runtime;
     try {
@@ -389,7 +484,11 @@ export class AgentHost {
     const timeoutMs = this.d.turnTimeoutMs ?? (this.d.engine ? 20 * 60_000 : 5 * 60_000);
     s.turnTimer = setTimeout(() => { if (s.meta.status === "running" || s.meta.status === "awaiting_permission") { this.send(s, { kind: "error", message: `The turn did not finish within ${Math.round(timeoutMs / 1000)} s and was stopped.`, canRetry: true }); this.teardownRuntime(s, "turn-timeout"); this.setStatus(s, "error"); } }, timeoutMs);
     (s.turnTimer as any).unref?.();
-    rt.queue.push({ type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() });
+    const msg = { type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() };
+    // docs/25: persistDisplayTurn (L41820) BEFORE delivery — the sidecar row the history replay maps
+    // the SDK transcript's engine text back to (what the user typed, not the app-owned preambles)
+    this.persistDisplayTurn(s, msg, displayTexts ?? (req.text.trim() ? [req.text] : []), req.attachmentIds);
+    rt.queue.push(msg);
     rt.wake?.(); rt.wake = null;
     // L41757-41763: once delivered, a fallback/attachment title may be replaced by a proposed one
     if (req.text.trim() && (s.meta.titleOrigin === "fallback" || s.meta.titleOrigin === "attachment") && !req.text.startsWith("✅")) {
@@ -434,16 +533,132 @@ export class AgentHost {
       })
       .finally(() => { if (s.titleRequest === controller) s.titleRequest = undefined; });
   }
-  /** getHistory (L43698) — docs/24 (B). The port keeps no display transcript and starts every runtime
-   *  without a persisted SDK session (meta.sdkSessionId is never set), so every video takes the
-   *  original's `!s.meta.sdkSessionId` branch: historyToEvents([], <empty display index>) = [].
-   *  NOT PORTED: display-transcript + SDK/Codex transcript replay, restoreFailedTurn/restoreHistoryState,
-   *  publishMaterials. Unknown ids throw like mustGet (L51008). */
-  async getHistory(sessionId: string): Promise<SessionEvent[]> {
+  /** persistDisplayTurn (L41820) slice: append the display-transcript row for a delivered turn.
+   *  NOT PORTED: message_time push, failedDisplayTexts bookkeeping, write-failure beacon. */
+  private persistDisplayTurn(s: Session, msg: Record<string, any>, displayTexts: string[], attachmentIds?: string[]): void {
+    if (!this.d.stateDir || displayTexts.length === 0) return;
+    const file = displayTranscriptPath(this.d.stateDir, s.meta.sessionId);
+    const turnId = isDisplayTurnId(msg.uuid) ? msg.uuid : randomUUID();
+    const previous = readDisplayTranscript(file).byTurnId.get(turnId);
+    const atMs = previous ? previous.atMs : Date.now();
+    const engineText = sdkUserMessageText(msg);
+    if (engineText !== null) appendDisplayTranscript(file, engineText, displayTexts, turnId, s.lastAssistantMessageId, (err: unknown) => this.log.warn("agent.display_transcript.write_failed", { sessionId: s.meta.sessionId, error: err }), attachmentIds?.length ? attachmentIds : undefined, atMs);
+  }
+  /** observeSdkSessionIdentity (L36172): record the SDK transcript identity at every ingress seam. */
+  private observeSdkSessionIdentity(s: Session, sdkSessionId: unknown): void {
+    if (typeof sdkSessionId !== "string" || !sdkSessionId) return;
+    if (s.meta.sdkSessionId === sdkSessionId) return;
+    s.meta.sdkSessionId = sdkSessionId;
+    this.saveRegistry();
+  }
+  /** engineProfileStore (L43343) — the SessionStore over <engine-profile>/projects/<key>/<sdkId>.jsonl. */
+  private engineProfileStore(): Record<string, unknown> | undefined {
+    if (!this.d.engineProfileDir) return undefined;
+    const root = join(this.d.engineProfileDir(), "projects");
+    return {
+      append: async () => {},
+      load: ({ projectKey, sessionId }: { projectKey: string; sessionId: string }) => {
+        let file = join(root, projectKey, `${sessionId}.jsonl`);
+        if (!existsSync(file)) {
+          try {
+            const hit = readdirSync(root, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => join(root, e.name, `${sessionId}.jsonl`)).find((p) => existsSync(p));
+            if (!hit) return Promise.resolve(null);
+            file = hit;
+          } catch { return Promise.resolve(null); }
+        }
+        let raw: string;
+        try { raw = readFileSync(file, "utf-8"); } catch { return Promise.resolve(null); }
+        const entries: unknown[] = [];
+        for (const line of raw.split("\n")) { if (!line.trim()) continue; try { entries.push(JSON.parse(line)); } catch {} }
+        return Promise.resolve(entries.length ? entries : null);
+      },
+    };
+  }
+  /** The transcript roots rawClaudeTranscript (L43391) searches: claudeCodeConfigDir() (L22720) + the engine profile. */
+  private transcriptRoots(): string[] {
+    const configured = process.env.CLAUDE_CONFIG_DIR?.trim();
+    const home = homedir();
+    const cc = !configured ? join(home, ".claude") : configured === "~" ? home : configured.startsWith("~/") ? join(home, configured.slice(2)) : configured;
+    return [join(cc, "projects"), ...(this.d.engineProfileDir ? [join(this.d.engineProfileDir(), "projects")] : [])];
+  }
+  /** rawClaudeTranscript (L43391): every row of the retained local transcript, wrapper metadata intact. */
+  rawClaudeTranscript(sdkSessionId: string, requireMarker?: string[]): unknown[] | null {
+    for (const root of this.transcriptRoots()) {
+      try {
+        for (const dirent of readdirSync(root, { withFileTypes: true })) {
+          if (!dirent.isDirectory()) continue;
+          const file = join(root, dirent.name, `${sdkSessionId}.jsonl`);
+          if (!existsSync(file) || statSync(file).size > 128 * 1024 * 1024) continue;
+          const text2 = readFileSync(file, "utf8");
+          if (requireMarker && !requireMarker.some((marker) => text2.includes(marker))) continue;
+          const entries: unknown[] = [];
+          for (const line of text2.split("\n")) { if (!line.trim()) continue; try { entries.push(JSON.parse(line)); } catch {} }
+          if (entries.some(visibleInSdkHistory)) return entries;
+        }
+      } catch {}
+    }
+    return null;
+  }
+  /** restoreHistoryState (L43646) slice: rejected-message filter + conversationTooLarge. NOT PORTED:
+   *  attachment moments, liveWork / tool-spend settlement (no live-work ledger in the port). */
+  private restoreHistoryState(s: Session, events: any[]): any[] {
+    const rejected = new Set<string>((s.meta.rejectedMessageIds as string[] | undefined) ?? []);
+    if (rejected.size > 0) events = events.filter((e) => !((e.kind === "assistant_text" || e.kind === "text_delta") && e.messageId !== undefined && rejected.has(e.messageId)));
+    return events;
+  }
+  /** getHistory (L43698) — docs/25: the ORIGINAL local claude-code branch. The display-transcript sidecar
+   *  (userData/display-transcripts/<id>.jsonl) + the SDK transcript of meta.sdkSessionId read with
+   *  getSessionMessages (filesystem, then the engine-profile SessionStore) → historyToEvents (verbatim).
+   *  NOT PORTED: remote/codex runtimes, publishMaterials, runtimeTurnStore.logicalMessageUuid (identity),
+   *  restoreFailedTurn (no turn-receipt store → failure cards are not rebuilt), compacted-history beacon. */
+  async getHistory(sessionId: string): Promise<any[]> {
     const s = this.mustGet(sessionId);
-    if (!s.meta.sdkSessionId) return [];
-    this.log.warn("agent.history.replay_not_ported", { sessionId });
-    return [];
+    const composerMaterials = this.attachmentStore ? this.attachmentStore.materials(sessionId) : [];
+    const displayIndex = readDisplayTranscript(this.d.stateDir ? displayTranscriptPath(this.d.stateDir, sessionId) : "", composerMaterials);
+    if (!s.meta.sdkSessionId) return this.restoreHistoryState(s, historyToEvents([], displayIndex, undefined));
+    try {
+      const { sdk } = await this.loadSdk();
+      const getSessionMessages = (sdk as any).getSessionMessages as (id: string, o: Record<string, unknown>) => Promise<any[]>;
+      if (typeof getSessionMessages !== "function") throw new Error("SDK has no getSessionMessages");
+      const sdkId = String(s.meta.sdkSessionId);
+      const empty2: any[] = [];
+      let messages = await getSessionMessages(sdkId, { dir: s.meta.cwd, includeSystemMessages: true }).catch(() => empty2);
+      if (messages.length === 0) messages = await getSessionMessages(sdkId, { includeSystemMessages: true }).catch(() => empty2);
+      const store = this.engineProfileStore();
+      if (messages.length === 0 && store) messages = await getSessionMessages(sdkId, { dir: s.meta.cwd, sessionStore: store, includeSystemMessages: true });
+      const sdkHistory = messages;
+      const compacted = isFlattenedClaudeCompactedHistory(sdkHistory);
+      const rawTranscript = this.rawClaudeTranscript(sdkId, compacted ? undefined : FALLBACK_EVIDENCE_MARKERS);
+      const derived = rejectedFallbackMessageIds(rawTranscript ?? sdkHistory);
+      if (derived.length > 0) { s.meta.rejectedMessageIds = [...new Set([...((s.meta.rejectedMessageIds as string[]) ?? []), ...derived])].slice(-200); this.saveRegistry(); }
+      const visibleRaw = rawTranscript?.filter(visibleInSdkHistory) ?? [];
+      const fullHistory = compacted && visibleRaw.length > 0 ? visibleRaw : null;
+      const events = historyToEvents(fullHistory ?? sdkHistory, displayIndex, s.meta.rejectedMessageIds);
+      if (!s.meta.jobId && this.d.engine) {
+        for (const raw of messages) {
+          if (raw?.type !== "assistant") continue;
+          const content = raw.message?.content;
+          if (!Array.isArray(content)) continue;
+          for (const block of content) if (block.type === "tool_use") this.maybeBindJob(s, JSON.stringify(block.input ?? {}));
+        }
+      }
+      this.log.info("agent.history.replayed", { sessionId, sdkMessages: messages.length, displayRows: displayIndex.ordered.length, events: events.length });
+      return this.restoreHistoryState(s, events);
+    } catch (e) {
+      this.log.warn("agent.history.read_failed", { sessionId, error: e });
+      return this.restoreHistoryState(s, historyToEvents([], displayIndex, undefined));
+    }
+  }
+  /** Whether the SDK transcript a resume would continue is still on disk (stale-resume guard, PORT-NEW
+   *  stand-in for tryStaleResumeFallback L43295: the port drops a dead id before spawning instead). */
+  private resumableSdkSession(s: Session): string | undefined {
+    const id = s.meta.sdkSessionId as string | undefined;
+    if (!id) return undefined;
+    if (this.rawClaudeTranscript(id)) return id;
+    this.log.warn("agent.history.stale_resume_dropped", { sessionId: s.meta.sessionId });
+    s.meta.sdkSessionId = undefined;
+    this.saveRegistry();
+    return undefined;
   }
 
   private loadSdk() { return (this.sdk ??= this.d.loadSdk().catch((e) => { this.sdk = undefined; throw e; })); }
@@ -536,6 +751,7 @@ export class AgentHost {
   /** reduce (L50416) — the event subset this port renders. */
   private reduce(s: Session, m: Record<string, any>, rt: Runtime): void {
     if (s.runtime !== rt || rt.dead) return;
+    this.observeSdkSessionIdentity(s, m.session_id); // L36172 (every ingress seam)
     switch (m.type) {
       case "system":
         if (m.subtype === "init") this.send(s, { kind: "port_runtime", phase: "started", llmRoute: rt.llmRoute, model: m.model, gateProxy: !!rt.handle.proxy, claudeCodeVersion: m.claude_code_version });
@@ -550,6 +766,7 @@ export class AgentHost {
       case "assistant": {
         if (s.staleResults > 0 || m.parent_tool_use_id) break;
         const messageId = m.message?.id ?? s.activeMessageId ?? m.uuid;
+        if (typeof messageId === "string") s.lastAssistantMessageId = messageId;
         for (const [blockIndex, b] of (m.message?.content ?? []).entries()) {
           if (b?.type === "text") this.send(s, { kind: "assistant_text", text: redactText(b.text ?? ""), messageId, blockIndex });
           else if (b?.type === "thinking") this.send(s, { kind: "thinking", text: redactText(b.thinking ?? "") });
@@ -626,7 +843,9 @@ export class AgentHost {
       strictMcpConfig: true,
       // PORT-NEW safety net (the original sets none): bounds a looping model on a shared key
       maxTurns: this.d.maxTurns ?? 120,
-      persistSession: false, // resume/history not ported (docs/21 §deferred)
+      // docs/25: the original keeps the SDK's local transcript (persistSession default) and resumes the
+      // video's sdkSessionId on every respawn (createLocalRuntime resume L39544) — session:history replays it
+      ...(this.resumableSdkSession(s) ? { resume: s.meta.sdkSessionId } : {}),
       env: engineChildEnv(handle.env, sp.engineEnv, !!sp.engineEnv.VIDEOCLAW_ENGINE),
       stderr,
     };
@@ -736,7 +955,10 @@ export class AgentHost {
     const rt = s.runtime;
     if (wasRunning) {
       const stoppedAfterMs = Math.max(0, this.now() - (s.turnStartedAtMs ?? this.now()));
-      this.send(s, { kind: "result", isError: false, totalCostUsd: s.meta.totalCostUsd, numTurns: 0, durationMs: stoppedAfterMs, stoppedAfterMs, stopTurnId: randomUUID() });
+      const stopTurnId = randomUUID();
+      // docs/25: L43906-43921 — a Stop leaves its display row so a reopened video shows "stopped after …"
+      if (reason === "stop" && this.d.stateDir) appendDisplayStop(displayTranscriptPath(this.d.stateDir, sessionId), stoppedAfterMs, stopTurnId, s.lastAssistantMessageId);
+      this.send(s, { kind: "result", isError: false, totalCostUsd: s.meta.totalCostUsd, numTurns: 0, durationMs: stoppedAfterMs, stoppedAfterMs, stopTurnId });
     }
     if (s.meta.status !== "idle") this.setStatus(s, "idle");
     if (!rt || rt.dead) return; // nothing launched (or stopped while spawning: sendMessage sees idle and does not queue)
@@ -915,7 +1137,7 @@ export class AgentHost {
 Per the taste-capture protocol, distill the feedback I gave across the versions into a SHORT list of durable taste rules (project-level; promote to client/global ONLY if clearly generalizable). Propose them to me with AskUserQuestion (multiSelect) so I pick which to keep — do NOT write any taste file until I confirm. After I confirm, write the kept rules to the appropriate COMMITMENTS blocks and reply with what was committed.` + (quotes ? `
 
 Feedback log:
-${quotes}` : "")).catch((e) => this.log.info("agent.version.taste_capture_not_sent", { sessionId, error: e }));
+${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.version.taste_capture_not_sent", { sessionId, error: e }));
   }
   /** unfinalizeSession (L…unfinalizeSession) → session:unfinalize (continuations not ported). */
   unfinalizeSession(sessionId: string): AgentSessionMeta {

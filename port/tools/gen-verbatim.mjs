@@ -264,7 +264,7 @@ export const SPECS = [
       slice("main", /^const QUICKSTART_RENDERER_LATENCY_STAGES = \[/, /^}$/, /^class QuickstartCatalogStore \{/),
     ],
     subs: [],
-    exports: ["envForGatewayUrl", "recordQuickstartLatency", "beginQuickstartLatency", "measureQuickstartLatency", "quickstartLatencySnapshot", "quickstartLatencyMark", "validateRawCatalog", "validateRoot", "sameQuickstartCatalogView", "QuickstartCatalogStore"],
+    exports: ["envForGatewayUrl", "recordQuickstartLatency", "beginQuickstartLatency", "measureQuickstartLatency", "quickstartLatencySnapshot", "quickstartLatencyMark", "milestoneDurationMs", "validateRawCatalog", "validateRoot", "sameQuickstartCatalogView", "QuickstartCatalogStore"],
   },
   {
     // docs/24 (C2): session titles — NEW_VIDEO_TITLE (L266), redact (L1966-1994), sessionTitleText (L22987),
@@ -279,6 +279,70 @@ export const SPECS = [
     ],
     subs: [],
     exports: ["NEW_VIDEO_TITLE", "REDACTIONS", "redact", "sessionTitleText", "fallbackSessionTitle"],
+  },
+  {
+    // docs/25: session:history transcript replay (getHistory L43698) — the ORIGINAL display-transcript
+    // sidecar (display-transcripts/<id>.jsonl, L52942-53223), historyToEvents (L53433) + its helpers,
+    // the engine-profile SessionStore / raw transcript reader inputs (visibleInSdkHistory,
+    // rejectedFallbackMessageIds) and the workbookContents ClaudeCodeMessageAdapter (L3851-4049).
+    out: "src/main/agent/history.generated.ts",
+    imports: [
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { appendFileSync, mkdirSync, readFileSync } from "node:fs";',
+      'import { dirname, join } from "node:path";',
+      'import { POLICY_REFUSAL_MARKER, isPolicyRefusalMessage } from "./session-assembly.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function isProviderPolicyRefusalMessage\(/, /^}$/),
+      slice("main", /^function isProjectMemoryNotice\(/, /^}$/, /^function isAccountPreferenceNotice\(/),
+      slice("main", /^const FAMILIES = /, /^}$/, /^function isSettledAskRecord\(/),
+      slice("main", /^const ORIGINS = /, /^}$/, /^function isSessionMaterial\(/),
+      slice("main", /^const PROVIDER_REFUSAL_KINDS = /, /^const UNSAFE_RUNS = /),
+      slice("main", /^const LATE_RESULT_OUTCOMES = /, /^}$/, /^function validProviderText\(/),
+      slice("main", /^const lateResultKey = /, /^const lateResultKey = /),
+      slice("wb", /^const SPEND_APPROVAL_PENDING_CODE = /, /^const SPEND_AUTHORITY_REQUIRED_CODE = /),
+      slice("wb", /^const GENERIC_ACTIVITY = /, /^}$/, /^function cleanSubject\(/),
+      slice("wb", /^const STALE_RESUME_RE = /, /^}$/, /^function providerFailureCopy\(/),
+      slice("wb", /^const VIDEOCLAW_CREDIT_GUIDANCE = /, /^};$/, /^const PROVIDER_GUIDANCE = \{/),
+      slice("wb", /^const CLAUDE_CODE_INTERNAL_PLAN_TOOLS = \[/, /^}$/, /^class ClaudeCodeMessageAdapter \{/),
+      slice("main", /^const SERVER_CLASSIFIER = /, /^}$/, /^function autoModeNoVerdict\(/),
+      slice("main", /^const DISPLAY_TURN_ID_RE =$/, /^}$/, /^function isDisplayTurnId\(/),
+      slice("main", /^function imagePathOf\(name, input\)/, /^}$/, /^function isRealUserText\(/),
+    ],
+    subs: [],
+    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine"],
+  },
+
+  {
+    // docs/25: taste:list / taste:commit / taste:decline (L61843-61852) → the ORIGINAL taste module
+    // (COMMITMENTS / ANTI-COMMITMENTS markdown, proposals ledger; L15178-15491).
+    out: "src/main/taste/taste.generated.ts",
+    imports: [
+      'import { randomUUID } from "node:crypto";',
+      'import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";',
+      'import { dirname, join } from "node:path";',
+      'import { recordMainLog } from "./taste-log";',
+    ],
+    slices: () => [
+      slice("main", /^const SECTION = "## COMMITMENTS";$/, /^}$/, /^function declineProposal\(/),
+    ],
+    subs: [],
+    exports: ["SECTION", "ANTI", "ANTI_HEADING", "readCommitments", "writeCommitments", "appendAnti", "listTaste", "commitTaste", "declineProposal"],
+  },
+  {
+    // docs/25: stats:stageEtas (L62297) → the ORIGINAL computeStageEtas (L55510-55583).
+    out: "src/main/jobs/stage-etas.generated.ts",
+    imports: [
+      'import { existsSync, readdirSync, readFileSync } from "node:fs";',
+      'import { homedir } from "node:os";',
+      'import { join } from "node:path";',
+      'import { engineFamilyLine } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const MIN_SAMPLES = 6;$/, /^}$/, /^function computeStageEtas\(/),
+    ],
+    subs: [],
+    exports: ["computeStageEtas"],
   },
 ];
 

@@ -1040,4 +1040,4 @@ class QuickstartCatalogStore {
   }
 }
 
-export { envForGatewayUrl, recordQuickstartLatency, beginQuickstartLatency, measureQuickstartLatency, quickstartLatencySnapshot, quickstartLatencyMark, validateRawCatalog, validateRoot, sameQuickstartCatalogView, QuickstartCatalogStore };
+export { envForGatewayUrl, recordQuickstartLatency, beginQuickstartLatency, measureQuickstartLatency, quickstartLatencySnapshot, quickstartLatencyMark, milestoneDurationMs, validateRawCatalog, validateRoot, sameQuickstartCatalogView, QuickstartCatalogStore };
