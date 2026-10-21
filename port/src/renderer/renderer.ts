@@ -1,6 +1,7 @@
 // Port renderer: Settings page (PORT-NEW, docs/18 §5) + the original IPC smoke/debug view.
 import "../shared/ipc-contract";
 import { mountSettingsPage } from "./settings-page";
+import { mountAgentChat } from "./agent-chat";
 const out = document.getElementById("log")!;
 const say = (s: string) => { out.textContent += s + "\n"; };
 const api = window.videoclaw;
@@ -19,6 +20,8 @@ for (const b of Array.from(document.querySelectorAll<HTMLButtonElement>("nav but
 
 const settingsRoot = document.getElementById("view-settings");
 if (settingsRoot) (window as any).__videoclawSettings = mountSettingsPage(settingsRoot); // handle for the smoke driver
+const agentRoot = document.getElementById("view-agent"); // PORT-NEW docs/19
+if (agentRoot) (window as any).__videoclawAgentChat = mountAgentChat(agentRoot);
 
 // debug view: lists window.videoclaw methods and pings a few fake-backed channels
 document.getElementById("summary")!.textContent = api

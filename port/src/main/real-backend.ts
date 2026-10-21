@@ -16,6 +16,9 @@
 //   settings:get / settings:set /    — original Settings (L5291) + setSettings (L61680) + host.llmRouteReadiness
 //   engine:llmRouteReadiness           (L51052) with PORT-NEW custom-provider routes (docs/15 §3.4) — llm-runtime.ts.
 //                                      PORT-NEW opt-out: VIDEOCLAW_PORT_FAKE_SETTINGS=1 keeps the QA fixtures.
+//   session:create / session:send /  — original L61690 / L61772 / L61780 → host.createSession / sendMessage /
+//   session:interrupt (+ push         interrupt, served by the PORT-NEW minimal AgentHost (docs/19, agent/agent-host.ts)
+//   session:event / session:changed)  bound to the LLM route service; session:list merges sessions.json + host sessions.
 import { app, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -34,6 +37,9 @@ import { bootstrapTool, killTree, resolveBootstrapToolRoots } from "./platform";
 import { createLlmRuntime } from "./llm-runtime";
 import { PORT_IPC, PORT_PUSH, type PortInvokeChannel } from "../shared/port-ipc";
 import { portDiagnostics } from "./port-diagnostics";
+import { AgentHost } from "./agent/agent-host";
+import { agentHostEmit, agentIpcHandlers, agentToolsFromEnv, PORT_AGENT_TOOLS_ENV } from "./agent/agent-ipc";
+import { claudeCodeExecutableFor, loadClaudeAgentSdk } from "./llm/agent-sdk";
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
@@ -122,15 +128,27 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
   if (process.env[PORT_REAL_BOOTSTRAP_ENV] === "1") handlers["bootstrap:run"] = () => core.runAll();
   if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1") {
     try {
+      let host: AgentHost | undefined;
       const llm = createLlmRuntime({
         userData: app.getPath("userData"),
-        sessionMeta: (id) => registry.sessions.get(id)?.meta as any,
-        onLlmRouteChanged: () => log("[port] llmRoute changed — AgentHost.onLlmRouteChanged (runtime teardown) NOT PORTED"),
+        sessionMeta: (id) => (registry.sessions.get(id)?.meta as any) ?? host?.listSessions().find((m) => m.sessionId === id),
+        // original setSettings → host.onLlmRouteChanged() (L61685)
+        onLlmRouteChanged: () => { const r = host?.onLlmRouteChanged(); log(`[port] llmRoute changed — AgentHost retired runtimes; interrupted=${r?.interrupted.length ?? 0}`); },
         onRoutesChanged: (view) => { push(PORT_PUSH.llmRoutesChanged, view); },
       });
       Object.assign(handlers, llm.handlers);
       Object.assign(portHandlers, llm.portHandlers);
-      app.on("will-quit", () => llm.dispose());
+      const allSessions = () => [...(registry.listSessions() as any[]), ...(host?.listSessions() ?? [])];
+      host = new AgentHost({
+        emit: agentHostEmit(push, allSessions),
+        service: llm.service,
+        loadSdk: async () => { const l = await loadClaudeAgentSdk(); log(`[port] Claude Agent SDK ${l.version} from ${l.source}`); return { sdk: l.sdk, version: l.version, executable: claudeCodeExecutableFor(l.packageDir) }; },
+        sessionsRoot: join(app.getPath("userData"), "agent-sessions"),
+        tools: agentToolsFromEnv(process.env[PORT_AGENT_TOOLS_ENV]),
+      });
+      const h = host;
+      Object.assign(handlers, agentIpcHandlers(h, allSessions));
+      app.on("will-quit", () => { void h.dispose(); llm.dispose(); });
     } catch (e) {
       // graceful degradation: the fake settings fixtures stay in place
       log(`[port] LLM runtime failed to start, settings stay on the fake backend: ${e instanceof Error ? e.message : String(e)}`);

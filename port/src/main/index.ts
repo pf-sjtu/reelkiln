@@ -67,6 +67,8 @@ function createWindow() {
           renderTimeoutMs: 10 * 60_000,
           llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE,
           uiSelect: process.env.VIDEOCLAW_PORT_SMOKE_UI_SELECT,
+          agentPrompt: process.env.VIDEOCLAW_PORT_SMOKE_AGENT,
+          agentStopPrompt: process.env.VIDEOCLAW_PORT_SMOKE_AGENT_STOP,
         }));
         for (const r of results) log(`[smoke] ${JSON.stringify(r).slice(0, 1500)}`);
         const shot = process.env.VIDEOCLAW_PORT_SMOKE_SCREENSHOT; // PORT-NEW docs/18: PNG of the page after the smoke

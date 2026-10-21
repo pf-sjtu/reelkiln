@@ -6,7 +6,10 @@
 // Optional (PORT-NEW, docs/18): VIDEOCLAW_PORT_SMOKE_UI_SELECT=<route> → click that route's radio on the
 // Settings page, check settings:get + the port:llm:routesChanged push + the re-rendered page, then click
 // the previously active route again (restores the user's choice).
-export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: string; renderTimeoutMs: number; llmRoute?: string; uiSelect?: string }): string {
+// Optional (PORT-NEW, docs/19): VIDEOCLAW_PORT_SMOKE_AGENT=<prompt> → open the Agent tab, type the prompt,
+// click Send, wait for the turn to end; VIDEOCLAW_PORT_SMOKE_AGENT_STOP=<prompt> → then a second turn in
+// the same chat, click Stop as soon as output streams, check that it settles idle and stays quiet.
+export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: string; renderTimeoutMs: number; llmRoute?: string; uiSelect?: string; agentPrompt?: string; agentStopPrompt?: string }): string {
   return `(async () => {
     const api = window.videoclaw; const out = [];
     const rec = async (name, fn) => { const t0 = Date.now(); try { const v = await fn(); out.push({ name, ok: true, ms: Date.now() - t0, value: v }); return v; } catch (e) { out.push({ name, ok: false, ms: Date.now() - t0, error: String(e && e.message || e) }); } };
@@ -40,6 +43,47 @@ export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: 
     const before = pageSelected();
     await rec("settings-page:select(" + ${JSON.stringify(o.uiSelect)} + ")", () => clickRoute(${JSON.stringify(o.uiSelect)}));
     if (before && before !== ${JSON.stringify(o.uiSelect)}) await rec("settings-page:restore(" + before + ")", () => clickRoute(before));` : ""}
+    ${o.agentPrompt ? `
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const until = async (pred, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (pred()) return true; await sleep(100); } return false; };
+    const chat = window.__videoclawAgentChat;
+    const statusOf = () => document.getElementById("agentStatus").dataset.status;
+    const uiTurn = async (prompt) => {
+      document.getElementById("tab-agent").click();
+      const before = chat.eventLog().length;
+      document.getElementById("agentInput").value = prompt;
+      document.getElementById("agentSend").click();
+      const started = await until(() => chat.eventLog().slice(before).some((e) => e.kind === "status") && statusOf() === "running", 60000);
+      return { before, started };
+    };
+    const transcript = () => [...document.querySelectorAll("#agentTranscript .msg")].map((d) => ({ cls: d.className, text: d.textContent.slice(0, 400) }));
+    await rec("agent-ui:turn", async () => {
+      const { before, started } = await uiTurn(${JSON.stringify(o.agentPrompt)});
+      const ended = await until(() => statusOf() !== "running" && chat.eventLog().slice(before).some((e) => e.kind === "result" || e.kind === "error"), 280000);
+      const ev = chat.eventLog().slice(before);
+      const kinds = {}; for (const e of ev) kinds[e.kind] = (kinds[e.kind] || 0) + 1;
+      const st = chat.state();
+      const ok = started && ended && st.status === "idle" && !!kinds.text_delta && !!kinds.assistant_text && st.lastResult && !st.lastResult.isError;
+      if (!ok) throw new Error(JSON.stringify({ started, ended, status: st.status, kinds, notice: document.getElementById("agentNotice").textContent, transcript: transcript() }).slice(0, 1400));
+      return { sessionId: st.sessionId, runtime: st.runtime, kinds, tools: st.items.filter((i) => i.type === "tool").map((i) => i.name + ":" + i.state), transcript: transcript() };
+    });
+    ${o.agentStopPrompt ? `
+    await rec("agent-ui:stop", async () => {
+      const { before, started } = await uiTurn(${JSON.stringify(o.agentStopPrompt)});
+      const streaming = await until(() => chat.eventLog().slice(before).some((e) => e.kind === "text_delta" || e.kind === "tool_start"), 120000);
+      const clickedAt = Date.now();
+      document.getElementById("agentStop").click();
+      const settled = await until(() => statusOf() === "idle", 15000);
+      const settleMs = Date.now() - clickedAt;
+      const atStop = chat.eventLog().length;
+      await sleep(4000);
+      const after = chat.eventLog().slice(atStop).filter((e) => e.kind === "text_delta" || e.kind === "assistant_text" || e.kind === "tool_start");
+      const st = chat.state();
+      const ok = started && streaming && settled && st.lastResult && st.lastResult.stopped && after.length === 0 && document.getElementById("agentStop").disabled;
+      const value = { started, streaming, settled, settleMs, stoppedResult: st.lastResult, outputAfterStop: after.length, status: st.status, transcriptTail: transcript().slice(-3) };
+      if (!ok) throw new Error(JSON.stringify(value).slice(0, 1400));
+      return value;
+    });` : ""}` : ""}
     ${o.runBootstrap ? `await rec("bootstrap:run", () => api.bootstrapRun());` : ""}
     ${o.session && o.job ? `
     const events = [];
