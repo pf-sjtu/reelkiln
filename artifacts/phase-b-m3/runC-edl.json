@@ -1,0 +1,38 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "beats": [
+    {
+      "name": "a_bars",
+      "source": "footage/clip_a.mp4",
+      "in": 0.5,
+      "out": 3.0,
+      "role": "hook",
+      "framing": "center",
+      "source_kind": "real"
+    },
+    {
+      "name": "b_fractal",
+      "source": "footage/clip_b.mp4",
+      "in": 0.0,
+      "out": 2.0,
+      "role": "broll",
+      "source_kind": "real"
+    },
+    {
+      "name": "c_stars",
+      "source": "footage/clip_c.mp4",
+      "in": 0.5,
+      "out": 2.5,
+      "role": "broll",
+      "framing": "center",
+      "source_kind": "real"
+    }
+  ],
+  "audio": {
+    "from_beats": false,
+    "vo": {"source": "audio/music.mp3", "gain": 1.0}
+  },
+  "output": "final_raw.mp4"
+}

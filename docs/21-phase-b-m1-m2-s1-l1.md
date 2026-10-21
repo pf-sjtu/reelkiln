@@ -97,7 +97,7 @@ env ... VIDEOCLAW_PORT_SMOKE=1 VIDEOCLAW_PORT_SMOKE_RELOAD=1 VIDEOCLAW_PORT_SMOK
 
 ## 7. 未验证 / 风险
 
-- S1-L1 只成功 **1 次**（run2）；MiniMax 行为有随机性，无提示时（run1）失败。可重复性未测。
+- （已由 docs/22 更新：带提示 4/4，见 docs/22 §3）S1-L1 只成功 **1 次**（run2）；MiniMax 行为有随机性，无提示时（run1）失败。可重复性未测。
 - 无提示的忠实路径在 MiniMax 上不能完成 S1；Claude 路由（原版目标模型）未在本轮实跑（需凭据）。
 - `auto` 权限模式在非 Claude 模型上的分类器行为未单独研究：本次未出现询问，原因（CLI 自动放行 vs 分类器）未拆解。
 - 真实 UI 中点击 composer 发送（而非经 `window.videoclaw` API）未驱动；原版 UI 是否完整渲染引擎会话的转录（事件形状为 port 子集）未逐项核对。

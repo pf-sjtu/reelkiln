@@ -62,10 +62,10 @@ export function s1SmokeScript(o: S1SmokeOptions): string {
     const staged = await api.attachmentStage({ sessionId: sid, destination: "video", files: picked.files });
     attachmentIds = staged.filter((a) => a.status !== "failed").map((a) => a.id);
     const ta = Date.now();
-    let list = [];
-    while (Date.now() - ta < 60000) { list = await api.attachmentList(sid); if (list.length && list.every((a) => a.status === "ready" || a.status === "failed")) break; await sleep(200); }
-    attachment = { picked: picked.files.map((f) => ({ name: f.name, sizeBytes: f.sizeBytes })), staged: staged.map((a) => ({ id: a.id, name: a.name, status: a.status })), settled: list.map((a) => ({ id: a.id, name: a.name, status: a.status, destination: a.destination, error: a.error })), pushed: atts, settleMs: Date.now() - ta };
-    attachmentIds = list.filter((a) => a.status === "ready").map((a) => a.id);` : ""}
+    let attList = [];
+    while (Date.now() - ta < 60000) { attList = await api.attachmentList(sid); if (attList.length && attList.every((a) => a.status === "ready" || a.status === "failed")) break; await sleep(200); }
+    attachment = { picked: picked.files.map((f) => ({ name: f.name, sizeBytes: f.sizeBytes })), staged: staged.map((a) => ({ id: a.id, name: a.name, status: a.status })), settled: attList.map((a) => ({ id: a.id, name: a.name, status: a.status, destination: a.destination, error: a.error })), pushed: atts, settleMs: Date.now() - ta };
+    attachmentIds = attList.filter((a) => a.status === "ready").map((a) => a.id);` : ""}
     const sent = done ? null : await api.sendMessage(sid, { text: ${JSON.stringify(o.brief)}, clientTurnId: "s1-" + Date.now(), ...(attachmentIds.length ? { attachmentIds } : {}) });
     while (!done && Date.now() - t0 < ${o.timeoutMs}) await sleep(500);
     const turnMs = Date.now() - t0;

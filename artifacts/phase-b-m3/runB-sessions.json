@@ -1,0 +1,26 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "ad6150a1-3975-45df-8f57-c65109455a2b",
+   "title": "New video",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0,
+   "createdAt": 1792566888366,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-ad6150",
+   "finalizedAtMs": 1792567136933,
+   "contextEpoch": "57775bd2-09de-4ced-abef-df51393875e9"
+  }
+ ],
+ "trashWorkspaces": []
+}

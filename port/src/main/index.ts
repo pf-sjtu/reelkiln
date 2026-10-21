@@ -15,6 +15,8 @@ import { smokeScript } from "./smoke";
 import { homeSmokeScript, reloadSmokeScript, s1SmokeScript } from "./original-ui-smoke";
 import { resolveRendererEntry } from "./renderer-entry";
 import { redactText } from "./llm/logger";
+// PORT-NEW smoke helper: surface renderer-side exceptions instead of an opaque "Script failed to execute"
+const catchingScript = (script: string) => `(async () => { try { return await ${script}; } catch (e) { return { ok: false, error: String((e && e.stack) || e), events: [] }; } })()`;
 
 const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1"; // PORT-NEW
 /** PORT-NEW: append every session:event / permission:request push (redacted JSONL) — evidence capture. */
@@ -88,10 +90,10 @@ function createWindow() {
         let ok = home.ok;
         if (originalMode === "s1") {
           const brief = process.env.VIDEOCLAW_PORT_SMOKE_M3_SESSION ? "" : readFileSync(process.env.VIDEOCLAW_PORT_SMOKE_S1!, "utf8").trim();
-          const r = await created.webContents.executeJavaScript(s1SmokeScript({ brief, timeoutMs: Number(process.env.VIDEOCLAW_PORT_SMOKE_S1_TIMEOUT_MS ?? 25 * 60_000), permission: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION === "deny" ? "deny" : "allow", permissionMode: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION_MODE, llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE, attach: !!process.env.VIDEOCLAW_PORT_SMOKE_PICK_FILES, m3: process.env.VIDEOCLAW_PORT_SMOKE_M3 === "1", keepTasteTurn: process.env.VIDEOCLAW_PORT_SMOKE_KEEP_TASTE === "1", existingSession: process.env.VIDEOCLAW_PORT_SMOKE_M3_SESSION }));
+          const r = await created.webContents.executeJavaScript(catchingScript(s1SmokeScript({ brief, timeoutMs: Number(process.env.VIDEOCLAW_PORT_SMOKE_S1_TIMEOUT_MS ?? 25 * 60_000), permission: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION === "deny" ? "deny" : "allow", permissionMode: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION_MODE, llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE, attach: !!process.env.VIDEOCLAW_PORT_SMOKE_PICK_FILES, m3: process.env.VIDEOCLAW_PORT_SMOKE_M3 === "1", keepTasteTurn: process.env.VIDEOCLAW_PORT_SMOKE_KEEP_TASTE === "1", existingSession: process.env.VIDEOCLAW_PORT_SMOKE_M3_SESSION })));
           const out = process.env.VIDEOCLAW_PORT_SMOKE_S1_OUT;
           if (out) writeFileSync(out, redactText(JSON.stringify(r, null, 2)));
-          log(`[smoke] S1 ok=${r.ok} turnMs=${r.turnMs} session=${JSON.stringify(r.session)} final=${JSON.stringify(r.final)} events=${r.events.length} attachment=${JSON.stringify(r.attachment)?.slice(0, 800)} m3=${JSON.stringify(r.m3)?.slice(0, 1500)}`);
+          log(`[smoke] S1 ok=${r.ok} error=${r.error ?? ""} turnMs=${r.turnMs} session=${JSON.stringify(r.session)} final=${JSON.stringify(r.final)} events=${r.events.length} attachment=${JSON.stringify(r.attachment)?.slice(0, 800)} m3=${JSON.stringify(r.m3)?.slice(0, 1500)}`);
           ok = ok && r.ok;
         } else if (originalMode === "reload") {
           const r = await created.webContents.executeJavaScript(reloadSmokeScript());

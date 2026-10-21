@@ -210,3 +210,13 @@ test("ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): c
     await assert.rejects(h.host.sendMessage(meta.sessionId, { text: "x", attachmentIds: ids }), /Missing composer turn id/);
   } finally { await h.cleanup(); }
 });
+
+test("smoke driver scripts parse for every S1 option combination (attach/m3/existing session)", async () => {
+  const { homeSmokeScript, s1SmokeScript, reloadSmokeScript } = await import("../src/main/original-ui-smoke");
+  const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+  const parse = (src: string) => new AsyncFunction(`return ${src};`); // throws SyntaxError on a bad script
+  parse(homeSmokeScript({ timeoutMs: 1 })); parse(reloadSmokeScript());
+  for (const attach of [false, true]) for (const m3 of [false, true]) for (const existingSession of [undefined, "sid"]) {
+    parse(s1SmokeScript({ brief: "b \"q\" `t` ${x}", timeoutMs: 1, permission: "allow", llmRoute: "minimax", attach, m3, keepTasteTurn: false, existingSession } as any));
+  }
+});

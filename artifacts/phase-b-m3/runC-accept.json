@@ -1,0 +1,86 @@
+{
+ "failed": [],
+ "pending": [],
+ "results": {
+  "E1_final_exists": {
+   "ok": true,
+   "detail": "<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-fa5fd7/final.mp4"
+  },
+  "E2_ffprobe_exit0": {
+   "ok": true,
+   "detail": ""
+  },
+  "E3_one_h264_video": {
+   "ok": true,
+   "detail": "[('h264', 'yuvj420p')]"
+  },
+  "E4_vertical_9x16": {
+   "ok": true,
+   "detail": "720x1280"
+  },
+  "E5_fps_30": {
+   "ok": true,
+   "detail": "30/1"
+  },
+  "E6_one_aac_audio": {
+   "ok": true,
+   "detail": "['aac']"
+  },
+  "E7_duration_6.5s": {
+   "ok": true,
+   "detail": "6.507s"
+  },
+  "E8_full_decode_clean": {
+   "ok": true,
+   "detail": ""
+  },
+  "E9_no_black_segments": {
+   "ok": true,
+   "detail": ""
+  },
+  "E10_cuts_at_2.5_4.5": {
+   "ok": true,
+   "detail": "cuts=[2.5, 4.5]"
+  },
+  "E11_music_bed_is_audio": {
+   "ok": true,
+   "detail": "330Hz=-13.2dB 440Hz=-34.6dB"
+  },
+  "E12_render_manifest_binds_final": {
+   "ok": true,
+   "detail": "videoclaw.render-manifest/v4"
+  },
+  "E13_runlog_assemble_compose": {
+   "ok": true,
+   "detail": "['beat_assembled', 'beat_assembled', 'beat_assembled', 'timeline_assembled', 'render_started', 'deliverable_published', 'render_completed', 'finishing_look_done']"
+  },
+  "E14_zero_spend": {
+   "ok": true,
+   "detail": "sum(estimate_usd)=0.0"
+  },
+  "E15_inputs_untouched": {
+   "ok": true,
+   "detail": "originals unchanged"
+  },
+  "A1_version_v1_minted": {
+   "ok": true,
+   "detail": "<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-fa5fd7/versions/v1.mp4"
+  },
+  "A2_session_bound_to_job": {
+   "ok": true,
+   "detail": "jobId=6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-fa5fd7"
+  },
+  "A3_version_approved": {
+   "ok": true,
+   "detail": "finalizedAtMs=1792567815103 finals(v1)=1 madeFinalAtMs=1792567815091 v1Recorded=True"
+  },
+  "X1_export_copy_playable": {
+   "ok": true,
+   "detail": "sha==v1:True ffprobe_rc=0 duration=6.507"
+  },
+  "L2_attachments_materialized": {
+   "ok": true,
+   "detail": "incoming=['clip_a.mp4', 'clip_b.mp4', 'clip_c.mp4', 'music.mp3']"
+  }
+ }
+}

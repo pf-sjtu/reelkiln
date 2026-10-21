@@ -1,0 +1,48 @@
+{
+ "level": "L2",
+ "acceptRc": 0,
+ "pass": true,
+ "failed": [],
+ "pending": [],
+ "wallS": 658,
+ "turnMs": 650776,
+ "numTurns": 47,
+ "durationMs": 649774,
+ "isError": false,
+ "toolCalls": 46,
+ "permissionCards": 0,
+ "errors": [],
+ "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-fa5fd7",
+ "m3": {
+  "finalizedAtMs": 1792567815103,
+  "tasteCaptureTurnStarted": true,
+  "tasteCaptureStopped": true,
+  "exported": true
+ },
+ "playback": {
+  "why": "playing",
+  "readyState": 4,
+  "duration": 6.507,
+  "width": 720,
+  "height": 1280,
+  "error": null
+ },
+ "attachment": [
+  [
+   "clip_a.mp4",
+   "ready"
+  ],
+  [
+   "clip_b.mp4",
+   "ready"
+  ],
+  [
+   "clip_c.mp4",
+   "ready"
+  ],
+  [
+   "music.mp3",
+   "ready"
+  ]
+ ]
+}
