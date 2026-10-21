@@ -1,12 +1,13 @@
 // PORT-NEW: local SQLite store for the models.dev catalog (docs/15 §5.2).
-// Engine: node:sqlite (DatabaseSync) — built into Node ≥22.5 and into Electron 42's Node 24.19
+// Engine: node:sqlite (DatabaseSync), loaded lazily via ./sqlite (capability guard, min versions) — built into Node ≥22.13 and into Electron 42's Node 24.19
 // (verified on the box: `ELECTRON_RUN_AS_NODE=1 electron -e "require('node:sqlite')"` → SQLite
 // 3.53.3), so there is no native addon to rebuild per Electron ABI / per OS (better-sqlite3 would
 // need electron-rebuild + prebuilt binaries for win32/darwin/linux).
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
+import { loadSqlite } from "./sqlite";
 import type { CatalogModel, ParsedCatalog } from "./catalog";
 
 export const MODELS_DB_ENV = "VIDEOCLAW_MODELS_DB";
@@ -78,7 +79,8 @@ export class ModelsDb {
   readonly db: DatabaseSync;
   constructor(readonly path: string) {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
-    this.db = new DatabaseSync(path);
+    const { DatabaseSync: Db } = loadSqlite(); // lazy + capability-checked (sqlite.ts); throws SQLITE_UNAVAILABLE
+    this.db = new Db(path);
     this.db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
     if (path !== ":memory:") this.db.exec("PRAGMA journal_mode = WAL;");
     this.migrate();

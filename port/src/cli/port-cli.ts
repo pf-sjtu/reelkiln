@@ -14,6 +14,7 @@
 //   node dist/cli/port-cli.cjs llm-providers-validate [file]   (strict pre-deploy check of a providers file; exit 1 if invalid)
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt]   (ONE real request via the generic helper path)
 //   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
+//   node dist/cli/port-cli.cjs sqlite-check            (node:sqlite capability: runtime, SQLite version, minimums)
 //   node dist/cli/port-cli.cjs models-list [--provider ID] [--search Q] [--limit N]
 //   node dist/cli/port-cli.cjs models-show <provider/model | model> [--raw]
 //   node dist/cli/port-cli.cjs llm-model-info <provider>  (provider config → models.dev metadata)
@@ -36,6 +37,7 @@ import { describeMiniMaxConfig, minimaxConfig } from "../main/llm/minimax";
 import { anthropicMessages, helperCredsForProvider } from "../main/llm/llm-route";
 import { describeProvider, getProviderRegistry, loadProviderRegistry, PROVIDERS_FILE_ENV } from "../main/llm/provider-registry";
 import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
+import { checkSqliteCapability } from "../main/models-dev/sqlite";
 
 const [, , cmd, a1, a2, a3] = process.argv;
 const out = (o: Record<string, unknown>) => console.log(JSON.stringify(o));
@@ -109,6 +111,7 @@ async function main() {
         const reg = getProviderRegistry();
         return out({ ok: !reg.configError, step: cmd, providers: reg.summaries(), ...(reg.configError ? { configError: reg.configError } : {}) });
       }
+      case "sqlite-check": { const c = checkSqliteCapability(); if (!c.ok) process.exitCode = 1; return out({ ...c, step: cmd }); }
       case "llm-providers-validate": { // PORT-NEW: validate before swapping the watched file (hot reload)
         const file = a1 ?? process.env[PROVIDERS_FILE_ENV]?.trim();
         if (!file) return out({ ok: false, step: cmd, error: `usage: llm-providers-validate <file> (or set ${PROVIDERS_FILE_ENV})` });
