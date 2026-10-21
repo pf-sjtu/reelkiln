@@ -53,7 +53,7 @@ const textTurn = (reply: string, id = "msg_1"): Script => async function* () {
   yield { type: "assistant", message: { id, content: [{ type: "text", text: reply }] }, parent_tool_use_id: null };
   yield { type: "result", subtype: "success", is_error: false, num_turns: 1, duration_ms: 12, total_cost_usd: 0.01 };
 };
-function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxConcurrentTurns?: number; interruptAckTimeoutMs?: number; route?: string } = {}) {
+function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxConcurrentTurns?: number; interruptAckTimeoutMs?: number; route?: string; price?: (m: string) => any; proxyStats?: () => any } = {}) {
   silent();
   const root = mkdtempSync(join(tmpdir(), "vc-agenthost-"));
   const events: Array<{ sessionId: string; event: SessionEvent }> = [];
@@ -64,7 +64,7 @@ function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxC
   const service: AgentHostRouteService = {
     newSessionLlmRoute: () => route as any,
     llmRouteReadiness: async (meta) => o.readiness ?? { route: meta?.llmRoute, ready: true },
-    sessionAgentRuntime: async (meta) => { const h = { closed: 0, meta }; handles.push(h); return { llmRoute: meta.llmRoute as any, model: "MiniMax-M3.1-Flash", env: { ANTHROPIC_BASE_URL: "http://127.0.0.1:1", ANTHROPIC_AUTH_TOKEN: "vcgp_session_token" }, proxy: { url: "x" }, close: async () => { h.closed++; } }; },
+    sessionAgentRuntime: async (meta) => { const h = { closed: 0, meta }; handles.push(h); return { llmRoute: meta.llmRoute as any, model: "MiniMax-M3.1-Flash", env: { ANTHROPIC_BASE_URL: "http://127.0.0.1:1", ANTHROPIC_AUTH_TOKEN: "vcgp_session_token" }, proxy: { url: "x", ...(o.proxyStats ? { stats: o.proxyStats } : {}) }, close: async () => { h.closed++; } }; },
   };
   let sdkLoads = 0;
   const host = new AgentHost({
@@ -72,6 +72,7 @@ function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxC
     service,
     loadSdk: async () => { sdkLoads++; return { sdk: { query: ({ prompt, options }) => { const q = new FakeQuery(prompt as any, options, o.script ?? textTurn("Hello from the agent.")); queries.push(q); return q as any; } }, executable: "/x/claude" }; },
     sessionsRoot: root, maxConcurrentTurns: o.maxConcurrentTurns, interruptAckTimeoutMs: o.interruptAckTimeoutMs ?? 200,
+    ...(o.price ? { price: o.price, servedModel: () => "MiniMax-M3.1-Flash" } : {}),
   });
   const kinds = (sid: string) => events.filter((e) => e.sessionId === sid).map((e) => e.event.kind);
   return { host, events, changed, queries, handles, root, kinds, setRoute: (r: string) => { route = r; }, sdkLoads: () => sdkLoads, cleanup: () => rmSync(root, { recursive: true, force: true }) };
@@ -404,4 +405,60 @@ test("AgentHost + real LlmRouteService + gate proxy (local upstream): child env 
     await assert.rejects(fetch(proxyUrl + "/v1/messages", { method: "POST", body: "{}" }), "gate proxy closed with the runtime");
     await host.dispose();
   } finally { rmSync(root, { recursive: true, force: true }); await new Promise<void>((r) => up.close(() => r())); }
+});
+
+// ── docs/30: displayed spend = metered usage priced by THE price table, never the SDK's Claude estimate ──
+const FLASH = { inputPerMTokUsd: 0.15, outputPerMTokUsd: 0.6, cacheReadPerMTokUsd: 0.015, source: "models.dev:minimax-cn/MiniMax-M3.1-Flash" };
+const usageTurn = (modelUsage: Record<string, any>): Script => async function* () {
+  yield { type: "system", subtype: "init", model: "MiniMax-M3.1-Flash", claude_code_version: "2.1.305" };
+  yield { type: "assistant", message: { id: "m", content: [{ type: "text", text: "ok" }] }, parent_tool_use_id: null };
+  yield { type: "result", subtype: "success", is_error: false, num_turns: 1, duration_ms: 5, total_cost_usd: 0.05, modelUsage };
+};
+test("docs/30 spend: the SDK result's modelUsage (a Claude alias priced as the served MiniMax model) → result.totalCostUsd; total_cost_usd is ignored", async () => {
+  const priced: string[] = [];
+  const h = harness({ route: "gateway", price: (m) => { priced.push(m); return FLASH; }, script: usageTurn({ "claude-sonnet-4-5": { inputTokens: 1000, outputTokens: 200, cacheReadInputTokens: 10000, cacheCreationInputTokens: 0 } }) });
+  try {
+    const { sessionId } = h.host.createSession({});
+    await h.host.sendMessage(sessionId, { text: "hi", clientTurnId: "c1" });
+    await until(() => h.kinds(sessionId).includes("result"));
+    const res = h.events.map((e) => e.event).find((e) => e.kind === "result") as any;
+    const expected = (1000 * 0.15 + 10000 * 0.015 + 200 * 0.6) / 1e6;
+    assert.ok(Math.abs(res.totalCostUsd - expected) < 1e-12, `metered ${res.totalCostUsd} vs ${expected}`);
+    assert.notEqual(res.totalCostUsd, 0.05, "never the SDK estimate");
+    assert.deepEqual(priced, ["MiniMax-M3.1-Flash"]);
+  } finally { await h.host.dispose(); h.cleanup(); }
+});
+test("docs/30 spend: a gate-proxied route (provider / Codex) is priced from the proxy's metered upstream usage, cumulative per runtime", async () => {
+  let usage: any = { "MiniMax-M3.1-Flash": { inputTokens: 100, outputTokens: 10, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 1 } };
+  const h = harness({ price: () => FLASH, proxyStats: () => ({ usage }), script: usageTurn({}) });
+  try {
+    const { sessionId } = h.host.createSession({});
+    await h.host.sendMessage(sessionId, { text: "hi", clientTurnId: "c1" });
+    await until(() => h.kinds(sessionId).includes("result"));
+    usage = { "MiniMax-M3.1-Flash": { inputTokens: 300, outputTokens: 30, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 2 } };
+    await h.host.sendMessage(sessionId, { text: "again", clientTurnId: "c2" });
+    await until(() => h.kinds(sessionId).filter((k) => k === "result").length === 2);
+    const results = h.events.map((e) => e.event).filter((e) => e.kind === "result") as any[];
+    assert.ok(Math.abs(results[0].totalCostUsd - (100 * 0.15 + 10 * 0.6) / 1e6) < 1e-12);
+    assert.ok(Math.abs(results[1].totalCostUsd - (300 * 0.15 + 30 * 0.6) / 1e6) < 1e-12, "cumulative runtime total, delta-added once");
+  } finally { await h.host.dispose(); h.cleanup(); }
+});
+test("docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels", async () => {
+  const h = harness();
+  try {
+    const { sessionId } = h.host.createSession({});
+    const early = await h.host.requestInput({ sessionId, kind: "rights", prompt: "p", destDir: "/tmp" } as any);
+    assert.deepEqual(early, { kind: "cancel", reason: "Session runtime changed" }, "no runtime yet");
+    await h.host.sendMessage(sessionId, { text: "hi", clientTurnId: "c1" });
+    await until(() => h.kinds(sessionId).includes("result"));
+    const answer = h.host.requestInput({ sessionId, kind: "rights", prompt: "Ana\n\nintro", destDir: "/tmp" } as any);
+    const pending = h.host.listPendingInteractions().filter((p) => p.kind === "input");
+    assert.equal(pending.length, 1); assert.equal(pending[0].request.kind, "rights");
+    h.host.respondInput(pending[0].request.requestId, { kind: "rights", accepted: true });
+    assert.deepEqual(await answer, { kind: "rights", accepted: true });
+    assert.equal(h.host.listPendingInteractions().length, 0);
+    const settled = h.events.map((e) => e.event).find((e: any) => e.kind === "ask_settled") as any;
+    assert.ok(settled, "ask_settled event");
+    assert.deepEqual([settled.record.askId, settled.record.family, settled.record.outcome, settled.record.title], [pending[0].request.requestId, "rights", "answered", "Rights confirmation"]);
+  } finally { await h.host.dispose(); h.cleanup(); }
 });

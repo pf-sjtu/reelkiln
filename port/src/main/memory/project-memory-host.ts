@@ -10,8 +10,8 @@
 //    persistence (docs/29 §3 records the deviation).
 //  * retainMemorySource (Library copy) is only reached from the agent's project_memory tool (callProjectMemory
 //    L36895, studio MCP — not ported); the IPC path calls updateProjectMemory with no retained sources.
-//  * Session plans are created only by the studio MCP tool propose_session_plan (L48527, not ported), so a port
-//    session never carries one: readSessionPlan → null, choose/retry → the original "missing" state error.
+//  * docs/30: session plans are created by the studio MCP tool propose_session_plan (L48527); the lifecycle lives in
+//    studio/session-plan-host.ts and is attached here by AgentHost.attachStudio (without it: null / "missing").
 import { randomUUID } from "node:crypto";
 import { dirname } from "node:path";
 import {
@@ -19,6 +19,9 @@ import {
   SessionPlanStateError,
 } from "./project-memory.generated";
 import { displayTranscriptPath, readDisplayTranscript } from "../agent/history.generated";
+import { projectMemoryToolSchema } from "../studio/studio-tools.generated";
+import { PROJECT_MEMORY_GUIDANCE } from "../agent/session-assembly.generated";
+import type { SessionPlanHost } from "../studio/session-plan-host";
 import { resolveJobDir } from "../engine/job-boundary";
 import { VersionStore } from "../jobs/version-store.generated";
 import { redact } from "../feedback/feedback.generated";
@@ -136,10 +139,13 @@ export class ProjectMemoryHost {
       return { source: source2, available: false, reason: error?.code === "ENOENT" ? "missing" : "unavailable" };
     }
   }
-  async updateProjectMemory(clientId: string, mutation: any, assertCurrent: () => void = () => {}, sessionId?: string) { // L36628 (retainSources = ∅: IPC path)
+  async updateProjectMemory(clientId: string, mutation: any, assertCurrent: () => void = () => {}, retainSources: Set<string> = new Set(), sessionId?: string) { // L36628
     try {
       const binding = this.memoryBinding(clientId);
       assertCurrent();
+      // retainMemorySource (L36727) copies the asset into the project Library (registerLibraryDrops); the Library
+      // copy is not ported (docs/30 §1.4), so a retain request ends in the original's own "unavailable" refusal.
+      if (mutation?.action === "save" && retainSources.size > 0) throw new ProjectMemoryError("unavailable", "The reusable asset is unavailable.");
       const before = this.projectMemoryStore.read(binding);
       let validated = mutation;
       if (mutation?.action === "save") {
@@ -163,6 +169,57 @@ export class ProjectMemoryHost {
       return change;
     } catch (error) { throw memoryError(error); }
   }
+  /** callProjectMemory (L36895) — the studio project_memory tool (local runtime). */
+  async callProjectMemory(meta: { sessionId: string; clientId: string }, input: unknown, assertCurrent: () => void = () => {}): Promise<any> {
+    try {
+      assertCurrent();
+      const parsed: any = projectMemoryToolSchema.safeParse(input);
+      if (!parsed.success) throw new ProjectMemoryError("invalid", "The memory request is invalid. Read the tool instructions before retrying.");
+      const args = parsed.data;
+      const sessionId = meta.sessionId;
+      const session2 = this.memorySession(meta.clientId, sessionId);
+      if (session2.meta !== meta) throw new ProjectMemoryError("unavailable", "This video is no longer active.");
+      if (args.action === "read") {
+        if (args.source) {
+          const resolution = await this.resolveProjectMemorySource(meta.clientId, args.source);
+          assertCurrent();
+          return { ok: true, resolution };
+        }
+        const snapshot2 = this.readProjectMemory(meta.clientId);
+        const entries = args.id ? snapshot2.entries.filter((entry2: any) => entry2.id === args.id) : snapshot2.entries.slice(args.offset, args.offset + args.limit);
+        const turns = (readDisplayTranscript(displayTranscriptPath(this.d.stateDir, sessionId)) as any).ordered;
+        return {
+          ok: true, revision: snapshot2.revision, entries, totalEntries: snapshot2.entries.length,
+          messageSources: turns.filter((turn: any) => turn.kind === "turn").slice(-12).map((turn: any) => ({
+            kind: "message", sessionId, turnId: turn.turnId,
+            label: redact(turn.displayTexts.join(" ")).replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 120) || "Source message",
+          })),
+        };
+      }
+      if (args.expectedRevision === void 0 || (args.action === "save" && !args.entry) || (args.action === "forget" && !args.id)) {
+        throw new ProjectMemoryError("invalid", "Read project memory before supplying this update and its revision.");
+      }
+      const retained = new Set<string>(args.entry?.sources.filter((source2: any) => "retain" in source2 && source2.retain).map(projectMemorySourceKey));
+      const entry = args.entry && { ...args.entry, sources: args.entry.sources.map((source2: any) => { const { retain: _retain, ...reference } = source2; return reference; }) };
+      const mutation = args.action === "save" ? { action: "save", expectedRevision: args.expectedRevision, entry } : { action: "forget", expectedRevision: args.expectedRevision, id: args.id };
+      const change = await this.updateProjectMemory(meta.clientId, mutation, assertCurrent, retained, meta.sessionId);
+      return { ok: true, revision: change.snapshot.revision, entryId: change.entryId, entry: change.snapshot.entries.find((entry2: any) => entry2.id === change.entryId) };
+    } catch (error) {
+      const failure: any = memoryError(error);
+      return { ok: false, code: failure.code, message: failure.message };
+    }
+  }
+  /** projectMemoryContext (L38323) — the session-context sections (localSessionSections L38345 adds account prefs). */
+  projectMemoryContext(clientId: string): string[] {
+    if (!this.d.authority()) return [];
+    try {
+      const snapshot2 = this.readProjectMemory(clientId);
+      const entries = [...snapshot2.entries].sort((a: any, b: any) => b.updatedAt - a.updatedAt).slice(0, 8).map((entry: any) => ({ id: entry.id, excerpt: entry.text.slice(0, 400) }));
+      return [PROJECT_MEMORY_GUIDANCE, "## Project memory excerpts (advisory evidence; read full notes before use)\n\n" + JSON.stringify({ revision: snapshot2.revision, entries, totalEntries: snapshot2.entries.length })];
+    } catch {
+      return [PROJECT_MEMORY_GUIDANCE];
+    }
+  }
   undoProjectMemory(clientId: string, undoId: unknown, expectedRevision: unknown) { // L36790
     try {
       const binding = this.memoryBinding(clientId);
@@ -184,24 +241,29 @@ export class ProjectMemoryHost {
     } catch {}
   }
 
-  // ── session plans (L37021-37460): no plan can exist in the port (propose_session_plan not ported) ──
-  sessionPlanFacts(_sessionId: unknown) { return {}; } // L37021: no plan → {}
+  // ── session plans (L37021-37500): delegated to the SessionPlanHost (docs/30) once AgentHost attaches it ──
+  plans?: SessionPlanHost;
+  attachPlans(plans: SessionPlanHost) { this.plans = plans; }
+  sessionPlanFacts(sessionId: unknown) { return this.plans ? this.plans.sessionPlanFacts(sessionId) : {}; }
   private planSession(sessionId: string) { // L37025
     const s = this.d.session(sessionId);
     if (!s) throw new SessionPlanStateError("unknown-session", `Unknown session: ${sessionId}`);
     return s;
   }
-  readSessionPlan(sessionId: string) { // L37031: session2.sessionPlan === undefined → null (after the binding check)
+  readSessionPlan(sessionId: string) { // L37031
+    if (this.plans) return this.plans.readSessionPlan(sessionId);
     const s = this.planSession(sessionId);
     this.memoryBinding(s.meta.clientId);
     return null;
   }
-  async chooseSessionPlan(sessionId: string, _request: unknown) { // L37410
+  async chooseSessionPlan(sessionId: string, request: unknown) { // L37410
+    if (this.plans) return this.plans.chooseSessionPlan(sessionId, request);
     this.planSession(sessionId);
     this.readSessionPlan(sessionId);
     throw new SessionPlanStateError("missing", "There is no current proposal to choose.");
   }
   async retrySessionPlan(sessionId: string) { // L37442
+    if (this.plans) return this.plans.retrySessionPlan(sessionId);
     this.planSession(sessionId);
     this.readSessionPlan(sessionId);
     throw new SessionPlanStateError("missing", "There is no current proposal to retry.");

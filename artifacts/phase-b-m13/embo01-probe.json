@@ -1,0 +1,1 @@
+{"http": 200, "base_resp": {"status_code": 0, "status_msg": "success"}, "n_vectors": 1, "dims": 1536, "total_tokens": 16, "keys": ["base_resp", "total_tokens", "vectors"]}

@@ -43,6 +43,7 @@ import { deletionBlockMessage, moveProjectToTrash, planProjectTrash, PROJECT_TRA
 import { assembleOriginalVideoContext, readPromiseBrief } from "../jobs/original-context.generated";
 import { MaterialsLedger } from "../materials/materials-ledger.generated";
 import { SessionSpendBudgets, spendBudgetAuthority } from "../spend/spend-budgets.generated";
+import { costUsd, type ModelPrice } from "../gateway/pricing";
 import { normalizeSpendCeilingUsd } from "../spend/spend-wb.generated";
 import { resolveJobDir } from "../engine/job-boundary";
 import { attachmentContextLines, ComposerAttachmentStore, composerTurnMessageUuid } from "../attachments/composer-attachments.generated";
@@ -58,6 +59,12 @@ import {
   type CanUseToolResult, type EnginePolicyHost, type EngineSessionDeps, type PermissionRequest,
 } from "./engine-session";
 import { fallbackSessionTitle, NEW_VIDEO_TITLE } from "./session-title.generated";
+import { SessionPlanHost } from "../studio/session-plan-host";
+import { makeStudioToolset, makeCodexToolset, type StudioInputRequest } from "../studio/studio-toolset";
+import { claudeCodeAllowedTools, settledAskFromInput } from "../studio/studio-tools.generated";
+import { appendDisplayAsk, appendDisplayPreference } from "./history.generated";
+import { saveAccountCommitment } from "../taste/taste.generated";
+import type { ProjectMemoryHost } from "../memory/project-memory-host";
 import { CodexAppServerClient, CodexProcessCapacityError } from "../codex/app-server-client";
 import { codexChildEnv, codexEventToSdkMessages } from "../codex/codex-protocol.generated";
 import { codexRouteDiagnostic, isQualifiedCodexRoute } from "../codex/codex-routes.generated";
@@ -119,6 +126,10 @@ export interface AgentHostEmit {
   materials?(sessionId: string, ledger: unknown): void;
   /** docs/26: push spend:snapshot {sessionId, snapshot} (original emit.spendSnapshot L61086). */
   spendSnapshot?(sessionId: string, snapshot: unknown): void;
+  /** docs/30: push input:request (original emit.inputRequest L61068). */
+  inputRequest?(req: unknown): void;
+  /** docs/30: push sessionPlan:changed (original emit.sessionPlanChanged, emitSessionPlan L37106). */
+  sessionPlanChanged?(payload: unknown): void;
 }
 export interface AgentRuntimeHandle { llmRoute: LlmRouteId; model: string | undefined; env: Record<string, string>; proxy?: unknown; close(): Promise<void> }
 export interface AgentHostRouteService {
@@ -176,6 +187,12 @@ export interface AgentHostDeps {
    *  pinned gateway settings (activeSettings) the credit route runs on (the docs/28 local gateway shim). */
   creditEligibility?: () => Promise<Record<string, any>>;
   gatewaySettings?: () => { gatewayUrl?: string; gatewayKey?: string };
+  /** docs/30: THE price table (gateway/pricing.ts priceTable: env → models.dev → MiniMax fallback) — the same resolver
+   *  the local gateway ledger charges with. Every route's displayed spend is priced with it from metered token usage;
+   *  the SDK's Claude-priced total_cost_usd is never shown. Absent → no LLM spend is shown (tests / chat mode). */
+  price?: (model: string) => ModelPrice;
+  /** docs/30: the model a non-MiniMax id (a Claude alias the shim / proxy maps) is actually served by. */
+  servedModel?: () => string | undefined;
 }
 export interface AgentHostCodexDeps {
   /** settings.get() — agentHarness / codexProvider / codexModel (resolvedAgentHarness L324) */
@@ -239,6 +256,11 @@ interface Session {
   /** docs/29: emitFailureCard (L42367) — the Claude account limit ended the last turn. */
   claudeAllowanceExhausted?: boolean;
   claudeAllowanceTurnIds?: string[];
+  /** docs/30: the session plan (L36986 restoredSessionPlan / L37066 persistSessionPlan) + its brief anchor (L41756). */
+  sessionPlan?: any;
+  sessionPlanRequired?: boolean;
+  lastUserTurnId?: string;
+  sessionPlannerRequest?: unknown;
 }
 interface DeliveredInput { msg: Record<string, any>; displayTexts: string[]; attachmentIds: string[] }
 interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void }
@@ -279,6 +301,11 @@ export const PORT_PAID_REFUSAL = "Paid generation needs a Videoclaw account, whi
 export class AgentHost {
   private readonly sessions = new Map<string, Session>();
   private readonly pendingPermissions = new Map<string, PendingPermission>();
+  /** docs/30: studio input requests (pendingInputs L34985, rememberInput L38545). */
+  private readonly pendingInputs = new Map<string, { request: any; sessionId: string; runtime?: Runtime; order: number; resolve: (r: any) => void; resolveOnRetire: boolean }>();
+  /** docs/30: the session-plan lifecycle (studio/session-plan-host.ts) and the project-memory host it binds through. */
+  readonly plans?: SessionPlanHost;
+  private memory?: ProjectMemoryHost;
   private permissionOrder = 0;
   private readonly log: Logger;
   private sdk?: Promise<{ sdk: ClaudeAgentSdkLike; executable?: string; version?: string }>;
@@ -328,6 +355,21 @@ export class AgentHost {
       }, d.engine.workspaceRoot());
       this.attachmentStore = new ComposerAttachmentStore(join(d.stateDir, "composer-attachments.json"));
       this.materialsLedger = new MaterialsLedger(d.stateDir);
+      const stateDir = d.stateDir;
+      this.plans = new SessionPlanHost({
+        stateDir,
+        session: (id) => this.sessions.get(id) as any,
+        isLive: (ps) => this.sessions.get(ps.meta.sessionId) === (ps as any) && !this.deletingSessions.has(ps.meta.sessionId),
+        memoryBinding: (clientId) => { if (!this.memory) throw new Error("Project memory is unavailable until this account and project are verified."); return this.memory.memoryBinding(clientId); },
+        verifiedMemorySource: (clientId, source) => { if (!this.memory) throw new Error("Project memory is unavailable."); return this.memory.verifiedMemorySource(clientId, source); },
+        flushRegistry: () => this.flushRegistry(),
+        sendMessage: (id, req) => this.sendMessage(id, req),
+        spendSnapshot: (id) => this.spendBudgets.snapshot(id),
+        requestWitness: (id, requireRuntime) => this.requestWitness(id, requireRuntime),
+        turnAccepted: (id, clientTurnId) => { const r = (this.attachmentStore as any)?.turns?.get(clientTurnId); return !!r && r.sessionId === id && r.state === "committed"; },
+        emitSessionPlanChanged: (payload) => { try { this.d.emit.sessionPlanChanged?.(payload); } catch {} },
+        isComposerDeliveryError: (e) => e instanceof ComposerDeliveryError,
+      });
     }
     // L34832: the per-video spend ledger. No gateway key exists in the port → the original's
     // spendBudgetAuthority(gatewayUrl, undefined) authority; persisted to spend-budgets.json (L34826).
@@ -428,7 +470,7 @@ export class AgentHost {
   registryRows(): Array<Record<string, unknown>> {
     return [...this.sessions.values()].map((s) => {
       const { portAgentHost: _p, liveWork: _l, mediaRecoveryNeeded: _m, turnStartedAtMs: _t, ...persisted } = s.meta as Record<string, unknown>;
-      return { ...persisted, ...(s.contextEpoch ? { contextEpoch: s.contextEpoch } : {}) };
+      return { ...persisted, ...(s.contextEpoch ? { contextEpoch: s.contextEpoch } : {}), ...(this.plans ? this.plans.registryFields(s as any) : s.sessionPlanRequired ? { sessionPlanRequired: true } : {}) };
     });
   }
   private saveRegistry(): void {
@@ -441,8 +483,9 @@ export class AgentHost {
     let n = 0;
     for (const row of rows) {
       if (!row || typeof row.sessionId !== "string" || this.sessions.has(row.sessionId)) continue;
-      const { liveWork: _l, mediaRecoveryNeeded: _m, contextEpoch, ...meta } = row;
-      this.sessions.set(row.sessionId, { meta: { ...meta, status: "idle", portAgentHost: true } as AgentSessionMeta, openTools: new Set(), clientTurns: new Set(), staleResults: 0, epoch: 0, ...(typeof contextEpoch === "string" ? { contextEpoch } : {}) });
+      const { liveWork: _l, mediaRecoveryNeeded: _m, contextEpoch, sessionPlan: _p, sessionPlanDetails: _pd, dismissedSessionPlan: _dp, sessionPlanRequired: _pr, ...meta } = row;
+      const planState = this.plans ? this.plans.restoredSessionPlan(row) : {}; // restoredSessionPlan L36986 (public meta strips the plan, L35717)
+      this.sessions.set(row.sessionId, { meta: { ...meta, status: "idle", portAgentHost: true } as AgentSessionMeta, openTools: new Set(), clientTurns: new Set(), staleResults: 0, epoch: 0, ...(typeof contextEpoch === "string" ? { contextEpoch } : {}), ...planState });
       n++;
     }
     return n;
@@ -506,7 +549,7 @@ export class AgentHost {
       ...(continued?.meta.jobId ? { adoptCandidate: { jobId: continued.meta.jobId, reason: "owned", ownerSessionId: continued.meta.sessionId, ownerTitle: continued.meta.title } } : {}),
       portAgentHost: true,
     };
-    this.sessions.set(sessionId, { meta, openTools: new Set(), clientTurns: new Set(), staleResults: 0, epoch: 0, ...(this.d.engine ? { preexistingJobs: listJobIds(cwd) } : {}) });
+    this.sessions.set(sessionId, { meta, openTools: new Set(), clientTurns: new Set(), staleResults: 0, epoch: 0, ...(this.d.engine ? { preexistingJobs: listJobIds(cwd), sessionPlanRequired: true } : {}) }); // L38862
     if (!continued) { try { this.spendBudgets.setUnlimited(sessionId); } catch (e) { this.log.warn("agent.spend.set_unlimited_failed", { sessionId, error: e }); } } // L38866
     this.log.info("agent.session.created", { sessionId, llmRoute, agentHarness, engine: !!this.d.engine, continued: !!continued, quickstart: !!quickstart });
     if (continued && !internal?.deferJobAdoption) continued.meta.continuation = { clientActionId: `recovery:${sessionId}`, sessionId };
@@ -600,6 +643,9 @@ export class AgentHost {
           const list2 = materialized.map((a) => `- ${a.id}: ${a.path}` + attachmentContextLines(a, true).map((line: string) => `\n${line}`).join("")).join("\n");
           wireText = `[APP-OWNED COMPOSER ATTACHMENTS — ordered]\n${list2}\n[Use these files as source material where relevant.]\n\n` + wireText;
         }
+        // L41666: the app-owned session-plan preamble (sessionPlanTurnContext L38254) leads the engine text
+        const planContext = this.plans && req.clientTurnId ? this.plans.sessionPlanTurnContext(s as any, req.clientTurnId) : "";
+        if (planContext) wireText = `${planContext}\n\n${wireText}`;
         if (useStore) wireText = store.freezeRuntimeText(sessionId, req.clientTurnId, req.text, req.attachmentIds, wireText);
       }
     } catch (e) {
@@ -618,6 +664,8 @@ export class AgentHost {
     this.setStatus(s, "running");
     const delivered = await this.deliver(s, { msg, displayTexts: displayTexts ?? (req.text.trim() ? [req.text] : []), attachmentIds: req.attachmentIds }, release);
     if (!delivered) return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] };
+    s.lastUserTurnId = msg.uuid; // L41756
+    this.plans?.recordAcceptedPlanSource(s as any, msg); // L42071
     // L41757-41763: once delivered, a fallback/attachment title may be replaced by a proposed one
     if (req.text.trim() && (s.meta.titleOrigin === "fallback" || s.meta.titleOrigin === "attachment") && !req.text.startsWith("✅")) {
       this.nameSession(s, req.text, titleCancellation === s.titleCancellation);
@@ -877,7 +925,7 @@ export class AgentHost {
     if (s.epoch !== epoch) throw new Error("The session was reset before the agent started.");
     // spawnLocal L39461-39495: engine env (+ bound job, pinned context epoch) and the assembled
     // session context are computed BEFORE the runtime starts, so a broken engine fails fast.
-    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch) : undefined;
+    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId)) : undefined;
     if (engineSpawn?.contextEpoch && engineSpawn.contextEpoch !== s.contextEpoch) { s.contextEpoch = engineSpawn.contextEpoch; this.saveRegistry(); }
     const handle = await this.d.service.sessionAgentRuntime(meta);
     if (s.epoch !== epoch) { await handle.close().catch(() => {}); throw new Error("The session was reset before the agent started."); }
@@ -895,7 +943,9 @@ export class AgentHost {
     let stderr = "";
     let options: Record<string, unknown>;
     if (this.d.engine && engineSpawn) {
-      options = this.engineQueryOptions(s, handle, engineSpawn, executable, (t) => { stderr = (stderr + t).slice(-4000); });
+      // spawnLocal L39564: studioServer = makeStudioToolset(meta, engineEnv).server, built with the loaded SDK
+      const studioServer = typeof (sdk as any).createSdkMcpServer === "function" ? this.makeStudioToolset(s, sdk as any).server : undefined;
+      options = this.engineQueryOptions(s, handle, engineSpawn, executable, (t) => { stderr = (stderr + t).slice(-4000); }, studioServer);
     } else {
       const policy = confinedToolPolicy(s.meta.cwd, this.tools);
       const canUseTool = async (name: string, toolInput: Record<string, unknown>) => {
@@ -926,7 +976,7 @@ export class AgentHost {
     this.codex.assertEnabled();
     const p = c.provider();
     if (!p) throw new Error(this.codex.runtimeGate().message);
-    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch) : undefined;
+    const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId)) : undefined;
     if (engineSpawn?.contextEpoch && engineSpawn.contextEpoch !== s.contextEpoch) { s.contextEpoch = engineSpawn.contextEpoch; this.saveRegistry(); }
     ensureCodexProfile(c.profileDir(), p.model);
     const backend = await (c.startBackend ?? ((pp: ResolvedProvider) => startCodexMiniMaxBackend(pp, { logger: this.log })))(p);
@@ -961,6 +1011,8 @@ export class AgentHost {
         sessionContext: { append: engineSpawn?.append ?? "", assembled: !!engineSpawn, lawsVersion: engineSpawn?.lawsVersion },
         engineEnv: engineSpawn?.engineEnv ?? { PATH: process.env.PATH ?? "/usr/bin:/bin" }, profileDir: c.profileDir(), appVersion: c.appVersion, executable: c.executable(),
         canUseTool, createClient: c.createClient,
+        // spawnLocal L39507: dynamicTools / callDynamicTool = makeCodexToolset(meta, engineEnv)
+        ...(this.d.engine ? (() => { const ct = makeCodexToolset(this.makeStudioToolset(s)); return { dynamicTools: ct.dynamicTools, callDynamicTool: (call: any, signal: AbortSignal) => ct.call(call, signal) }; })() : {}),
         onWarning: (m) => { stderr = (stderr + m + "\n").slice(-4000); },
       });
     } catch (e) { await backend.close().catch(() => {}); throw e; }
@@ -1093,7 +1145,7 @@ export class AgentHost {
         const subtype = String(m.subtype ?? "unknown");
         const isError = subtype !== "interrupted" && (m.is_error === true || subtype !== "success");
         this.closeOpenTools(s, isError ? "error" : "abandoned");
-        if (Number.isFinite(m.total_cost_usd) && m.total_cost_usd >= 0 && rt.llmRoute === "gateway") s.meta.totalCostUsd = Math.max(s.meta.totalCostUsd, m.total_cost_usd);
+        this.meterResultCost(s, rt, m);
         if (s.staleResults > 0) { s.staleResults--; break; } // the Stop already sent its result (L43900)
         this.send(s, { kind: "result", isError, totalCostUsd: s.meta.totalCostUsd, numTurns: m.num_turns ?? 0, durationMs: m.duration_ms ?? 0 });
         if (isError) {
@@ -1115,14 +1167,14 @@ export class AgentHost {
     return {
       sessionCwd: (id) => this.sessions.get(id)?.meta.cwd,
       sessionJobId: (id) => this.sessions.get(id)?.meta.jobId,
-      sessionPlanRefusal: () => undefined, // no plan can exist (propose_session_plan not ported) → L45xxx returns undefined
+      sessionPlanRefusal: (id) => this.plans?.sessionPlanProductionRefusal(id), // sessionPlanProductionRefusal L38138
       askHuman: (req, signal) => this.askHuman(req, signal),
       paidRefusal: () => PORT_PAID_REFUSAL,
       log: (event, detail) => this.log.info(event, detail),
     };
   }
   /** createLocalRuntime options (L23237-23314) for an engine session. */
-  private engineQueryOptions(s: Session, handle: AgentRuntimeHandle, sp: { engineEnv: Record<string, string>; append: string }, executable: string | undefined, stderr: (t: string) => void): Record<string, unknown> {
+  private engineQueryOptions(s: Session, handle: AgentRuntimeHandle, sp: { engineEnv: Record<string, string>; append: string }, executable: string | undefined, stderr: (t: string) => void, studioServer?: unknown): Record<string, unknown> {
     const sessionId = s.meta.sessionId;
     const engine = this.d.engine!;
     const policyHost = this.enginePolicyHost();
@@ -1140,10 +1192,10 @@ export class AgentHost {
       settingSources: ["project"],
       systemPrompt: { type: "preset", preset: "claude_code", append: [sp.append, providerRouteHint(String(handle.llmRoute))].filter(Boolean).join("\n\n") },
       disallowedTools: claudeCodeDisallowedTools(),
-      allowedTools: [], // claudeCodeAllowedTools(): studio self-authorizing MCP tools — no studio MCP in the port
+      allowedTools: claudeCodeAllowedTools(), // L23270: the studio self-authorizing MCP tools
       canUseTool: adaptClaudeCodeCanUseTool(makeEngineCanUseTool(engine, policyHost, sessionId, sp.engineEnv)),
       hooks: makeEngineHooks(engine, policyHost, sessionId, sp.engineEnv),
-      mcpServers: {}, // studio MCP (L48511) not ported
+      mcpServers: studioServer ? { studio: studioServer } : {}, // L23280: the studio MCP (makeStudioToolset L48166)
       strictMcpConfig: true,
       // PORT-NEW safety net (the original sets none): bounds a looping model on a shared key
       maxTurns: this.d.maxTurns ?? 120,
@@ -1226,8 +1278,11 @@ export class AgentHost {
     pending.resolve(decision);
   }
   /** listPendingInteractions (L38511) → interaction:replayPending. */
-  listPendingInteractions(): Array<{ kind: "permission"; request: PermissionRequest; order: number }> {
-    return [...this.pendingPermissions.values()].map((p) => ({ kind: "permission" as const, request: p.request, order: p.order })).sort((a, b) => a.order - b.order);
+  listPendingInteractions(): Array<{ kind: "permission" | "input"; request: any; order: number }> {
+    return [
+      ...[...this.pendingPermissions.values()].map((p) => ({ kind: "permission" as const, request: p.request, order: p.order })),
+      ...[...this.pendingInputs.values()].map((p) => ({ kind: "input" as const, request: p.request, order: p.order })),
+    ].sort((a, b) => a.order - b.order);
   }
   private cancelPendingPermissions(s: Session, rt?: Runtime): void {
     for (const [id, p] of this.pendingPermissions) {
@@ -1288,6 +1343,7 @@ export class AgentHost {
     s.runtime = undefined;
     s.staleResults = 0;
     this.cancelPendingPermissions(s, rt);
+    this.retireRuntimeInputs(s, rt);
     this.closeOpenTools(s, "abandoned");
     rt.inputClosed = true;
     rt.wake?.(); rt.wake = null;
@@ -1809,10 +1865,114 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     writeFileSync(temporary, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
     renameSync(temporary, this.spendBudgetFile);
   }
-  /** respondInput (L44689) — input:respond. The port has no request_input tool (studio MCP not ported), so
-   *  pendingInputs is always empty: takePendingInput finds nothing and the answer is dropped (original branch). */
-  respondInput(requestId: string, response: unknown): void {
-    this.log.info("agent.input.respond_no_pending", { requestId: String(requestId).slice(0, 64), kind: (response as any)?.kind ?? null });
+  /** respondInput (L44689) — input:respond (pulse not ported). */
+  respondInput(requestId: string, response: any): void {
+    const pending = this.takePendingInput(String(requestId), response?.kind === "cancel" ? "cancelled" : "answered", response);
+    this.log.info("agent.input.respond", { requestId: String(requestId).slice(0, 64), kind: response?.kind ?? null, pending: !!pending });
+    pending?.resolve(response);
+  }
+  /** requestInput (L48142) — a studio tool's blocking card (rights / voiceover / files). */
+  requestInput(req: StudioInputRequest): Promise<any> {
+    const requestId = randomUUID();
+    const inputRequest = { ...req, requestId };
+    const runtime = this.sessions.get(req.sessionId)?.runtime;
+    const turnAtRequestMs = this.sessions.get(req.sessionId)?.turnStartedAtMs;
+    return new Promise<any>((resolvePromise) => {
+      const s = this.sessions.get(req.sessionId);
+      if (!s || !runtime || runtime.dead) { resolvePromise({ kind: "cancel", reason: "Session runtime changed" }); return; }
+      this.pendingInputs.set(requestId, { request: inputRequest, sessionId: req.sessionId, runtime, resolve: resolvePromise, resolveOnRetire: true, order: ++this.permissionOrder }); // rememberInput L38545
+      this.setStatus(s, "awaiting_permission");
+      this.log.info("agent.input.request", { sessionId: req.sessionId, requestId, kind: req.kind });
+      try { this.d.emit.inputRequest?.(inputRequest); } catch (e) { this.log.warn("agent.emit_failed", { error: e }); }
+    }).then((response) => { this.resumeAfterInteraction(req.sessionId, runtime, turnAtRequestMs); return response; });
+  }
+  /** takePendingInput (L38703) → recordSettledAsk (L38607): the durable settled-ask card. */
+  private takePendingInput(requestId: string, outcome: string, response?: unknown) {
+    const pending = this.pendingInputs.get(requestId);
+    if (!pending) return undefined;
+    this.pendingInputs.delete(requestId);
+    try {
+      const record2 = settledAskFromInput(pending.request, outcome, response);
+      if (this.d.stateDir) appendDisplayAsk(displayTranscriptPath(this.d.stateDir, pending.sessionId), record2, this.sessions.get(pending.sessionId)?.lastAssistantMessageId);
+      const s = this.sessions.get(pending.sessionId);
+      if (s) this.send(s, { kind: "ask_settled", record: record2 } as any);
+    } catch (e) { this.log.warn("agent.input.settle_record_failed", { error: e }); }
+    return pending;
+  }
+  /** retireRuntimeInputs (L43018). */
+  private retireRuntimeInputs(s: Session, runtime: Runtime): void {
+    for (const [requestId, pending] of [...this.pendingInputs]) {
+      if (pending.sessionId !== s.meta.sessionId || pending.runtime !== runtime) continue;
+      this.takePendingInput(requestId, "retired");
+      this.send(s, { kind: "input_resolved", requestId } as any);
+      if (pending.resolveOnRetire) pending.resolve({ kind: "cancel", reason: "Session runtime changed" });
+    }
+  }
+  /** resumeAfterInteraction (L45491) slice: back to running while the turn is open, else idle. */
+  private resumeAfterInteraction(sessionId: string, runtime: Runtime | undefined, _turnAtRequestMs: number | undefined): void {
+    const s = this.sessions.get(sessionId);
+    if (!s || s.meta.status !== "awaiting_permission") return;
+    for (const p of this.pendingPermissions.values()) if (p.sessionId === sessionId) return;
+    for (const p of this.pendingInputs.values()) if (p.sessionId === sessionId) return;
+    const live = s.runtime && !s.runtime.dead ? s.runtime : undefined;
+    if (live && runtime !== undefined && live !== runtime) return;
+    if (live && s.turnStartedAtMs !== undefined) { this.setStatus(s, "running"); return; }
+    this.setStatus(s, "idle");
+  }
+  /** requestWitness (L38229) — no dispatchEpoch / sign-out pause in the port (epoch stands in). */
+  requestWitness(sessionId: string, requireRuntime: boolean): () => boolean {
+    const atStart = this.sessions.get(sessionId);
+    const runtime = atStart?.runtime, epoch = atStart?.epoch;
+    const turn = atStart?.turnStartedAtMs, jobId = atStart?.meta.jobId, cwd = atStart?.meta.cwd;
+    const active = (status: unknown) => status === "running" || status === "awaiting_permission";
+    const wasActive = active(atStart?.meta.status);
+    return () => {
+      const live = this.sessions.get(sessionId);
+      return Boolean(atStart && live === atStart && (runtime ? !runtime.dead : !requireRuntime) && live.runtime === runtime && live.epoch === epoch
+        && live.turnStartedAtMs === turn && live.meta.jobId === jobId && live.meta.cwd === cwd && (!wasActive || active(live.meta.status)));
+    };
+  }
+  /** docs/30: main wires the ProjectMemoryHost (constructed after the host) — memory binding for plans + tools. */
+  attachStudio(memory: ProjectMemoryHost): void {
+    this.memory = memory;
+    if (this.plans) memory.attachPlans(this.plans);
+  }
+  /** projectMemoryContext (L38323) for localSessionSections (L38345). */
+  projectMemoryContext(clientId: string): string[] { return this.memory ? this.memory.projectMemoryContext(clientId) : []; }
+  /** saveAccountPreference (L36851). */
+  saveAccountPreference(meta: any, input: { text: string }): Record<string, unknown> {
+    try {
+      const s = this.sessions.get(meta.sessionId);
+      if (!s || s.meta !== meta) return { ok: false, reason: "This video is no longer active." };
+      const saved: any = saveAccountCommitment(meta.cwd.replace(/^~(?=$|\/)/, homedir()), input.text);
+      const notice = { noticeId: randomUUID(), text: saved.text };
+      if (!this.deletingSessions.has(meta.sessionId)) {
+        if (this.d.stateDir) appendDisplayPreference(displayTranscriptPath(this.d.stateDir, meta.sessionId), notice, s.lastAssistantMessageId);
+        try { this.send(s, { kind: "preference_noted", notice } as any); } catch {}
+      }
+      return { ok: true, scope: "account", alreadySaved: saved.alreadySaved, visibleIn: "Settings → Taste → All your projects", notice: 'The user now sees a "Saved for all your projects" notice in this chat.', instruction: "Do not also save this preference to project_memory." };
+    } catch (err) {
+      this.log.warn("agent.account_preference.failed", { error: err });
+      return { ok: false, reason: "The preference could not be saved. Tell the user it was not saved." };
+    }
+  }
+  /** makeStudioToolset (L48166) over this host (studio/studio-toolset.ts). */
+  makeStudioToolset(s: Session, sdk?: any) {
+    const meta = s.meta;
+    return makeStudioToolset(meta as any, {
+      callSessionPlan: async (sessionId, args) => this.plans ? this.plans.callSessionPlan(sessionId, args) : { ok: false, message: "The plan could not be proposed for the current brief. Continue the conversation or retry the saved plan; do not repeat this call unchanged." },
+      callProjectMemory: async (m, args) => this.memory ? this.memory.callProjectMemory(m, args) : { ok: false, code: "unavailable", message: "Project memory is unavailable until this account and project are verified." },
+      saveAccountPreference: (m, args) => this.saveAccountPreference(m, args),
+      readWorkbook: (sessionId, attachmentId, o) => this.attachmentStore ? this.attachmentStore.readWorkbook(sessionId, attachmentId, o) : { ok: false, reason: "Attachments are unavailable." },
+      readPdf: (sessionId, attachmentId, o) => this.attachmentStore ? this.attachmentStore.readPdf(sessionId, attachmentId, o) : { ok: false, reason: "Attachments are unavailable." },
+      requestInput: (req) => this.requestInput(req),
+      noteMaterial: (sessionId, arrival) => { try { this.materialsLedger?.record({ ...arrival, sessionId }); this.publishMaterials(sessionId); } catch (e) { this.log.warn("agent.materials.note_failed", { error: e }); } },
+    }, sdk);
+  }
+  /** docs/30: emit a session event on behalf of a collaborator (ProjectMemoryHost memory_noted, L36848). */
+  emitSessionEvent(sessionId: string, event: Record<string, unknown>): void {
+    const s = this.sessions.get(sessionId);
+    if (s) this.send(s, event as any);
   }
   /** transcribeVoice (L45689) — media:transcribeVoice. The session checks are the original's; VoiceDictation.execute
    *  (L10599) then needs the bundled macOS `voice-dictation` helper (Apple on-device speech). Linux ships no such
@@ -1892,6 +2052,97 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       this.d.emit.materials?.(sessionId, ledger);
     } catch {}
   }
+  // ── docs/30 spend: L50739-50777 with the cost read from metered usage priced by THE price table ──────────
+  /** runtimeCostTotals (keyed by costEpoch = the runtime here) and llmJobChargeTotals (L50755). */
+  private readonly runtimeCostTotals = new WeakMap<Runtime, number>();
+  private readonly llmJobChargeTotals = new Map<string, { jobId: string; totalUsd: number }>();
+  private readonly unsavedLlmSpend = new Map<string, number>();
+  /** The model whose models.dev row prices a usage key: MiniMax ids price as themselves; a Claude alias (the SDK
+   *  reports the id it asked for) prices as the model the route really serves. */
+  private pricedModel(rt: Runtime, key: string): string {
+    if (/^minimax-/i.test(key)) return key;
+    if (rt.handle.model && !/^claude-|^(opus|sonnet|haiku)$/i.test(rt.handle.model)) return rt.handle.model;
+    return this.d.servedModel?.() ?? key;
+  }
+  /** Cumulative USD of one runtime, priced per model: the gate proxy's metered upstream usage when the route has
+   *  one (provider / Codex routes), else the SDK result's cumulative modelUsage token counts (gateway route). */
+  meteredRuntimeCost(rt: Runtime, m: any): { usd: number; meter: "proxy" | "modelUsage"; sources: string[] } | undefined {
+    const price = this.d.price;
+    if (!price) return undefined;
+    const sources = new Set<string>();
+    const sum = (rows: Array<[string, { inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number }]>) =>
+      rows.reduce((a, [k, u]) => { const p = price(this.pricedModel(rt, k)); sources.add(p.source); return a + costUsd(p, u); }, 0);
+    const stats = (rt.handle.proxy as { stats?: () => any } | undefined)?.stats?.();
+    if (stats?.usage && Object.keys(stats.usage).length) return { usd: sum(Object.entries(stats.usage) as any), meter: "proxy", sources: [...sources] };
+    const mu = m?.modelUsage;
+    if (mu && typeof mu === "object" && Object.keys(mu).length) {
+      const rows = Object.entries(mu).map(([k, u]: [string, any]) => [k, {
+        inputTokens: Number(u?.inputTokens) || 0, outputTokens: Number(u?.outputTokens) || 0,
+        cacheReadTokens: Number(u?.cacheReadInputTokens) || 0, cacheWriteTokens: Number(u?.cacheCreationInputTokens) || 0,
+      }]) as any;
+      return { usd: sum(rows), meter: "modelUsage", sources: [...sources] };
+    }
+    return undefined;
+  }
+  /** L50739-50777: accumulate the runtime's cost delta into meta.totalCostUsd, charge whole cents to the job's
+   *  spend budget (chargeUnreservable), and reconcile with the gateway's per-job ledger. */
+  private meterResultCost(s: Session, rt: Runtime, m: any) {
+    const metered = this.meteredRuntimeCost(rt, m);
+    if (!metered) return;
+    const previousTotal = s.meta.totalCostUsd;
+    const previousRuntimeTotal = this.runtimeCostTotals.get(rt) ?? 0;
+    const nextRuntimeTotal = Math.max(previousRuntimeTotal, metered.usd);
+    this.runtimeCostTotals.set(rt, nextRuntimeTotal);
+    const nextTotal = previousTotal + (nextRuntimeTotal - previousRuntimeTotal);
+    s.meta.totalCostUsd = nextTotal;
+    const costDelta = nextTotal - previousTotal;
+    this.log.info("agent.spend.metered", { sessionId: s.meta.sessionId, llmRoute: rt.llmRoute, meter: metered.meter, priceSources: metered.sources, runtimeUsd: nextRuntimeTotal, totalUsd: nextTotal, sdkEstimateUsd: Number.isFinite(m?.total_cost_usd) ? m.total_cost_usd : undefined });
+    if (s.meta.jobId && costDelta > 0) {
+      let charge = this.llmJobChargeTotals.get(s.meta.sessionId);
+      if (!charge || charge.jobId !== s.meta.jobId) { charge = { jobId: s.meta.jobId, totalUsd: 0 }; this.llmJobChargeTotals.set(s.meta.sessionId, charge); }
+      const previousCents = Math.ceil((charge.totalUsd - Number.EPSILON) * 100);
+      charge.totalUsd += costDelta;
+      const nextCents = Math.ceil((charge.totalUsd - Number.EPSILON) * 100);
+      const chargeUsd = (nextCents - previousCents) / 100;
+      try { this.spendBudgets.chargeUnreservable(s.meta.sessionId, chargeUsd); }
+      catch (err) {
+        this.unsavedLlmSpend.set(s.meta.sessionId, (this.unsavedLlmSpend.get(s.meta.sessionId) ?? 0) + chargeUsd);
+        if (!this.spendBudgets.isStorageBlocked()) this.log.warn("agent.spend.charge_failed", { sessionId: s.meta.sessionId, error: err });
+      }
+      if (rt.llmRoute === "gateway") void this.reconcileGatewaySpend(s);
+    }
+  }
+  /** readGatewaySpend (L48020), direct fetch branch (no agentGatewayProxy in the port). */
+  async readGatewaySpend(s: Session): Promise<any> {
+    const jobId = s.meta.jobId!;
+    const cfg = this.d.gatewaySettings?.() ?? {};
+    if (!cfg.gatewayUrl) throw new Error("No gateway");
+    const response = await fetch(`${cfg.gatewayUrl.replace(/\/+$/, "")}/v1/spend-authorities/${encodeURIComponent(jobId)}`, { headers: { authorization: `Bearer ${cfg.gatewayKey}` }, signal: AbortSignal.timeout(5e3) });
+    if (!response.ok) throw new Error(`Gateway spending read returned HTTP ${response.status}`);
+    const body: any = await response.json();
+    if (!body || typeof body.spent_usd !== "number" || !Number.isFinite(body.spent_usd) || body.spent_usd < 0
+      || typeof body.reserved_usd !== "number" || !Number.isFinite(body.reserved_usd) || body.reserved_usd < 0
+      || !Number.isSafeInteger(Math.ceil(body.spent_usd * 100)) || !Number.isSafeInteger(Math.ceil(body.reserved_usd * 100))
+      || body.client_job !== jobId) throw new Error("Invalid gateway spending response");
+    return body;
+  }
+  /** applyGatewaySpend (L48047) + reconcileGatewaySpend (L48078). */
+  async reconcileGatewaySpend(s: Session): Promise<void> {
+    const queriedJobId = s.meta.jobId;
+    const cfg = this.d.gatewaySettings?.() ?? {};
+    if (!queriedJobId || !cfg.gatewayKey) return;
+    try {
+      const token = this.spendBudgets.gatewayReconciliationToken(s.meta.sessionId, queriedJobId);
+      const body = await this.readGatewaySpend(s);
+      if (this.sessions.get(s.meta.sessionId) !== s || s.meta.jobId !== queriedJobId) return;
+      const snapshot2 = this.spendBudgets.snapshot(s.meta.sessionId);
+      const settleRestored = body.client_job === s.meta.jobId && body.mode === "capped" && body.ceiling_usd === snapshot2.ceilingUsd && body.reserved_usd === 0
+        && (body.state === "ready" || body.state === "exhausted") && Array.isArray(body.in_flight) && body.in_flight.length === 0 && !s.runtime;
+      this.spendBudgets.reconcileGatewayLedger(s.meta.sessionId, body.spent_usd, body.reserved_usd, s.meta.jobId, token, settleRestored);
+      this.log.info("agent.spend.gateway_reconciled", { sessionId: s.meta.sessionId, jobId: queriedJobId, ledgerSpentUsd: body.spent_usd });
+    } catch (e) { this.log.debug("agent.spend.gateway_reconcile_failed", { sessionId: s.meta.sessionId, error: e }); }
+  }
+
   // ── docs/29: the VideoClaw-credits continuation (creditHandoffOffer L51901 / continueOnCredits L52012) ──
   private readonly creditHandoffs = new Map<string, Promise<AgentSessionMeta>>();
   /** PORT-NEW seam: the original sets this from emitFailureCard (L42367) when the Claude CLI reports the

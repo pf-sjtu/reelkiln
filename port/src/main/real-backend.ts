@@ -85,6 +85,8 @@ import { AccountService, ACCOUNT_BLOCKED_COPY } from "./account/account-service"
 import { gatewayChannels } from "./gateway/gateway-channels";
 import { LocalGatewayShim, localGatewayEnabled, localGatewayMonthUsd, localGatewayPort } from "./gateway/local-gateway-shim";
 import { minimaxConfig } from "./llm/minimax";
+import { minimaxModelsDevProviders, priceTable } from "./gateway/pricing";
+import { syncModelsDevIfStale } from "./models-dev/startup-sync";
 import { registerSecret } from "./llm/logger";
 import { miniMaxClaudeModelSource } from "./agent/claude-code";
 import { purgeExpiredProjectTrash } from "./jobs/project-trash.generated";
@@ -446,10 +448,18 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       const userDataDir = app.getPath("userData");
       const credentials = new CredentialStore({ file: join(userDataDir, "credentials.dat"), packaged: app.isPackaged, log: (line: string) => recordMainLog("credentials", line) } as any);
       let shimReady: Promise<unknown> = Promise.resolve();
+      // docs/30: THE price table — models.dev first (row of the MiniMax provider actually called), shared by the
+      // local gateway ledger and every route's displayed spend; each model's resolved source is logged
+      const pricedVia = minimaxConfig();
+      const sharedPrice = priceTable({
+        providers: minimaxModelsDevProviders(pricedVia?.baseUrl),
+        onResolve: (model, p) => log(`[port] pricing: ${model} priced from ${p.source} (USD/MTok in ${p.inputPerMTokUsd} out ${p.outputPerMTokUsd} cacheRead ${p.cacheReadPerMTokUsd ?? "-"} cacheWrite ${p.cacheWritePerMTokUsd ?? "-"})`),
+      });
+      void syncModelsDevIfStale({ log });
       if (localGatewayEnabled()) {
         const shimPort = localGatewayPort();
         const shimUrl = `http://127.0.0.1:${shimPort}`;
-        const shim = new LocalGatewayShim({ dir: join(userDataDir, "local-gateway"), provider: () => minimaxConfig(), port: shimPort, monthUsd: localGatewayMonthUsd(), log, appVersion: app.getVersion() });
+        const shim = new LocalGatewayShim({ dir: join(userDataDir, "local-gateway"), provider: () => minimaxConfig(), price: sharedPrice, port: shimPort, monthUsd: localGatewayMonthUsd(), log, appVersion: app.getVersion() });
         // PORT-NEW: this process opens on the self-hosted gateway, and a first launch provisions its vc_ key
         // into the vault (the key the user would otherwise paste under "I already have an alpha key")
         if (String(llm.settings.get().gatewayUrl ?? "").replace(/\/+$/, "") !== shimUrl) llm.settings.patch({ gatewayUrl: shimUrl });
@@ -515,6 +525,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
           // docs/26: L61095 / L61086
           materials: (_sessionId, ledger) => { push("materials:changed", ledger); },
           spendSnapshot: (sessionId, snapshot) => { push("spend:snapshot", { sessionId, snapshot }); },
+          // docs/30: L61068 / L61096
+          inputRequest: (req) => { push("input:request", req); },
+          sessionPlanChanged: (event) => { push("sessionPlan:changed", event); },
         },
         // docs/26: deleteProject's registry half + setJobBusyProbe (L62438)
         registry: {
@@ -527,6 +540,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         // docs/29: setCreditHandoffEligibility (L61622) + the opened gateway the credits continuation bills
         creditEligibility: () => accountService.creditHandoffEligibility(),
         gatewaySettings: () => accountService.activeSettings() as { gatewayUrl?: string; gatewayKey?: string },
+        price: sharedPrice, servedModel: () => minimaxConfig()?.model,
         engine: engineDeps,
         // docs/22: versions.json + composer-attachments.json live next to sessions.json (L34841-34848)
         ...(engineDeps ? { stateDir: app.getPath("userData") } : {}),
@@ -616,7 +630,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         emitProjectMemoryChanged: ({ clientId, change, authority, sessionId, notice }) => {
           push("memory:changed", { scope: { clientId, ...authority }, change, sessionId, ...(notice ? { notice } : {}) }); // L61097
         },
+        emitSessionEvent: (id, event) => h.emitSessionEvent(id, event as any), // memory_noted (L36848)
       });
+      h.attachStudio(memoryHost); // docs/30: the studio MCP + session plans bind through project memory
       const sheetBuilder: any = new (CharacterSheetBuilder as any)(llm.settings, (evt: unknown) => { push("characters:build", evt); }, { // L34875
         quoteGatewayBudget: (jobId: string, items: unknown) => {
           if (!m12.proxy) throw new Error("gateway pricing is unavailable");

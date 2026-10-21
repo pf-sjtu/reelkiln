@@ -4,8 +4,9 @@
 // where that price came from, so a later table change never rewrites history):
 //   1. VIDEOCLAW_PORT_LOCAL_GATEWAY_PRICES  — owner override, JSON {"<model>": {"input":…, "output":…, "cacheRead":…, "cacheWrite":…}}
 //                                             (USD per million tokens; "*" = default for any other model)
-//   2. the models.dev catalog the port already syncs (models-dev/db.ts, node:sqlite) — cost_input / cost_output /
-//      cost_cache_read / cost_cache_write of the best matching row (provider "minimax" first, then any provider)
+//   2. the models.dev catalog the port syncs (models-dev/db.ts, node:sqlite; the app syncs it at startup, docs/30) —
+//      cost_input / cost_output / cost_cache_read / cost_cache_write of the row of the MiniMax provider actually called
+//      (minimaxModelsDevProviders: api.minimaxi.com → "minimax-cn" then "minimax"; never a reseller / $0 plan row)
 //   3. MINIMAX_FALLBACK_PRICES                — MiniMax's published per-token price for the models the shim serves
 //   4. the default model's fallback price     — an unknown model is never free
 //
@@ -64,37 +65,50 @@ export function envPrices(env: NodeJS.ProcessEnv = process.env): Record<string, 
   } catch { return {}; }
 }
 
-/** Look a model up in the synced models.dev catalog (read-only; undefined when never synced / no row). */
+/** docs/30: the models.dev provider ids whose rows price the MiniMax endpoint actually called. api.minimaxi.com is
+ *  the China site (models.dev "minimax-cn"), api.minimax.io the international one ("minimax"); each falls back to
+ *  the other. Rows of other providers (resellers, $0 "coding-plan" bundles) never price a MiniMax call. */
+export function minimaxModelsDevProviders(baseUrl: string | undefined): string[] {
+  return /minimaxi\.com/i.test(baseUrl ?? "") ? ["minimax-cn", "minimax"] : ["minimax", "minimax-cn"];
+}
+/** Look a model up in the synced models.dev catalog (read-only; undefined when never synced / no row). Only
+ *  positive hits are cached, so a catalog synced after startup is picked up on the next lookup. */
 export type CatalogLookup = (model: string) => ModelPrice | undefined;
-export function modelsDevLookup(dbPath = defaultModelsDbPath()): CatalogLookup {
-  let db: ModelsDb | null | undefined;
-  const open = () => {
-    if (db !== undefined) return db;
-    try { db = existsSync(dbPath) ? new ModelsDb(dbPath) : null; } catch { db = null; }
-    return db;
-  };
-  const cache = new Map<string, ModelPrice | undefined>();
+export function modelsDevLookup(dbPath = defaultModelsDbPath(), providers: string[] = ["minimax", "minimax-cn"]): CatalogLookup {
+  const cache = new Map<string, ModelPrice>();
   return (model) => {
-    if (cache.has(model)) return cache.get(model);
+    const cached = cache.get(model);
+    if (cached) return cached;
     let hit: ModelPrice | undefined;
-    const d = open();
-    if (d) {
-      try {
-        const row = d.findModel({ provider: "minimax", model }) ?? d.findModel({ model });
+    let d: ModelsDb | undefined;
+    try {
+      if (!existsSync(dbPath)) return undefined;
+      d = new ModelsDb(dbPath);
+      for (const provider of providers) {
+        const row = d.getModel(provider, model);
         const md = row ? toMetadata(row) : undefined;
-        if (md?.pricing) hit = fromRecord(md.pricing, `models.dev:${md.provider}/${md.model}`);
-      } catch {}
-    }
-    cache.set(model, hit);
+        if (md?.pricing) { hit = fromRecord(md.pricing, `models.dev:${md.provider}/${md.model}`); if (hit) break; }
+      }
+    } catch { hit = undefined; } finally { try { (d as any)?.close?.(); } catch {} }
+    if (hit) cache.set(model, hit);
     return hit;
   };
 }
 
-export interface PriceTableOptions { env?: NodeJS.ProcessEnv; catalog?: CatalogLookup | null; defaultModel?: string }
-/** The resolver the shim charges with. */
+export interface PriceTableOptions { env?: NodeJS.ProcessEnv; catalog?: CatalogLookup | null; defaultModel?: string; providers?: string[]; onResolve?: (model: string, price: ModelPrice) => void }
+/** The resolver the shim charges with — and (docs/30) the one every route's displayed spend is priced with. */
 export function priceTable(o: PriceTableOptions = {}): (model: string) => ModelPrice {
+  const resolve = priceTableRaw(o);
+  const seen = new Map<string, string>();
+  return (model) => {
+    const p = resolve(model);
+    if (o.onResolve && seen.get(model) !== p.source) { seen.set(model, p.source); try { o.onResolve(model, p); } catch {} }
+    return p;
+  };
+}
+function priceTableRaw(o: PriceTableOptions): (model: string) => ModelPrice {
   const overrides = envPrices(o.env ?? process.env);
-  const catalog = o.catalog === undefined ? modelsDevLookup() : o.catalog;
+  const catalog = o.catalog === undefined ? modelsDevLookup(undefined, o.providers) : o.catalog;
   const def = o.defaultModel ?? DEFAULT_PRICED_MODEL;
   const fallback = (m: string) => { const f = MINIMAX_FALLBACK_PRICES[m]; return f ? { ...f, source: FALLBACK_SOURCE } : undefined; };
   return (model) => overrides[model]

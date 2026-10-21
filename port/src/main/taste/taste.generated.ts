@@ -322,4 +322,4 @@ function declineProposal(_cwd, file, cards, antiText) {
   }
 }
 
-export { SECTION, ANTI, ANTI_HEADING, readCommitments, writeCommitments, appendAnti, listTaste, commitTaste, declineProposal };
+export { SECTION, ANTI, ANTI_HEADING, readCommitments, writeCommitments, appendAnti, listTaste, commitTaste, declineProposal, saveAccountCommitment };

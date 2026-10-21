@@ -64,7 +64,7 @@ export const PRICING_TABLE_ID = "port-per-model/v2";
 export const TOOL_QUOTE_CENTS: Record<string, number> = { model_call: 1, mint_image: 4, mint_video: 50, audio_enhance: 2, media_pull: 0 };
 export const DEFAULT_TOOL_QUOTE_CENTS = 5;
 
-export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number; status: number; pricing: ModelPrice }
+export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number; status: number; pricing: ModelPrice; /** docs/30: X-VideoClaw-Client-Job of the call (route-service anthropicClientJobCustomHeaders, chunk L149) */ clientJob?: string }
 export interface Ledger {
   schema: typeof LEDGER_SCHEMA;
   account: { id: string; name: string; createdAt: number };
@@ -207,6 +207,8 @@ export class LocalGatewayShim {
     };
   }
   available(): number | null { return this.meter().available_credit_usd as number | null; }
+  /** docs/30: the metered spend of one client job (sum of its ledger entries, 6-dp). */
+  jobSpentUsd(jobId: string): number { return round6(this.ledger.entries.filter((e) => e.clientJob === jobId).reduce((a, e) => a + e.usd, 0)); }
   /** The price the ledger charges `model` at (docs/29 §1). */
   priceFor(model: string): ModelPrice { return this.price(model); }
   charge(e: Omit<LedgerEntry, "id" | "at" | "usd" | "pricing">): LedgerEntry {
@@ -294,7 +296,9 @@ export class LocalGatewayShim {
       if (method === "GET") {
         req.resume();
         const a = this.ledger.spendAuthorities[jobId];
-        return this.json(res, 200, { job_id: jobId, mode: a?.mode ?? "per_operation", ceiling_usd: a?.ceilingUsd ?? null, spent_usd: 0, available_credit_usd: this.available() });
+        // docs/30: readGatewaySpend (L48020) needs spent_usd / reserved_usd / client_job — spent is this job's metered
+        // model calls (the same per-model models.dev-first prices every entry was charged at); the shim reserves nothing
+        return this.json(res, 200, { job_id: jobId, client_job: jobId, mode: a?.mode ?? "per_operation", ceiling_usd: a?.ceilingUsd ?? null, spent_usd: this.jobSpentUsd(jobId), reserved_usd: 0, state: "ready", in_flight: [], available_credit_usd: this.available() });
       }
     }
     if (method === "PUT" && (m = /^\/v1\/budgets\/([^/]+)$/.exec(path))) {
@@ -428,6 +432,8 @@ export class LocalGatewayShim {
     if (!p) return this.json(res, 503, { type: "error", error: { type: "api_error", message: "The self-hosted gateway has no model provider configured (MINIMAX_API_KEY is not set)." } });
     registerSecret(p.key);
     const requested = typeof body?.model === "string" ? body.model : "";
+    const clientJobHeader = req.headers["x-videoclaw-client-job"];
+    const clientJob = typeof clientJobHeader === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(clientJobHeader) ? clientJobHeader : undefined;
     // Claude model ids (TITLE_MODEL, gateway-route pins) are served by the configured MiniMax model.
     const upstreamModel = /^MiniMax-/i.test(requested) ? requested : p.model;
     const upstreamBody = JSON.stringify({ ...body, model: upstreamModel });
@@ -473,7 +479,7 @@ export class LocalGatewayShim {
         res.end(text);
       }
     });
-    if (status >= 200 && status < 300) this.charge({ kind: "model_call", keyId, model: requested || upstreamModel, upstreamModel, inputTokens, outputTokens, ...(cacheReadTokens ? { cacheReadTokens } : {}), ...(cacheWriteTokens ? { cacheWriteTokens } : {}), status });
+    if (status >= 200 && status < 300) this.charge({ kind: "model_call", keyId, model: requested || upstreamModel, upstreamModel, inputTokens, outputTokens, ...(cacheReadTokens ? { cacheReadTokens } : {}), ...(cacheWriteTokens ? { cacheWriteTokens } : {}), status, ...(clientJob ? { clientJob } : {}) });
   }
 }
 

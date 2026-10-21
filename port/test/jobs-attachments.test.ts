@@ -199,7 +199,10 @@ test("ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): c
     const incoming = join(h.ws, "jobs", jobId, "incoming");
     assert.equal(sha(readFileSync(join(incoming, "clip_a.mp4"))), sha(readFileSync(clip)));
     assert.equal(sha(readFileSync(join(incoming, "music.mp3"))), sha(readFileSync(music)));
-    const turn = h.queries[0].turns[0];
+    // docs/30: a new video carries sessionPlanRequired (L38862), so the app-owned plan preamble (L41666) leads the turn
+    const full = h.queries[0].turns[0];
+    assert.ok(full.startsWith("[APP-OWNED SESSION PLAN — authoritative]\n"), full.slice(0, 120));
+    const turn = full.slice(full.indexOf("[END APP-OWNED SESSION PLAN]\n\n") + "[END APP-OWNED SESSION PLAN]\n\n".length);
     assert.ok(turn.startsWith(`[APP-OWNED COMPOSER ATTACHMENTS — ordered]\n- ${ids[0]}: ${join(incoming, "clip_a.mp4")}`), turn.slice(0, 300));
     assert.ok(turn.includes(`- ${ids[1]}: ${join(incoming, "music.mp3")}`));
     assert.ok(turn.includes("[Use these files as source material where relevant.]"));

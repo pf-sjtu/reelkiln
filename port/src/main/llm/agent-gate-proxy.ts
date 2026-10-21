@@ -32,6 +32,51 @@ export interface AgentGateProxyStats {
   /** docs/17 §3: structured-output requests rewritten to a forced tool call / of those, replies that
    *  came back as parseable JSON text. */
   structuredEmulated: number; structuredJsonOk: number;
+  /** docs/30: cumulative token usage per upstream model, read from every upstream reply (the displayed spend of a
+   *  provider / Codex route is priced from it with the models.dev-first table — never the SDK's Claude estimate). */
+  usage?: Record<string, { inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; calls: number }>;
+}
+/** docs/30: reads token usage out of an upstream reply as it streams past (Anthropic Messages SSE / JSON, OpenAI
+ *  Responses SSE / JSON, Chat Completions JSON). Anthropic input_tokens exclude cache reads; OpenAI input_tokens
+ *  include input_tokens_details.cached_tokens, which are moved to cacheRead so the price split is the same. */
+export class UsageMeter {
+  private buf = "";
+  private readonly dec = new TextDecoder();
+  inputTokens = 0; outputTokens = 0; cacheReadTokens = 0; cacheWriteTokens = 0; model?: string; seen = false;
+  private anthropic(u: any) {
+    if (!u || typeof u !== "object") return;
+    if (Number.isFinite(u.input_tokens) && u.input_tokens > 0) this.inputTokens = u.input_tokens;
+    if (Number.isFinite(u.cache_read_input_tokens) && u.cache_read_input_tokens > 0) this.cacheReadTokens = u.cache_read_input_tokens;
+    if (Number.isFinite(u.cache_creation_input_tokens) && u.cache_creation_input_tokens > 0) this.cacheWriteTokens = u.cache_creation_input_tokens;
+    if (Number.isFinite(u.output_tokens) && u.output_tokens > 0) this.outputTokens = u.output_tokens;
+    this.seen = true;
+  }
+  private openai(u: any) {
+    if (!u || typeof u !== "object") return;
+    const input = Number(u.input_tokens ?? u.prompt_tokens ?? 0) || 0;
+    const cached = Number(u.input_tokens_details?.cached_tokens ?? u.prompt_tokens_details?.cached_tokens ?? 0) || 0;
+    this.inputTokens = Math.max(0, input - cached); this.cacheReadTokens = cached;
+    this.outputTokens = Number(u.output_tokens ?? u.completion_tokens ?? 0) || 0;
+    this.seen = true;
+  }
+  event(ev: any) {
+    if (!ev || typeof ev !== "object") return;
+    if (ev.type === "message_start") { this.model ??= ev.message?.model; this.anthropic(ev.message?.usage); }
+    else if (ev.type === "message_delta") this.anthropic(ev.usage);
+    else if (ev.type === "response.completed" || ev.type === "response.done") { this.model ??= ev.response?.model; this.openai(ev.response?.usage); }
+    else if (ev.type === "message" && ev.usage) { this.model ??= ev.model; this.anthropic(ev.usage); }
+    else if (ev.object === "response" && ev.usage) { this.model ??= ev.model; this.openai(ev.usage); }
+    else if (ev.object === "chat.completion" && ev.usage) { this.model ??= ev.model; this.openai(ev.usage); }
+  }
+  push(chunk: string | Uint8Array) {
+    this.buf += typeof chunk === "string" ? chunk : this.dec.decode(chunk, { stream: true });
+    let i: number;
+    while ((i = this.buf.indexOf("\n")) >= 0) {
+      const line = this.buf.slice(0, i).trim(); this.buf = this.buf.slice(i + 1);
+      if (line.startsWith("data:")) { try { this.event(JSON.parse(line.slice(5).trim())); } catch {} }
+    }
+  }
+  json(text: string) { try { this.event(JSON.parse(text)); } catch {} }
 }
 export interface AgentGateProxyOptions {
   /** Override of p.agentCompat.emulateStructuredOutputs. */
@@ -77,6 +122,13 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
   const gate = () => o.gate ?? providerGate(p.gateKey ?? p.name, p.maxConcurrency);
   const extra = Object.fromEntries(Object.entries(p.headers).map(([k, v]) => [k.toLowerCase(), v]));
   let requests = 0, rejected = 0, inflight = 0, maxInflight = 0, structuredEmulated = 0, structuredJsonOk = 0;
+  const usage: NonNullable<AgentGateProxyStats["usage"]> = {};
+  const record = (meter: UsageMeter, requestModel: string | undefined) => {
+    if (!meter.seen) return;
+    const model = requestModel || meter.model || "unknown";
+    const u = (usage[model] ??= { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, calls: 0 });
+    u.inputTokens += meter.inputTokens; u.outputTokens += meter.outputTokens; u.cacheReadTokens += meter.cacheReadTokens; u.cacheWriteTokens += meter.cacheWriteTokens; u.calls++;
+  };
   const emulate = o.emulateStructuredOutputs ?? !!p.agentCompat?.emulateStructuredOutputs;
   const jsonOk = (t: string) => { try { JSON.parse(t); return true; } catch { return false; } };
   const surface = o.surface ?? "anthropic";
@@ -121,7 +173,17 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
           const upstream = await doFetch(upstreamUrl(path), { method, headers, body: method === "GET" || method === "HEAD" ? undefined : reqBody, signal: abort.signal });
           const rh: Record<string, string> = {};
           upstream.headers.forEach((v, k) => { if (!RESPONSE_DROP.has(k)) rh[k] = v; });
-          const write = async (c: string | Uint8Array) => { if (c.length && !res.write(c)) await new Promise((r) => res.once("drain", r)); };
+          const meter = new UsageMeter();
+          let requestModel: string | undefined;
+          try { const m = JSON.parse(reqBody.toString("utf8"))?.model; if (typeof m === "string") requestModel = m; } catch {}
+          const sse = /text\/event-stream/i.test(upstream.headers.get("content-type") ?? "");
+          let jsonBuf = "";
+          const okStatus = upstream.status >= 200 && upstream.status < 300;
+          const textOf = (c: string | Uint8Array) => (typeof c === "string" ? c : Buffer.from(c).toString("utf8"));
+          const write = async (c: string | Uint8Array) => {
+            if (okStatus) { if (sse) meter.push(c); else if (jsonBuf.length < 4_000_000) jsonBuf += textOf(c); }
+            if (c.length && !res.write(c)) await new Promise((r) => res.once("drain", r));
+          };
           if (emulated && upstream.status === 200 && /text\/event-stream/i.test(upstream.headers.get("content-type") ?? "")) {
             res.writeHead(upstream.status, rh);
             const rw = surface === "openai" ? new ResponsesStructuredSseRewriter() : new StructuredSseRewriter();
@@ -151,7 +213,9 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
             res.writeHead(upstream.status, rh);
             if (upstream.body) for await (const c of upstream.body as any) await write(c);
           }
+          if (okStatus && !sse) meter.json(jsonBuf);
           res.end();
+          record(meter, requestModel);
           log.debug("agent_proxy.request", { method, path: path.split("?")[0], status: upstream.status, waitedMs, emulated, ms: Date.now() - t0 });
         } finally { inflight--; }
       });
@@ -167,7 +231,7 @@ export async function startAgentGateProxy(p: Pick<ResolvedProvider, "name" | "ba
   return {
     url: `http://127.0.0.1:${port}`,
     token,
-    stats: () => ({ requests, rejected, maxInflight, inflight, structuredEmulated, structuredJsonOk }),
+    stats: () => ({ requests, rejected, maxInflight, inflight, structuredEmulated, structuredJsonOk, usage: JSON.parse(JSON.stringify(usage)) }),
     close: () => new Promise<void>((r) => { server.closeAllConnections?.(); server.close(() => r()); }),
   };
 }

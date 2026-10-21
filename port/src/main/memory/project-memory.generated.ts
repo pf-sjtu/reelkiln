@@ -763,4 +763,4 @@ async function projectMemoryFile(root, path) {
   }
 }
 
-export { PROJECT_MEMORY_MAX_SOURCES, projectMemorySourceKey, resolveProjectDestination, isExistingProjectDirectory, ProjectMemoryError, ProjectMemoryStore, SessionPlanChoiceError, SessionPlanBlockedError, SessionPlanScopeError, SessionPlanStateError, sessionPlanFailureDiagnostic, assertPlanGenerationAllowed, sessionPlanReply, assertProjectMemoryScope, projectMemoryReply, openProjectMemorySource, memoryError, projectMemoryFile };
+export { PROJECT_MEMORY_MAX_SOURCES, projectMemorySourceKey, resolveProjectDestination, isExistingProjectDirectory, ProjectMemoryError, ProjectMemoryStore, SessionPlanChoiceError, SessionPlanBlockedError, SessionPlanScopeError, SessionPlanStateError, sessionPlanFailureDiagnostic, assertPlanGenerationAllowed, sessionPlanReply, assertProjectMemoryScope, projectMemoryReply, openProjectMemorySource, memoryError, projectMemoryFile, SessionPlanDispatchError, SessionPlanBindingError, SessionPlanPersistError, attestExistingProjectDirectory, sameDirectory$1 as sameProjectDirectory };

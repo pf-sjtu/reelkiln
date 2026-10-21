@@ -322,7 +322,7 @@ export const SPECS = [
       slice("main", /^function imagePathOf\(name, input\)/, /^}$/, /^function isRealUserText\(/),
     ],
     subs: [],
-    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText", "providerMessage", "providerFailureKind", "providerCapabilityLabel", "QUOTA_EXHAUSTED", "isRuntimeAuthFailure"],
+    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText", "providerMessage", "providerFailureKind", "providerCapabilityLabel", "QUOTA_EXHAUSTED", "isRuntimeAuthFailure", "appendDisplayAsk", "appendDisplayPreference"],
   },
 
   {
@@ -339,7 +339,7 @@ export const SPECS = [
       slice("main", /^const SECTION = "## COMMITMENTS";$/, /^}$/, /^function declineProposal\(/),
     ],
     subs: [],
-    exports: ["SECTION", "ANTI", "ANTI_HEADING", "readCommitments", "writeCommitments", "appendAnti", "listTaste", "commitTaste", "declineProposal"],
+    exports: ["SECTION", "ANTI", "ANTI_HEADING", "readCommitments", "writeCommitments", "appendAnti", "listTaste", "commitTaste", "declineProposal", "saveAccountCommitment"],
   },
   {
     // docs/25: stats:stageEtas (L62297) → the ORIGINAL computeStageEtas (L55510-55583).
@@ -756,7 +756,42 @@ export const SPECS = [
     subs: [],
     exports: ["PROJECT_MEMORY_MAX_SOURCES", "projectMemorySourceKey", "resolveProjectDestination", "isExistingProjectDirectory", "ProjectMemoryError", "ProjectMemoryStore",
       "SessionPlanChoiceError", "SessionPlanBlockedError", "SessionPlanScopeError", "SessionPlanStateError", "sessionPlanFailureDiagnostic", "assertPlanGenerationAllowed", "sessionPlanReply",
-      "assertProjectMemoryScope", "projectMemoryReply", "openProjectMemorySource", "memoryError", "projectMemoryFile"],
+      "assertProjectMemoryScope", "projectMemoryReply", "openProjectMemorySource", "memoryError", "projectMemoryFile",
+      "SessionPlanDispatchError", "SessionPlanBindingError", "SessionPlanPersistError", "attestExistingProjectDirectory", "sameDirectory$1 as sameProjectDirectory"],
+  },
+  {
+    // docs/30 (M13): the studio MCP toolset's verbatim constants + the session-plan schemas/decision/projection/restore
+    // (makeStudioToolset L48166, callSessionPlan L37207, settled-ask cards L1798, self-authorizing list L22956).
+    out: "src/main/studio/studio-tools.generated.ts",
+    imports: [
+      'import { isDeepStrictEqual } from "node:util";',
+      'import { z } from "zod";',
+      'import { SessionPlanChoiceError, SessionPlanBindingError } from "../memory/project-memory.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function sha256Utf8\(value\) \{$/, /^}$/),
+      slice("main", /^const SAVED_VOICE_RIGHTS_EXEMPTION =$/, /;$/),
+      slice("main", /^const ACCOUNT_PREFERENCE_TOOL_DESCRIPTION =$/, /;$/),
+      slice("main", /^const PROJECT_MEMORY_TOOL_DESCRIPTION =$/, /;$/),
+      slice("main", /^const NOT_ANSWERED = \{$/, /^}$/, /^function fileName\(path\)/),
+      slice("main", /^function settledAskFromInput\(/, /^}$/, /^function inputSummary\(/),
+      sliceUntil("main", /^const SESSION_PREVIEW_ASPECTS = \[$/, /^const REDACTIONS = \[$/),
+      slice("main", /^const memoryLabel = z$/, /^const projectMemoryToolSchema = /),
+      slice("main", /^const VOICEOVER_NAME_PREFIX_RE = /, /^const VOICEOVER_NAME_PREFIX_RE = /),
+      sliceUntil("main", /^const id = z\.string\(\)\.regex/, /^class SessionPlanChoiceError extends Error \{\}$/),
+      sliceUntil("main", /^const sessionPlanDecisionSchema = z$/, /^function assertPlanGenerationAllowed\(/),
+      slice("main", /^const CLAUDE_CODE_SELF_AUTHORIZING_STUDIO_TOOLS = \[$/, /^const claudeCodeAllowedTools = /),
+      slice("main", /^class SessionPlanJobMissingError extends SessionPlanBindingError \{$/, /;$/, /^const SESSION_PLAN_JOB_MISSING =$/),
+      slice("main", /^const LIBRARY_ID = /, /^const LIBRARY_ID = /),
+      slice("main", /^const SESSION_PLAN_PREAMBLE_PREFIX = /, /^const SESSION_PLAN_PREAMBLE_PREFIX = /),
+    ],
+    subs: [],
+    exports: ["sha256Utf8", "SAVED_VOICE_RIGHTS_EXEMPTION", "ACCOUNT_PREFERENCE_TOOL_DESCRIPTION", "PROJECT_MEMORY_TOOL_DESCRIPTION", "settledAskFromInput",
+      "SESSION_PREVIEW_ASPECTS", "SESSION_PLAN_GUIDANCE", "SESSION_PLAN_GUIDANCE_V1", "SESSION_PREVIEW_GUIDANCE", "PLAN_PAID_OPERATIONS_WHEN",
+      "projectMemoryToolShape", "projectMemoryToolSchema", "VOICEOVER_NAME_PREFIX_RE", "sessionPlanToolShape", "sessionPlanToolSchema", "storedSessionPlanSchema",
+      "splitSessionPlanForDisk", "mergeSessionPlanDetails", "sessionPlanChanges", "projectSessionPlan", "sessionPlanTurnId", "decideSessionPlan", "restoreSessionPlan",
+      "CLAUDE_CODE_SELF_AUTHORIZING_STUDIO_TOOLS", "selfAuthorizingStudioTools", "claudeCodeAllowedTools", "SessionPlanJobMissingError", "SESSION_PLAN_JOB_MISSING",
+      "LIBRARY_ID", "SESSION_PLAN_PREAMBLE_PREFIX"],
   },
   {
     // docs/29: app update channel preferences (createUpdatePreferences L2182) + the release-feed check

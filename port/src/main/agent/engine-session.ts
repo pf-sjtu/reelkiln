@@ -16,6 +16,7 @@
 //   submitPreparedMessage (L41559) → firstMessageJobId() + engineTurnText()
 //   maybeBindJob (L47576) / isPreexistingJob (L47938) → sniffJobIds()
 //   pinBoundJobEnv (L34018), pinSessionContextEpoch (L34022)
+import { selfAuthorizingStudioTools } from "../studio/studio-tools.generated";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -139,8 +140,8 @@ export function assembleBundle(d: EngineSessionDeps, meta: EngineSessionMeta) {
     workspaceSnapshot: { jobs: [...listJobIds(cwd)], engineVersion: eng?.version ?? "" },
   };
 }
-/** localSessionSections (L38345): projectMemoryContext is [] without a project-memory authority. */
-export function localSessionSections(): string[] { return [ACCOUNT_PREFERENCE_GUIDANCE]; }
+/** localSessionSections (L38345): [...projectMemoryContext(clientId) (L38323), ACCOUNT_PREFERENCE_GUIDANCE]. */
+export function localSessionSections(memoryContext: string[] = []): string[] { return [...memoryContext, ACCOUNT_PREFERENCE_GUIDANCE]; }
 
 /** pinBoundJobEnv (L34018) + pinSessionContextEpoch (L34022). */
 export function pinBoundJobEnv(env: Record<string, string>, jobId: string | undefined): void {
@@ -157,7 +158,7 @@ export function pinSessionContextEpoch(env: Record<string, string>, current: str
 
 export interface EngineSpawnContext { engineEnv: Record<string, string>; append: string; contextEpoch?: string; lawsVersion?: string; appendSha256?: string }
 /** spawnLocal L39461-39495 (local claude-code branch): engine env + assembled session context. */
-export function prepareEngineSpawn(d: EngineSessionDeps, meta: EngineSessionMeta, contextEpoch: string | undefined): EngineSpawnContext {
+export function prepareEngineSpawn(d: EngineSessionDeps, meta: EngineSessionMeta, contextEpoch: string | undefined, memoryContext: string[] = []): EngineSpawnContext {
   if (!d.currentEngine()) throw new Error("Production is blocked because no installed engine can validate the current route. Run Setup, then retry.");
   const engineEnv: Record<string, string> = { ...d.engineSessionEnv() };
   assertEnginePython(engineEnv.VIDEOCLAW_ENGINE);
@@ -167,8 +168,8 @@ export function prepareEngineSpawn(d: EngineSessionDeps, meta: EngineSessionMeta
   if (engineEnv.VIDEOCLAW_ENGINE) d.assertProductionContract(engineEnv.VIDEOCLAW_ENGINE);
   const bundle = { ...assembleBundle(d, meta) };
   const sc: any = engineEnv.VIDEOCLAW_ENGINE
-    ? assembleLocalSessionContext(engineEnv.VIDEOCLAW_ENGINE, bundle, localSessionSections() as any, undefined)
-    : legacyDevSessionContext([...localSessionSections(), CHARACTER_VOICE_GUIDANCE] as any, undefined);
+    ? assembleLocalSessionContext(engineEnv.VIDEOCLAW_ENGINE, bundle, localSessionSections(memoryContext) as any, undefined)
+    : legacyDevSessionContext([...localSessionSections(memoryContext), CHARACTER_VOICE_GUIDANCE] as any, undefined);
   return { engineEnv, append: sc.append, contextEpoch: epoch, lawsVersion: sc.lawsVersion, appendSha256: sc.hashes?.append };
 }
 /** engineSupportsOperationRecovery (L9202), verbatim logic. */
@@ -198,11 +199,12 @@ const CLAUDE_CODE_PLAN_MODE_REDIRECT = "Special plan mode is not available in th
 
 export type CanUseToolResult = { behavior: "allow"; updatedInput: Record<string, unknown> } | { behavior: "deny"; message: string; interrupt?: boolean };
 export type CanUseTool = (toolName: string, input: Record<string, unknown>, options: { signal?: AbortSignal; toolUseID?: string; requestId?: string; title?: string; displayName?: string; description?: string; decisionReason?: unknown; suggestions?: unknown }) => Promise<CanUseToolResult>;
-/** adaptClaudeCodeCanUseTool (L22977): plan-mode tools are redirected; studio self-authorizing tools
- *  (none are registered in the port: no studio MCP) would be allowed. */
+/** adaptClaudeCodeCanUseTool (L22977): plan-mode tools are redirected; the studio self-authorizing MCP tools
+ *  (CLAUDE_CODE_SELF_AUTHORIZING_STUDIO_TOOLS L22956, docs/30) are allowed without a permission card. */
 export function adaptClaudeCodeCanUseTool(delegate: CanUseTool): CanUseTool {
   return async (toolName, input, options) => {
     if (CLAUDE_CODE_INTERNAL_PLAN_TOOLS.includes(toolName)) return { behavior: "deny", message: CLAUDE_CODE_PLAN_MODE_REDIRECT };
+    if (selfAuthorizingStudioTools.has(toolName)) return { behavior: "allow", updatedInput: input };
     return delegate(toolName, input, options);
   };
 }
@@ -228,8 +230,7 @@ export function engineChildEnv(routeEnv: Record<string, string>, engineEnv: Reco
 export interface EnginePolicyHost {
   sessionCwd(sessionId: string): string | undefined;
   sessionJobId(sessionId: string): string | undefined;
-  /** creativeActionRefusal → sessionPlanProductionRefusal (L45xxx): undefined while no plan exists
-   *  (the port has no propose_session_plan tool, so a plan never exists). */
+  /** creativeActionRefusal → sessionPlanProductionRefusal (L38138, docs/30). */
   sessionPlanRefusal?(sessionId: string): string | undefined;
   /** Ask the human (permission:request card). Resolves with their decision. */
   askHuman(req: PermissionRequest, signal?: AbortSignal): Promise<CanUseToolResult>;

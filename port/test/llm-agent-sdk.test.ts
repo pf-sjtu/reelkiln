@@ -227,7 +227,7 @@ test("gate proxy: session token required, real auth swapped in upstream, custom 
     const xk = await send(proxy.url + "/v1/messages", { headers: { "x-api-key": proxy.token }, body: "{}" });
     assert.equal(xk.status, 200);
     await xk.text();
-    assert.deepEqual(proxy.stats(), { requests: 2, rejected: 1, maxInflight: 1, inflight: 0, structuredEmulated: 0, structuredJsonOk: 0 });
+    assert.deepEqual(proxy.stats(), { requests: 2, rejected: 1, maxInflight: 1, inflight: 0, structuredEmulated: 0, structuredJsonOk: 0, usage: {} });
   } finally { await proxy.close(); await up.close(); }
 });
 
