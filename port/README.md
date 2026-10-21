@@ -21,4 +21,5 @@ npm run start      # electron .  → stub renderer listing window.videoclaw (184
 | `src/main/fake-backend.ts` | QA-fixture-derived fake (qaFixtures-E0ox5qGv.js), rest = logged stubs |
 | `src/main/platform/` | macOS→Windows platform abstraction (tested) |
 | `src/renderer/` | smoke-test page |
-| `src/main/llm/` | PORT-NEW MiniMax route (docs/14 方案 a): llmRoute "minimax", sanitizedAgentEnv/resolveHelperCreds/anthropicMessages ports, concurrency gate + 429/529 backoff |
+| `src/main/llm/` | PORT-NEW generic custom-LLM provider framework (docs/15; MiniMax = built-in preset, docs/14): zod-validated providers config, anthropic-messages / openai-chat-completions / openai-responses, x-api-key / bearer / custom-header auth, per-provider gate + retry policy, redacting logger; sanitizedAgentEnv/resolveHelperCreds/anthropicMessages ports |
+| `src/main/models-dev/` | PORT-NEW models.dev catalog → SQLite (node:sqlite) sync + metadata lookup (docs/15); CLI `models-sync` / `models-list` / `models-show` / `llm-model-info` |

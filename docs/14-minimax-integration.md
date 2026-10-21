@@ -1,6 +1,7 @@
 # 14 · MiniMax（MiniMax-M3.1-Flash）接入方案
 
 > 状态：方案 (a) 已在 `port/` 落地（`port/src/main/llm/`），真实 key 冒烟已通过（见 §0）。日期：2026-10-21。
+> **2026-10-21 更新**：MiniMax 已不再特判，改为通用自定义 LLM 框架的内置 preset `minimax`（见 [docs/15](15-generic-llm-and-models-dev.md)）；helper 调用鉴权由 `x-api-key` 改为 `Authorization: Bearer`（两者在 §0 均已验证 200，并已用通用路径重新实测）。
 > 本文 **不含任何密钥**。密钥只通过环境变量 `MINIMAX_API_KEY` 提供，禁止写入文件 / 日志 / git。
 
 ## 0. 已验证 / 未验证（2026-10-21，box 上用真实 `MINIMAX_API_KEY`）
