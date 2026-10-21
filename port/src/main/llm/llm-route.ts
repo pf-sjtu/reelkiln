@@ -4,27 +4,42 @@
 //    + sanitizedAgentEnv (L16004-16033), the sdkEnv preparation of createLocalRuntime
 //    (L23216-23230), the gateway env branch (L23306-23313), ANTHROPIC_VERSION/resolveHelperCreds/
 //    anthropicMessages (L22342-22385).
-//  - PORT-NEW (docs/14 方案 a): a third route "minimax". Every place the original branches on
-//    "gateway" gets a sibling "minimax" branch; non-minimax behaviour is unchanged.
-//    The MiniMax key lives in MINIMAX_API_KEY, which sanitizedAgentEnv strips (name matches /KEY/),
-//    so it is read from the *unsanitized* env here and passed to the child explicitly as
-//    ANTHROPIC_AUTH_TOKEN.
-import { minimaxClaudeRuntimeEnv, minimaxConfig, minimaxGate, withMiniMaxRetry, MiniMaxError, MINIMAX_ROUTE, type MiniMaxConfig, type RetryOptions } from "./minimax";
+//  - PORT-NEW (docs/15): besides "claude-code" and "gateway", llmRoute may name ANY provider
+//    registered in the generic provider registry (built-in preset "minimax" + user providers file).
+//    Every place the original branches on "gateway" gets a sibling "provider" branch; behaviour for
+//    the two original routes is unchanged. Provider keys live in env vars that sanitizedAgentEnv
+//    strips (/KEY|TOKEN|…/), so they are read from the *unsanitized* env and passed to the child
+//    explicitly (ANTHROPIC_AUTH_TOKEN / ANTHROPIC_API_KEY / ANTHROPIC_CUSTOM_HEADERS).
+import type { BuiltinLlmRoute, LlmRouteId } from "../../shared/llm-types";
+import { LlmProviderError } from "./errors";
+import { getLogger } from "./logger";
+import { ANTHROPIC_VERSION, buildRequestBody, claudeAgentEnv, endpointUrl, extractText, requestHeaders } from "./protocols";
+import type { LlmProtocol } from "./provider-config";
+import { getProviderRegistry, type ProviderRegistry, type ResolvedProvider } from "./provider-registry";
+import { providerGate, withRetry, type RetryOptions, type RetryPolicy } from "./retry";
 
-export type LlmRoute = "claude-code" | "gateway" | typeof MINIMAX_ROUTE;
-export const DEFAULT_LLM_ROUTE: LlmRoute = "claude-code"; // L319
-export const LLM_ROUTES: readonly LlmRoute[] = ["claude-code", "gateway", MINIMAX_ROUTE];
+export { ANTHROPIC_VERSION };
+export type LlmRoute = LlmRouteId;
+export const DEFAULT_LLM_ROUTE: BuiltinLlmRoute = "claude-code"; // L319
+export const BUILTIN_LLM_ROUTES: readonly BuiltinLlmRoute[] = ["claude-code", "gateway"];
+/** Every route currently accepted: the two original ones + every registered provider name. */
+export function llmRoutes(registry: ProviderRegistry = getProviderRegistry()): LlmRoute[] {
+  return [...BUILTIN_LLM_ROUTES, ...registry.names()];
+}
+export function isProviderRoute(route: unknown, registry: ProviderRegistry = getProviderRegistry()): route is string {
+  return route !== "claude-code" && route !== "gateway" && registry.has(route);
+}
 
-/** L320. PORT-NEW: "minimax" is accepted. */
-export function resolvedLlmRoute(settings: { llmRoute?: unknown }): LlmRoute {
+/** L320. PORT-NEW: a registered provider name is accepted. */
+export function resolvedLlmRoute(settings: { llmRoute?: unknown }, registry: ProviderRegistry = getProviderRegistry()): LlmRoute {
   if (settings.llmRoute === "gateway") return "gateway";
-  if (settings.llmRoute === MINIMAX_ROUTE) return MINIMAX_ROUTE;
+  if (isProviderRoute(settings.llmRoute, registry)) return settings.llmRoute;
   return DEFAULT_LLM_ROUTE;
 }
 
-/** Settings normalisation (L5397-5399): unknown routes are deleted. PORT-NEW: keeps "minimax". */
-export function normalizeLlmRouteSetting<T extends { llmRoute?: unknown }>(value: T): T {
-  if (!LLM_ROUTES.includes(value.llmRoute as LlmRoute)) delete value.llmRoute;
+/** Settings normalisation (L5397-5399): unknown routes are deleted. PORT-NEW: keeps registered providers. */
+export function normalizeLlmRouteSetting<T extends { llmRoute?: unknown }>(value: T, registry: ProviderRegistry = getProviderRegistry()): T {
+  if (value.llmRoute !== "claude-code" && value.llmRoute !== "gateway" && !isProviderRoute(value.llmRoute, registry)) delete value.llmRoute;
   return value;
 }
 
@@ -64,12 +79,20 @@ export interface RouteGateway {
   llmRoute: LlmRoute;
   gatewayUrl?: string;
   gatewayKey?: string;
-  /** Pre-resolved MiniMax config; defaults to minimaxConfig(process.env) for the minimax route. */
-  minimax?: MiniMaxConfig | null;
+  /** Pre-resolved provider for a provider route; defaults to registry.resolve(llmRoute, env). */
+  provider?: ResolvedProvider | null;
+  registry?: ProviderRegistry;
+  /** UNSANITIZED env the provider key is read from (default process.env). */
+  env?: NodeJS.ProcessEnv;
 }
 
-/** The route-specific slice of the createLocalRuntime env block (L23306-23313) + PORT-NEW minimax
- *  sibling. Spread AFTER claudeSdkBaseEnv()/engineEnv, exactly where the original spreads it. */
+function routeProvider(route: string, g: { provider?: ResolvedProvider | null; registry?: ProviderRegistry; env?: NodeJS.ProcessEnv }): ResolvedProvider | null {
+  return g.provider !== undefined ? g.provider : (g.registry ?? getProviderRegistry()).resolve(route, g.env ?? process.env);
+}
+
+/** The route-specific slice of the createLocalRuntime env block (L23306-23313) + PORT-NEW provider
+ *  sibling. Spread AFTER claudeSdkBaseEnv()/engineEnv, exactly where the original spreads it.
+ *  Throws KEY_MISSING / UNSUPPORTED_PROTOCOL for an unusable provider route. */
 export function claudeRouteEnv(gateway: RouteGateway, profileDir: string, customHeaders?: string): Record<string, string> {
   if (gateway.llmRoute === "gateway" && gateway.gatewayKey) {
     return {
@@ -79,38 +102,55 @@ export function claudeRouteEnv(gateway: RouteGateway, profileDir: string, custom
       CLAUDE_CONFIG_DIR: profileDir,
     };
   }
-  if (gateway.llmRoute === MINIMAX_ROUTE) {
-    const mm = gateway.minimax === undefined ? minimaxConfig() : gateway.minimax;
-    if (!mm) throw new MiniMaxError("The MiniMax route is selected but MINIMAX_API_KEY is not set.", 0, "MINIMAX_KEY_MISSING");
-    return minimaxClaudeRuntimeEnv(mm, profileDir); // never forwards gateway customHeaders
+  if (gateway.llmRoute !== "gateway" && gateway.llmRoute !== "claude-code") {
+    const registry = gateway.registry ?? getProviderRegistry();
+    if (gateway.provider === undefined && !registry.has(gateway.llmRoute)) return {}; // unregistered → behaves like claude-code (resolvedLlmRoute)
+    const p = routeProvider(gateway.llmRoute, { ...gateway, registry });
+    if (!p) {
+      const keyEnv = registry.get(gateway.llmRoute)?.apiKeyEnv ?? "its API key env var";
+      throw new LlmProviderError("KEY_MISSING", `The "${gateway.llmRoute}" provider is selected but ${keyEnv} is not set.`, { provider: gateway.llmRoute });
+    }
+    return claudeAgentEnv(p, profileDir); // never forwards gateway customHeaders
   }
   return {};
 }
 
-/** sessionModel (L40865) default for a route when the video has no override. PORT-NEW: minimax. */
-export function defaultSessionModel(route: LlmRoute, mm?: MiniMaxConfig | null): string | undefined {
+/** sessionModel (L40865) default for a route when the video has no override. PORT-NEW: providers. */
+export function defaultSessionModel(route: LlmRoute, provider?: ResolvedProvider | null, registry: ProviderRegistry = getProviderRegistry()): string | undefined {
   if (route === "gateway") return "sonnet";
-  if (route === MINIMAX_ROUTE) return (mm === undefined ? minimaxConfig() : mm)?.model;
-  return undefined;
+  if (route === "claude-code") return undefined;
+  if (provider !== undefined) return provider?.model;
+  return registry.has(route) ? (registry.resolve(route)?.model ?? registry.get(route)!.model) : undefined;
 }
 
 // ---------------------------------------------------------------------------------------------
 // Main-process helper calls (proposeSessionTitle, Conductor judge, …)
 
-export const ANTHROPIC_VERSION = { "anthropic-version": "2023-06-01" } as const; // L22342
 export interface HelperCreds {
   url: string;
   headers: Record<string, string>;
-  /** PORT-NEW: set for minimax — overrides body.model (callers hard-code Claude model ids). */
+  /** PORT-NEW: provider routes — overrides body.model (callers hard-code Claude model ids). */
   model?: string;
-  provider?: "gateway" | typeof MINIMAX_ROUTE;
+  provider?: string; // "gateway" | provider name
+  protocol?: LlmProtocol; // undefined ≙ anthropic-messages (gateway)
   maxConcurrency?: number;
+  retry?: RetryPolicy;
+  defaultParams?: Record<string, unknown>;
+  keyEnv?: string;
+  timeoutMs?: number;
 }
 export interface HelperCfg { llmRoute?: unknown; gatewayUrl: string; gatewayKey?: string }
 
-/** L22343. PORT-NEW minimax branch (x-api-key, verified 2026-10-21). */
-export function resolveHelperCreds(cfg: HelperCfg, env: NodeJS.ProcessEnv = process.env): HelperCreds | null {
-  const route = resolvedLlmRoute(cfg);
+export function helperCredsForProvider(p: ResolvedProvider): HelperCreds {
+  return {
+    url: endpointUrl(p.protocol, p.baseUrl), headers: requestHeaders(p), model: p.model, provider: p.name, protocol: p.protocol,
+    maxConcurrency: p.maxConcurrency, retry: p.retry, defaultParams: p.defaultParams, keyEnv: p.keyEnv, timeoutMs: p.timeoutMs,
+  };
+}
+
+/** L22343. PORT-NEW provider branch (any registered provider, any protocol). */
+export function resolveHelperCreds(cfg: HelperCfg, env: NodeJS.ProcessEnv = process.env, registry: ProviderRegistry = getProviderRegistry()): HelperCreds | null {
+  const route = resolvedLlmRoute(cfg, registry);
   if (route === "gateway" && cfg.gatewayKey) {
     return {
       url: `${cfg.gatewayUrl.replace(/\/$/, "")}/anthropic/v1/messages`,
@@ -118,16 +158,9 @@ export function resolveHelperCreds(cfg: HelperCfg, env: NodeJS.ProcessEnv = proc
       provider: "gateway",
     };
   }
-  if (route === MINIMAX_ROUTE) {
-    const mm = minimaxConfig(env);
-    if (!mm) return null;
-    return {
-      url: `${mm.baseUrl}/v1/messages`,
-      headers: { "x-api-key": mm.key, "content-type": "application/json", ...ANTHROPIC_VERSION },
-      model: mm.model,
-      provider: MINIMAX_ROUTE,
-      maxConcurrency: mm.maxConcurrency,
-    };
+  if (route !== "gateway" && route !== "claude-code") {
+    const p = registry.resolve(route, env);
+    return p ? helperCredsForProvider(p) : null;
   }
   return null;
 }
@@ -135,12 +168,15 @@ export function resolveHelperCreds(cfg: HelperCfg, env: NodeJS.ProcessEnv = proc
 export type AnthropicResult = { ok: true; text: string } | { ok: false; status?: number; reason: string; code?: string };
 export interface AnthropicOpts { timeoutMs: number; fetchImpl?: typeof fetch; retry?: RetryOptions }
 
-/** L22362. Unchanged for gateway. PORT-NEW for minimax creds: body.model := creds.model, the call
- *  runs inside the process-wide MiniMax gate, and 429/529/1002 are retried with backoff
- *  (timeoutMs applies per attempt). */
+/** L22362. Unchanged for gateway. PORT-NEW for provider creds: the Anthropic-shaped body is
+ *  translated to the provider's protocol (body.model := creds.model, defaultParams merged under),
+ *  the call runs inside the provider's process-wide gate, and retryable statuses/body codes are
+ *  retried with backoff per the provider's policy (timeoutMs applies per attempt). */
 export async function anthropicMessages(creds: HelperCreds, body: Record<string, unknown>, opts: AnthropicOpts): Promise<AnthropicResult> {
   const doFetch = opts.fetchImpl ?? fetch;
-  const payload = creds.model ? { ...body, model: creds.model } : body;
+  const protocol: LlmProtocol = creds.protocol ?? "anthropic-messages";
+  const isProvider = !!creds.provider && creds.provider !== "gateway";
+  const payload = isProvider ? buildRequestBody(protocol, body, { model: creds.model, defaultParams: creds.defaultParams }) : creds.model ? { ...body, model: creds.model } : body;
   const once = async (): Promise<Response> => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), opts.timeoutMs);
@@ -149,20 +185,32 @@ export async function anthropicMessages(creds: HelperCreds, body: Record<string,
       // read the body inside the timeout window so retry/parse see a complete Response
       const buf = await res.arrayBuffer();
       return new Response(buf, { status: res.status, statusText: res.statusText, headers: res.headers });
+    } catch (e) {
+      if (!isProvider) throw e; // gateway: original error surface unchanged
+      if (controller.signal.aborted) throw new LlmProviderError("TIMEOUT", `request timed out after ${opts.timeoutMs}ms`, { retryable: true, provider: creds.provider, cause: e });
+      throw new LlmProviderError("NETWORK", `network error: ${e instanceof Error ? e.message : String(e)}`, { retryable: true, provider: creds.provider, cause: e });
     } finally {
       clearTimeout(timer);
     }
   };
+  const log = getLogger().child({ provider: creds.provider });
   try {
-    const res = creds.provider === MINIMAX_ROUTE
-      ? await minimaxGate({ maxConcurrency: creds.maxConcurrency ?? 1 }).run(() => withMiniMaxRetry(once, opts.retry))
+    const res = isProvider
+      ? await providerGate(creds.provider!, creds.maxConcurrency ?? 1).run(() => withRetry(once, creds.retry, {
+        ...opts.retry,
+        onRetry: (i) => { log.warn("llm.retry", i); opts.retry?.onRetry?.(i); },
+      }, { provider: creds.provider, keyEnv: creds.keyEnv }))
       : await once();
     if (!res.ok) return { ok: false, status: res.status, reason: `http ${res.status}` };
-    const data = (await res.json()) as { content?: Array<{ type?: string; text?: string }> };
-    const text = Array.isArray(data.content) ? data.content.filter((b) => b.type === "text").map((b) => b.text ?? "").join(" ") : "";
+    const text = extractText(protocol, await res.json(), creds.provider);
     return { ok: true, text };
   } catch (err) {
-    if (err instanceof MiniMaxError) return { ok: false, status: err.status, reason: err.message, code: err.code };
+    if (err instanceof LlmProviderError) {
+      log.warn("llm.request_failed", { code: err.code, status: err.status });
+      return { ok: false, ...(err.status ? { status: err.status } : {}), reason: err.message, code: err.code };
+    }
     return { ok: false, reason: err instanceof Error ? err.message : String(err) };
   }
 }
+/** Protocol-neutral alias of anthropicMessages for new callers. */
+export const providerComplete = anthropicMessages;

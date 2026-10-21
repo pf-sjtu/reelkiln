@@ -10,8 +10,10 @@
 //   node dist/cli/port-cli.cjs doctor <engineDir> <workspaceDir> [bootstrapDir]
 //   node dist/cli/port-cli.cjs codex-handshake <codexExe>
 //   node dist/cli/port-cli.cjs run-bash "<command>"
-//   node dist/cli/port-cli.cjs minimax-config          (offline; key shown only as configured:true/false)
-//   VIDEOCLAW_MINIMAX_LIVE=1 node dist/cli/port-cli.cjs minimax-ping   (ONE real request via the ported helper path)
+//   node dist/cli/port-cli.cjs llm-providers           (offline; registered providers, keys only as configured:true/false)
+//   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt]   (ONE real request via the generic helper path)
+//   node dist/cli/port-cli.cjs minimax-config          (docs/14 alias; = the "minimax" preset)
+//   VIDEOCLAW_MINIMAX_LIVE=1 node dist/cli/port-cli.cjs minimax-ping   (docs/14 alias of llm-ping minimax)
 // Every subcommand prints one JSON line `{ok, step, ...}` so results can be pasted back.
 import { mkdtempSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -26,7 +28,8 @@ import { CodexAppServerClient } from "../main/codex/app-server-client";
 import { runBash } from "../main/engine/run-bash";
 import { bootstrapTool } from "../main/platform";
 import { describeMiniMaxConfig, minimaxConfig } from "../main/llm/minimax";
-import { anthropicMessages, resolveHelperCreds } from "../main/llm/llm-route";
+import { anthropicMessages, helperCredsForProvider } from "../main/llm/llm-route";
+import { describeProvider, getProviderRegistry } from "../main/llm/provider-registry";
 
 const [, , cmd, a1, a2, a3] = process.argv;
 const out = (o: Record<string, unknown>) => console.log(JSON.stringify(o));
@@ -90,12 +93,20 @@ async function main() {
         return out({ ok: !r.isError, step: cmd, output: r.output.slice(-2000) });
       }
       case "minimax-config": return out({ ok: true, step: cmd, minimax: describeMiniMaxConfig(minimaxConfig()) });
-      case "minimax-ping": { // PORT-NEW live check; explicit opt-in so CI/tests never hit MiniMax
-        if (process.env.VIDEOCLAW_MINIMAX_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_MINIMAX_LIVE=1 to make a real MiniMax request" });
-        const creds = resolveHelperCreds({ llmRoute: "minimax", gatewayUrl: "" });
-        if (!creds) return out({ ok: false, step: cmd, error: "MINIMAX_API_KEY is not set" });
-        const r = await anthropicMessages(creds, { max_tokens: 256, messages: [{ role: "user", content: a1 || "Say hello in one short sentence." }] }, { timeoutMs: 60_000 });
-        return out({ ok: r.ok, step: cmd, minimax: describeMiniMaxConfig(minimaxConfig()), result: r, ms: Date.now() - t0 });
+      case "llm-providers": {
+        const reg = getProviderRegistry();
+        return out({ ok: !reg.configError, step: cmd, providers: reg.summaries(), ...(reg.configError ? { configError: reg.configError } : {}) });
+      }
+      case "minimax-ping":
+      case "llm-ping": { // PORT-NEW live check; explicit opt-in so CI/tests never hit a real provider
+        const name = cmd === "minimax-ping" ? "minimax" : a1;
+        const prompt = cmd === "minimax-ping" ? a1 : a2;
+        const live = process.env.VIDEOCLAW_LLM_LIVE === "1" || (cmd === "minimax-ping" && process.env.VIDEOCLAW_MINIMAX_LIVE === "1");
+        if (!live) return out({ ok: false, step: cmd, error: `set VIDEOCLAW_LLM_LIVE=1 to make a real request` });
+        if (!name) return out({ ok: false, step: cmd, error: "usage: llm-ping <provider> [prompt]" });
+        const p = getProviderRegistry().resolveOrThrow(name);
+        const r = await anthropicMessages(helperCredsForProvider(p), { max_tokens: 256, messages: [{ role: "user", content: prompt || "Say hello in one short sentence." }] }, { timeoutMs: p.timeoutMs });
+        return out({ ok: r.ok, step: cmd, provider: describeProvider(p), result: r, ms: Date.now() - t0 });
       }
       default:
         out({ ok: false, error: `unknown subcommand ${cmd}` });

@@ -17,5 +17,8 @@
     "electron": "42.11.9",
     "esbuild": "^0.28.2",
     "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }

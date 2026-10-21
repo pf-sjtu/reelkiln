@@ -1,4 +1,5 @@
-// MiniMax route (docs/14 方案 a). All HTTP goes to a local mock — never the real API.
+// MiniMax route (docs/14 方案 a) — now the built-in "minimax" preset of the generic provider
+// framework (docs/15). All HTTP goes to a local mock — never the real API.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer, type IncomingMessage } from "node:http";
@@ -21,7 +22,8 @@ const noSleep = { sleep: async () => {}, jitter: () => 0 };
 test("minimaxConfig: defaults, trimming, trailing slash, concurrency clamp 1..2, null without key", () => {
   assert.equal(minimaxConfig({}), null);
   assert.equal(minimaxConfig({ MINIMAX_API_KEY: "   " }), null);
-  assert.deepEqual(minimaxConfig({ MINIMAX_API_KEY: ` ${FAKE_KEY} ` }), { key: FAKE_KEY, baseUrl: MINIMAX_DEFAULT_BASE_URL, model: MINIMAX_DEFAULT_MODEL, maxConcurrency: 1 });
+  const d = minimaxConfig({ MINIMAX_API_KEY: ` ${FAKE_KEY} ` })!;
+  assert.deepEqual({ key: d.key, baseUrl: d.baseUrl, model: d.model, maxConcurrency: d.maxConcurrency, protocol: d.protocol, auth: d.auth }, { key: FAKE_KEY, baseUrl: MINIMAX_DEFAULT_BASE_URL, model: MINIMAX_DEFAULT_MODEL, maxConcurrency: 1, protocol: "anthropic-messages", auth: { scheme: "bearer" } });
   assert.equal(MINIMAX_DEFAULT_BASE_URL, "https://api.minimaxi.com/anthropic");
   assert.equal(MINIMAX_DEFAULT_MODEL, "MiniMax-M3.1-Flash");
   const c = minimaxConfig({ MINIMAX_API_KEY: FAKE_KEY, MINIMAX_BASE_URL: "https://api.minimax.io/anthropic///", MINIMAX_MODEL: "MiniMax-M3", MINIMAX_MAX_CONCURRENCY: "9" })!;
@@ -60,7 +62,7 @@ test("sanitizedAgentEnv: differential vs original L16026; it strips MINIMAX_API_
 test("claudeRouteEnv minimax: base URL, explicit auth token from MINIMAX_API_KEY, all aliases → MiniMax-M3.1-Flash, isolated profile, no gateway headers", () => {
   const parent = { PATH: "/bin", MINIMAX_API_KEY: FAKE_KEY, ANTHROPIC_BASE_URL: "https://stale", ANTHROPIC_CUSTOM_HEADERS: "x-a: b" };
   const mm = minimaxConfig(parent);
-  const child = { ...claudeSdkBaseEnv(parent), ...claudeRouteEnv({ llmRoute: "minimax", minimax: mm }, "/profile", "x-videoclaw-job: 1") };
+  const child = { ...claudeSdkBaseEnv(parent), ...claudeRouteEnv({ llmRoute: "minimax", provider: mm }, "/profile", "x-videoclaw-job: 1") };
   assert.equal(child.ANTHROPIC_BASE_URL, "https://api.minimaxi.com/anthropic");
   assert.equal(child.ANTHROPIC_AUTH_TOKEN, FAKE_KEY);
   for (const k of ["ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "ANTHROPIC_SMALL_FAST_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"]) assert.equal((child as any)[k], "MiniMax-M3.1-Flash", k);
@@ -68,13 +70,13 @@ test("claudeRouteEnv minimax: base URL, explicit auth token from MINIMAX_API_KEY
   assert.equal((child as any).ANTHROPIC_CUSTOM_HEADERS, undefined);
   assert.equal((child as any).MINIMAX_API_KEY, undefined); // only as ANTHROPIC_AUTH_TOKEN
   assert.equal(child.CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK, "1");
-  assert.throws(() => claudeRouteEnv({ llmRoute: "minimax", minimax: null }, "/p"), /MINIMAX_API_KEY is not set/);
+  assert.throws(() => claudeRouteEnv({ llmRoute: "minimax", provider: null }, "/p"), /MINIMAX_API_KEY is not set/);
   // gateway / claude-code unchanged (L23306)
   assert.deepEqual(claudeRouteEnv({ llmRoute: "gateway", gatewayUrl: "https://gw", gatewayKey: "gk" }, "/p", "h: 1"), { ANTHROPIC_BASE_URL: "https://gw/anthropic", ANTHROPIC_AUTH_TOKEN: "gk", ANTHROPIC_CUSTOM_HEADERS: "h: 1", CLAUDE_CONFIG_DIR: "/p" });
   assert.deepEqual(claudeRouteEnv({ llmRoute: "claude-code" }, "/p"), {});
 });
 
-test("resolveHelperCreds: gateway branch differential vs original L22343; minimax → {base}/v1/messages + x-api-key", () => {
+test("resolveHelperCreds: gateway branch differential vs original L22343; minimax → {base}/v1/messages + Bearer (preset auth; x-api-key also verified in docs/14)", () => {
   const orig = evalOriginal<(c: any) => any>(`const DEFAULT_LLM_ROUTE = "claude-code";\n${fnText(/^function resolvedLlmRoute\(/)}\nconst ANTHROPIC_VERSION = { "anthropic-version": "2023-06-01" };\n${fnText(/^function resolveHelperCreds\(/)}`, "resolveHelperCreds");
   const g = { llmRoute: "gateway", gatewayUrl: "https://gw/", gatewayKey: "k" };
   const { provider, ...port } = resolveHelperCreds(g, {})!;
@@ -84,7 +86,7 @@ test("resolveHelperCreds: gateway branch differential vs original L22343; minima
   assert.equal(resolveHelperCreds({ llmRoute: "minimax", gatewayUrl: "x" }, {}), null);
   const m = resolveHelperCreds({ llmRoute: "minimax", gatewayUrl: "x" }, { MINIMAX_API_KEY: FAKE_KEY })!;
   assert.equal(m.url, "https://api.minimaxi.com/anthropic/v1/messages");
-  assert.deepEqual(m.headers, { "x-api-key": FAKE_KEY, "content-type": "application/json", "anthropic-version": "2023-06-01" });
+  assert.deepEqual(m.headers, { authorization: `Bearer ${FAKE_KEY}`, "content-type": "application/json", "anthropic-version": "2023-06-01" });
   assert.equal(m.model, "MiniMax-M3.1-Flash");
 });
 
@@ -133,9 +135,9 @@ test("anthropicMessages via minimax creds (mock): URL, headers, model override, 
     assert.equal(m.seen.length, 4);
     for (const s of m.seen) {
       assert.equal(s.path, "/anthropic/v1/messages");
-      assert.equal(s.headers["x-api-key"], FAKE_KEY);
+      assert.equal(s.headers.authorization, `Bearer ${FAKE_KEY}`);
       assert.equal(s.headers["anthropic-version"], "2023-06-01");
-      assert.equal(s.headers.authorization, undefined);
+      assert.equal(s.headers["x-api-key"], undefined);
       assert.equal(s.body.model, "MiniMax-M3.1-Flash");
     }
     assert.deepEqual(retries, [{ attempt: 1, delayMs: 0, status: 429 }, { attempt: 2, delayMs: 4000, status: 529 }, { attempt: 3, delayMs: 0, status: 429 }]);
