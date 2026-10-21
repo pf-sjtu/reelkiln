@@ -1,0 +1,7 @@
+[port] AgentHost ENGINE mode; restored 0 session(s) from sessions.json
+[ui-e2e] mode on: original renderer, no injected script; dialogs answered from env (save-as preset, pick-files real)
+[port] llmRoute changed — AgentHost retired runtimes; interrupted=0
+[smoke] llmRoute preset minimax
+[port] renderer: original file://<APPIMAGE_ROOT>/resources/renderer-original/index.html
+[smoke] save dialog answered: <RUN>/export/s1.mp4 (default <RUN>/v1.mp4)
+[smoke] showItemInFolder <RUN>/export/s1.mp4

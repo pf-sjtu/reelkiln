@@ -1,0 +1,18 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "beats": [
+    {"name": "b1_clip_a", "source": "footage/seg_a.mp4", "in": 0.0, "out": 2.5,
+     "role": "broll", "source_kind": "real", "grade": "none"},
+    {"name": "b2_clip_b", "source": "footage/seg_b.mp4", "in": 0.0, "out": 2.0,
+     "role": "broll", "source_kind": "real", "grade": "none"},
+    {"name": "b3_clip_c", "source": "footage/seg_c.mp4", "in": 0.0, "out": 2.0,
+     "role": "broll", "source_kind": "real", "grade": "none"}
+  ],
+  "audio": {
+    "from_beats": false,
+    "bed": {"source": "audio/music.mp3"}
+  },
+  "output": "final_raw.mp4"
+}

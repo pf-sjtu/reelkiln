@@ -1,0 +1,77 @@
+{"t":24,"note":"launch AppImage release/Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage (UI_E2E mode, CDP :9352)"}
+{"t":4263,"cdp":"Page.enable","params":{}}
+{"t":4322,"cdp":"Runtime.enable","params":{}}
+{"t":4336,"note":"page target file://<APPIMAGE_ROOT>/resources/renderer-original/index.html"}
+{"t":5847,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":5848,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":5865,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":5866,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":6418,"screenshot":"01-home.png"}
+{"t":6422,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":6424,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":6424,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":6425,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":6426,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":6441,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":6441,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":6445,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":6446,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":6447,"cdp":"Input.insertText","params":{"text":"S1 UI e2e"}}
+{"t":6449,"action":"insertText","into":"input.new-client-input","text":"S1 UI e2e"}
+{"t":6450,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":6450,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":6462,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":6464,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":6772,"action":"click","desc":"New video in S1 UI e2e","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in S1 UI e2e"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":6772,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":7031,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":7046,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":7048,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":7425,"screenshot":"02-new-video.png"}
+{"t":7425,"note":"STEP project_video: PASS {\"clientId\":\"s1-ui-e2e\",\"sessionId\":\"204c7974-95fe-47dd-bc5d-8f52a6f23bb8\",\"title\":\"New video\"}"}
+{"t":7426,"action":"dropFiles","at":{"x":766,"y":721},"files":["clip_a.mp4","clip_b.mp4","clip_c.mp4","music.mp3"]}
+{"t":7426,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":7428,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":7434,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":8608,"screenshot":"03-attachments.png"}
+{"t":8609,"note":"STEP attach: PASS {\"ready\":[\"clip_a.mp4\",\"clip_b.mp4\",\"clip_c.mp4\",\"music.mp3\"],\"storeFile\":true}"}
+{"t":8611,"action":"click","desc":"composer textarea","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"tag":"TEXTAREA","cls":"","label":""},"hit":{"hitTag":"TEXTAREA","hitCls":"","onTarget":true}}
+{"t":8611,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":8613,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":8615,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":8616,"cdp":"Input.insertText","params":{"text":"我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.5–2.5 s；只用 music.mp3 做音轨（不要素材原声）；不要字幕、不要叠加、不要任何付费工具。渲染成片。"}}
+{"t":8658,"action":"insertText","into":"textarea","chars":136}
+{"t":9114,"screenshot":"04-brief-typed.png"}
+{"t":9116,"action":"click","desc":"Send","selector":"button.send-btn","at":{"x":1228,"y":768},"element":{"x":1211,"y":751,"width":34,"height":34,"tag":"BUTTON","cls":"send-btn","label":"Send"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":9116,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1228,"y":768}}
+{"t":9118,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":9120,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":9430,"note":"STEP brief_send: PASS {\"typedMatches\":true}"}
+{"t":27545,"screenshot":"05-turn-streaming.png"}
+{"t":27548,"controlsDuringTurn":[{"cls":"send-btn stop","aria":null,"title":"Stop","disabled":false}]}
+{"t":576834,"screenshot":"05b-turn-done.png"}
+{"t":576835,"note":"STEP stream: PASS {\"turnS\":568,\"toolStarts\":39,\"textDeltas\":90,\"domTextChanges\":52,\"numTurns\":40,\"isError\":false,\"jobId\":\"6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-204c79\",\"controlsDuringTurn\":[{\"cls\":\"send-btn stop\",\"aria\":null,\"title\":\"Stop\",\"disabled\":false}]}"}
+{"t":576840,"action":"click","desc":"player native play control","selector":".op-preview-stage video","at":{"x":929,"y":317},"element":{"x":905,"y":140,"width":359,"height":227.359375,"tag":"VIDEO","cls":"","label":""},"hit":{"hitTag":"VIDEO","hitCls":"","onTarget":true}}
+{"t":576840,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":929,"y":317}}
+{"t":576843,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":929,"y":317,"button":"left","clickCount":1}}
+{"t":576845,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":929,"y":317,"button":"left","clickCount":1}}
+{"t":578446,"screenshot":"06-player-playing.png"}
+{"t":579954,"playbackSamples":[{"t":1792569816124,"currentTime":0.399576,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792569816626,"currentTime":0.901528,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792569817129,"currentTime":1.404423,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792569817724,"currentTime":1.999034,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792569818227,"currentTime":2.501987,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792569818729,"currentTime":3.004504,"paused":false,"ended":false,"readyState":4,"error":null}]}
+{"t":579954,"note":"STEP play: PASS {\"ok\":true,\"advancedS\":2.605,\"maxReadyState\":4,\"src\":\"vcmedia://local<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-204c79/versions/v1.mp4?consumer=primary-preview-13&version=223020808907f05084094df5ceed99154379dea6eb46adb34216a9d7dce177ab\",\"duration\":6.549333,\"size\":\"1080x1920\",\"controls\":true}"}
+{"t":579957,"action":"click","desc":"Approve V1","selector":"button.v-approve","at":{"x":1085,"y":413},"element":{"x":1038.890625,"y":401.359375,"width":91.21875,"height":24,"tag":"BUTTON","cls":"v-approve","label":"Mark this cut as the final one"},"hit":{"hitTag":"BUTTON","hitCls":"v-approve","onTarget":true}}
+{"t":579958,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1085,"y":413}}
+{"t":579973,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1085,"y":413,"button":"left","clickCount":1}}
+{"t":579976,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1085,"y":413,"button":"left","clickCount":1}}
+{"t":581921,"screenshot":"07-approved.png"}
+{"t":581922,"note":"STEP approve: PASS {\"finalizedAtMs\":1792569818785,\"v1Approved\":true,\"finals\":[{\"n\":1,\"via\":\"promote\",\"madeFinalAtMs\":1792569818763}]}"}
+{"t":581936,"action":"click","desc":"Download v1.mp4","selector":"button.op-preview-download","at":{"x":1241,"y":163},"element":{"x":1226,"y":148,"width":30,"height":30,"tag":"BUTTON","cls":"op-preview-download","label":"Download v1.mp4"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":581936,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1241,"y":163}}
+{"t":581939,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1241,"y":163,"button":"left","clickCount":1}}
+{"t":581941,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1241,"y":163,"button":"left","clickCount":1}}
+{"t":584161,"screenshot":"08-exported.png"}
+{"t":584286,"note":"STEP export: PASS {\"sha\":{\"final\":\"e64bd11609d2f19b8d2c1ed50adaafcaa2384f8187ce088cc23e636fce2c7e10\",\"v1\":\"e64bd11609d2f19b8d2c1ed50adaafcaa2384f8187ce088cc23e636fce2c7e10\",\"export\":\"e64bd11609d2f19b8d2c1ed50adaafcaa2384f8187ce088cc23e636fce2c7e10\"},\"ffprobeRc\":0,\"video\":\"h264 1080x1920 30/1\",\"audio\":\"aac\",\"durationS\":\"6.549333\",\"saveDialogLog\":true}"}
+{"t":945008,"screenshot":"09-after-taste-turn.png"}
+{"t":945008,"note":"taste-capture {\"stopControlVisibleWhileFinalized\":false,\"started\":true,\"finished\":false,\"isError\":null,\"waitedS\":361,\"endedBy\":\"app quit (teardown) after --taste-wait-ms\"}"}
+{"t":945014,"cdp":"Browser.close","params":{}}
+{"t":945231,"note":"app exited 0"}
+{"t":945341,"note":"DONE allPass=true"}

@@ -1,0 +1,42 @@
+{"t":45,"note":"launch dev electron (UI_E2E mode, CDP :9353)"}
+{"t":667,"cdp":"Page.enable","params":{}}
+{"t":719,"cdp":"Runtime.enable","params":{}}
+{"t":773,"note":"page target file://<REPO>/app/out/renderer/index.html"}
+{"t":2060,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":2060,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":2076,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2079,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2636,"screenshot":"01-home.png"}
+{"t":2640,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":2643,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":2643,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":2645,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":2646,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":2663,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":2663,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":2676,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":2678,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":2680,"cdp":"Input.insertText","params":{"text":"S1 UI e2e"}}
+{"t":2683,"action":"insertText","into":"input.new-client-input","text":"S1 UI e2e"}
+{"t":2684,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":2684,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":2694,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":2695,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":3005,"action":"click","desc":"New video in S1 UI e2e","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in S1 UI e2e"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":3005,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":3261,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":3276,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":3278,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":3641,"screenshot":"02-new-video.png"}
+{"t":3641,"note":"STEP project_video: PASS {\"clientId\":\"s1-ui-e2e\",\"sessionId\":\"70dae31d-4bbc-46a3-a50d-499f183c0926\",\"title\":\"New video\"}"}
+{"t":3645,"action":"click","desc":"Add footage, images, audio… (attach button)","selector":"button.attach-btn","at":{"x":349,"y":768},"element":{"x":334,"y":753,"width":30,"height":30,"tag":"BUTTON","cls":"attach-btn","label":"Add footage, images, audio…"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":3645,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":349,"y":768}}
+{"t":3660,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":349,"y":768,"button":"left","clickCount":1}}
+{"t":3661,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":349,"y":768,"button":"left","clickCount":1}}
+{"t":4823,"screenshot":"03-attachments.png"}
+{"t":4823,"note":"STEP attach: PASS {\"via\":\"picker\",\"ready\":[\"clip_a.mp4\",\"clip_b.mp4\",\"clip_c.mp4\",\"music.mp3\"],\"storeFile\":true}"}
+{"t":4823,"note":"stop-after attach"}
+{"t":4872,"screenshot":"99-error.png"}
+{"t":4876,"cdp":"Browser.close","params":{}}
+{"t":4920,"note":"app exited 0"}
+{"t":5164,"note":"DONE allPass=true"}

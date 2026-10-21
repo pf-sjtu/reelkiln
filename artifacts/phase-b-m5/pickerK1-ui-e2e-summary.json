@@ -1,0 +1,74 @@
+{
+ "started": "2026-10-21T07:55:42.731Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "70dae31d-4bbc-46a3-a50d-499f183c0926",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "picker",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer 'Add footage, images, audio…' (button.attach-btn)",
+   "how": "click → original intake:pickFiles → open dialog (answered by env preset)"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "sessionId": "70dae31d-4bbc-46a3-a50d-499f183c0926",
+ "jobId": null,
+ "consoleErrors": [
+  "TypeError: Cannot read properties of undefined (reading 'find')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:31748:24",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18"
+ ],
+ "attachVia": "picker",
+ "stopAfter": "attach",
+ "allPass": true,
+ "finished": "2026-10-21T07:55:46.830Z"
+}

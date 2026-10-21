@@ -1,0 +1,179 @@
+{
+ "started": "2026-10-21T08:11:04.196Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "df6dd672-f16f-4009-8ffa-9ae8494447d4",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  },
+  "brief_send": {
+   "ok": true,
+   "typedMatches": true
+  },
+  "stream": {
+   "ok": true,
+   "turnS": 381,
+   "toolStarts": 34,
+   "textDeltas": 13,
+   "domTextChanges": 47,
+   "numTurns": 35,
+   "isError": false,
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-df6dd6",
+   "controlsDuringTurn": [
+    {
+     "cls": "send-btn stop",
+     "aria": null,
+     "title": "Stop",
+     "disabled": false
+    }
+   ]
+  },
+  "play": {
+   "ok": true,
+   "advancedS": 2.598,
+   "maxReadyState": 4,
+   "src": "vcmedia://local<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-df6dd6/versions/v1.mp4?consumer=primary-preview-11&version=4a684af5e127c1a00e89253c55e2a000788cc033264816bc9b1c7e03b44c7701",
+   "duration": 6.507,
+   "size": "720x1280",
+   "controls": true
+  },
+  "approve": {
+   "ok": true,
+   "finalizedAtMs": 1792570653390,
+   "v1Approved": true,
+   "finals": [
+    {
+     "n": 1,
+     "via": "promote",
+     "madeFinalAtMs": 1792570653379
+    }
+   ]
+  },
+  "export": {
+   "ok": true,
+   "sha": {
+    "final": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d",
+    "v1": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d",
+    "export": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d"
+   },
+   "ffprobeRc": 0,
+   "video": "h264 720x1280 30/1",
+   "audio": "aac",
+   "durationS": "6.507000",
+   "saveDialogLog": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)"
+  },
+  {
+   "element": "composer textarea",
+   "how": "click + Input.insertText(brief)"
+  },
+  {
+   "element": "composer Send (button.send-btn)",
+   "how": "click"
+  },
+  {
+   "element": "Output panel player (original <video controls> in .op-preview-stage) native play button",
+   "how": "click at the controls' play button position"
+  },
+  {
+   "element": "'Approve V1' (button.v-approve, Output panel)",
+   "how": "click"
+  },
+  {
+   "element": "Output panel 'Download v1.mp4' (button.op-preview-download)",
+   "how": "click → original file:saveItemAs → save dialog (answered by env preset)"
+  },
+  {
+   "element": "AskUserQuestion card (.question-card): first .q-option per question + 'Answer' (.q-submit)",
+   "how": "click"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "tasteCapture": {
+  "stopControlVisibleWhileFinalized": false,
+  "cardAnswered": {
+   "questions": 1,
+   "picked": [
+    "Music-only audio track"
+   ]
+  },
+  "started": true,
+  "finished": true,
+  "isError": false,
+  "waitedS": 99,
+  "endedBy": "result"
+ },
+ "sha": {
+  "final": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d",
+  "v1": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d",
+  "export": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d"
+ },
+ "sessionId": "df6dd672-f16f-4009-8ffa-9ae8494447d4",
+ "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-df6dd6",
+ "consoleErrors": [
+  "TypeError: Cannot read properties of undefined (reading 'find')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:31748:24",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<REPO>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18"
+ ],
+ "attachVia": "drop",
+ "stopAfter": null,
+ "allPass": true,
+ "finished": "2026-10-21T08:19:16.481Z"
+}
