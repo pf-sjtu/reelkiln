@@ -32,6 +32,9 @@ createServer(async (req, res) => {
   } else if (/request_files/.test(prompt) && tool("request_files")) {
     const dest = /dest_dir 为 "([^"]+)"/.exec(prompt)?.[1];
     blocks = [{ type: "tool_use", id: `toolu_${++n}`, name: tool("request_files"), input: { description: "请提供一张参考图（PNG）", dest_dir: dest, accept: [".png"] } }];
+  } else if (/request_voiceover/.test(prompt) && tool("request_voiceover")) { // docs/33 M16 voice card
+    const dest = /dest_dir 为 "([^"]+)"/.exec(prompt)?.[1]; const script = /script 为 "([^"]+)"/.exec(prompt)?.[1];
+    blocks = [{ type: "tool_use", id: `toolu_${++n}`, name: tool("request_voiceover"), input: { script, direction: "平稳、清晰", dest_dir: dest } }];
   } else if (/project_memory/.test(prompt) && tool("project_memory")) {
     blocks = [{ type: "tool_use", id: `toolu_${++n}`, name: tool("project_memory"), input: { action: "save", text: "片尾统一使用白色字幕" } }];
   } else blocks = [{ type: "text", text: `OK ${code}` }];

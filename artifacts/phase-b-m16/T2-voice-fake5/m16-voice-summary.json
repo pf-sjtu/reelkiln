@@ -1,0 +1,291 @@
+{
+ "phase": "voice",
+ "llmUpstream": "FAKE-LLM: local scripted Anthropic/t2a stub (http://127.0.0.1:47999/anthropic) — cards/IPC/ledger real, LLM + TTS bytes fake, $0 real spend",
+ "micInput": "HARNESS: Chromium --use-fake-device-for-media-stream + --use-file-for-fake-audio-capture=fake-mic.wav",
+ "started": "2026-10-21T22:07:31.454Z",
+ "steps": {
+  "recorder_card": {
+   "ok": true,
+   "cardBefore": "Voiceover · studio take\n平稳、清晰\n欢迎来到海边小镇，今天我们一起看日出。\nUsing System Default (Fake Default Audio Input)\nSlow\nNormal\nFast\nRecord\nDecline\nDetails",
+   "take": "Take 1 · 0:03",
+   "requestMicCalls": 1,
+   "inputRespond": {
+    "ok": true,
+    "args": "[\"b760910c-1f42-4ddf-95cb-d1d2e52931ae\",{\"kind\":\"voiceover\",\"takes\":[{\"name\":\"Take 1.wav\",\"data\":\"<bytes 534572>\"}]}]"
+   },
+   "files": [
+    "vo_take1.wav"
+   ],
+   "wav": {
+    "name": "vo_take1.wav",
+    "bytes": 534572,
+    "sha256": "ee32835d56c8b0f3",
+    "riff": "RIFF/WAVE",
+    "probe": {
+     "programs": [],
+     "stream_groups": [],
+     "streams": [
+      {
+       "codec_name": "pcm_s24le",
+       "sample_rate": "48000",
+       "channels": 1,
+       "bits_per_sample": 24
+      }
+     ],
+     "format": {
+      "format_name": "wav",
+      "duration": "3.712000"
+     }
+    }
+   },
+   "tools": [
+    "mcp__studio__request_voiceover"
+   ],
+   "settled": [
+    {
+     "family": "voiceover",
+     "outcome": "answered",
+     "title": "Voiceover",
+     "summary": "Voiceover recorded"
+    }
+   ],
+   "reply": "完成 VC49PQX"
+  },
+  "composer_voice_note": {
+   "ok": true,
+   "statusIpc": {
+    "ok": true,
+    "result": "{\"available\":false,\"attach\":true,\"message\":\"On-device transcription is unavailable on this Mac. You can still type your message.\"}"
+   },
+   "panel": "Voice note ready.\n\n0:03 / 2:00\n\nSaved with this video. The agent may use your voice in it.\n\nTranscribe is unavailable. On-device transcription is unavailable on this Mac. You can still type your message.\n\nDiscard\nAttach as audio\nTranscribe",
+   "transcribeDisabled": {
+    "disabled": true,
+    "title": "On-device transcription is unavailable on this Mac. You can still type your message."
+   },
+   "attachIpc": {
+    "ok": true,
+    "result": "[{\"id\":\"8442b6ff-296e-4399-9243-b1756accea39\",\"sessionId\":\"5c2317c1-b00b-44ee-b516-7d7feaa33c18\",\"name\":\"Voice note 0:04.wav\",\"sizeBytes\":339918,\"destination\":\"video\",\"status\":\"uploading\",\"copiedBytes\":0,\"canRetry\":false}]"
+   },
+   "chip": "Voice note 0:04.wav",
+   "wav": {
+    "name": "voice-note-7398c147-1fe6-414d-80f4-bdb97e49e43a.wav",
+    "bytes": 339918,
+    "sha256": "110fed73512e851d",
+    "probe": {
+     "programs": [],
+     "stream_groups": [],
+     "streams": [
+      {
+       "codec_name": "pcm_s16le",
+       "sample_rate": "48000",
+       "channels": 1,
+       "bits_per_sample": 16
+      }
+     ],
+     "format": {
+      "format_name": "wav",
+      "duration": "3.540000"
+     }
+    }
+   },
+   "sent": {
+    "incoming": [
+     "Voice note 0:04.wav"
+    ],
+    "wav": {
+     "sha256": "110fed73512e851d",
+     "sameAsIntake": true,
+     "probe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "pcm_s16le",
+        "sample_rate": "48000",
+        "channels": 1,
+        "bits_per_sample": 16
+       }
+      ],
+      "format": {
+       "format_name": "wav",
+       "duration": "3.540000"
+      }
+     }
+    },
+    "lastUserMsg": ""
+   }
+  }
+ },
+ "code": "VC49PQX",
+ "fakeMic": {
+  "file": "fake-mic.wav",
+  "sha256": "1166ccb92b2188f7",
+  "probe": {
+   "programs": [],
+   "stream_groups": [],
+   "streams": [
+    {
+     "codec_name": "pcm_s16le",
+     "sample_rate": "48000",
+     "channels": 1,
+     "bits_per_sample": 16
+    }
+   ],
+   "format": {
+    "format_name": "wav",
+    "duration": "8.000000"
+   }
+  }
+ },
+ "landing": "home",
+ "session": "5c2317c1-b00b-44ee-b516-7d7feaa33c18",
+ "llmRoute": "gateway",
+ "job": "ok-vc49pqx-20261021-5c2317",
+ "recorder": {
+  "cardBefore": "Voiceover · studio take\n平稳、清晰\n欢迎来到海边小镇，今天我们一起看日出。\nUsing System Default (Fake Default Audio Input)\nSlow\nNormal\nFast\nRecord\nDecline\nDetails",
+  "take": "Take 1 · 0:03",
+  "requestMicCalls": 1,
+  "inputRespond": {
+   "ok": true,
+   "args": "[\"b760910c-1f42-4ddf-95cb-d1d2e52931ae\",{\"kind\":\"voiceover\",\"takes\":[{\"name\":\"Take 1.wav\",\"data\":\"<bytes 534572>\"}]}]"
+  },
+  "files": [
+   "vo_take1.wav"
+  ],
+  "wav": {
+   "name": "vo_take1.wav",
+   "bytes": 534572,
+   "sha256": "ee32835d56c8b0f3",
+   "riff": "RIFF/WAVE",
+   "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+     {
+      "codec_name": "pcm_s24le",
+      "sample_rate": "48000",
+      "channels": 1,
+      "bits_per_sample": 24
+     }
+    ],
+    "format": {
+     "format_name": "wav",
+     "duration": "3.712000"
+    }
+   }
+  },
+  "tools": [
+   "mcp__studio__request_voiceover"
+  ],
+  "settled": [
+   {
+    "family": "voiceover",
+    "outcome": "answered",
+    "title": "Voiceover",
+    "summary": "Voiceover recorded"
+   }
+  ],
+  "reply": "完成 VC49PQX"
+ },
+ "voiceNote": {
+  "statusIpc": {
+   "ok": true,
+   "result": "{\"available\":false,\"attach\":true,\"message\":\"On-device transcription is unavailable on this Mac. You can still type your message.\"}"
+  },
+  "panel": "Voice note ready.\n\n0:03 / 2:00\n\nSaved with this video. The agent may use your voice in it.\n\nTranscribe is unavailable. On-device transcription is unavailable on this Mac. You can still type your message.\n\nDiscard\nAttach as audio\nTranscribe",
+  "transcribeDisabled": {
+   "disabled": true,
+   "title": "On-device transcription is unavailable on this Mac. You can still type your message."
+  },
+  "attachIpc": {
+   "ok": true,
+   "result": "[{\"id\":\"8442b6ff-296e-4399-9243-b1756accea39\",\"sessionId\":\"5c2317c1-b00b-44ee-b516-7d7feaa33c18\",\"name\":\"Voice note 0:04.wav\",\"sizeBytes\":339918,\"destination\":\"video\",\"status\":\"uploading\",\"copiedBytes\":0,\"canRetry\":false}]"
+  },
+  "chip": "Voice note 0:04.wav",
+  "wav": {
+   "name": "voice-note-7398c147-1fe6-414d-80f4-bdb97e49e43a.wav",
+   "bytes": 339918,
+   "sha256": "110fed73512e851d",
+   "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+     {
+      "codec_name": "pcm_s16le",
+      "sample_rate": "48000",
+      "channels": 1,
+      "bits_per_sample": 16
+     }
+    ],
+    "format": {
+     "format_name": "wav",
+     "duration": "3.540000"
+    }
+   }
+  },
+  "sent": {
+   "incoming": [
+    "Voice note 0:04.wav"
+   ],
+   "wav": {
+    "sha256": "110fed73512e851d",
+    "sameAsIntake": true,
+    "probe": {
+     "programs": [],
+     "stream_groups": [],
+     "streams": [
+      {
+       "codec_name": "pcm_s16le",
+       "sample_rate": "48000",
+       "channels": 1,
+       "bits_per_sample": 16
+      }
+     ],
+     "format": {
+      "format_name": "wav",
+      "duration": "3.540000"
+     }
+    }
+   },
+   "lastUserMsg": ""
+  }
+ },
+ "ledgerAtEnd": {
+  "entries": 7,
+  "usd": 0.001428
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "attachment:voiceNote",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "input:respond",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "materials:preview",
+  "media:discardVoice",
+  "media:requestMic",
+  "media:voiceDictationStatus",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T22:10:55.148Z"
+}

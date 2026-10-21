@@ -435,3 +435,15 @@ test("docs/26: handler wiring of the M9 channels the UI run could not reach — 
     assert.throws(() => noHost["input:respond"]("r", {}), /Videos are not available/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test("media:voiceDictationStatus (L61910) = voiceDictationStatus(voiceTools()): ffmpeg but no on-device helper → attach-only", async () => {
+  const { configureVoiceTools } = await import("../src/main/attachments/voice-tools");
+  const { VOICE_ERRORS } = await import("../src/main/platform/voice");
+  const root = mkdtempSync(join(tmpdir(), "vc-voice-"));
+  const h = localChannels26({} as any) as Record<string, (...a: any[]) => any>;
+  configureVoiceTools(() => [root]);
+  assert.deepEqual(await h["media:voiceDictationStatus"](), { available: false, attach: false, message: "Voice notes are unavailable in this build." });
+  writeFileSync(join(root, "ffmpeg"), "");
+  assert.deepEqual(await h["media:voiceDictationStatus"](), { available: false, attach: true, message: VOICE_ERRORS.unavailable });
+  configureVoiceTools(() => []); rmSync(root, { recursive: true, force: true });
+});

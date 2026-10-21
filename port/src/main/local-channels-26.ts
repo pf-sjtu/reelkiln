@@ -25,6 +25,9 @@
 //   feedback:capture / discard L62342-62349 → FeedbackService (L57172)
 //   hfPreview:available/start/stop/editApply L62430-62436 → HyperframesPreviewController (L56487)
 //   account:localResetPrepare / Commit L61497-61498 → LocalResetController (L5826)
+//   media:voiceDictationStatus L61910 → voiceDictationStatus(voiceTools()) (L10472; docs/33 M16)
+import { voiceDictationStatus } from "./platform/voice";
+import { voiceTools } from "./attachments/voice-tools";
 type Handler = (...a: any[]) => unknown;
 
 export interface LocalChannels26Deps {
@@ -97,6 +100,8 @@ export function localChannels26(d: LocalChannels26Deps): Record<string, Handler>
     "spend:setCeiling": (sessionId: unknown, usd: unknown, options: unknown) => needHost().setSpendCeiling(String(sessionId), usd, options as any),
     // L61829: paidWorkBlocked() is false in the port (no account gate) → the response passes through
     "input:respond": (requestId: unknown, r: unknown) => needHost().respondInput(String(requestId), r),
+    // L61910: ipcMain.handle(IPC.voiceDictationStatus, () => voiceDictationStatus()) — default arg voiceTools()
+    "media:voiceDictationStatus": () => voiceDictationStatus(voiceTools()),
     "media:discardVoice": (sessionId: unknown, recordingId: unknown) => { needHost().discardVoice(String(sessionId), String(recordingId)); },
     // L62197
     "materials:preview": (sessionId: unknown, id: unknown) => {
