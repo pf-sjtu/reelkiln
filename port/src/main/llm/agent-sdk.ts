@@ -7,9 +7,13 @@
 //
 // The SDK is NOT a port dependency (the original pins @anthropic-ai/claude-agent-sdk ^0.3.281 and
 // ships the per-platform native `claude` binary from @anthropic-ai/claude-agent-sdk-<plat>-<arch>).
-// It is loaded at runtime from VIDEOCLAW_CLAUDE_AGENT_SDK (package dir, or a node_modules dir that
-// contains @anthropic-ai/claude-agent-sdk), so tests and CI never need it.
+// It is loaded at runtime (docs/17 §4 discovery order): VIDEOCLAW_CLAUDE_AGENT_SDK → the app's own
+// node_modules (packaged: resources/app.asar.unpacked/node_modules, like the original) →
+// <resources>/claude-agent-sdk → <appRoot>/vendor/claude-agent-sdk (`npm run agent-sdk:install`) →
+// ~/.videoclaw/claude-agent-sdk. Tests and CI never need it.
 import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { resolve as resolvePath } from "node:path";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { LlmProviderError } from "./errors";
@@ -33,15 +37,71 @@ export function resolveSdkPackageDir(spec: string, exists: (p: string) => boolea
 // esbuild would turn a bare import() into require() in the CJS bundle; the SDK is ESM-only.
 const importEsm = new Function("u", "return import(u)") as (u: string) => Promise<any>;
 
-export async function loadClaudeAgentSdk(spec: string | undefined = process.env[CLAUDE_AGENT_SDK_ENV]): Promise<LoadedSdk> {
-  if (!spec?.trim()) throw new LlmProviderError("SDK_UNAVAILABLE", `Claude Agent SDK not configured: set ${CLAUDE_AGENT_SDK_ENV} to a directory containing ${CLAUDE_AGENT_SDK_PACKAGE} (npm i ${CLAUDE_AGENT_SDK_PACKAGE} in a sandbox dir).`);
-  const packageDir = resolveSdkPackageDir(spec.trim());
-  if (!packageDir) throw new LlmProviderError("SDK_UNAVAILABLE", `${CLAUDE_AGENT_SDK_PACKAGE} not found under ${spec}`);
+/** Version the port is tested against (docs/16/17); `npm run agent-sdk:install` installs it. */
+export const PINNED_CLAUDE_AGENT_SDK_VERSION = "0.3.305";
+
+export interface SdkDiscoveryOptions {
+  env?: NodeJS.ProcessEnv;
+  /** Port/app root (contains package.json, dist/, vendor/). Default: two levels above the bundle. */
+  appRoot?: string;
+  /** Electron process.resourcesPath when packaged. */
+  resourcesPath?: string;
+  home?: string;
+  exists?: (p: string) => boolean;
+}
+export interface SdkCandidate { source: "env" | "app-node_modules" | "resources-unpacked" | "resources" | "vendor" | "home"; dir: string }
+
+/** Ordered candidate locations (first hit wins). */
+export function sdkCandidates(o: SdkDiscoveryOptions = {}): SdkCandidate[] {
+  const env = o.env ?? process.env;
+  const out: SdkCandidate[] = [];
+  const explicit = env[CLAUDE_AGENT_SDK_ENV]?.trim();
+  if (explicit) out.push({ source: "env", dir: explicit });
+  // dist/main/index.cjs or dist/cli/port-cli.cjs → port root
+  const appRoot = o.appRoot ?? (typeof __dirname === "string" ? resolvePath(__dirname, "..", "..") : process.cwd());
+  out.push({ source: "app-node_modules", dir: join(appRoot, "node_modules") });
+  const res = o.resourcesPath ?? (process as { resourcesPath?: string }).resourcesPath;
+  if (res) {
+    out.push({ source: "resources-unpacked", dir: join(res, "app.asar.unpacked", "node_modules") });
+    out.push({ source: "resources", dir: join(res, "claude-agent-sdk") });
+  }
+  out.push({ source: "vendor", dir: join(appRoot, "vendor", "claude-agent-sdk") });
+  const home = o.home ?? (() => { try { return homedir(); } catch { return ""; } })();
+  if (home) out.push({ source: "home", dir: join(home, ".videoclaw", "claude-agent-sdk") });
+  return out;
+}
+
+/** First candidate that contains the SDK package. An explicit env path that does not contain it is
+ *  an error (no silent fallback past a misconfiguration). */
+export function discoverClaudeAgentSdk(o: SdkDiscoveryOptions = {}): { packageDir: string; source: SdkCandidate["source"]; tried: SdkCandidate[] } {
+  const exists = o.exists ?? existsSync;
+  const tried: SdkCandidate[] = [];
+  for (const c of sdkCandidates(o)) {
+    tried.push(c);
+    const packageDir = resolveSdkPackageDir(c.dir, exists);
+    if (packageDir) return { packageDir, source: c.source, tried };
+    if (c.source === "env") throw new LlmProviderError("SDK_UNAVAILABLE", `${CLAUDE_AGENT_SDK_PACKAGE} not found under ${c.dir} (${CLAUDE_AGENT_SDK_ENV})`);
+  }
+  throw new LlmProviderError("SDK_UNAVAILABLE", `Claude Agent SDK not installed. Run \`npm run agent-sdk:install\` in the port directory (installs ${CLAUDE_AGENT_SDK_PACKAGE}@${PINNED_CLAUDE_AGENT_SDK_VERSION} into vendor/claude-agent-sdk), or set ${CLAUDE_AGENT_SDK_ENV}. Looked in: ${tried.map((t) => t.dir).join(", ")}`);
+}
+
+/** Loads the SDK. `spec` (a dir) bypasses discovery; otherwise discoverClaudeAgentSdk(o). */
+export async function loadClaudeAgentSdk(spec?: string, o: SdkDiscoveryOptions = {}): Promise<LoadedSdk & { source: string }> {
+  let packageDir: string | undefined;
+  let source = "argument";
+  if (spec?.trim()) {
+    packageDir = resolveSdkPackageDir(spec.trim());
+    if (!packageDir) throw new LlmProviderError("SDK_UNAVAILABLE", `${CLAUDE_AGENT_SDK_PACKAGE} not found under ${spec}`);
+  } else {
+    const d = discoverClaudeAgentSdk(o);
+    packageDir = d.packageDir;
+    source = d.source;
+  }
   const pkg = JSON.parse(readFileSync(join(packageDir, "package.json"), "utf8")) as { name?: string; version?: string };
   if (pkg.name !== CLAUDE_AGENT_SDK_PACKAGE) throw new LlmProviderError("SDK_UNAVAILABLE", `${packageDir} is ${pkg.name}, not ${CLAUDE_AGENT_SDK_PACKAGE}`);
   const mod = await importEsm(pathToFileURL(join(packageDir, "sdk.mjs")).href);
   if (typeof mod?.query !== "function") throw new LlmProviderError("SDK_UNAVAILABLE", `${CLAUDE_AGENT_SDK_PACKAGE}@${pkg.version} has no query() export`);
-  return { sdk: mod as ClaudeAgentSdkLike, packageDir, version: pkg.version ?? "unknown" };
+  return { sdk: mod as ClaudeAgentSdkLike, packageDir, version: pkg.version ?? "unknown", source };
 }
 
 /** Packaged branch of claudeCodeExecutable (L19505-19514): the per-platform native binary that

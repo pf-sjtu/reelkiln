@@ -10,7 +10,8 @@
     "bundle": "node tools/build.mjs",
     "build": "npm run gen && npm run typecheck && npm run bundle",
     "test": "node tools/build.mjs --tests && node --test \"dist-test/*.test.cjs\"",
-    "start": "electron ."
+    "start": "electron .",
+    "agent-sdk:install": "node tools/install-agent-sdk.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
@@ -20,5 +21,8 @@
   },
   "dependencies": {
     "zod": "^4.6.7"
+  },
+  "config": {
+    "claudeAgentSdkVersion": "0.3.305"
   }
 }

@@ -15,7 +15,8 @@
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt] [image.png]   (ONE real request via the main-process route service)
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-structured <provider> [--mode native|tool|off]
 //        (ONE real structured-output helper request; reports whether the reply is schema-valid JSON; docs/17)
-//   VIDEOCLAW_LLM_LIVE=1 VIDEOCLAW_CLAUDE_AGENT_SDK=<dir> node dist/cli/port-cli.cjs llm-agent-smoke <provider> [prompt] [--tool|--key-probe]
+//   node dist/cli/port-cli.cjs agent-sdk-check        (offline: where the Claude Agent SDK was discovered, version, native binary; docs/17 §4)
+//   VIDEOCLAW_LLM_LIVE=1 [VIDEOCLAW_CLAUDE_AGENT_SDK=<dir>] node dist/cli/port-cli.cjs llm-agent-smoke <provider> [prompt] [--tool|--key-probe]
 //        (ONE real Claude Agent SDK turn: sessionRuntimeConfig() env/model → query(); docs/16)
 //   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
 //   node dist/cli/port-cli.cjs sqlite-check            (node:sqlite capability: runtime, SQLite version, minimums)
@@ -42,7 +43,7 @@ import { LlmRouteService } from "../main/llm/route-service";
 import { describeProvider, getProviderRegistry, loadProviderRegistry, PROVIDERS_FILE_ENV } from "../main/llm/provider-registry";
 import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
 import { checkSqliteCapability } from "../main/models-dev/sqlite";
-import { claudeCodeExecutableFor, loadClaudeAgentSdk, runAgentTurn } from "../main/llm/agent-sdk";
+import { claudeCodeExecutableFor, discoverClaudeAgentSdk, loadClaudeAgentSdk, PINNED_CLAUDE_AGENT_SDK_VERSION, runAgentTurn } from "../main/llm/agent-sdk";
 import { anthropicMessages } from "../main/llm/llm-route";
 
 const [, , cmd, a1, a2, a3] = process.argv;
@@ -146,6 +147,12 @@ async function main() {
         const result = r.ok ? { ok: true, text: r.text.slice(0, 400), chars: r.text.length } : r;
         return out({ ok: r.ok, step: cmd, provider: describeProvider(p), image: image ? { bytes: Buffer.from(image, "base64").length, mediaType } : undefined, result, ms: Date.now() - t0 });
       }
+      case "agent-sdk-check": { // PORT-NEW docs/17 §4 (offline; does not import the SDK)
+        const d = discoverClaudeAgentSdk();
+        const version = JSON.parse(readFileSync(join(d.packageDir, "package.json"), "utf8")).version;
+        const executable = claudeCodeExecutableFor(d.packageDir);
+        return out({ ok: !!executable, step: cmd, source: d.source, packageDir: d.packageDir, version, pinned: PINNED_CLAUDE_AGENT_SDK_VERSION, matchesPin: version === PINNED_CLAUDE_AGENT_SDK_VERSION, executable: executable ?? null, ...(executable ? {} : { error: "native claude binary for this platform not found next to the SDK (optional dependency skipped?)" }) });
+      }
       case "llm-structured": { // PORT-NEW docs/17: structured output through the route service
         if (process.env.VIDEOCLAW_LLM_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_LLM_LIVE=1 to make a real request" });
         const args = process.argv.slice(3);
@@ -181,7 +188,7 @@ async function main() {
         const [name, prompt] = args.filter((a) => !a.startsWith("--"));
         if (!name) return out({ ok: false, step: cmd, error: "usage: llm-agent-smoke <provider> [prompt] [--tool | --key-probe]" });
         const p = getProviderRegistry().resolveOrThrow(name);
-        const { sdk, packageDir, version } = await loadClaudeAgentSdk();
+        const { sdk, packageDir, version, source: sdkSource } = await loadClaudeAgentSdk();
         const executable = claudeCodeExecutableFor(packageDir);
         const profileDir = mkdtempSync(join(tmpdir(), "vc-agent-profile-")); // isolated CLAUDE_CONFIG_DIR
         const cwd = mkdtempSync(join(tmpdir(), "vc-agent-cwd-"));
@@ -205,7 +212,7 @@ async function main() {
         const seenLen = mode === "key-probe" ? Number(/LEN=(\d+)/.exec(r.toolResults.map((t) => t.text).join("\n"))?.[1] ?? NaN) : undefined;
         const keyProbe = mode === "key-probe" ? { childSawTokenLength: seenLen, sessionTokenLength: childTokenLength, providerKeyLength: p.key.length, childSawProviderKey: seenLen === p.key.length } : undefined;
         const ok = r.ok && (mode !== "tool" || r.toolResults.some((t) => !t.isError && t.text.includes(marker))) && (mode !== "key-probe" || (seenLen === childTokenLength && seenLen !== p.key.length));
-        return out({ ok, step: cmd, mode, sdk: { package: "@anthropic-ai/claude-agent-sdk", version, executable }, provider: describeProvider(p), readiness, childEnvNames: envNames, childEnvHasProviderKey: Object.values(runtime.env).includes(p.key), gateProxy: runtime.proxy ? runtime.proxy.stats() : undefined, toolMarker: mode === "tool" ? marker : undefined, keyProbe, turn: r, ms: Date.now() - t0 });
+        return out({ ok, step: cmd, mode, sdk: { package: "@anthropic-ai/claude-agent-sdk", version, source: sdkSource, executable }, provider: describeProvider(p), readiness, childEnvNames: envNames, childEnvHasProviderKey: Object.values(runtime.env).includes(p.key), gateProxy: runtime.proxy ? runtime.proxy.stats() : undefined, toolMarker: mode === "tool" ? marker : undefined, keyProbe, turn: r, ms: Date.now() - t0 });
       }
       default:
         out({ ok: false, error: `unknown subcommand ${cmd}` });

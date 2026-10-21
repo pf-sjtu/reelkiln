@@ -26,3 +26,6 @@ __pycache__/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+
+# Claude Agent SDK + native claude binary installed by `npm run agent-sdk:install` (docs/17) — never commit
+port/vendor/

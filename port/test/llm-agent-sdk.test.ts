@@ -3,12 +3,12 @@
 // local http server); the real run is the gated `llm-agent-smoke` CLI.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { claudeCodeExecutableFor, loadClaudeAgentSdk, minimalAgentOptions, resolveSdkPackageDir, runAgentTurn, type ClaudeAgentSdkLike } from "../src/main/llm/agent-sdk";
+import { PINNED_CLAUDE_AGENT_SDK_VERSION, claudeCodeExecutableFor, discoverClaudeAgentSdk, sdkCandidates, loadClaudeAgentSdk, minimalAgentOptions, resolveSdkPackageDir, runAgentTurn, type ClaudeAgentSdkLike } from "../src/main/llm/agent-sdk";
 import { proxiedAgentEnv, startAgentGateProxy } from "../src/main/llm/agent-gate-proxy";
 import { agentCompatEnv, claudeAgentEnv } from "../src/main/llm/protocols";
 import { loadProviderRegistry, type ProviderRegistry } from "../src/main/llm/provider-registry";
@@ -107,7 +107,8 @@ test("runAgentTurn: error result, SDK throw and timeout become a typed failure (
 });
 
 test("loadClaudeAgentSdk: SDK_UNAVAILABLE when unset/missing/wrong package; loads an ESM package from a node_modules dir", async () => {
-  await assert.rejects(loadClaudeAgentSdk(""), (e: unknown) => e instanceof LlmProviderError && e.code === "SDK_UNAVAILABLE");
+  const nowhere = { env: {}, appRoot: "/nonexistent-vc", home: "/nonexistent-home", resourcesPath: undefined };
+  await assert.rejects(loadClaudeAgentSdk("", nowhere), (e: unknown) => e instanceof LlmProviderError && e.code === "SDK_UNAVAILABLE" && /agent-sdk:install/.test(e.message));
   const dir = tmp();
   try {
     await assert.rejects(loadClaudeAgentSdk(dir), /not found/);
@@ -124,6 +125,30 @@ test("loadClaudeAgentSdk: SDK_UNAVAILABLE when unset/missing/wrong package; load
     writeFileSync(join(pkg, "package.json"), JSON.stringify({ name: "evil-sdk", version: "1.0.0" }));
     await assert.rejects(loadClaudeAgentSdk(pkg), /not @anthropic-ai\/claude-agent-sdk/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("SDK discovery (docs/17 §4): env > app node_modules > resources(unpacked) > vendor > ~/.videoclaw; env misconfig is an error, not a fallback", async () => {
+  const has = (dirs: string[]) => (p: string) => dirs.some((d) => p === join(d, "package.json") || p === join(d, "sdk.mjs"));
+  const SDK = (root: string) => join(root, "@anthropic-ai", "claude-agent-sdk");
+  const base = { appRoot: "/app", resourcesPath: "/res", home: "/home/u" };
+  assert.deepEqual(sdkCandidates({ ...base, env: { VIDEOCLAW_CLAUDE_AGENT_SDK: "/x" } }).map((c) => [c.source, c.dir]), [
+    ["env", "/x"], ["app-node_modules", "/app/node_modules"], ["resources-unpacked", "/res/app.asar.unpacked/node_modules"],
+    ["resources", "/res/claude-agent-sdk"], ["vendor", "/app/vendor/claude-agent-sdk"], ["home", "/home/u/.videoclaw/claude-agent-sdk"],
+  ]);
+  const vendorPkg = join("/app/vendor/claude-agent-sdk", "node_modules", "@anthropic-ai", "claude-agent-sdk");
+  let d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([vendorPkg, SDK("/res/app.asar.unpacked/node_modules")]) });
+  assert.equal(d.source, "resources-unpacked");
+  d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([vendorPkg]) });
+  assert.deepEqual([d.source, d.packageDir], ["vendor", vendorPkg]);
+  d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([SDK("/home/u/.videoclaw/claude-agent-sdk/node_modules")]) });
+  assert.equal(d.source, "home");
+  assert.throws(() => discoverClaudeAgentSdk({ ...base, env: { VIDEOCLAW_CLAUDE_AGENT_SDK: "/typo" }, exists: has([vendorPkg]) }), /not found under \/typo/);
+  assert.throws(() => discoverClaudeAgentSdk({ ...base, env: {}, exists: () => false }), (e: unknown) => e instanceof LlmProviderError && e.code === "SDK_UNAVAILABLE" && /Looked in: .*vendor/.test(e.message));
+});
+
+test("pinned SDK version: agent-sdk.ts constant == package.json config (install script source)", () => {
+  const pkgJson = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
+  assert.equal(pkgJson.config.claudeAgentSdkVersion, PINNED_CLAUDE_AGENT_SDK_VERSION);
 });
 
 test("claudeCodeExecutableFor: original packaged layout (claude-agent-sdk-<platform>-<arch>/claude), musl, win32 .exe, override", () => {
