@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 import { resolveRendererEntry } from "../src/main/renderer-entry";
 import { smokeDialog } from "../src/main/media/media-ipc";
 import { Cdp, mouseClick, dropFiles, pressKey, typeText } from "../tools/ui-e2e/cdp.mjs";
-import { center, nativePlayButton, playbackVerdict, redactEvidence, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
+import { answerDeclined, center, nativePlayButton, playbackVerdict, redactEvidence, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
 
 const base = { packaged: false, appPath: "/repo/port", resourcesPath: "/res", mainDir: "/repo/port/dist/main", exists: () => true };
 
@@ -99,4 +99,14 @@ test("evidence redaction scrubs secrets and run paths", () => {
 test("ui-e2e driver parses (node --check)", () => {
   const r = spawnSync(process.execPath, ["--check", resolve(__dirname, "..", "tools", "ui-e2e.mjs")], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr);
+});
+
+test("answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposals' file content (qcardQ1) does not", () => {
+  assert.equal(answerDeclined(["The user declined the question. Hmm. The AskUserQuestion was declined — \"declined this step\" means they dismissed the question."]), true);
+  assert.equal(answerDeclined(["Denied by user"]), true);
+  assert.equal(answerDeclined(["用户拒绝了这个问题"]), true);
+  // multiSelect: options left unticked are "declined" by an ACCEPTED answer (qcardQ1 thinking)
+  assert.equal(answerDeclined(["Here the user declined \"No captions or overlays\", \"No paid tools\" as *locked rules*"]), false);
+  assert.equal(answerDeclined(["User kept only:\n1. Music-only audio\n## ANTI-COMMITMENTS (declined proposals — do not re-raise)\n- _(none yet)_"]), false);
+  assert.equal(answerDeclined(["你选了竖屏 9:16。", "Locked: **music-only audio** and **center-crop to fill 9:16**."]), false);
 });

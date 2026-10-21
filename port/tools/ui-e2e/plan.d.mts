@@ -5,3 +5,5 @@ export interface PlaybackSample { currentTime: number; paused: boolean; ended: b
 export function playbackVerdict(samples: PlaybackSample[]): { ok: boolean; why?: string; advancedS?: number; maxReadyState?: number };
 export function redactEvidence(text: string, o?: { paths?: Record<string, string>; secrets?: string[] }): string;
 export const S1_UI_STEPS: { id: string; what: string }[];
+export const DECLINE_RE: RegExp;
+export function answerDeclined(texts: unknown[]): boolean;

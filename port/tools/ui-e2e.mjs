@@ -18,7 +18,7 @@ import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Cdp, waitForPageTarget, mouseClick, mouseMove, typeText, dropFiles, screenshot } from "./ui-e2e/cdp.mjs";
-import { center, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
+import { answerDeclined, center, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PORT_DIR = resolve(HERE, "..");
@@ -146,8 +146,7 @@ function answerVerdict(card) {
   const toolEnd = after.find((e) => e.kind === "tool_end" && e.toolUseId === card.toolUseId);
   const resolved = after.find((e) => e.kind === "permission_resolved" && e.requestId === card.requestId);
   const texts = after.filter((e) => e.kind === "thinking" || e.kind === "assistant_text").map((e) => String(e.text));
-  const DECLINE = /declin|denied by user|user (?:has )?(?:rejected|dismissed)|拒绝|没有回答|未回答/i;
-  const declinedMentioned = texts.some((t) => DECLINE.test(t));
+  const declinedMentioned = answerDeclined(texts); // plan.mjs DECLINE_RE (docs/24: refusal phrasing only)
   const pickedLabelsEchoed = card.picked.filter((l) => texts.some((t) => t.includes(l.split("\n")[0].slice(0, 24))));
   const decisions = [...readFileSync(mainLog, "utf8").matchAll(/^\{[^\n]*"event":"agent\.permission\.decision"[^\n]*$/gm)].map((m) => JSON.parse(m[0])).filter((d) => d.requestId === card.requestId);
   const decision = decisions.pop() ?? null;

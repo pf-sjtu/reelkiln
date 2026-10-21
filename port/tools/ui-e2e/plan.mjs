@@ -40,3 +40,11 @@ export const S1_UI_STEPS = [
   { id: "approve", what: "click 'Approve V1' → '✅ V1 approved' + 'This video is finalized'" },
   { id: "export", what: "click the Output panel Download button → file:saveItemAs (save dialog answered by env preset)" },
 ];
+
+/** docs/24 (A): does the agent's text after an answered question card say the QUESTION was refused?
+ *  Targets the refusal the SDK hands back on a deny ("The user declined this step." / "Denied by user")
+ *  and the agent's paraphrases of it about the question/step itself — NOT any "declin…": on a multiSelect
+ *  card the agent legitimately says the user "declined" the options left unticked, and qcardQ1's taste
+ *  file quotes its own heading "ANTI-COMMITMENTS (declined proposals — do not re-raise)". */
+export const DECLINE_RE = /declined this step|denied by user|\b(?:user|you)\s+(?:has\s+|have\s+)?(?:declined|denied|rejected|dismissed|skipped)\s+(?:the|this|my|your)\s+(?:question|step|card|prompt)|\b(?:question|AskUserQuestion|step)\s+was\s+(?:declined|denied|rejected|dismissed)|拒绝了(?:这个|该)?(?:问题|提问)|没有回答|未回答/i;
+export function answerDeclined(texts) { return texts.some((t) => DECLINE_RE.test(String(t))); }
