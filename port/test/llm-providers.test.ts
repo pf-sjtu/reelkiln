@@ -14,6 +14,7 @@ import { LlmProviderError } from "../src/main/llm/errors";
 import { createLogger, registerSecret, redact, clearSecretsForTests, setLoggerForTests, type LogRecord } from "../src/main/llm/logger";
 import { resetProviderGatesForTests, withRetry, bodyCode } from "../src/main/llm/retry";
 import { PROVIDER_CREDENTIAL_CODE } from "../src/main/gateway/agent-gateway-proxy";
+import type { PublicSettings } from "../src/shared/ipc-contract";
 
 const KEY = "sk-custom-test-key-not-real-abcdef";
 const noSleep = { sleep: async () => {}, jitter: () => 0 };
@@ -299,4 +300,16 @@ test("logger: secret-named fields and registered secret values are redacted ever
   const quiet: LogRecord[] = [];
   createLogger({ sink: (r) => quiet.push(r), level: "warn" }).info("dropped");
   assert.equal(quiet.length, 0);
+});
+
+test("shipped example providers file validates; settings type accepts provider routes", () => {
+  const r = loadProviderRegistry({ file: join(process.cwd(), "config/llm-providers.example.json"), env: {} });
+  assert.deepEqual(r.names(), ["minimax", "my-anthropic-proxy", "deepseek", "azure-openai"]);
+  assert.equal(r.get("minimax")!.agentEffort, "medium");
+  assert.equal(r.get("minimax")!.baseUrl, "https://api.minimaxi.com/anthropic");
+  assert.deepEqual(r.get("azure-openai")!.auth, { scheme: "header", header: "api-key", prefix: "" });
+  const s: PublicSettings = { gatewayUrl: "x", telemetry: false, llmRoute: "deepseek" };
+  const t: PublicSettings = { gatewayUrl: "x", telemetry: false, llmRoute: "claude-code" };
+  assert.equal(normalizeLlmRouteSetting({ ...s }, r).llmRoute, "deepseek");
+  assert.equal(normalizeLlmRouteSetting({ ...t }, r).llmRoute, "claude-code");
 });

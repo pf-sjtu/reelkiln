@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "providers": [
+    {
+      "name": "minimax",
+      "concurrency": { "max": 1 },
+      "agentEffort": "medium"
+    },
+    {
+      "name": "my-anthropic-proxy",
+      "displayName": "Internal Anthropic-compatible proxy",
+      "protocol": "anthropic-messages",
+      "baseUrl": "https://llm-proxy.example.com/anthropic",
+      "auth": { "scheme": "x-api-key" },
+      "apiKeyEnv": "MY_PROXY_API_KEY",
+      "model": "claude-sonnet-4-5",
+      "aliases": { "haiku": "claude-haiku-4-5", "smallFast": "claude-haiku-4-5" },
+      "defaultParams": { "thinking": { "type": "enabled", "budget_tokens": 1024 } },
+      "headers": { "X-Team": "videoclaw" },
+      "concurrency": { "max": 4 },
+      "retry": { "maxRetries": 3, "baseDelayMs": 1000, "retryStatuses": [429, 503, 529] },
+      "modelsDev": { "provider": "anthropic" }
+    },
+    {
+      "name": "deepseek",
+      "protocol": "openai-chat-completions",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "auth": { "scheme": "bearer" },
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "model": "deepseek-v4-flash",
+      "concurrency": { "max": 2 }
+    },
+    {
+      "name": "azure-openai",
+      "protocol": "openai-responses",
+      "baseUrl": "https://my-resource.openai.azure.com/openai/v1",
+      "auth": { "scheme": "header", "header": "api-key" },
+      "apiKeyEnv": "AZURE_OPENAI_API_KEY",
+      "model": "gpt-5.5",
+      "defaultParams": { "reasoning": { "effort": "low" } },
+      "timeoutMs": 120000,
+      "modelsDev": { "provider": "azure" }
+    }
+  ]
+}
