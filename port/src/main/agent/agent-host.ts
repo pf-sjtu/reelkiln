@@ -44,7 +44,7 @@ import { MaterialsLedger } from "../materials/materials-ledger.generated";
 import { SessionSpendBudgets, spendBudgetAuthority } from "../spend/spend-budgets.generated";
 import { normalizeSpendCeilingUsd } from "../spend/spend-wb.generated";
 import { resolveJobDir } from "../engine/job-boundary";
-import { attachmentContextLines, ComposerAttachmentStore } from "../attachments/composer-attachments.generated";
+import { attachmentContextLines, ComposerAttachmentStore, composerTurnMessageUuid } from "../attachments/composer-attachments.generated";
 import type { LlmRouteId } from "../../shared/llm-types";
 import { minimalAgentOptions, type ClaudeAgentSdkLike, type AgentQuery } from "../llm/agent-sdk";
 import { getLogger, redact, redactText, registerSecret, type Logger } from "../llm/logger";
@@ -533,7 +533,11 @@ export class AgentHost {
     }
     this.preparing.delete(sessionId);
     if (typeof s.meta.pendingPermissionMode === "string") { s.meta.permissionMode = s.meta.pendingPermissionMode; delete s.meta.pendingPermissionMode; if (s.runtime && !s.runtime.dead) this.teardownRuntime(s, "permission-mode"); this.saveRegistry(); } // applyPendingPermissionMode (before a send)
-    const msg = { type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() };
+    const msg = { type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "",
+      // docs/26: createLocalRuntime pushInput L23073 — a composer turn's SDK uuid is composerTurnMessageUuid(clientTurnId),
+      // the same id the ORIGINAL renderer gives its optimistic row (displayTurnId) and persistDisplayTurn records, so
+      // session:history (re-fetched on every status change) reconciles onto that row instead of duplicating it
+      uuid: req.clientTurnId ? composerTurnMessageUuid(sessionId, req.clientTurnId) : randomUUID() };
     s.failedInputs = undefined; s.failedTurnCanRetry = undefined; // a new send supersedes the failed one (L41700)
     this.setStatus(s, "running");
     const delivered = await this.deliver(s, { msg, displayTexts: displayTexts ?? (req.text.trim() ? [req.text] : []), attachmentIds: req.attachmentIds }, release);

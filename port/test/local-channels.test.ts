@@ -15,6 +15,7 @@ import { quickstartLatencySnapshot } from "../src/main/quickstart/quickstart-cat
 import { loadClaudeAgentSdk } from "../src/main/llm/agent-sdk";
 import { createLogger, setLoggerForTests } from "../src/main/llm/logger";
 import { SECTION, ANTI } from "../src/main/taste/taste.generated";
+import { composerTurnMessageUuid } from "../src/main/attachments/composer-attachments.generated";
 
 const PORT = resolve(__dirname, "..");
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
@@ -243,4 +244,25 @@ test("quickstart:mark / impression / previewed (L61250-61293) over the shipped c
     const stages = JSON.stringify(quickstartLatencySnapshot(journey));
     assert.ok(stages.includes("gallery_ready") && stages.includes("preview_ready"), stages);
   } finally { rmSync(ud, { recursive: true, force: true }); }
+});
+
+test("docs/26: a composer turn is delivered with uuid composerTurnMessageUuid(clientTurnId) (pushInput L23073) — the ORIGINAL renderer's optimistic row id — so history re-fetches do not duplicate the live user bubble", async () => {
+  const h = harness();
+  try {
+    const { sessionId } = h.host.createSession({});
+    await h.host.sendMessage(sessionId, { text: "请记住暗号", clientTurnId: "turn-abc", attachmentIds: [] });
+    await until(() => h.host.runtimeInfo(sessionId).status === "idle");
+    const expected = composerTurnMessageUuid(sessionId, "turn-abc");
+    assert.equal(h.pushed[0].uuid, expected);
+    assert.match(expected, /^[a-f0-9]{8}-[a-f0-9]{4}-5[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+    const side = readDisplayTranscript(displayTranscriptPath(join(h.root, "state"), sessionId));
+    assert.equal((side.ordered[0] as any).turnId, expected, "persistDisplayTurn keys the row by the same id");
+    const replay = await h.host.getHistory(sessionId);
+    assert.equal(replay.filter((e: any) => e.kind === "user_text").length, 1);
+    assert.equal((replay.find((e: any) => e.kind === "user_text") as any)?.turnId, expected, "user:<turnId> == renderer displayTurnId");
+    // a turn without a composer id (e.g. the approve follow-up) still gets a fresh uuid
+    await h.host.sendMessage(sessionId, "follow-up");
+    await until(() => h.pushed.length === 2 && h.host.runtimeInfo(sessionId).status === "idle");
+    assert.notEqual(h.pushed[1].uuid, expected);
+  } finally { await h.host.dispose(); h.cleanup(); }
 });
