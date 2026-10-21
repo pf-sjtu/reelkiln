@@ -1,0 +1,12 @@
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list, account:snapshot, app:update:get, workflowSubmit:eligibility, bootstrap:status, client:list, client:create, interaction:replayPending, characters:list, quickstart:catalog, quickstart:mark, quick
+[smoke] push account:changed [{"loaded":true,"signInAvailable":false,"signInUnavailableReason":"unconfigured","signedIn":false,"account":null,"hasStoredKey":true,"storedKeyId":"899a9a63befccb80e1a595d97402be56229a40cde6da7e7ec972716e8a2d233a","storedKeyInvalid":false,"verifyingKey":false,"pendingKey
+[smoke] push window:state [{"fullscreen":false}]
+[smoke] push window:state [{"fullscreen":true}]
+[smoke] push window:state [{"fullscreen":false}]
+[port] quit: begin shutdown (quit)
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list, account:snapshot, app:update:get, workflowSubmit:eligibility, bootstrap:status, client:list, client:create, interaction:replayPending, characters:list, quickstart:catalog, quickstart:mark, quick
+[smoke] push account:changed [{"loaded":true,"signInAvailable":false,"signInUnavailableReason":"unconfigured","signedIn":false,"account":null,"hasStoredKey":true,"storedKeyId":"899a9a63befccb80e1a595d97402be56229a40cde6da7e7ec972716e8a2d233a","storedKeyInvalid":false,"verifyingKey":false,"pendingKey
+[smoke] push window:state [{"fullscreen":false}]
+[smoke] push account:changed [{"loaded":true,"signInAvailable":false,"signInUnavailableReason":"unconfigured","signedIn":false,"account":null,"hasStoredKey":true,"storedKeyId":"899a9a63befccb80e1a595d97402be56229a40cde6da7e7ec972716e8a2d233a","storedKeyInvalid":false,"verifyingKey":false,"pendingKey
+[smoke] push account:changed [{"loaded":true,"signInAvailable":false,"signInUnavailableReason":"unconfigured","signedIn":false,"account":null,"hasStoredKey":true,"storedKeyId":"03896c23a8c88e13a667749d48da8881e0603ac0d13794bfc07344850209404c","storedKeyInvalid":false,"verifyingKey":false,"pendingKey
+[restart] app:restart normal-relaunch

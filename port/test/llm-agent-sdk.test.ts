@@ -132,15 +132,16 @@ test("SDK discovery (docs/17 §4): env > app node_modules > resources(unpacked) 
   const SDK = (root: string) => join(root, "@anthropic-ai", "claude-agent-sdk");
   const base = { appRoot: "/app", resourcesPath: "/res", home: "/home/u" };
   assert.deepEqual(sdkCandidates({ ...base, env: { VIDEOCLAW_CLAUDE_AGENT_SDK: "/x" } }).map((c) => [c.source, c.dir]), [
-    ["env", "/x"], ["app-node_modules", "/app/node_modules"], ["resources-unpacked", "/res/app.asar.unpacked/node_modules"],
-    ["resources", "/res/claude-agent-sdk"], ["vendor", "/app/vendor/claude-agent-sdk"], ["home", "/home/u/.videoclaw/claude-agent-sdk"],
+    // docs/34: platform paths (join), so the same expectations hold on the windows-latest runner
+    ["env", "/x"], ["app-node_modules", join("/app", "node_modules")], ["resources-unpacked", join("/res", "app.asar.unpacked", "node_modules")],
+    ["resources", join("/res", "claude-agent-sdk")], ["vendor", join("/app", "vendor", "claude-agent-sdk")], ["home", join("/home/u", ".videoclaw", "claude-agent-sdk")],
   ]);
   const vendorPkg = join("/app/vendor/claude-agent-sdk", "node_modules", "@anthropic-ai", "claude-agent-sdk");
-  let d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([vendorPkg, SDK("/res/app.asar.unpacked/node_modules")]) });
+  let d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([vendorPkg, SDK(join("/res", "app.asar.unpacked", "node_modules"))]) });
   assert.equal(d.source, "resources-unpacked");
   d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([vendorPkg]) });
   assert.deepEqual([d.source, d.packageDir], ["vendor", vendorPkg]);
-  d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([SDK("/home/u/.videoclaw/claude-agent-sdk/node_modules")]) });
+  d = discoverClaudeAgentSdk({ ...base, env: {}, exists: has([SDK(join("/home/u", ".videoclaw", "claude-agent-sdk", "node_modules"))]) });
   assert.equal(d.source, "home");
   assert.throws(() => discoverClaudeAgentSdk({ ...base, env: { VIDEOCLAW_CLAUDE_AGENT_SDK: "/typo" }, exists: has([vendorPkg]) }), /not found under \/typo/);
   assert.throws(() => discoverClaudeAgentSdk({ ...base, env: {}, exists: () => false }), (e: unknown) => e instanceof LlmProviderError && e.code === "SDK_UNAVAILABLE" && /Looked in: .*vendor/.test(e.message));
@@ -154,8 +155,9 @@ test("pinned SDK version: agent-sdk.ts constant == package.json config (install 
 test("claudeCodeExecutableFor: original packaged layout (claude-agent-sdk-<platform>-<arch>/claude), musl, win32 .exe, override", () => {
   const pkg = "/app/node_modules/@anthropic-ai/claude-agent-sdk";
   const has = (set: string[]) => (p: string) => set.includes(p);
-  assert.equal(claudeCodeExecutableFor(pkg, { platform: "linux", arch: "x64", env: {}, exists: has(["/app/node_modules/@anthropic-ai/claude-agent-sdk-linux-x64/claude"]) }), "/app/node_modules/@anthropic-ai/claude-agent-sdk-linux-x64/claude");
-  assert.equal(claudeCodeExecutableFor(pkg, { platform: "linux", arch: "arm64", env: {}, exists: has(["/app/node_modules/@anthropic-ai/claude-agent-sdk-linux-arm64-musl/claude"]) }), "/app/node_modules/@anthropic-ai/claude-agent-sdk-linux-arm64-musl/claude");
+  const at = (name: string) => join("/app/node_modules/@anthropic-ai", name, "claude"); // platform path separators (windows-latest)
+  assert.equal(claudeCodeExecutableFor(pkg, { platform: "linux", arch: "x64", env: {}, exists: has([at("claude-agent-sdk-linux-x64")]) }), at("claude-agent-sdk-linux-x64"));
+  assert.equal(claudeCodeExecutableFor(pkg, { platform: "linux", arch: "arm64", env: {}, exists: has([at("claude-agent-sdk-linux-arm64-musl")]) }), at("claude-agent-sdk-linux-arm64-musl"));
   assert.match(claudeCodeExecutableFor(pkg, { platform: "win32", arch: "x64", env: {}, exists: (p) => p.endsWith("claude.exe") })!, /claude-agent-sdk-win32-x64[\\/]claude\.exe$/);
   assert.equal(claudeCodeExecutableFor(pkg, { platform: "linux", arch: "x64", env: {}, exists: () => false }), undefined);
   assert.equal(claudeCodeExecutableFor(pkg, { env: { VIDEOCLAW_CLAUDE_CODE_EXECUTABLE: "/opt/claude" }, exists: () => false }), "/opt/claude");

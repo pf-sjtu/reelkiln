@@ -1,0 +1,179 @@
+{
+ "llm": "FAKE-LLM (MINIMAX_API_KEY is a fake string; no model call is made)",
+ "harnessInputs": [
+  "own Xvfb",
+  "own dbus session + gnome-keyring-daemon",
+  "--password-store=gnome-libsecret",
+  "HARNESS edit of settings.json lastEngineVersion while the app is down",
+  "HARNESS-issued vc_ key appended to the local-gateway ledger (hash only) + its alpha-consent record in settings.json",
+  "VIDEOCLAW_PORT_RESTART_REAL=1"
+ ],
+ "started": "2026-10-21T23:37:28.712Z",
+ "steps": {
+  "A_no_toast_fresh_profile": {
+   "ok": true,
+   "pendingToast": [
+    {
+     "ok": true,
+     "real": true,
+     "result": "null"
+    }
+   ],
+   "toast": null,
+   "lastEngineVersion": "0.1.57-rc7-15f8f2d"
+  },
+  "A_window_state": {
+   "ok": true,
+   "method": "document.documentElement.requestFullscreen() (CDP userGesture)",
+   "classBefore": "app  ",
+   "classFullscreen": "app fullscreen ",
+   "leftFullscreen": true,
+   "pushes": [
+    "window:state [{\"fullscreen\":false}]",
+    "window:state [{\"fullscreen\":true}]",
+    "window:state [{\"fullscreen\":false}]"
+   ]
+  },
+  "B_pending_toast": {
+   "ok": true,
+   "pendingToast": [
+    {
+     "ok": true,
+     "real": true,
+     "result": "{\"version\":\"0.1.57-rc7-15f8f2d\"}"
+    }
+   ],
+   "toast": "⚡\nengine updated — new tricks available\n✕",
+   "toastAtMs": 21468,
+   "lastEngineVersionAfter": "0.1.57-rc7-15f8f2d"
+  },
+  "B_save_key": {
+   "ok": true,
+   "status": "Saved for next launch as Local studio (self-hosted) — restart Videoclaw to apply it.",
+   "verify": [
+    {
+     "ch": "gateway:verify",
+     "ok": true,
+     "real": true,
+     "result": "{\"ok\":true,\"name\":\"Local studio (self-hosted)\",\"id\":\"03896c23a8c88e13a667749d48da8881e0603ac0d13794bfc07344850209404c\"}"
+    },
+    {
+     "ch": "settings:saveGatewayKey",
+     "ok": true,
+     "real": true,
+     "result": "{\"gatewayUrl\":\"http://127.0.0.1:47737\",\"telemetry\":true,\"llmRoute\":\"gateway\",\"llmRouteAcknowledgedAt\":1792625869711,\"alphaConsentsByKey\":{\"75d4eb058d00503eb1bd2"
+    }
+   ],
+   "restartButton": true
+  },
+  "C_app_restart_relaunch": {
+   "ok": true,
+   "appRestartIpc": [
+    {
+     "ok": true,
+     "real": true,
+     "result": "true"
+    }
+   ],
+   "oldExit": {
+    "code": 0,
+    "signal": null,
+    "at": 26037
+   },
+   "relaunched": [
+    "1861025 53 3 /tmp/m17r/apps/Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage --no-sandbox --remote-debugging-port=9397 --user-data-dir=/tmp/m17r/.config/videoclaw-port --password-store=gnome-libsecret"
+   ],
+   "restartLog": [
+    "[port] quit: begin shutdown (quit)",
+    "[restart] app:restart normal-relaunch"
+   ],
+   "ipcChannelsAfterRestart": [
+    "settings:get",
+    "account:snapshot",
+    "session:list",
+    "client:list",
+    "bootstrap:status",
+    "engine:pendingToast",
+    "interaction:replayPending",
+    "app:update:get",
+    "engine:llmRouteReadiness",
+    "workflowSubmit:eligibility",
+    "quickstart:catalog",
+    "memory:read"
+   ]
+  },
+  "C_no_toast_after_restart": {
+   "ok": true,
+   "pendingToast": [
+    {
+     "ok": true,
+     "real": true,
+     "result": "null"
+    }
+   ],
+   "toast": "",
+   "storedKeyIdPrefix": "03896c23a8c8",
+   "harnessKeyIdPrefix": "03896c23a8c8",
+   "storedKeyIsHarnessKey": true
+  }
+ },
+ "app": {
+  "file": "Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage",
+  "sha256": "e62db237bf5226a2"
+ },
+ "engine": {
+  "version": "0.1.57-rc7-15f8f2d",
+  "path": "/workspace/vc-linux/ud/engines/engine-0.1.57-rc7-15f8f2d"
+ },
+ "harness": {
+  "lastEngineVersionSetTo": "0.1.56-m17-harness",
+  "ledgerKeys": [
+   {
+    "id": "899a9a63befc…",
+    "hint": "vc_b7…"
+   },
+   {
+    "id": "03896c23a8c8…",
+    "hint": "vc_d9…"
+   }
+  ],
+  "harnessKeyId": "03896c23a8c8…"
+ },
+ "restart": {
+  "appRestartIpc": [
+   {
+    "ok": true,
+    "real": true,
+    "result": "true"
+   }
+  ],
+  "oldExit": {
+   "code": 0,
+   "signal": null,
+   "at": 26037
+  },
+  "relaunched": [
+   "1861025 53 3 /tmp/m17r/apps/Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage --no-sandbox --remote-debugging-port=9397 --user-data-dir=/tmp/m17r/.config/videoclaw-port --password-store=gnome-libsecret"
+  ],
+  "restartLog": [
+   "[port] quit: begin shutdown (quit)",
+   "[restart] app:restart normal-relaunch"
+  ],
+  "ipcChannelsAfterRestart": [
+   "settings:get",
+   "account:snapshot",
+   "session:list",
+   "client:list",
+   "bootstrap:status",
+   "engine:pendingToast",
+   "interaction:replayPending",
+   "app:update:get",
+   "engine:llmRouteReadiness",
+   "workflowSubmit:eligibility",
+   "quickstart:catalog",
+   "memory:read"
+  ]
+ },
+ "allPass": true,
+ "finished": "2026-10-21T23:38:06.700Z"
+}

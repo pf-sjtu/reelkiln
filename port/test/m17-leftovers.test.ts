@@ -15,6 +15,7 @@ import * as B from "../src/main/engine/bootstrap";
 import { readQuitState } from "../src/main/quit/read-quit-state";
 import { assessQuit } from "../src/main/quit/quit-coordinator.generated";
 import { fullscreenStateForWindow, wireWindowState } from "../src/main/window-state";
+import { relaunchOptions } from "../src/main/relaunch";
 import { ProjectMemoryHost } from "../src/main/memory/project-memory-host";
 import { CharacterStore } from "../src/main/characters/character-store.generated";
 import { evalOriginal, fnText } from "./original-source";
@@ -241,4 +242,12 @@ test("M17 characters:voices:changed (L45041-45063): approve and remove emit the 
     assert.equal(emitted.length, 2, "remove emits (finally)");
     assert.equal(snap.voices.length, 0);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("docs/34: relaunchOptions — inside an AppImage relaunch the AppImage file (not the temporary runtime mount); elsewhere Electron's default", () => {
+  const argv = ["/tmp/.mount_X/videoclaw-port", "--no-sandbox", "--user-data-dir=/u"];
+  assert.deepEqual(relaunchOptions({ APPIMAGE: "/apps/Videoclaw.AppImage" }, "linux", argv), { execPath: "/apps/Videoclaw.AppImage", args: ["--no-sandbox", "--user-data-dir=/u"] });
+  assert.equal(relaunchOptions({}, "linux", argv), undefined);
+  assert.equal(relaunchOptions({ APPIMAGE: "/x" }, "win32", argv), undefined);
+  assert.equal(relaunchOptions({ APPIMAGE: "/x" }, "darwin", argv), undefined);
 });

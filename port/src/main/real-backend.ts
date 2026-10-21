@@ -107,6 +107,7 @@ import { configureSheetEnv } from "./characters/sheet-env";
 import { CharacterSheetBuilder } from "./characters/character-sheet.generated";
 import { voiceTools } from "./attachments/voice-tools";
 import { isVoiceNoteAudio, voiceErrors } from "./attachments/voice-note.generated";
+import { relaunchOptions } from "./relaunch";
 
 /** exposeCharacters (L60415): grant each character's sheet + refs to vcmedia. */
 export function exposeCharacters<T extends { sheetPath?: string; refs: string[] }>(media: { grant(p: string, s: string): boolean; grantMany(p: string[], s: string): void }, characters: T[]): T[] {
@@ -417,7 +418,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     processesExited: async () => true,
     flushOutbox: async () => {},
     stopOutbox: async () => {},
-    relaunch: () => { if (smoke()) { log("[smoke] local-reset relaunch requested"); return; } app.relaunch(); app.exit(0); },
+    relaunch: () => { if (smoke() && process.env.VIDEOCLAW_PORT_RESTART_REAL !== "1") { log("[smoke] local-reset relaunch requested"); return; } app.relaunch(relaunchOptions()); app.exit(0); },
     log: (line: string) => { recordMainLog("local-reset", line); log(`[local-reset] ${line}`); },
   });
   const clipboardIntakeDir = join(app.getPath("userData"), "composer-clipboard"); // L62215
@@ -781,7 +782,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         beginQuit: () => { quitCoordinator.requestQuit("update"); },
         recoverInstall: () => {
           log("[update] Native installation failed; reopening the current app after orderly shutdown.");
-          app.relaunch();
+          app.relaunch(relaunchOptions());
           app.quit();
         },
       });
@@ -828,8 +829,10 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         const launcher = !app.isPackaged && process.env.VIDEOCLAW_DEV_RESTART_CONTROLLER === "1"; // MANAGED_DEV_RESTART_ENV (L53847)
         restartPending = true;
         setImmediate(() => {
-          if (smoke()) { log(`[smoke] app:restart ${launcher ? "launcher-restart 75" : "normal-relaunch"}`); return; }
-          if (launcher) app.exit(75); else { app.relaunch(); app.exit(0); }
+          // PORT-NEW harness seam: UI-e2e normally only logs; VIDEOCLAW_PORT_RESTART_REAL=1 lets docs/34's restart proof relaunch for real
+          if (smoke() && process.env.VIDEOCLAW_PORT_RESTART_REAL !== "1") { log(`[smoke] app:restart ${launcher ? "launcher-restart 75" : "normal-relaunch"}`); return; }
+          log(`[restart] app:restart ${launcher ? "launcher-restart 75" : "normal-relaunch"}`);
+          if (launcher) app.exit(75); else { app.relaunch(relaunchOptions()); app.exit(0); }
         });
         return true;
       };

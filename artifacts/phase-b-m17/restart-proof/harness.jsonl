@@ -1,0 +1,20 @@
+{"t":948,"note":"A launched pid 1860407"}
+{"action":"click","desc":"Skip tour","at":{"x":667.390625,"y":672.5,"label":"Skip tour","disabled":false}}
+{"t":9291,"note":"STEP A_no_toast_fresh_profile: PASS {\"pendingToast\":[{\"ok\":true,\"real\":true,\"result\":\"null\"}],\"toast\":null,\"lastEngineVersion\":\"0.1.57-rc7-15f8f2d\"}"}
+{"t":9303,"note":"xdotool F11: Error: Command failed: xdotool windowfocus --sync 4194305\nX Error of failed request:  BadMatch (invalid parameter attrib"}
+{"t":17818,"note":"STEP A_window_state: PASS {\"method\":\"document.documentElement.requestFullscreen() (CDP userGesture)\",\"classBefore\":\"app  \",\"classFullscreen\":\"app fullscreen \",\"leftFullscreen\":true,\"pushes\":[\"window:state [{\\\"fullscreen\\\":false}]\",\"window:state [{\\\"fullscreen\\\":true}]\",\"window:state [{\\\"fullscreen\\\":false}]\"]}"}
+{"t":17824,"note":"A exited SIGTERM"}
+{"t":20126,"note":"HARNESS lastEngineVersion=0.1.56-m17-harness, harness key id 03896c23a8c8…"}
+{"t":20128,"note":"B launched pid 1860889"}
+{"t":23699,"note":"STEP B_pending_toast: PASS {\"pendingToast\":[{\"ok\":true,\"real\":true,\"result\":\"{\\\"version\\\":\\\"0.1.57-rc7-15f8f2d\\\"}\"}],\"toast\":\"⚡\\nengine updated — new tricks available\\n✕\",\"toastAtMs\":21468,\"lastEngineVersionAfter\":\"0.1.57-rc7-15f8f2d\"}"}
+{"action":"click","desc":"profile button","at":{"x":125.5,"y":778,"label":"Your account\nLocal studio","disabled":false}}
+{"action":"click","desc":"Settings","at":{"x":125.5,"y":609.40625,"label":"Settings","disabled":false}}
+{"action":"click","desc":"Billing & credits nav","at":{"x":283,"y":221.5,"label":"Billing & credits","disabled":false}}
+{"action":"click","desc":"key input","at":{"x":702.6796875,"y":292.640625,"label":"","disabled":false}}
+{"action":"click","desc":"Save","at":{"x":1030.6796875,"y":295.640625,"label":"Save","disabled":false}}
+{"t":25851,"note":"STEP B_save_key: PASS {\"status\":\"Saved for next launch as Local studio (self-hosted) — restart Videoclaw to apply it.\",\"verify\":[{\"ch\":\"gateway:verify\",\"ok\":true,\"real\":true,\"result\":\"{\\\"ok\\\":true,\\\"name\\\":\\\"Local studio (self-hosted)\\\",\\\"id\\\":\\\"03896c23a8c88e13a667749d48da8881e0603ac0d13794bfc07344850209404c\\\"}\"},{\"ch\":\"settings:saveGatewayKey\",\"ok\":true,\"real\":true,\"result\":\"{\\\"gatewayUrl\\\":\\\"http://127.0.0.1:47737\\\",\\\"telemetry\\\":true,\\\"llmRoute\\\":\\\"gateway\\\",\\\"llmRouteAcknowledgedAt\\\":1792625869711,\\\"alphaConsentsByKey\\\":{\\\"75d4eb058d00503eb1bd2\"}],\"restartButton\":true}"}
+{"action":"click","desc":"Restart now","at":{"x":466.7734375,"y":428.640625,"label":"Restart now","disabled":false}}
+{"t":26037,"note":"B exited 0"}
+{"t":37988,"note":"STEP C_app_restart_relaunch: PASS {\"appRestartIpc\":[{\"ok\":true,\"real\":true,\"result\":\"true\"}],\"oldExit\":{\"code\":0,\"signal\":null,\"at\":26037},\"relaunched\":[\"1861025 53 3 /tmp/m17r/apps/Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage --no-sandbox --remote-debugging-port=9397 --user-data-dir=/tmp/m17r/.config/videoclaw-port --password-store=gnome-libsecret\"],\"restartLog\":[\"[port] quit: begin shutdown (quit)\",\"[restart] app:restart normal-relaunch\"],\"ipcChannelsAfterRestart\":[\"settings:get\",\"account:snapshot\",\"session:list\",\"client:list\",\"bootstrap:status\",\"engine:pendingToast\",\"interaction:replayPending\",\"app:update:get\",\"engine:llmRouteReadiness\",\"workflowSubmit:eligibility\",\"quickstart:catalog\",\"memory:read\"]}"}
+{"t":37988,"note":"STEP C_no_toast_after_restart: PASS {\"pendingToast\":[{\"ok\":true,\"real\":true,\"result\":\"null\"}],\"toast\":\"\",\"storedKeyIdPrefix\":\"03896c23a8c8\",\"harnessKeyIdPrefix\":\"03896c23a8c8\",\"storedKeyIsHarnessKey\":true}"}
+{"t":39506,"note":"DONE allPass=true A_no_toast_fresh_profile:ok A_window_state:ok B_pending_toast:ok B_save_key:ok C_app_restart_relaunch:ok C_no_toast_after_restart:ok out=/tmp/m17r/out-m17-restart-1792625848712"}
