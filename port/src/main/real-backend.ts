@@ -70,7 +70,8 @@ import { localChannelHandlers } from "./local-channels";
 import { localChannels26 } from "./local-channels-26";
 import { QuickstartStartCoordinator } from "./quickstart/quickstart-start.generated";
 import { writeProjectPack } from "./taste/project-pack.generated";
-import { createLibraryMutationGate, libraryAddSource, libraryErrorMessage, libraryKey, libraryPreview, libraryRemoveSource, libraryScan, libraryStats } from "./library/library.generated";
+import { createLibraryMutationGate, libraryAddSource, libraryErrorMessage, libraryKey, libraryPreview, libraryRemoveSource, libraryScan, libraryStats, librarySearch, librarySync } from "./library/library.generated";
+import { randomUUID } from "node:crypto";
 import { configureLibraryEnv } from "./library/library-env";
 import { configureVoiceTools } from "./attachments/voice-tools";
 import { attachmentIntakeHandlers } from "./attachments/attachment-ipc";
@@ -87,6 +88,17 @@ import { minimaxConfig } from "./llm/minimax";
 import { registerSecret } from "./llm/logger";
 import { miniMaxClaudeModelSource } from "./agent/claude-code";
 import { purgeExpiredProjectTrash } from "./jobs/project-trash.generated";
+// docs/29 (M12): the last category-(b) channels
+import { remainingChannels } from "./remaining-channels";
+import { ProjectMemoryHost } from "./memory/project-memory-host";
+import { AgentGatewayProxy } from "./gateway/agent-gateway-proxy";
+import { Outbox } from "./telemetry/outbox.generated";
+import { sessionIndexProjection } from "./telemetry/session-index.generated";
+import { createUpdatePreferences, selectedUpdateChannel, startUpdateCheck } from "./update/update-check.generated";
+import { configureSheetEnv } from "./characters/sheet-env";
+import { CharacterSheetBuilder } from "./characters/character-sheet.generated";
+import { voiceTools } from "./attachments/voice-tools";
+import { isVoiceNoteAudio, voiceErrors } from "./attachments/voice-note.generated";
 
 /** exposeCharacters (L60415): grant each character's sheet + refs to vcmedia. */
 export function exposeCharacters<T extends { sheetPath?: string; refs: string[] }>(media: { grant(p: string, s: string): boolean; grantMany(p: string[], s: string): void }, characters: T[]): T[] {
@@ -310,7 +322,14 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
   bindLocal();
   // ── docs/26: the remaining local channels (local-channels-26.ts) ──
   const sessionEnvDeps0 = { currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p: string) => core.enginePathEnv(p) };
-  configureLibraryEnv(() => engineSessionEnv(sessionEnvDeps0) as Record<string, string>);
+  // docs/29: mutable links the M12 wiring fills once the gateway / account / host exist
+  const m12: { shimUrl?: string; outbox?: any; account?: AccountService; settings?: { get(): any; patch(u: any): unknown }; sheetBuilder?: any; proxy?: AgentGatewayProxy | null } = {};
+  // engineSessionEnv(gatewayKey?, gatewayUrl?) as the Library module calls it (L9380): the scoped lease's
+  // loopback capability reaches the engine as VIDEOCLAW_GATEWAY_URL / VIDEOCLAW_API_KEY (engineGatewaySessionConfig
+  // L9332 = the opened gateway — set only when the docs/28 local gateway is on)
+  const leaseEnvDeps = { ...sessionEnvDeps0, gatewaySessionConfig: () => (m12.shimUrl ? { gatewayUrl: m12.shimUrl } : undefined) };
+  configureLibraryEnv((k?: string, u?: string) => engineSessionEnv(leaseEnvDeps, k, u) as Record<string, string>);
+  configureSheetEnv({ userData: () => app.getPath("userData"), isPackaged: () => app.isPackaged, currentEngine: () => core.currentEngine(), engineSessionEnv: (k?: string, u?: string) => engineSessionEnv(leaseEnvDeps, k, u) as Record<string, string> });
   // voiceTools (L10465) = the bundled helper roots; PORT-NEW fallback: the installed engine's bin/ffmpeg
   configureVoiceTools(() => [...roots, ...(core.currentEngine() ? [join(core.currentEngine()!.path, "bin")] : [])]);
   configureFeedbackEnv({ currentEngine: () => core.currentEngine() });
@@ -333,20 +352,27 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     isRenderActive: (jobId: string) => (editorRender.state() as any)?.jobId === jobId,
     log: (kind: string, detail: string) => { recordMainLog(kind, detail); log(`[main-log] ${kind} ${detail}`); },
   });
-  const feedback = new FeedbackService({ // L62298 (no outbox / account / settings store in the port)
+  const feedback = new FeedbackService({ // L62298 — docs/29: outbox / account / settings linked once they exist
     win: () => BrowserWindow.getAllWindows()[0] ?? null,
-    settings: () => ({ telemetry: false }),
+    settings: () => (m12.account ? m12.account.activeSettings() : { telemetry: false }),
     listSessions: () => (handlers["session:list"]?.() as any[]) ?? [],
     getJobSnapshot: (sessionId: string) => { try { return hostRef?.getJobSnapshot(sessionId) ?? null; } catch { return null; } },
     mediaRecoveryEvidence: () => undefined,
     bootstrapStatus: () => core.status(),
-    outboxSummary: () => ({ pending: 0 }),
-    updateDiagnostics: () => ({ state: null }),
-    outboxFailureEvidence: () => [],
-    enqueueFeedback: async () => { throw new Error("Feedback delivery needs a Videoclaw account."); },
-    patchSettings: () => {},
-    blockedReason: () => "signed-out",
-    grantUsageSharing: async () => {},
+    outboxSummary: () => (m12.outbox ? m12.outbox.summary() : { pending: 0 }),
+    updateDiagnostics: () => ({ state: null }), // appUpdater is darwin-only (category c)
+    outboxFailureEvidence: () => (m12.outbox ? m12.outbox.failureEvidence() : []),
+    enqueueFeedback: async (data: unknown) => {
+      if (!m12.outbox) throw new Error("Feedback delivery needs a Videoclaw account.");
+      return m12.outbox.enqueueDurableAndTry("feedback", data);
+    },
+    patchSettings: (patch: any) => { m12.settings?.patch(patch); },
+    blockedReason: () => (m12.account ? String(m12.account.account.step ?? "signed-out") : "signed-out"),
+    // #378 (L62334): durable consent record; reconcileUsageSharing's alpha-consent half is the local-studio policy
+    grantUsageSharing: async () => {
+      const already = m12.account?.activeSettings().usageSharingConsentAt;
+      m12.settings?.patch({ telemetry: true, usageSharingConsentAt: already ?? Date.now() });
+    },
   });
   feedback.sweep();
   const localReset = new LocalResetController({ // L61459
@@ -390,7 +416,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       },
       characterStore,
       exposeCharacter: localDeps.exposeCharacter,
-      sheetStates: () => [], // CharacterSheetBuilder.statesFor: builds start only via characters:sheetBuild (paid)
+      sheetStates: (cwd: string) => m12.sheetBuilder?.statesFor(cwd) ?? [], // CharacterSheetBuilder.statesFor (L19470)
       // characterVoiceErrorText(ProjectMemoryError) from memoryBinding (L36456): no verified account
       characterVoiceUnavailable: () => ({ ok: false, message: "Project memory is unavailable until this account and project are verified." }),
       bootstrap: core,
@@ -407,6 +433,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       let host: AgentHost | undefined;
       const llm = createLlmRuntime({
         userData: app.getPath("userData"),
+        activeSettings: () => (m12.account ? m12.account.activeSettings() : null), // docs/29: the vault gatewayKey
         sessionMeta: (id) => (registry.sessions.get(id)?.meta as any) ?? host?.listSessions().find((m) => m.sessionId === id),
         // original setSettings → host.onLlmRouteChanged() (L61685)
         onLlmRouteChanged: () => { const r = host?.onLlmRouteChanged(); log(`[port] llmRoute changed — AgentHost retired runtimes; interrupted=${r?.interrupted.length ?? 0}`); },
@@ -438,6 +465,28 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         openExternal: guardedShell.openExternal, stopAuthenticatedWork: () => { (host as any)?.stopAuthenticatedWork?.(); },
       });
       void shimReady.then(() => accountService.resolveAccount()).catch(() => {}); // `void resolveAccount()` at launch (L60955)
+      m12.account = accountService;
+      m12.settings = llm.settings as any;
+      // docs/29: outbox (L60953) + AgentGatewayProxy (L61003) — only against the self-hosted loopback gateway,
+      // so the port never posts telemetry / feedback to the production gateway
+      const openedUrl = String(accountService.activeSettings().gatewayUrl ?? "");
+      const loopbackGateway = /^http:\/\/127\.0\.0\.1:\d+$/.test(openedUrl.replace(/\/+$/, ""));
+      if (localGatewayEnabled() && loopbackGateway) {
+        m12.shimUrl = openedUrl.replace(/\/+$/, "");
+        const outbox: any = new (Outbox as any)(join(userDataDir, "outbox.json"), () => accountService.activeSettings());
+        outbox.start();
+        m12.outbox = outbox;
+        app.on("will-quit", () => { try { outbox.stop(); } catch {} });
+        const openedKey = accountService.activeSettings().gatewayKey;
+        if (openedKey) {
+          const shimBase = m12.shimUrl;
+          void shimReady.then(() => AgentGatewayProxy.start(shimBase, String(openedKey))).then((proxy) => {
+            m12.proxy = proxy;
+            log(`[port] agent gateway proxy on ${proxy.origin}`);
+          }, (e) => log(`[port] agent gateway proxy failed to start: ${e instanceof Error ? e.message : String(e)}`));
+          app.on("will-quit", () => { m12.proxy?.close(); });
+        }
+      }
       for (const [ch, fn] of Object.entries(gatewayChannels(accountService, { userData: userDataDir }))) {
         (handlers as any)[ch] = async (...a: unknown[]) => { await shimReady; return fn(...a); };
       }
@@ -475,6 +524,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
           unmarkRemoved: (id) => { registry.removedSessionIds.delete(id); },
         },
         jobBusyProbe: (jobId) => (editorRender.state() as any)?.jobId === jobId || hfPreview.activeJobId() === jobId,
+        // docs/29: setCreditHandoffEligibility (L61622) + the opened gateway the credits continuation bills
+        creditEligibility: () => accountService.creditHandoffEligibility(),
+        gatewaySettings: () => accountService.activeSettings() as { gatewayUrl?: string; gatewayKey?: string },
         engine: engineDeps,
         // docs/22: versions.json + composer-attachments.json live next to sessions.json (L34841-34848)
         ...(engineDeps ? { stateDir: app.getPath("userData") } : {}),
@@ -549,6 +601,127 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         })();
       }
       bindLocal26(h);
+      // ── docs/29 (M12): the last 23 category-(b) channels ──
+      const memoryHost = new ProjectMemoryHost({
+        stateDir: userDataDir,
+        authority: () => accountService.currentProjectMemoryScope(), // setProjectMemoryAuthority (L61128)
+        settingsGatewayUrl: () => String(accountService.activeSettings().gatewayUrl ?? ""),
+        authenticatedWorkPaused: () => accountService.signedOutInProcess,
+        getClient: (id) => registry.getClient(id) as any,
+        isClientRemoved: (id) => registry.removedClientIds.has(id),
+        session: (id) => h.memorySessionView(id),
+        sessions: () => h.memorySessionViews(),
+        isSessionGone: (id) => registry.removedSessionIds.has(id) || !h.liveSession(id),
+        libraryStats: (cwd, tenant) => libraryStats(cwd, tenant) as any,
+        emitProjectMemoryChanged: ({ clientId, change, authority, sessionId, notice }) => {
+          push("memory:changed", { scope: { clientId, ...authority }, change, sessionId, ...(notice ? { notice } : {}) }); // L61097
+        },
+      });
+      const sheetBuilder: any = new (CharacterSheetBuilder as any)(llm.settings, (evt: unknown) => { push("characters:build", evt); }, { // L34875
+        quoteGatewayBudget: (jobId: string, items: unknown) => {
+          if (!m12.proxy) throw new Error("gateway pricing is unavailable");
+          return m12.proxy.quoteProject(jobId, items);
+        },
+        gatewayCredentials: async (scopeId: string, jobId: string, ceilingUsd: number) =>
+          m12.proxy ? m12.proxy.credentialsForBudgetedTools(scopeId, new Set(["mint_image"]), 6, jobId, ceilingUsd) : undefined,
+        releaseGatewayCredentials: (scopeId: string) => m12.proxy?.revoke(scopeId),
+      });
+      m12.sheetBuilder = sheetBuilder;
+      app.on("will-quit", () => { try { sheetBuilder.closeAll(); } catch {} });
+      const pendingChar = (cwd: string, slug: string) => { // L45328
+        const c: any = characterStore.list(cwd).find((x: any) => x.slug === slug && x.state === "pending");
+        return c ? { slug: c.slug, name: c.name, dir: c.dir } : null;
+      };
+      // updates (L62572-62600): preferences always; the release-feed check only against the self-hosted gateway
+      let currentUpdateInfo: unknown = null;
+      const updateSettings = () => ({ ...llm.settings.get(), gatewayUrl: accountService.activeSettings().gatewayUrl });
+      let updateChecker: { checkNow(): Promise<unknown>; invalidate(): void; stop(): void } | null = null;
+      const updatePreferences: any = createUpdatePreferences({
+        settings: updateSettings,
+        account: () => accountService.account,
+        refreshAccount: () => accountService.resolveAccount(),
+        save: (preference: unknown) => { llm.settings.patch({ updateChannelPreference: preference }); },
+        canSwitch: () => false, // appUpdater (createAppUpdater) is darwin-only → canSwitchChannel() never true
+        invalidate: () => updateChecker?.invalidate(),
+        installedVersion: app.getVersion(),
+      });
+      if (m12.shimUrl) {
+        void shimReady.then(() => {
+          updateChecker = startUpdateCheck({
+            currentVersion: app.getVersion(),
+            channel: () => selectedUpdateChannel(updateSettings(), accountService.account) as "nightly" | "latest", // updateChannel
+            settings: () => accountService.activeSettings(),
+            onTick: () => {}, // bootstrap.checkForEngineUpdate (engine re-check cadence) — not ported
+            onInfo: (info: unknown) => { currentUpdateInfo = info; push("app:update", info); },
+            onClear: () => { currentUpdateInfo = null; push("app:update", null); },
+          });
+          app.on("will-quit", () => updateChecker?.stop());
+        });
+      }
+      handlers["app:update:get"] = () => currentUpdateInfo; // L61329
+      const credentialsVault: any = credentials;
+      Object.assign(handlers, remainingChannels({
+        host: h,
+        memory: memoryHost,
+        currentProjectMemoryScope: () => accountService.currentProjectMemoryScope(),
+        openLocalPath: async (path) => { if (smoke()) { log(`[smoke] openPath ${path.slice(0, 200)}`); return; } const err = await shell.openPath(path); if (err) throw new Error(err); },
+        assertGenerationAllowed: () => { if (accountService.paidWorkBlocked()) throw new Error("Verify your VideoClaw account before starting paid work."); },
+        absCwd,
+        outbox: m12.outbox,
+        sessionIndex: async (meta, posthogSessionId, durable = false) => { // enqueueSessionIndex (L60490)
+          const cfg: any = accountService.activeSettings();
+          if (!m12.outbox || !cfg?.gatewayKey || !cfg.telemetry) return;
+          const data = sessionIndexProjection(meta, { observedAt: Date.now(), appVersion: app.getVersion(), engineVersion: core.currentEngine()?.version, posthogSessionId });
+          if (durable) await m12.outbox.enqueueDurable("session-index", { ...data });
+          else m12.outbox.enqueue("session-index", { ...data });
+        },
+        listSessions: () => h.listSessions() as any,
+        feedback: feedback as any,
+        library: {
+          tenantFor: (id) => (registry.getClient(id) as any)?.tenant ?? null,
+          acquireLease: async (clientId, cwd, operation) => { // acquireLibraryGatewayLease (L45713)
+            if (accountService.signedOutInProcess) throw new Error("Sign in again to restart Videoclaw before paid work.");
+            const client: any = registry.getClient(clientId);
+            if (!client || !client.tenant || !cwd) throw new Error("This project does not have a Library yet.");
+            const proxy = m12.proxy;
+            if (!proxy) throw new Error("Paid Library work is unavailable until this app is connected to Videoclaw.");
+            const id2 = randomUUID();
+            const scopeId = `library-operation-${id2}`;
+            const jobId = `library-${operation}-${id2}`;
+            const limits = operation === "search" ? { calls: 1, ceilingUsd: 0.1 } : { calls: 5e3, ceilingUsd: 5 };
+            const creds = await proxy.credentialsForBudgetedTools(scopeId, new Set(["embed"]), limits.calls, jobId, limits.ceilingUsd);
+            let released = false;
+            return { ...creds, jobId, release: () => { if (released) return; released = true; proxy.revokeCredential(creds.gatewayKey); } } as any;
+          },
+          sync: (cwd, tenant, onLine, lease) => librarySync(cwd, tenant, onLine, lease) as Promise<number>,
+          search: (cwd, tenants, query2, type, lease) => librarySearch(cwd, tenants, query2, type, lease) as Promise<any[]>,
+          errorMessage: libraryErrorMessage, gate: libraryGate, key: libraryKey,
+          exposeHits: (hits) => { mediaCapabilities.grantMany(hits.map((hit: any) => hit.sourceFile), "external"); return hits; }, // L60426
+          log: (kind, detail) => recordMainLog(kind, detail),
+        },
+        push: (ch, payload) => { push(ch, payload); },
+        providerKeys: {
+          get: (provider) => credentialsVault.providerKey(provider),
+          set: (provider, key) => { if (key && key.trim()) registerSecret(key.trim()); credentialsVault.setProviderKey(provider, key); },
+          // currentAgentProviderKeyStatus (L61662) over the vault; openai-api is also configured by the MiniMax backend
+          status: () => ({
+            openaiApi: { configured: Boolean(credentialsVault.providerKey("openai-api")) || (h.codex?.providerKeyStatus().openaiApi.configured ?? false) },
+            openrouter: { configured: Boolean(credentialsVault.providerKey("openrouter")) },
+          }),
+        },
+        workflow: { authorizedRequest: (path, init) => accountService.auth.accountApiRequest(path, init) },
+        update: { checker: () => updateChecker, preferences: () => updatePreferences, appVersion: app.getVersion() },
+        sheets: {
+          plan: async (cwd, slug) => { const c = pendingChar(cwd, slug); return c ? sheetBuilder.plan(c) : { status: "error", message: "That character is no longer pending." }; },
+          build: async (cwd, slug) => { const c = pendingChar(cwd, slug); if (!c || existsSync(join(c.dir, "sheet.png"))) return false; return sheetBuilder.build(cwd, c); },
+        },
+        voice: { tools: () => voiceTools() as any, isAudio: isVoiceNoteAudio as any, invalidAudio: (voiceErrors as any).invalid_audio },
+      }) as Partial<Record<InvokeChannel, Handler>>);
+      // agentProviderKeyStatus (L61660) reads the same vault saveAgentProviderKey writes
+      handlers["engine:agentProviderKeyStatus"] = () => ({
+        openaiApi: { configured: Boolean(credentialsVault.providerKey("openai-api")) || (h.codex?.providerKeyStatus().openaiApi.configured ?? false) },
+        openrouter: { configured: Boolean(credentialsVault.providerKey("openrouter")) },
+      });
       if (engineDeps) {
         mediaRoots.chatMediaRoot = (sessionId) => h.chatMediaRoot(sessionId);
         const attachmentChanged = (attachment: unknown) => { push("attachment:changed", attachment); }; // L62190

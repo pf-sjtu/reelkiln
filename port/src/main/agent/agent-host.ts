@@ -38,6 +38,7 @@ import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSy
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve as resolvePath } from "node:path";
 import { JobWatcher, VersionStore, resolveCut, scanJob } from "../jobs/version-store.generated";
+import { modelAccountLimit, modelAccountLimitPresentation } from "./account-limit.generated";
 import { deletionBlockMessage, moveProjectToTrash, planProjectTrash, PROJECT_TRASH_RETENTION_MS } from "../jobs/project-trash.generated";
 import { assembleOriginalVideoContext, readPromiseBrief } from "../jobs/original-context.generated";
 import { MaterialsLedger } from "../materials/materials-ledger.generated";
@@ -171,6 +172,10 @@ export interface AgentHostDeps {
   /** docs/28: the Claude Code login + catalog seams (claude-code.ts). Absent → the controller still runs with
    *  the PORT defaults (no login probe, connect refused) and an empty model source. */
   claude?: Pick<ClaudeCodeDeps, "available" | "connector" | "modelSource" | "catalogTimeoutMs">;
+  /** docs/29: host.setCreditHandoffEligibility (main L61622 → AccountService.creditHandoffEligibility) and the
+   *  pinned gateway settings (activeSettings) the credit route runs on (the docs/28 local gateway shim). */
+  creditEligibility?: () => Promise<Record<string, any>>;
+  gatewaySettings?: () => { gatewayUrl?: string; gatewayKey?: string };
 }
 export interface AgentHostCodexDeps {
   /** settings.get() — agentHarness / codexProvider / codexModel (resolvedAgentHarness L324) */
@@ -231,11 +236,22 @@ interface Session {
   failedTurnCanRetry?: boolean;
   /** publishMaterials (L44932) digest of the last pushed ledger. */
   materialsDigest?: string;
+  /** docs/29: emitFailureCard (L42367) — the Claude account limit ended the last turn. */
+  claudeAllowanceExhausted?: boolean;
+  claudeAllowanceTurnIds?: string[];
 }
 interface DeliveredInput { msg: Record<string, any>; displayTexts: string[]; attachmentIds: string[] }
 interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void }
 
 export const DEFAULT_AGENT_TOOLS = ["Read", "Glob", "Grep"];
+/** PORT-NEW UI-e2e fault injection (docs/29 §6): the Claude subscription limit is an EXTERNAL precondition the
+ *  port can never reach (USER DIRECTIVE: no real Claude subscription). Only with VIDEOCLAW_PORT_UI_E2E=1 and
+ *  VIDEOCLAW_PORT_E2E_CLAUDE_LIMIT_TEXT set, a claude-code-route turn fails with that raw CLI text instead of
+ *  starting the Claude CLI; everything after it (classification, card, offer, continuation) is the real path. */
+export function claudeLimitInjection(llmRoute: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const text = env.VIDEOCLAW_PORT_E2E_CLAUDE_LIMIT_TEXT;
+  return env.VIDEOCLAW_PORT_UI_E2E === "1" && llmRoute === "claude-code" && text ? text : undefined;
+}
 const PATH_KEYS = ["file_path", "path", "notebook_path"];
 /** FALLBACK_EVIDENCE_MARKERS (L34378). */
 const FALLBACK_EVIDENCE_MARKERS = ["supersedes", "retractedMessageUuids", "retracted_message_uuids"];
@@ -892,7 +908,8 @@ export class AgentHost {
         { canUseTool, stderr: (t) => { stderr = (stderr + t).slice(-4000); } },
       );
     }
-    rt.query = sdk.query({ prompt: input, options });
+    const injected = claudeLimitInjection(handle.llmRoute);
+    rt.query = injected ? (async function* () { throw new Error(injected); })() as unknown as AgentQuery : sdk.query({ prompt: input, options });
     s.runtime = rt;
     this.send(s, { kind: "port_runtime", phase: "started", llmRoute: handle.llmRoute, model: handle.model, gateProxy: !!handle.proxy });
     this.log.info("agent.runtime.started", { sessionId: s.meta.sessionId, llmRoute: handle.llmRoute, model: handle.model, gateProxy: !!handle.proxy, engine: !!engineSpawn, boundJob: engineSpawn?.engineEnv.VIDEOCLAW_BOUND_JOB, lawsVersion: engineSpawn?.lawsVersion, appendBytes: engineSpawn ? Buffer.byteLength(engineSpawn.append) : undefined });
@@ -1027,7 +1044,7 @@ export class AgentHost {
       if (wasStopping) { if (s.meta.status !== "idle") this.setStatus(s, "idle"); return; }
       const tail = stderr();
       this.log.warn("agent.turn_error", { sessionId: s.meta.sessionId, error: e, stderrTail: tail ? redactText(tail.slice(-800)) : undefined });
-      this.send(s, { kind: "error", message: rt.launched || rt.llmRoute === "codex" ? redactText(String(e?.message ?? e)).slice(0, 500) : "The studio couldn't start — try again in a moment, or check Setup.", canRetry: true }); // L50245
+      this.send(s, this.failureEvent(s, e, rt.launched || rt.llmRoute === "codex" ? redactText(String(e?.message ?? e)).slice(0, 500) : "The studio couldn't start — try again in a moment, or check Setup.", rt)); // L50245 + emitFailureCard accountLimit
       this.setStatus(s, "error");
     }
   }
@@ -1081,7 +1098,7 @@ export class AgentHost {
         this.send(s, { kind: "result", isError, totalCostUsd: s.meta.totalCostUsd, numTurns: m.num_turns ?? 0, durationMs: m.duration_ms ?? 0 });
         if (isError) {
           const detail = Array.isArray(m.errors) && m.errors.length ? `: ${short(m.errors.join("; "), 300)}` : m.api_error_status ? ` (api status ${m.api_error_status})` : "";
-          this.send(s, { kind: "error", message: redactText(`The turn ended with ${subtype}${detail}`), canRetry: true });
+          this.send(s, this.failureEvent(s, Array.isArray(m.errors) && m.errors.length ? m.errors.join("; ") : String(m.result ?? ""), redactText(`The turn ended with ${subtype}${detail}`), rt));
           this.setStatus(s, "error");
         } else this.setStatus(s, "idle");
         break;
@@ -1797,6 +1814,18 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   respondInput(requestId: string, response: unknown): void {
     this.log.info("agent.input.respond_no_pending", { requestId: String(requestId).slice(0, 64), kind: (response as any)?.kind ?? null });
   }
+  /** transcribeVoice (L45689) — media:transcribeVoice. The session checks are the original's; VoiceDictation.execute
+   *  (L10599) then needs the bundled macOS `voice-dictation` helper (Apple on-device speech). Linux ships no such
+   *  helper, so the run ends in the original's own "unavailable in this build" result (docs/29 §9). */
+  async transcribeVoice(sessionId: string, recordingId: unknown, audio: unknown, tools: { helper: string; ffmpeg: string }, isAudio: (a: unknown) => boolean, invalidAudio: string): Promise<{ status: string; message: string }> {
+    const s = this.mustGet(sessionId);
+    if (s.meta.finalizedAtMs) throw new Error("Open an editable conversation and sign in before transcribing.");
+    if (typeof recordingId !== "string" || !/^[a-f0-9-]{36}$/.test(recordingId)) throw new Error("Invalid recording.");
+    if (!isAudio(audio)) return { status: "failed", message: invalidAudio };
+    if (!tools.helper || !tools.ffmpeg) return { status: "failed", message: "Voice notes are unavailable in this build." };
+    // a helper binary named voice-dictation on Linux would still be the macOS Speech bridge — not ported
+    return { status: "failed", message: "Voice notes are unavailable in this build." };
+  }
   /** discardVoice (L45705) — media:discardVoice: voiceDictations is empty (no on-device dictation helper). */
   discardVoice(_sessionId: string, _recordingId: string): void {}
   /** assertComposerWritable (L44801). */
@@ -1863,6 +1892,149 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       this.d.emit.materials?.(sessionId, ledger);
     } catch {}
   }
+  // ── docs/29: the VideoClaw-credits continuation (creditHandoffOffer L51901 / continueOnCredits L52012) ──
+  private readonly creditHandoffs = new Map<string, Promise<AgentSessionMeta>>();
+  /** PORT-NEW seam: the original sets this from emitFailureCard (L42367) when the Claude CLI reports the
+   *  subscription limit. The port has no Claude subscription (USER DIRECTIVE), so the limit can never arrive
+   *  naturally; tests / the UI-e2e harness seed it explicitly (docs/29 §6). */
+  /** emitFailureCard (L42348) account-limit slice: limitedAccount (L42318) → modelAccountLimit; a Claude limit
+   *  marks the allowance exhausted (credits hand-off precondition) and the card carries accountLimit +
+   *  llmRouteRequired with the original headline. Every other failure keeps the port's message. */
+  private failureEvent(s: Session, raw: unknown, fallback: string, rt?: Runtime): SessionEvent {
+    const account2 = (s.meta.runtime as string | undefined) === "remote" ? undefined
+      : s.meta.agentHarness === "codex-app-server" ? ((s.meta as any).codexProvider ?? "chatgpt")
+      : (rt?.llmRoute ?? s.meta.llmRoute) === "claude-code" ? "claude" : undefined;
+    const accountLimit: any = account2 ? modelAccountLimit(raw, account2) : undefined;
+    const exhausted = accountLimit?.account === "claude";
+    s.claudeAllowanceExhausted = exhausted;
+    s.claudeAllowanceTurnIds = exhausted ? [...new Set((s.inflight ?? s.failedInputs ?? []).flatMap((input) => (typeof input.msg?.uuid === "string" && input.msg.uuid ? [input.msg.uuid as string] : [])))] : undefined;
+    if (!accountLimit) return { kind: "error", message: fallback, canRetry: true };
+    const headline = modelAccountLimitPresentation(accountLimit, undefined)?.headline;
+    return { kind: "error", message: headline ?? fallback, accountLimit, ...(exhausted ? { llmRouteRequired: true } : {}), canRetry: true } as any;
+  }
+  markClaudeAllowanceExhausted(sessionId: string, turnIds: string[] = []): void {
+    const s = this.mustGet(sessionId);
+    s.claudeAllowanceExhausted = true;
+    s.claudeAllowanceTurnIds = turnIds;
+  }
+  private creditSettings(): { gatewayUrl?: string; gatewayKey?: string } { return this.d.gatewaySettings?.() ?? {}; }
+  /** creditTransferBudget (L51990) + spendPolicyForMaterialChange (L34057). */
+  private creditTransferBudget(src: Session): { permissionMode: string; budget: any; budgetResets?: string } {
+    const priorMode = src.meta.permissionMode as string;
+    const permissionMode = priorMode === "bypassPermissions" ? "auto" : priorMode;
+    const sourceBudget: any = this.spendBudgets.snapshot(src.meta.sessionId);
+    const policy = permissionMode === "bypassPermissions" ? { kind: "unlimited_for_video" } : priorMode === "bypassPermissions" ? { kind: "ask_each" } : sourceBudget.policy === "unlimited_for_video" ? { kind: "ask_each" } : undefined;
+    if (!policy) return { permissionMode, budget: sourceBudget };
+    const { ceilingUsd: _c, remainingUsd: _r, ...kept } = sourceBudget;
+    return { permissionMode, budget: { ...kept, policy: policy.kind }, budgetResets: priorMode === "bypassPermissions" ? "bypass" : "always-allow" };
+  }
+  async creditHandoffOffer(sessionId: string): Promise<Record<string, unknown>> {
+    const s = this.mustGet(sessionId);
+    const refuse = (reason: string, message: string) => ({ available: false, reason, message });
+    if (((s.meta.runtime as string | undefined) ?? "local") !== "local" || (s.meta.agentHarness ?? "claude-code") !== "claude-code" || s.meta.llmRoute !== "claude-code") {
+      return refuse("not-applicable", "This chat is not using a Claude subscription.");
+    }
+    const existing = this.completedContinuation(s);
+    if (s.meta.continuation && !existing) return refuse("already-continued", "The continuation chat was removed. The original chat remains available as history.");
+    if (existing && existing.meta.continuedFromSessionId !== sessionId) return refuse("already-continued", "This video already has a continuation chat.");
+    const transfer: any = existing?.meta.creditContinuation;
+    if (existing && !transfer?.pending) return { available: true, existingSessionId: existing.meta.sessionId };
+    if (transfer && transfer.budget?.unknownSpend) return refuse("account-unavailable", "The original video budget could not be verified for this account.");
+    if (!existing && !s.claudeAllowanceExhausted) {
+      const events = await this.getHistory(sessionId);
+      const terminal: any = [...events].reverse().find((event: any) => event.kind === "error" || event.kind === "result" || event.kind === "user_text");
+      if (terminal?.kind !== "error" || terminal.accountLimit?.account !== "claude") return refuse("not-applicable", "Continue with credits is available after your Claude allowance runs out.");
+    }
+    if (this.deletingSessions.has(sessionId) || this.hasActiveJobWork(s) || s.interrupting || (s.runtime?.queue.length ?? 0) > 0 || (s.openTools?.size ?? 0) > 0) {
+      return refuse("active-work", "Finish or stop the current step first.");
+    }
+    // PORT: the per-video spend ledger is local-authority (no paid gateway spend flows through it), so the
+    // original's ledger-authority equality check reduces to the blocked check (docs/29 §6).
+    if (this.spendBudgets.isBlocked()) return refuse("unsettled-spend", "Wait for accepted work and its charges to finish reconciling.");
+    const cfg = { ...this.creditSettings() };
+    const eligibility: any = this.d.creditEligibility ? await this.d.creditEligibility() : { available: false, reason: "account-unavailable", message: "Verify your VideoClaw account before continuing." };
+    const current = this.creditSettings();
+    if (current.gatewayKey !== cfg.gatewayKey || current.gatewayUrl !== cfg.gatewayUrl || this.sessions.get(sessionId) !== s) return refuse("account-unavailable", "Your account changed. Try again.");
+    const { budgetResets } = this.creditTransferBudget(s);
+    return eligibility.available && budgetResets ? { ...eligibility, budgetResets } : eligibility;
+  }
+  continueOnCredits(sessionId: string, request2: any): Promise<AgentSessionMeta> {
+    if (!request2 || request2.consent !== "videoclaw-credits" || typeof request2.clientActionId !== "string" || !request2.clientActionId.trim()) {
+      return Promise.reject(new Error("Explicit VideoClaw credit consent is required."));
+    }
+    const inFlight = this.creditHandoffs.get(sessionId);
+    if (inFlight) return inFlight;
+    const result = this.finishCreditContinuation(sessionId, request2.clientActionId);
+    this.creditHandoffs.set(sessionId, result);
+    void result.finally(() => this.creditHandoffs.delete(sessionId)).catch(() => {});
+    return result;
+  }
+  private async finishCreditContinuation(sessionId: string, clientActionId: string): Promise<AgentSessionMeta> { // L52027
+    const src = this.mustGet(sessionId);
+    const offer: any = await this.creditHandoffOffer(sessionId);
+    if (!offer.available) throw new Error(offer.message);
+    const prior = this.completedContinuation(src);
+    if (prior && !(prior.meta.creditContinuation as any)?.pending) return prior.meta;
+    const events = await this.getHistory(sessionId);
+    const targetId = (src.meta.continuation as any)?.sessionId ?? continuationSessionUuid(sessionId, clientActionId);
+    let target = this.sessions.get(targetId);
+    const pendingTurnIds = src.claudeAllowanceTurnIds ?? (src.failedInputs ?? []).flatMap((input) => (input.msg?.uuid ? [input.msg.uuid as string] : []));
+    const pending = [...new Set(pendingTurnIds)].flatMap((id2) => events.filter((event: any) => event.kind === "user_text" && event.turnId?.replace(/:\d+$/, "") === id2));
+    const draft = pending.map((event: any) => event.text).join("\n");
+    const attachmentIds = [...new Set(pending.flatMap((event: any) => event.attachmentIds ?? []))] as string[];
+    if (!target && draft.length > 1e5) throw new Error("These queued edits exceed the message limit. They are safe in the original conversation; shorten them before continuing.");
+    const cfg = { ...this.creditSettings() };
+    if (!target && attachmentIds.length && this.attachmentStore) await this.attachmentStore.validateContinuationDraft(sessionId, attachmentIds, (destination: string) => this.secureComposerDestination(src, destination));
+    const eligibility: any = this.d.creditEligibility ? await this.d.creditEligibility() : { available: false, message: "Verify your VideoClaw account before continuing." };
+    if (!eligibility.available) throw new Error(eligibility.message);
+    if (this.creditSettings().gatewayKey !== cfg.gatewayKey || this.creditSettings().gatewayUrl !== cfg.gatewayUrl || this.sessions.get(sessionId) !== src || this.deletingSessions.has(sessionId)
+      || this.hasActiveJobWork(src) || src.interrupting || (src.runtime?.queue.length ?? 0) > 0 || (src.openTools?.size ?? 0) > 0 || this.spendBudgets.isBlocked()) {
+      throw new Error("The video or account changed. Wait for active work and try again.");
+    }
+    if (!target) {
+      const { permissionMode, budget: budget22 } = this.creditTransferBudget(src);
+      this.createSession({ continueFromSessionId: sessionId, permissionMode }, undefined, { sessionId: targetId, deferJobAdoption: true, providerMigration: { agentHarness: "claude-code", codexProvider: "chatgpt", llmRoute: "gateway" } });
+      target = this.mustGet(targetId);
+      target.meta.continuedFromSessionId = sessionId;
+      if (pending.length) target.meta.continuationDraft = draft;
+      target.meta.creditContinuation = {
+        authority: this.spendBudgets.exportState().authority, budget: budget22,
+        context: events.filter((event: any) => event.kind === "user_text" || event.kind === "assistant_text").slice(-20).map((event: any) => `${event.kind}: ${event.text}`).join("\n").slice(-3e4),
+        attachmentIds, pending: true,
+      };
+      src.meta.continuation = { clientActionId, sessionId: targetId };
+      (src.meta as any).finalizedAtMs ??= Date.now();
+    }
+    const tgt = target;
+    if (!tgt.meta.creditContinuation) throw new Error("This video already has a different continuation.");
+    if (!this.flushRegistry()) throw new Error("Could not save the continuation. Try again.");
+    this.teardownRuntime(src, "credit-handoff");
+    const jobId = src.meta.jobId;
+    if (jobId) {
+      this.adoptJob(targetId, jobId);
+      if (tgt.meta.jobId !== jobId) throw new Error("The video is still owned by another active chat.");
+      src.meta.priorJobId = jobId;
+    } else if (tgt.meta.jobId) src.meta.priorJobId = tgt.meta.jobId;
+    const transfer: any = tgt.meta.creditContinuation;
+    const budget2 = transfer.budget;
+    if (budget2.policy === "capped") this.spendBudgets.setCeiling(targetId, budget2.ceilingUsd);
+    else if (budget2.policy === "unlimited_for_video") this.spendBudgets.setUnlimited(targetId);
+    else this.spendBudgets.setAskEach(targetId);
+    this.spendBudgets.reconcileSpend(targetId, budget2.spentUsd ?? 0);
+    if (transfer.attachmentIds.length && this.attachmentStore) {
+      await this.attachmentStore.copyContinuationDraft(sessionId, targetId, transfer.attachmentIds, (attachment: unknown) => (this.d.emit as any).attachmentChanged?.(attachment), (destination: string) => this.secureComposerDestination(tgt, destination));
+    }
+    if (this.creditSettings().gatewayKey !== cfg.gatewayKey || this.creditSettings().gatewayUrl !== cfg.gatewayUrl || this.sessions.get(sessionId) !== src || this.sessions.get(targetId) !== tgt) {
+      throw new Error("The account or video changed. Try again.");
+    }
+    if (!this.flushRegistry()) throw new Error("Could not save the transferred video. Try again.");
+    // materializeGatewaySpendPolicy (L47222): no gateway spend policy is written for a local-authority ledger
+    transfer.pending = false;
+    if (!this.flushRegistry()) { transfer.pending = true; throw new Error("Could not save the continuation. Try again."); }
+    this.log.info("agent.credit_handoff", { from: sessionId, to: targetId });
+    this.d.emit.sessionsChanged(this.listSessions());
+    return tgt.meta;
+  }
   /** codexDisconnectImpact L52416: Codex videos with a live runtime mid-turn. */
   /** codexHandoffOffer (L52172): may this blocked local Claude video continue on Codex (MiniMax-backed)? */
   async codexHandoffOffer(sessionId: string): Promise<Record<string, unknown>> {
@@ -1915,6 +2087,14 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   /** closeAll (L43010) slice: tear every runtime down (local reset commit). */
   closeAll(): number[] { for (const s of this.sessions.values()) this.teardownRuntime(s, "local-reset"); return []; }
   /** host session meta by id (HyperFrames preview / editor render liveSession L62403). */
+  /** docs/29: the session view ProjectMemoryHost reads (the original reads this.sessions directly). */
+  memorySessionView(sessionId: string): { meta: any; lastAssistantMessageId?: string } | undefined {
+    const s = this.sessions.get(sessionId);
+    return s ? { meta: s.meta, lastAssistantMessageId: s.lastAssistantMessageId } : undefined;
+  }
+  memorySessionViews(): Array<{ meta: any; lastAssistantMessageId?: string }> {
+    return [...this.sessions.values()].map((s) => ({ meta: s.meta, lastAssistantMessageId: s.lastAssistantMessageId }));
+  }
   liveSession(sessionId: string): AgentSessionMeta | undefined { return this.isDeleting(sessionId) ? undefined : this.sessions.get(sessionId)?.meta; }
 }
 

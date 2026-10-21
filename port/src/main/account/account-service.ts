@@ -83,6 +83,8 @@ export class PortAccountAuth {
     this.assertTrustedGateway(); // this.call() L54587
     throw new AccountAuthError("rejected", "Sign in to continue.");
   }
+  /** accountApiRequest (L54613): needs the account session; the port has no sign-in pool → assertTrustedGateway throws. */
+  async accountApiRequest(_path: string, _init?: unknown): Promise<Response> { this.assertTrustedGateway(); throw new AccountAuthError("rejected", "Sign in to continue."); }
   async issueKey(): Promise<never> { this.assertTrustedGateway(); this.credentials.assertCanMutate(); throw new AccountAuthError("rejected", "Sign in to continue."); }
   async addDeviceAccess(): Promise<never> { this.assertTrustedGateway(); this.credentials.assertCanMutate(); throw new AccountAuthError("rejected", "Sign in to continue."); }
   async claimKey(_key: string): Promise<never> { this.assertTrustedGateway(); this.credentials.assertCanMutate(); throw new AccountAuthError("rejected", "Sign in to continue."); }
@@ -277,6 +279,14 @@ export class AccountService {
       "gateway:meter": () => loadKeyMeter({ settings: () => this.activeSettings(), ...(d.fetchImpl ? { fetch: d.fetchImpl } : {}) }),
       "gateway:topup": (usd: unknown) => startTopUp(usd, { settings: () => this.activeSettings(), blocked: () => this.paidWorkBlocked(), openExternal: d.openExternal, ...(d.fetchImpl ? { fetch: d.fetchImpl } : {}) }),
     };
+  }
+  /** currentProjectMemoryScope (L60451). */
+  currentProjectMemoryScope(): { gatewayUrl: string; canonicalKeyId: string } | null {
+    const current = this.activeSettings();
+    const verified = this.projectMemoryIdentity;
+    return !this.signedOutInProcess && this.account.step === "ready" && verified && current
+      && verified.gatewayUrl === current.gatewayUrl && verified.gatewayKey === current.gatewayKey
+      ? { gatewayUrl: verified.gatewayUrl, canonicalKeyId: verified.canonicalKeyId } : null;
   }
   /** host.setCreditHandoffEligibility (L61622) — the credit-route eligibility verdict. */
   async creditHandoffEligibility(): Promise<Obj> {

@@ -1956,4 +1956,4 @@ function isRealUserText(text2) {
   );
 }
 
-export { displayTranscriptPath, engineMessageSha256, sdkUserMessageText, appendDisplayTranscript, appendDisplayStop, isDisplayTurnId, readDisplayTranscript, visibleInSdkHistory, rejectedFallbackMessageIds, isFlattenedClaudeCompactedHistory, historyToEvents, legacyDisplayText, isRealUserText, engineFamilyLine, friendlyToolLine, appendDisplayMaterial, isSessionMaterial, errorCauses, classifyError, sanitizeErrorText };
+export { displayTranscriptPath, engineMessageSha256, sdkUserMessageText, appendDisplayTranscript, appendDisplayStop, isDisplayTurnId, readDisplayTranscript, visibleInSdkHistory, rejectedFallbackMessageIds, isFlattenedClaudeCompactedHistory, historyToEvents, legacyDisplayText, isRealUserText, engineFamilyLine, friendlyToolLine, appendDisplayMaterial, isSessionMaterial, errorCauses, classifyError, sanitizeErrorText, providerMessage, providerFailureKind, providerCapabilityLabel, QUOTA_EXHAUSTED, isRuntimeAuthFailure };

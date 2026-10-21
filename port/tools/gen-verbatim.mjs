@@ -322,7 +322,7 @@ export const SPECS = [
       slice("main", /^function imagePathOf\(name, input\)/, /^}$/, /^function isRealUserText\(/),
     ],
     subs: [],
-    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText"],
+    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText", "providerMessage", "providerFailureKind", "providerCapabilityLabel", "QUOTA_EXHAUSTED", "isRuntimeAuthFailure"],
   },
 
   {
@@ -731,6 +731,90 @@ export const SPECS = [
     ],
     subs: [],
     exports: ["sendSessionEntries", "sendSessionIndex", "sendBeaconNow", "sendFeedback", "authorityFor", "authoritiesMatch", "isOutboxItem", "Outbox"],
+  },
+  {
+    // docs/29: project memory (ProjectMemoryStore L3256 = LOCAL MEMORY.md under userData/memory/…) + the IPC reply
+    // wrappers (projectMemoryReply L10711, openProjectMemorySource L10755) + the session-plan reply wrapper (L3995)
+    out: "src/main/memory/project-memory.generated.ts",
+    imports: [
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { closeSync, constants, createReadStream, existsSync, fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";',
+      'import { dirname, isAbsolute, join, relative, resolve } from "node:path";',
+      'import { z } from "zod";',
+      'import { sanitizeErrorText } from "../agent/history.generated";',
+      'import { recordMainLog } from "../feedback/feedback-env";',
+    ],
+    slices: () => [
+      slice("main", /^const PROJECT_MEMORY_MAX_TEXT = /, /^}$/, /^function projectMemorySourceKey\(/),
+      slice("main", /^function isWithin\$3\(root, target\) \{$/, /^}$/, /^function resolveProjectDestination\(/),
+      sliceUntil("main", /^const MAX_FILE_BYTES = 1024 \* 1024;$/, /^const id = z\.string\(\)/),
+      slice("main", /^class SessionPlanChoiceError extends Error \{\}$/, /^}$/, /^function sessionPlanFailureDiagnostic\(/),
+      slice("main", /^function assertPlanGenerationAllowed\(/, /^}$/, /^async function sessionPlanReply\(/),
+      slice("main", /^function assertProjectMemoryScope\(/, /^}$/, /^function openProjectMemorySource\(/),
+      slice("main", /^function memoryError\(error\) \{$/, /^}$/, /^async function projectMemoryFile\(/),
+    ],
+    subs: [],
+    exports: ["PROJECT_MEMORY_MAX_SOURCES", "projectMemorySourceKey", "resolveProjectDestination", "isExistingProjectDirectory", "ProjectMemoryError", "ProjectMemoryStore",
+      "SessionPlanChoiceError", "SessionPlanBlockedError", "SessionPlanScopeError", "SessionPlanStateError", "sessionPlanFailureDiagnostic", "assertPlanGenerationAllowed", "sessionPlanReply",
+      "assertProjectMemoryScope", "projectMemoryReply", "openProjectMemorySource", "memoryError", "projectMemoryFile"],
+  },
+  {
+    // docs/29: app update channel preferences (createUpdatePreferences L2182) + the release-feed check
+    // (startUpdateCheck L55921). The Linux app updater stays disabled (createAppUpdater is darwin-only, category c).
+    out: "src/main/update/update-check.generated.ts",
+    imports: [
+      'import semver from "semver";',
+      'import { canUseNightlyUpdates } from "../account-snapshot.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function selectedUpdateChannel\(settings2, account2\) \{$/, /^}$/, /^function releaseChannel\(/),
+      sliceUntil("main", /^const RECHECK_MS = /, /^const RENDER_SCRIPT_REL = /),
+    ],
+    subs: [],
+    exports: ["selectedUpdateChannel", "createUpdatePreferences", "releaseChannel", "startUpdateCheck"],
+  },
+  {
+    // docs/29: CharacterSheetBuilder (L19216) — the engine dry-run plan + gateway quote and the paid build
+    // (engine tools/build_character_sheet.py → POST /v1/mint_image through the scoped gateway capability)
+    out: "src/main/characters/character-sheet.generated.ts",
+    imports: [
+      'import { spawn } from "node:child_process";',
+      'import { randomBytes } from "node:crypto";',
+      'import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";',
+      'import { homedir } from "node:os";',
+      'import { join } from "node:path";',
+      'import { app, currentEngine, engineSessionEnv, featureFlagDecision, FEATURE_FLAG_REASON_COPY, policyRefusalMessage, sanitizedAgentEnv } from "./sheet-env";',
+      'import { classifyError } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      sliceUntil("main", /^const DEV_FALLBACK_ENGINE = /, /^const JOB_ID_RE\$2 = /),
+    ],
+    subs: [],
+    exports: ["resolveSheetTool", "classifySheetFailure", "CharacterSheetBuilder", "STUDIO_UPDATE_MSG", "GENERIC_FAIL"],
+  },
+  {
+    // docs/29: the session-index projection telemetry:bindReplay enqueues (L10769-10787)
+    out: "src/main/telemetry/session-index.generated.ts",
+    imports: [],
+    slices: () => [
+      sliceUntil("main", /^function indexedSessionStatus\(meta\) \{$/, /^function journeyScope\(/),
+    ],
+    subs: [],
+    exports: ["indexedSessionStatus", "sessionIndexProjection"],
+  },
+  {
+    // docs/29: modelAccountLimit / modelAccountLimitPresentation (workbookContents chunk L1873-1923) — the
+    // emitFailureCard (L42348) account-limit classification the credits hand-off keys on
+    out: "src/main/agent/account-limit.generated.ts",
+    imports: [
+      'import { providerMessage, providerFailureKind, providerCapabilityLabel, QUOTA_EXHAUSTED } from "./history.generated";',
+    ],
+    slices: () => [
+      sliceUntil("wb", /^const CODEX_PROVIDER_LABELS = \{$/, /^function codexRouteDiagnostic\(/),
+      sliceUntil("wb", /^const LIMITED_ACCOUNT_LABELS = \{$/, /^const FREE_GEN_TOOLS = /),
+    ],
+    subs: [],
+    exports: ["LIMITED_ACCOUNT_URLS", "modelAccountLimit", "modelAccountLimitPresentation"],
   },
 ];
 

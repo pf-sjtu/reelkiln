@@ -7,11 +7,16 @@
 // STUBBED: handle() authenticates exactly like the original (L28997-29010: header
 // x-videoclaw-not-forwarded, 401 "invalid session credential") and then refuses with 501
 // before forwarding anything. authorize() (L29655-30327, spend/quote/permit logic),
-// settlementPolicies(), operationContext(), quoteProject(), setSessionSpendPolicy(),
-// getJobBudget(), credentialsForBudgetedTools(), harnessReviewCredentials() are NOT PORTED.
+// settlementPolicies(), operationContext(), harnessReviewCredentials() are NOT PORTED.
+// docs/29: quoteProject / setSessionSpendPolicy / getJobBudget / credentialsForBudgetedTools are ported
+// (L28891-28970), and handle() forwards the TOOL-LIMITED capability subset of authorize() (L29730-29860:
+// uploads, the allowed tools' quotes and submits with the fixed client_job, their child job polls) — the shape
+// the Library lease (L45713) and the character-sheet build (L19216) mint. Session agent credentials (spend
+// approval / quotes / permits, L29655-30327) still refuse 501 before anything is forwarded.
 import { createServer, type IncomingHttpHeaders, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { randomBytes } from "node:crypto";
 import type { AddressInfo } from "node:net";
+import { isClientJobId } from "../engine/session";
 
 export const PROVIDER_CREDENTIAL_CODE = "PROVIDER_CREDENTIAL_MISCONFIGURED"; // L28204
 export const GATEWAY_CANCEL_REASON = "videoclaw:gateway-requests-cancelled"; // L28335
@@ -27,7 +32,8 @@ export interface GatewaySessionPolicy {
   jobId: () => string | undefined;
   projectId?: () => string | undefined;
   allowLlm?: boolean;
-  allowedUnscopedTools?: string[];
+  allowedUnscopedTools?: string[] | Set<string>;
+  fixedUnscopedJobId?: string;
   unscopedCallLimit?: number;
   recoveryOnly?: boolean;
   harnessReviewOnly?: { jobId: string; uploadsLeft: number; uploadIds: Set<string>; reviewedUploadIds: Set<string> };
@@ -84,7 +90,45 @@ export class AgentGatewayProxy {
   }
   credentialsForTools(sessionId: string, tools: string[], maxCalls: number): GatewayCredentials { // L28880
     if (!Number.isInteger(maxCalls) || maxCalls < 1 || maxCalls > 1e4) throw new Error("tool-limited gateway capability requires a bounded call count");
-    return this.credentials(sessionId, { jobId: () => undefined, allowedUnscopedTools: tools, unscopedCallLimit: maxCalls, allowLlm: false });
+    return this.credentials(sessionId, { jobId: () => undefined, allowedUnscopedTools: new Set(tools), unscopedCallLimit: maxCalls, allowLlm: false });
+  }
+  async quoteProject(jobId: string, items: unknown, signal?: AbortSignal): Promise<any> { // L28891
+    if (!isClientJobId(jobId)) throw new Error("project quote job id is invalid");
+    const response = await fetch(`${this.gatewayUrl}/v1/quotes/project`, {
+      method: "POST", headers: this.upstreamHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ job_id: jobId, items }), signal: AbortSignal.any([AbortSignal.timeout(1e4), ...(signal ? [signal] : [])]),
+    });
+    if (!response.ok) throw new Error(`gateway project quote failed (${response.status})`);
+    const quote: any = await response.json();
+    for (const field of ["planned_total_cents", "reserve_cents", "total_cents"]) {
+      if (!Number.isSafeInteger(quote[field]) || Number(quote[field]) < 0) throw new Error("gateway project quote returned invalid cents");
+    }
+    return quote;
+  }
+  async setSessionSpendPolicy(jobId: string, policy: { kind: string; ceilingUsd?: number }): Promise<void> { // L28910
+    if (!isClientJobId(jobId)) throw new Error("session spend policy job id is invalid");
+    const body = policy.kind === "capped" ? { mode: "capped", ceiling_usd: Number(policy.ceilingUsd).toFixed(2) } : policy.kind === "unlimited_for_video" ? { mode: "unlimited" } : { mode: "per_operation" };
+    const response = await fetch(`${this.gatewayUrl}/v1/spend-authorities/${encodeURIComponent(jobId)}`, { method: "PUT", headers: this.upstreamHeaders({ "content-type": "application/json" }), body: JSON.stringify(body), signal: AbortSignal.timeout(1e4) });
+    if (!response.ok) throw new Error(`The gateway could not update this video's spending policy (HTTP ${response.status}).`);
+  }
+  async getJobBudget(jobId: string): Promise<any> { // L28933
+    if (!isClientJobId(jobId)) throw new Error("gateway budget job id is invalid");
+    const response = await fetch(`${this.gatewayUrl}/v1/spend-authorities/${encodeURIComponent(jobId)}`, { headers: this.upstreamHeaders(), signal: AbortSignal.timeout(5e3) });
+    if (!response.ok) throw new Error(`The gateway budget read failed (HTTP ${response.status}).`);
+    const body = await response.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("The gateway returned an invalid budget response.");
+    return body;
+  }
+  async credentialsForBudgetedTools(sessionId: string, tools: Iterable<string>, maxCalls: number, jobId: string, ceilingUsd: number): Promise<GatewayCredentials> { // L28951
+    if (!isClientJobId(jobId)) throw new Error("tool-limited gateway job id is invalid");
+    if (!Number.isFinite(ceilingUsd) || ceilingUsd <= 0) throw new Error("tool-limited gateway ceiling is invalid");
+    const response = await fetch(`${this.gatewayUrl}/v1/budgets/${encodeURIComponent(jobId)}`, { method: "PUT", headers: this.upstreamHeaders({ "content-type": "application/json" }), body: JSON.stringify({ ceiling_usd: ceilingUsd }), signal: AbortSignal.timeout(1e4) });
+    if (!response.ok) throw new Error(`gateway helper budget registration failed (${response.status})`);
+    const credentials2 = this.credentialsForTools(sessionId, [...tools], maxCalls);
+    const entry = this.sessions.get(credentials2.gatewayKey);
+    if (!entry) throw new Error("tool-limited gateway capability was not created");
+    entry.policy.fixedUnscopedJobId = jobId;
+    return credentials2;
   }
   revoke(sessionId: string, keepRecovery = false): void { // L28972
     for (const [token, entry] of this.sessions) {
@@ -112,9 +156,58 @@ export class AgentGatewayProxy {
     const token = bearer(request.headers);
     const entry = token ? this.sessions.get(token) : undefined;
     if (!entry) return void this.reject(response, 401, "invalid session credential");
+    if (entry.policy.allowedUnscopedTools && entry.policy.allowLlm === false) return this.forwardToolLimited(request, response, entry);
     request.resume();
-    // PORT STUB: authorize()/forwarding (L29010-29654) not ported. Nothing is sent upstream.
+    // PORT STUB: authorize()/forwarding (L29010-29654) for session agent credentials not ported. Nothing is sent upstream.
     this.reject(response, 501, "NOT PORTED: gateway forwarding (AgentGatewayProxy.authorize) is not implemented in the Windows port yet");
+  }
+  /** docs/29: the tool-limited capability subset of authorize() (L29730-29860). */
+  private async forwardToolLimited(request: IncomingMessage, response: ServerResponse, entry: SessionEntry): Promise<void> {
+    const method = (request.method ?? "GET").toUpperCase();
+    const url = new URL(request.url ?? "/", "http://127.0.0.1");
+    const path = url.pathname;
+    const chunks: Buffer[] = []; let size = 0;
+    for await (const c of request) { size += (c as Buffer).length; if (size > MAX_BODY_BYTES) return void this.reject(response, 413, "request body is too large"); chunks.push(c as Buffer); }
+    let body: Buffer | undefined = Buffer.concat(chunks);
+    const tools = new Set(entry.policy.allowedUnscopedTools as Iterable<string>);
+    let remember = false;
+    let m: RegExpExecArray | null;
+    if ((method === "POST" && path === "/v1/uploads") || (method === "GET" && /^\/v1\/uploads\/[a-f0-9]{32}$/.test(path))) {
+      // allowed (L29730)
+    } else if (method === "POST" && (m = /^\/v1\/quotes\/([a-z][a-z0-9_.-]{0,63})$/.exec(path)) && m[1] !== "project") {
+      if (!tools.has(m[1])) return void this.reject(response, 403, "this helper is not authorized for that production tool");
+    } else if (method === "GET" && (m = /^\/v1\/jobs\/([A-Za-z0-9_.:-]{1,200})$/.exec(path))) {
+      if (!entry.childJobs.has(m[1])) return void this.reject(response, 403, "gateway control route is unavailable to agents");
+    } else if (method === "POST" && (m = /^\/v1\/([a-z][a-z0-9_.-]{0,63})$/.exec(path)) && tools.has(m[1])) {
+      if (entry.policy.unscopedCallLimit === undefined || entry.unscopedCalls >= entry.policy.unscopedCallLimit) return void this.reject(response, 402, "tool-limited gateway capability is exhausted");
+      entry.unscopedCalls += 1;
+      if (entry.policy.fixedUnscopedJobId) {
+        let payload: any;
+        try { payload = JSON.parse(body.toString("utf8")); } catch { return void this.reject(response, 400, "production request must be JSON"); }
+        payload.client_job = entry.policy.fixedUnscopedJobId;
+        body = Buffer.from(JSON.stringify(payload));
+      }
+      remember = true;
+    } else {
+      return void this.reject(response, 403, "gateway control route is unavailable to agents");
+    }
+    const controller = new AbortController();
+    entry.activeRequests.add(controller);
+    try {
+      const upstream = await fetch(`${this.gatewayUrl}${path}${url.search}`, {
+        method, headers: this.upstreamHeaders(typeof request.headers["content-type"] === "string" ? { "content-type": request.headers["content-type"] } : {}),
+        ...(method === "GET" ? {} : { body: new Uint8Array(body) }), signal: controller.signal,
+      });
+      const text = Buffer.from(await upstream.arrayBuffer());
+      if (remember && upstream.ok) { try { const j = JSON.parse(text.toString("utf8")); if (typeof j?.job_id === "string") entry.childJobs.set(j.job_id, j.job_id); } catch {} }
+      response.removeHeader("x-videoclaw-not-forwarded");
+      response.statusCode = upstream.status;
+      for (const h of ["content-type", "x-should-retry", "retry-after"]) { const v = upstream.headers.get(h); if (v) response.setHeader(h, v); }
+      response.end(text);
+    } catch (e) {
+      response.removeHeader("x-videoclaw-not-forwarded");
+      this.reject(response, 502, `gateway request failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally { entry.activeRequests.delete(controller); }
   }
   rejectHarnessReview(response: ServerResponse, verdict: { status: number; code: string; reason?: string; message: string }): void { // L30336
     response.statusCode = verdict.status;

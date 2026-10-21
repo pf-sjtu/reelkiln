@@ -31,6 +31,9 @@ export interface LlmRuntimeDeps {
   /** Install a SIGHUP → reload handler (POSIX only; ignored on win32). */
   sighup?: boolean;
   logger?: Logger;
+  /** docs/29: activeSettings (main L60918) — settings + the vault gateway key pinned to the opened gateway
+   *  (AccountService). Read lazily; null → the raw settings (no gatewayKey). */
+  activeSettings?: () => Record<string, unknown> | null;
 }
 export interface LlmRuntime {
   settings: SettingsStore;
@@ -47,7 +50,7 @@ export function createLlmRuntime(d: LlmRuntimeDeps): LlmRuntime {
   const log = (d.logger ?? getLogger()).child({ component: "llm-runtime" });
   const settings = new SettingsStore(join(d.userData, "settings.json"), d.defaultGatewayUrl ?? PROD_GATEWAY_URL);
   const service = new LlmRouteService({
-    settings: () => settings.get() as any, // gateway key vault NOT PORTED → no gatewayKey
+    settings: () => (d.activeSettings?.() ?? settings.get()) as any, // docs/29: + the vault gatewayKey (AccountService)
     env: () => env,
     profileDir: () => { const dir = join(d.userData, "engine-profile"); mkdirSync(dir, { recursive: true }); return dir; }, // L52521
     logger: d.logger,
