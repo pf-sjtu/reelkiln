@@ -1,0 +1,12 @@
+{
+ "task": "M16 T5 — S1 regression on the packaged AppImage (Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage, repackaged after T4 d6640cd)",
+ "attempt": "1 of max 2 (no second attempt needed)",
+ "llmUpstream": "REAL MiniMax (MiniMax-M3.1-Flash via the minimax provider route; MINIMAX_BASE_URL unset)",
+ "harness": "port/tools/ui-e2e.mjs --appimage --engine <read-only ENGINE>; HARNESS INPUT: private dbus-daemon + unlocked gnome-keyring-daemon (secrets) + --password-store=gnome-libsecret so the packaged CredentialStore has an OS keychain",
+ "result": "allPass=true; steps home/project_video/attach/brief_send/stream/play/approve/export/taste_question_card all PASS; accept_check 20/20 ok (failed [], pending [])",
+ "output": "h264 720x1280 30fps + aac, 6.507 s, cuts at 2.5/4.5 s; sha256 final == v1 == export = 1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9",
+ "spendUsd": 0.274949289,
+ "spendSource": "session totalCostUsd, proxy-metered at models.dev:minimax-cn/MiniMax-M3.1-Flash (in 0.1494 / out 0.5976 / cacheRead 0.0149 USD/MTok); includes the original taste-capture follow-up turn",
+ "remains": "general window 99% before, 97% after (T5-remains-before-s1.json / T5-remains-after-s1.json)",
+ "teardown": "the harness quit (Browser.close) arrived while the taste-capture turn was still running; the ORIGINAL QuitCoordinator 'Videoclaw is still working' dialog (ported in T3) blocked it (shot 99-teardown-quit-dialog.png). Teardown was finished by a manual xdotool click on 'Quit Videoclaw' on the Xvfb display → main.log 'quit: begin shutdown (quit)' → clean exit 0. The harness now races Browser.close with 5 s and falls back to SIGTERM/SIGKILL. The click is post-verdict teardown, not part of any PASS."
+}

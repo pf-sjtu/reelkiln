@@ -1,0 +1,100 @@
+{"t":58,"note":"launch AppImage release/Videoclaw-Port-0.0.40-port.0-linux-x86_64.AppImage (UI_E2E mode, CDP :9353)"}
+{"t":5812,"cdp":"Page.enable","params":{}}
+{"t":5828,"cdp":"Runtime.enable","params":{}}
+{"t":5846,"note":"page target file://<APPIMAGE_ROOT>/resources/renderer-original/index.html"}
+{"t":7360,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":671},"element":{"x":639,"y":657,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":7360,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":671}}
+{"t":7378,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":671,"button":"left","clickCount":1}}
+{"t":7380,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":671,"button":"left","clickCount":1}}
+{"t":7973,"screenshot":"01-home.png"}
+{"t":7979,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":7982,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":7982,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":7998,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":8000,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":8016,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":8016,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":8027,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":8029,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":8030,"cdp":"Input.insertText","params":{"text":"S1 UI e2e"}}
+{"t":8032,"action":"insertText","into":"input.new-client-input","text":"S1 UI e2e"}
+{"t":8034,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":8034,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":8043,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":8046,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":8359,"action":"click","desc":"New video in S1 UI e2e","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in S1 UI e2e"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":8359,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":8628,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":8645,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":8647,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":9026,"screenshot":"02-new-video.png"}
+{"t":9027,"note":"STEP project_video: PASS {\"clientId\":\"s1-ui-e2e\",\"sessionId\":\"15846add-dd92-4b60-adbb-f1d273e1d2cc\",\"title\":\"New video\"}"}
+{"t":9029,"action":"dropFiles","at":{"x":766,"y":721},"files":["clip_a.mp4","clip_b.mp4","clip_c.mp4","music.mp3"]}
+{"t":9029,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":9032,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":9038,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":10247,"screenshot":"03-attachments.png"}
+{"t":10247,"note":"STEP attach: PASS {\"via\":\"drop\",\"ready\":[\"clip_a.mp4\",\"clip_b.mp4\",\"clip_c.mp4\",\"music.mp3\"],\"storeFile\":true}"}
+{"t":10250,"action":"click","desc":"composer textarea","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"tag":"TEXTAREA","cls":"","label":""},"hit":{"hitTag":"TEXTAREA","hitCls":"","onTarget":true}}
+{"t":10250,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":10261,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":10264,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":10265,"cdp":"Input.insertText","params":{"text":"我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.5–2.5 s；只用 music.mp3 做音轨（不要素材原声）；不要字幕、不要叠加、不要任何付费工具。渲染成片。"}}
+{"t":10312,"action":"insertText","into":"textarea","chars":136}
+{"t":10806,"screenshot":"04-brief-typed.png"}
+{"t":10810,"action":"click","desc":"Send","selector":"button.send-btn","at":{"x":1228,"y":768},"element":{"x":1211,"y":751,"width":34,"height":34,"tag":"BUTTON","cls":"send-btn","label":"Send"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":10810,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1228,"y":768}}
+{"t":10829,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":10830,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":11401,"note":"STEP brief_send: PASS {\"typedMatches\":true}"}
+{"t":49617,"screenshot":"05-turn-streaming.png"}
+{"t":49620,"controlsDuringTurn":[{"cls":"send-btn stop","aria":null,"title":"Stop","disabled":false}]}
+{"t":780236,"screenshot":"05b-turn-done.png"}
+{"t":780240,"note":"title {\"title\":\"三素材竖屏快剪\",\"titleOrigin\":\"automatic\",\"notNewVideo\":true,\"inSidebarDom\":true,\"sequence\":[\"-:New video\",\"fallback:我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.…\",\"automatic:三素材竖屏快剪\"]}"}
+{"t":780317,"screenshot":"05c-title.png"}
+{"t":780318,"note":"STEP stream: PASS {\"turnS\":769,\"toolStarts\":45,\"textDeltas\":73,\"domTextChanges\":65,\"numTurns\":46,\"isError\":false,\"jobId\":\"6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-15846a\",\"controlsDuringTurn\":[{\"cls\":\"send-btn stop\",\"aria\":null,\"title\":\"Stop\",\"disabled\":false}]}"}
+{"t":780326,"action":"click","desc":"player native play control","selector":".op-preview-stage video","at":{"x":929,"y":317},"element":{"x":905,"y":140,"width":359,"height":227.359375,"tag":"VIDEO","cls":"","label":""},"hit":{"hitTag":"VIDEO","hitCls":"","onTarget":true}}
+{"t":780326,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":929,"y":317}}
+{"t":780329,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":929,"y":317,"button":"left","clickCount":1}}
+{"t":780332,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":929,"y":317,"button":"left","clickCount":1}}
+{"t":781914,"screenshot":"06-player-playing.png"}
+{"t":783421,"playbackSamples":[{"t":1792623531575,"currentTime":0.407461,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792623532077,"currentTime":0.909516,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792623532579,"currentTime":1.411666,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792623533155,"currentTime":1.987315,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792623533657,"currentTime":2.489712,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792623534159,"currentTime":2.99197,"paused":false,"ended":false,"readyState":4,"error":null}]}
+{"t":783422,"note":"STEP play: PASS {\"ok\":true,\"advancedS\":2.585,\"maxReadyState\":4,\"src\":\"vcmedia://local<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-15846a/versions/v1.mp4?consumer=primary-preview-17&version=cb594ea67b3d25fada98d90741ea65ace4b1f2225e528b39c69c511a217d41e2\",\"duration\":6.507,\"size\":\"720x1280\",\"controls\":true}"}
+{"t":783426,"action":"click","desc":"Approve V1","selector":"button.v-approve","at":{"x":1085,"y":413},"element":{"x":1038.890625,"y":401.359375,"width":91.21875,"height":24,"tag":"BUTTON","cls":"v-approve","label":"Mark this cut as the final one"},"hit":{"hitTag":"BUTTON","hitCls":"v-approve","onTarget":true}}
+{"t":783426,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1085,"y":413}}
+{"t":783430,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1085,"y":413,"button":"left","clickCount":1}}
+{"t":783434,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1085,"y":413,"button":"left","clickCount":1}}
+{"t":785382,"screenshot":"07-approved.png"}
+{"t":785382,"note":"STEP approve: PASS {\"finalizedAtMs\":1792623534197,\"v1Approved\":true,\"finals\":[{\"n\":1,\"via\":\"promote\",\"madeFinalAtMs\":1792623534182}]}"}
+{"t":785387,"action":"click","desc":"Download v1.mp4","selector":"button.op-preview-download","at":{"x":1241,"y":163},"element":{"x":1226,"y":148,"width":30,"height":30,"tag":"BUTTON","cls":"op-preview-download","label":"Download v1.mp4"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":785387,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1241,"y":163}}
+{"t":785395,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1241,"y":163,"button":"left","clickCount":1}}
+{"t":785397,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1241,"y":163,"button":"left","clickCount":1}}
+{"t":787618,"screenshot":"08-exported.png"}
+{"t":787712,"note":"STEP export: PASS {\"sha\":{\"final\":\"1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9\",\"v1\":\"1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9\",\"export\":\"1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9\"},\"ffprobeRc\":0,\"video\":\"h264 720x1280 30/1\",\"audio\":\"aac\",\"durationS\":\"6.507000\",\"saveDialogLog\":true}"}
+{"t":1112637,"screenshot":"09a-question-card-1.png"}
+{"t":1112639,"action":"click","desc":"question 1 first option","at":{"x":373,"y":124},"element":{"x":292,"y":109.453125,"width":161.53125,"height":29,"label":"Music-only soundtrack"}}
+{"t":1112639,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":373,"y":124}}
+{"t":1112642,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":373,"y":124,"button":"left","clickCount":1}}
+{"t":1112649,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":373,"y":124,"button":"left","clickCount":1}}
+{"t":1112955,"action":"click","desc":"question 2 first option","at":{"x":362,"y":285},"element":{"x":292,"y":270.734375,"width":140.203125,"height":29,"label":"Honour exact trims"}}
+{"t":1112955,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":362,"y":285}}
+{"t":1112958,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":362,"y":285,"button":"left","clickCount":1}}
+{"t":1112961,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":362,"y":285,"button":"left","clickCount":1}}
+{"t":1113266,"action":"click","desc":"question 3 first option","at":{"x":378,"y":433},"element":{"x":292,"y":418.609375,"width":171.828125,"height":29,"label":"No captions, no overlays"}}
+{"t":1113266,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":378,"y":433}}
+{"t":1113269,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":378,"y":433,"button":"left","clickCount":1}}
+{"t":1113272,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":378,"y":433,"button":"left","clickCount":1}}
+{"t":1113650,"screenshot":"09b-question-card-1-selected.png"}
+{"t":1113656,"action":"click","desc":"question card Answer","selector":".question-card .q-submit","at":{"x":333,"y":545},"element":{"x":292,"y":529.609375,"width":82.78125,"height":31,"tag":"BUTTON","cls":"q-submit","label":"Answer"},"hit":{"hitTag":"BUTTON","hitCls":"q-submit","onTarget":true}}
+{"t":1113656,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":333,"y":545}}
+{"t":1113658,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":333,"y":545,"button":"left","clickCount":1}}
+{"t":1113661,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":333,"y":545,"button":"left","clickCount":1}}
+{"t":1113666,"note":"answered question card 1 (taste) [\"Music-only soundtrack\",\"Honour exact trims\",\"No captions, no overlays\"]"}
+{"t":1136304,"note":"answer verdict {\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":3,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[\"Music-only soundtrack\",\"Honour exact trims\",\"No captions, no overlays\"],\"textsAfter\":1,\"firstTextsAfter\":[\"The user selected:\\n- Kept rules: \\\"Music-only soundtrack\\\"\\n- Working: \\\"Honour exact trims\\\"\\n- Global: \\\"No captions, no overlays\\\"\\n\\nWait — \\\"No captions, no overlays\\\" was selected in the global question but NOT in the kept-rules question (kept rules only = Music-only soundtrack). Hmm. The global question said \\\"Which of these should ALSO become account-wide rules\\\". They picked \\\"No caption"}
+{"t":1136304,"note":"STEP taste_question_card: PASS {\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":3,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[\"Music-only soundtrack\",\"Honour exact trims\",\"No captions, no overlays\"],\"textsAfter\":1,\"firstTextsAfter\":[\"The user selected:\\n- Kept rules: \\\"Music-only soundtrack\\\"\\n- Working: \\\"Honour exact trims\\\"\\n- Gl"}
+{"t":1148445,"screenshot":"09-after-taste-turn.png"}
+{"t":1148445,"note":"taste-capture {\"stopControlVisibleWhileFinalized\":false,\"cardAnswered\":{\"questions\":3,\"picked\":[\"Music-only soundtrack\",\"Honour exact trims\",\"No captions, no overlays\"]},\"answerVerdict\":{\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":3,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[\"Music-only soundtrack\",\"Honour exact trims\",\"No captions, no overlays\"],\"textsAfter\":1,\"firstTextsAfter\":[\"The user selected:\\n- Kept rules: \\\"Music-only soundtrack\\\"\\n- Working: \\\"Honour exact trims\\\"\\n- Global: \\\"No captions, no overlays\\\"\\n\\nWait — \\\"No captions, no overlays\\\" was selected in the global question but NOT in the kept-rules question (kept rules only = Music-only soundtrack). Hmm. The global question said \\\"Which of"}
+{"t":1148458,"cdp":"Browser.close","params":{}}
+{"t":1631905,"note":"app exited 0"}
+{"t":1631997,"note":"DONE allPass=true"}

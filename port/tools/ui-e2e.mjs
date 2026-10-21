@@ -26,7 +26,8 @@ const REPO = resolve(PORT_DIR, "..");
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d; };
 const RUN = resolve(opt("--run") ?? "");
-const SRC = resolve(opt("--engine-home") ?? "");
+const SRC = opt("--engine-home") ? resolve(opt("--engine-home")) : null;
+const ENGINE = opt("--engine") ? resolve(opt("--engine")) : null; // docs/33: point at an installed (read-only) engine dir instead of copying an engine home
 const APPIMAGE = opt("--appimage");
 const CDP_PORT = Number(opt("--port", "9351"));
 const PROJECT = opt("--project", "S1 UI e2e");
@@ -37,15 +38,22 @@ const ANSWER_CARD = !argv.includes("--no-answer-card");
 const TASTE_WAIT_MS = Number(opt("--taste-wait-ms", String(6 * 60_000)));
 const CHECK_QUICKSTART = argv.includes("--check-quickstart"); // docs/24: open the original Quickstarts gallery after home
 const TITLE_WAIT_MS = Number(opt("--title-wait-ms", String(90_000)));
-if (!opt("--run") || !opt("--engine-home")) { console.error("usage: ui-e2e.mjs --run RUN_DIR --engine-home SRC_HOME [--appimage PATH]"); process.exit(2); }
+if (!opt("--run") || (!opt("--engine-home") && !opt("--engine"))) { console.error("usage: ui-e2e.mjs --run RUN_DIR --engine-home SRC_HOME [--appimage PATH]"); process.exit(2); }
 if (!process.env.MINIMAX_API_KEY) { console.error("MINIMAX_API_KEY not set"); process.exit(2); }
 if (existsSync(RUN)) { console.error(`${RUN} exists; use a fresh dir`); process.exit(2); }
 
 const UD = join(RUN, ".config", "videoclaw-port");
 const OUT = join(RUN, "out"); const SHOTS = join(OUT, "shots"); const IN = join(RUN, "in"); const EXPORT = join(RUN, "export", "s1.mp4");
 mkdirSync(UD, { recursive: true }); mkdirSync(SHOTS, { recursive: true }); mkdirSync(dirname(EXPORT), { recursive: true });
-cpSync(join(SRC, ".config", "videoclaw-port", "engine-current.json"), join(UD, "engine-current.json"));
-for (const d of [".cache", ".local", ".npm"]) if (existsSync(join(SRC, d))) execFileSync("cp", ["-al", join(SRC, d), RUN]);
+if (SRC) {
+  cpSync(join(SRC, ".config", "videoclaw-port", "engine-current.json"), join(UD, "engine-current.json"));
+  for (const d of [".cache", ".local", ".npm"]) if (existsSync(join(SRC, d))) execFileSync("cp", ["-al", join(SRC, d), RUN]);
+}
+if (ENGINE) { // the engine's own version + build digest (bootstrap.ts L389), as tools/ui-e2e-m16-voice.mjs does
+  const version = JSON.parse(readFileSync(join(ENGINE, "ENGINE_VERSION.json"), "utf8")).version;
+  let digest = null; try { const d = readFileSync(join(ENGINE, ".videoclaw-build-sha256"), "utf8").trim().split(/\s+/)[0]; if (/^[0-9a-f]{64}$/.test(d)) digest = d; } catch {}
+  writeFileSync(join(UD, "engine-current.json"), JSON.stringify({ version, path: ENGINE, ...(digest ? { buildSha256: digest } : {}) }));
+}
 execFileSync("bash", [join(REPO, "tools", "accept_fixtures.sh"), IN], { stdio: "ignore" });
 const BRIEF_DEFAULT = "我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.5–2.5 s；只用 music.mp3 做音轨（不要素材原声）；不要字幕、不要叠加、不要任何付费工具。渲染成片。";
 // docs/24: --brief-file overrides the S1 brief (e.g. a brief that makes the agent ask an AskUserQuestion first)
@@ -68,7 +76,17 @@ const env = { ...process.env, HOME: RUN, UV_PYTHON_INSTALL_DIR: process.env.UV_P
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;
 const appArgs = ["--no-sandbox", `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${UD}`];
 let cmd, args;
-if (APPIMAGE) { env.APPIMAGE_EXTRACT_AND_RUN = "1"; cmd = "xvfb-run"; args = ["-a", "-s", "-screen 0 1440x960x24", resolve(APPIMAGE), ...appArgs]; }
+let keyringPids = [];
+if (APPIMAGE) {
+  env.APPIMAGE_EXTRACT_AND_RUN = "1";
+  // docs/33 harness input: a packaged build stores credentials only through the OS keychain (CredentialStore) —
+  // give it a private session bus + an unlocked gnome-keyring Secret Service, and tell Chromium to use it.
+  const bus = execFileSync("dbus-daemon", ["--session", "--fork", "--print-address=1", "--print-pid=1"]).toString().trim().split("\n");
+  env.DBUS_SESSION_BUS_ADDRESS = bus[0];
+  const kr = execFileSync("bash", ["-c", "printf 'ui-e2e-harness' | gnome-keyring-daemon --unlock --components=secrets"], { env: { ...env } }).toString();
+  keyringPids = [Number(bus[1]), Number(/GNOME_KEYRING_PID=(\d+)/.exec(kr)?.[1] ?? 0)].filter(Boolean);
+  cmd = "xvfb-run"; args = ["-a", "-s", "-screen 0 1440x960x24", resolve(APPIMAGE), ...appArgs, "--password-store=gnome-libsecret"];
+}
 else { cmd = "xvfb-run"; args = ["-a", "-s", "-screen 0 1440x960x24", join(PORT_DIR, "node_modules", ".bin", "electron"), ...appArgs, PORT_DIR]; }
 if (await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`).then(() => true, () => false)) { console.error(`port ${CDP_PORT} already in use — pick another --port`); process.exit(2); }
 say(`launch ${APPIMAGE ? "AppImage " + APPIMAGE : "dev electron"} (UI_E2E mode, CDP :${CDP_PORT})`);
@@ -339,10 +357,14 @@ try {
   summary.finished = new Date().toISOString();
   writeFileSync(join(OUT, "ui-e2e-summary.json"), JSON.stringify(summary, null, 1));
   // graceful quit: Browser.close over the browser endpoint (will-quit flushes the registry)
-  try { const v = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`)).json(); const b = await Cdp.connect(v.webSocketDebuggerUrl, (o) => log(o)); await b.send("Browser.close").catch(() => {}); b.close(); } catch {}
+  try { const v = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`)).json(); const b = await Cdp.connect(v.webSocketDebuggerUrl, (o) => log(o)); await Promise.race([b.send("Browser.close").catch(() => {}), sleep(5000)]); b.close(); } catch {}
+  // docs/33: since M16 T3 every quit goes through the original QuitCoordinator — if a turn (e.g. the taste-capture
+  // follow-up) is still running, the original native "Videoclaw is still working" dialog blocks Browser.close.
   cdp.close();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
-  if (!exited) { try { process.kill(-child.pid, "SIGTERM"); } catch {} }
+  if (!exited) { say("teardown: app still running after Browser.close (QuitCoordinator dialog?) → SIGTERM, then SIGKILL"); try { process.kill(-child.pid, "SIGTERM"); } catch {} for (let i = 0; i < 20 && !exited; i++) await sleep(250); }
+  if (!exited) { try { process.kill(-child.pid, "SIGKILL"); } catch {} }
+  for (const pid of keyringPids) { try { process.kill(pid, "SIGTERM"); } catch {} }
   say(`DONE allPass=${summary.allPass}`);
   process.exit(summary.allPass ? 0 : 1);
 }
