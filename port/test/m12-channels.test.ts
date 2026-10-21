@@ -246,3 +246,17 @@ test("outbox / telemetry / feedback / sheets: authority snapshot, replay binding
   assert.equal(await ch["characters:sheetBuild"]("/w", "ava"), false);
   assert.throws(() => remainingChannels(base({ assertGenerationAllowed: () => { throw new Error("Verify your VideoClaw account before starting paid work."); } }))["characters:sheetBuild"]("/w", "ava"), /Verify your VideoClaw account/);
 });
+
+test("M12 credits precondition: modelAccountLimit classifies the Claude usage limit; the e2e injection seam is inert outside UI-e2e", async () => {
+  const { modelAccountLimit } = await import("../src/main/agent/account-limit.generated");
+  const { claudeLimitInjection } = await import("../src/main/agent/agent-host");
+  const lim: any = modelAccountLimit("Claude AI usage limit reached|1760000000", "claude");
+  assert.equal(modelAccountLimit("Claude AI usage limit reached|1760000000", undefined as any), undefined); // account required (L1652)
+  assert.equal(lim?.account, "claude");
+  assert.equal(lim?.kind, "usage");
+  const text = "Claude AI usage limit reached|1760000000";
+  assert.equal(claudeLimitInjection("claude-code", { VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_E2E_CLAUDE_LIMIT_TEXT: text }), text);
+  assert.equal(claudeLimitInjection("claude-code", { VIDEOCLAW_PORT_E2E_CLAUDE_LIMIT_TEXT: text }), undefined); // not in UI-e2e
+  assert.equal(claudeLimitInjection("gateway", { VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_E2E_CLAUDE_LIMIT_TEXT: text }), undefined); // only the claude route
+  assert.equal(claudeLimitInjection("claude-code", { VIDEOCLAW_PORT_UI_E2E: "1" }), undefined);
+});

@@ -81,7 +81,7 @@ import { configureFeedbackEnv, recordMainLog } from "./feedback/feedback-env";
 import { HyperframesPreviewController, validateInPolicyWorker } from "./hyperframes/hf-preview.generated";
 import { LocalResetController, LocalResetRecoveryError, LOCAL_RESET_MARKER, runPendingLocalReset } from "./account/local-reset.generated";
 import { CredentialStore } from "./account/local-reset-env";
-import { AccountService } from "./account/account-service";
+import { AccountService, ACCOUNT_BLOCKED_COPY } from "./account/account-service";
 import { gatewayChannels } from "./gateway/gateway-channels";
 import { LocalGatewayShim, localGatewayEnabled, localGatewayMonthUsd, localGatewayPort } from "./gateway/local-gateway-shim";
 import { minimaxConfig } from "./llm/minimax";
@@ -665,7 +665,10 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         memory: memoryHost,
         currentProjectMemoryScope: () => accountService.currentProjectMemoryScope(),
         openLocalPath: async (path) => { if (smoke()) { log(`[smoke] openPath ${path.slice(0, 200)}`); return; } const err = await shell.openPath(path); if (err) throw new Error(err); },
-        assertGenerationAllowed: () => { if (accountService.paidWorkBlocked()) throw new Error("Verify your VideoClaw account before starting paid work."); },
+        assertGenerationAllowed: () => { // L60842
+          if ((currentUpdateInfo as any)?.blocked) throw new Error("Update Videoclaw before starting new work.");
+          if (accountService.paidWorkBlocked()) throw new Error(ACCOUNT_BLOCKED_COPY);
+        },
         absCwd,
         outbox: m12.outbox,
         sessionIndex: async (meta, posthogSessionId, durable = false) => { // enqueueSessionIndex (L60490)

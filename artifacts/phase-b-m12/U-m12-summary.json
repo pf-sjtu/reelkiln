@@ -1,0 +1,235 @@
+{
+ "phase": "m12",
+ "started": "2026-10-21T13:38:33.663Z",
+ "steps": {
+  "update_check": {
+   "ok": true,
+   "result": {
+    "kind": "current",
+    "currentVersion": "0.0.40-port.0"
+   },
+   "dom": "Videoclaw is up to date (0.0.40-port.0)"
+  },
+  "feedback_submit": {
+   "ok": true,
+   "grant": null,
+   "result": {
+    "queued": true,
+    "delivery": "delivered"
+   },
+   "sinks": {
+    "feedback": 1,
+    "feedback-screenshot": 1
+   },
+   "toast": "Thanks"
+  },
+  "claude_limit_card": {
+   "ok": true,
+   "sessionId": "335ef070-89b6-4983-a50f-5207d1c89ec5",
+   "llmRoute": "claude-code",
+   "card": {
+    "kind": "error",
+    "message": "Claude usage limit reached.",
+    "accountLimit": {
+     "account": "claude",
+     "kind": "usage"
+    },
+    "llmRouteRequired": true,
+    "canRetry": true
+   },
+   "offer": "{\"available\":true,\"budgetResets\":\"always-allow\"}",
+   "memoryRead": [
+    {
+     "real": true,
+     "result": "{\"ok\":true,\"value\":{\"revision\":null,\"entries\":[]}}"
+    }
+   ],
+   "planRead": [
+    {
+     "real": true,
+     "result": "{\"ok\":true,\"value\":null}"
+    }
+   ]
+  },
+  "continue_on_credits": {
+   "ok": true,
+   "continuation": {
+    "sessionId": "eb799223-9fde-5324-8e6b-45204ad93df7",
+    "llmRoute": "gateway",
+    "continuedFromSessionId": "335ef070-89b6-4983-a50f-5207d1c89ec5",
+    "title": "把片头的颜色改成青色 · continued"
+   }
+  },
+  "credits_turn": {
+   "ok": true,
+   "result": {
+    "kind": "result",
+    "isError": false,
+    "totalCostUsd": 0.0526324,
+    "numTurns": 1,
+    "durationMs": 5235
+   },
+   "text": "完成 VCE94DO",
+   "runtime": [
+    "{\"ts\":\"2026-10-21T13:38:45.646Z\",\"level\":\"info\",\"event\":\"agent.runtime.started\",\"component\":\"agent-host\",\"sessionId\":\"eb799223-9fde-5324-8e6b-45204ad93df7\",\"llmRoute\":\"gateway\",\"model\":\"sonnet\",\"gateProxy\":false,\"engine\":true,\"boundJob\":\"video-20261021-335ef0\",\"lawsVersion\":\"1.20.0\",\"appendBytes\":79"
+   ],
+   "ledgerEntries": [
+    {
+     "kind": "model_call",
+     "model": "claude-sonnet-5-5",
+     "upstreamModel": "MiniMax-M3.1-Flash",
+     "inputTokens": 121,
+     "outputTokens": 92,
+     "cacheReadTokens": 1105,
+     "usd": 0.000089925
+    },
+    {
+     "kind": "model_call",
+     "model": "claude-sonnet-5-5",
+     "upstreamModel": "MiniMax-M3.1-Flash",
+     "inputTokens": 25640,
+     "outputTokens": 6,
+     "cacheReadTokens": 199,
+     "usd": 0.003852585
+    }
+   ],
+   "ledgerUsd": 0.00394251,
+   "pricing": {
+    "table": "port-per-model/v2"
+   }
+  }
+ },
+ "code": "VCE94DO",
+ "landing": "home",
+ "creditsTurn": {
+  "result": {
+   "kind": "result",
+   "isError": false,
+   "totalCostUsd": 0.0526324,
+   "numTurns": 1,
+   "durationMs": 5235
+  },
+  "text": "完成 VCE94DO",
+  "runtime": [
+   "{\"ts\":\"2026-10-21T13:38:45.646Z\",\"level\":\"info\",\"event\":\"agent.runtime.started\",\"component\":\"agent-host\",\"sessionId\":\"eb799223-9fde-5324-8e6b-45204ad93df7\",\"llmRoute\":\"gateway\",\"model\":\"sonnet\",\"gateProxy\":false,\"engine\":true,\"boundJob\":\"video-20261021-335ef0\",\"lawsVersion\":\"1.20.0\",\"appendBytes\":79"
+  ],
+  "ledgerEntries": [
+   {
+    "kind": "model_call",
+    "model": "claude-sonnet-5-5",
+    "upstreamModel": "MiniMax-M3.1-Flash",
+    "inputTokens": 121,
+    "outputTokens": 92,
+    "cacheReadTokens": 1105,
+    "usd": 0.000089925
+   },
+   {
+    "kind": "model_call",
+    "model": "claude-sonnet-5-5",
+    "upstreamModel": "MiniMax-M3.1-Flash",
+    "inputTokens": 25640,
+    "outputTokens": 6,
+    "cacheReadTokens": 199,
+    "usd": 0.003852585
+   }
+  ],
+  "ledgerUsd": 0.00394251,
+  "pricing": {
+   "table": "port-per-model/v2"
+  }
+ },
+ "ledgerAtEnd": {
+  "entries": 2,
+  "usd": 0.00394251,
+  "sinks": {
+   "feedback": 1,
+   "feedback-screenshot": 1
+  },
+  "refusals": 0,
+  "budgets": 0,
+  "pricing": {
+   "table": "port-per-model/v2"
+  }
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:check",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "client:list",
+  "engine:codexHandoffOffer",
+  "engine:continueOnCredits",
+  "engine:creditHandoffOffer",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "feedback:capture",
+  "feedback:submit",
+  "gateway:meter",
+  "hfPreview:available",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "m12Channels": {
+  "memory:read": [
+   {
+    "ok": true,
+    "real": true
+   }
+  ],
+  "sessionPlan:read": [
+   {
+    "ok": true,
+    "real": true
+   },
+   {
+    "ok": true,
+    "real": true
+   }
+  ],
+  "app:update:check": [
+   {
+    "ok": true,
+    "real": true
+   }
+  ],
+  "feedback:grantUsageSharing": [],
+  "feedback:submit": [
+   {
+    "ok": true,
+    "real": true
+   }
+  ],
+  "engine:creditHandoffOffer": [
+   {
+    "ok": true,
+    "real": true
+   },
+   {
+    "ok": true,
+    "real": true
+   }
+  ],
+  "engine:continueOnCredits": [
+   {
+    "ok": true,
+    "real": true
+   }
+  ]
+ },
+ "allPass": true,
+ "finished": "2026-10-21T13:38:54.419Z"
+}

@@ -1,0 +1,75 @@
+{
+ "plan": {
+  "status": "ok",
+  "totalEstimateUsd": 0.15,
+  "plannedEstimateUsd": 0.12,
+  "retryReserveUsd": 0.03,
+  "paidSteps": 3,
+  "steps": [
+   {
+    "step": 1,
+    "of": 6,
+    "label": "Checking your photos"
+   },
+   {
+    "step": 2,
+    "of": 6,
+    "label": "Building the face close-up",
+    "estimateUsd": 0.08
+   },
+   {
+    "step": 3,
+    "of": 6,
+    "label": "Building the front full-body panel",
+    "estimateUsd": 0.08
+   },
+   {
+    "step": 4,
+    "of": 6,
+    "label": "Building the back full-body panel",
+    "estimateUsd": 0.08
+   },
+   {
+    "step": 5,
+    "of": 6,
+    "label": "Assembling the character sheet"
+   },
+   {
+    "step": 6,
+    "of": 6,
+    "label": "Saving the face references"
+   }
+  ]
+ },
+ "buildStarted": true,
+ "events": [
+  "{\"cwd\":\"/tmp/vc-sheet-proof-BOz25r/project\",\"slug\":\"ava\",\"state\":{\"slug\":\"ava\",\"phase\":\"running\",\"step\":0,\"of\":0,\"label\":\"Starting the build\"}}",
+  "{\"cwd\":\"/tmp/vc-sheet-proof-BOz25r/project\",\"slug\":\"ava\",\"state\":{\"slug\":\"ava\",\"phase\":\"running\",\"step\":1,\"of\":6,\"label\":\"Checking your photos\"}}",
+  "{\"cwd\":\"/tmp/vc-sheet-proof-BOz25r/project\",\"slug\":\"ava\",\"state\":{\"slug\":\"ava\",\"phase\":\"running\",\"step\":2,\"of\":6,\"label\":\"Building the face close-up\"}}",
+  "{\"cwd\":\"/tmp/vc-sheet-proof-BOz25r/project\",\"slug\":\"ava\",\"state\":{\"slug\":\"ava\",\"phase\":\"error\",\"error\":\"Something went wrong while creating the face close-up. Your photos are safe — please try again.\",\"failure\":\"rejected\",\"retryable\":false}}"
+ ],
+ "statesAfter": [
+  {
+   "slug": "ava",
+   "phase": "error",
+   "error": "Something went wrong while creating the face close-up. Your photos are safe — please try again.",
+   "failure": "rejected",
+   "retryable": false
+  }
+ ],
+ "sheetExists": false,
+ "shim": {
+  "quotes": 1,
+  "budgets": [
+   "charsheet-ava-62cd884a744c"
+  ],
+  "refusals": [],
+  "sinks": {
+   "upload-ticket": 3,
+   "upload": 3,
+   "paid-refusal": 1
+  },
+  "entries": 0
+ },
+ "minimaxUpstreamCalls": 0
+}

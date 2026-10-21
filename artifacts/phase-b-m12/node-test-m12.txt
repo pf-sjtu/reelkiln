@@ -1,0 +1,17 @@
+✔ memory:read/update/undo/openSource: the verbatim ProjectMemoryStore bound to the verified authority; refusal without one (11.793386ms)
+✔ sessionPlan:read/choose/retry: no plan can exist (propose_session_plan is studio MCP) → null / the original missing-state reply (1.630737ms)
+✔ workflowSubmit:start: invalid id / name / eligibility branches of WorkflowSubmissionService.run (L59760) (0.652895ms)
+✔ engine:saveAgentProviderKey: the original validation; stored in the vault, never validated or sent (0.559913ms)
+✔ app:update:preferences/channel/check: createUpdatePreferences + startUpdateCheck against the shim's release feed (45.751383ms)
+✔ library:search/sync: the scoped lease (credentialsForBudgetedTools → shim PUT /v1/budgets) reaches the engine call; no proxy → paid-work-unavailable (21.165441ms)
+✔ credits: a Claude usage-limit failure → accountLimit card → creditHandoffOffer available → continueOnCredits = a gateway-route continuation (36.333072ms)
+✔ media:transcribeVoice: the original session checks, then VoiceDictation's unavailable branch (1.110204ms)
+✔ outbox / telemetry / feedback / sheets: authority snapshot, replay binding validation + durable session index, feedback passthrough, sheet plan/build guards (0.896773ms)
+✔ M12 credits precondition: modelAccountLimit classifies the Claude usage limit; the e2e injection seam is inert outside UI-e2e (0.350943ms)
+✔ pricing: MiniMax-M3.1-Flash fallback is 0.15 / 0.6 / cache-read 0.015 per M tokens; the sample call costs half the old flat table (1.387804ms)
+✔ pricing: owner override (env JSON) beats models.dev, which beats the MiniMax fallback; bad JSON is ignored (12.273893ms)
+✔ ledger: cache-read tokens reported by MiniMax are recorded and charged at the cache-read price (JSON and SSE) (63.467775ms)
+✔ shim sinks: feedback (+ bound screenshot PUT), blocked feedback without a key, telemetry deliveries, final-video PUT, uploads, release feed, paid-tool refusal (34.309166ms)
+ℹ tests 271
+ℹ pass 271
+ℹ fail 0

@@ -21,7 +21,7 @@ chans = json.loads((R / "artifacts/manifests/ipc-channels.json").read_text())
 src = lambda p: (R / "port/src/main" / p).read_text()
 key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
 assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
-real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts"))) | set(key_re.findall(src("codex/codex-channels.ts"))) | set(key_re.findall(src("account/account-service.ts"))) | set(key_re.findall(src("gateway/gateway-channels.ts")))
+real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts"))) | set(key_re.findall(src("codex/codex-channels.ts"))) | set(key_re.findall(src("account/account-service.ts"))) | set(key_re.findall(src("gateway/gateway-channels.ts"))) | set(key_re.findall(src("remaining-channels.ts")))
 real_env = {"bootstrap:run"}
 # docs/24 → docs/25: session:history now replays the display transcript + SDK transcript (real).
 # docs/25 real-partial: original handler shape, some original branches not ported (reason given).
@@ -51,6 +51,25 @@ PARTIAL = {
     "engine:claudeModels": "PORT substitute model source: MiniMax GET /v1/models (no Claude Code CLI) through the ORIGINAL partition + evidence ledger (docs/28)",
     **{c: "USER DIRECTIVE (docs/28): no real Claude subscription — no `claude auth status` probe / login child → the original's not-connected branches only" for c in (
         "engine:claudeCodeStatus", "engine:claudeCodeConnect", "engine:claudeCodeConnectCancel", "engine:claudeCodeSignOutImpact", "engine:claudeCodeSignOut")},
+    # docs/29 (M12): the last category-(b) channels — original bodies; the branch that needs a hosted service ends in the
+    # original's own refusal / unavailable answer
+    **{c: "(b) session plans are created only by the studio-MCP propose_session_plan (not ported) → read null / choose+retry 'missing'" for c in (
+        "sessionPlan:read", "sessionPlan:choose", "sessionPlan:retry")},
+    "outbox:authoritySnapshot": "outbox exists only against the self-hosted loopback gateway (never posts to the production gateway)",
+    "telemetry:bindReplay": "durable session-index enqueue only with telemetry on; delivered to the shim's local sinks",
+    "feedback:submit": "delivered through the outbox to the self-hosted shim (/v1/feedback + screenshot sink), not to Videoclaw support",
+    "feedback:grantUsageSharing": "AlphaConsentCoordinator not ported → reconcileUsageSharing = local-studio consent",
+    "library:sync": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax has no equivalent)",
+    "library:search": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax has no equivalent)",
+    "engine:creditHandoffOffer": "the Claude-allowance precondition needs a real Claude subscription (USER DIRECTIVE: none) — reachable only by UI-e2e injection; spend-authority equality reduced to isBlocked",
+    "engine:continueOnCredits": "continuation is real (gateway route → shim → MiniMax, ledger-charged); materializeGatewaySpendPolicy not ported",
+    "engine:saveAgentProviderKey": "stored in the vault only — the openai-api/openrouter Codex providers run on MiniMax (docs/27)",
+    "workflowSubmit:start": "no Videoclaw account plane → accountApiRequest refuses → the original not-eligible branch",
+    "app:update:preferences": "nightly entitlement needs a managed account → nightlyAllowed false",
+    "app:update:channel": "createAppUpdater is darwin-only → canSwitchChannel false → the original 'wait for the current update' refusal",
+    "characters:sheetPlan": "engine dry-run + gateway quote (shim local price table); needs the installed engine's build_character_sheet tool",
+    "characters:sheetBuild": "real build path; the shim refuses mint_image (MiniMax image-01 cannot do multi-reference identity edits) → original failBuild",
+    "media:transcribeVoice": "(c) VoiceDictation needs the macOS Speech helper → the original unavailable answer",
 }
 fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()

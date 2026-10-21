@@ -1,0 +1,58 @@
+{
+ "schema": "videoclaw-port.local-gateway-ledger/v1",
+ "limits": {
+  "monthUsd": 5,
+  "totalUsd": null
+ },
+ "pricing": {
+  "table": "port-per-model/v2"
+ },
+ "entries": [
+  {
+   "id": "spend_2040383f11a1",
+   "at": 1792589928040,
+   "usd": 8.9925e-05,
+   "pricing": {
+    "inputPerMTokUsd": 0.15,
+    "outputPerMTokUsd": 0.6,
+    "cacheReadPerMTokUsd": 0.015,
+    "source": "minimax-fallback/2026-10"
+   },
+   "kind": "model_call",
+   "keyId": "4673f6359fa66753a00657820b38cf5b64402c3e36e413ba1145f15cf34755a8",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 121,
+   "outputTokens": 92,
+   "cacheReadTokens": 1105,
+   "status": 200
+  },
+  {
+   "id": "spend_ec94e3ce0d33",
+   "at": 1792589931138,
+   "usd": 0.003852585,
+   "pricing": {
+    "inputPerMTokUsd": 0.15,
+    "outputPerMTokUsd": 0.6,
+    "cacheReadPerMTokUsd": 0.015,
+    "source": "minimax-fallback/2026-10"
+   },
+   "kind": "model_call",
+   "keyId": "4673f6359fa66753a00657820b38cf5b64402c3e36e413ba1145f15cf34755a8",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 25640,
+   "outputTokens": 6,
+   "cacheReadTokens": 199,
+   "status": 200
+  }
+ ],
+ "refusals": [],
+ "topups": [],
+ "sinks": {
+  "feedback": 1,
+  "feedback-screenshot": 1
+ },
+ "budgets": {},
+ "quotes": []
+}

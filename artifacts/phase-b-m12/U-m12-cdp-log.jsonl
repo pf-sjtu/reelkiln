@@ -1,0 +1,72 @@
+{"t":1601,"cdp":"Page.enable","params":{}}
+{"t":1682,"cdp":"Runtime.enable","params":{}}
+{"t":2954,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"hitOk":true,"hit":"BUTTON.tour-skip","x":639,"y":659,"width":56.78125,"height":27,"label":"Skip tour"}}
+{"t":2954,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":2957,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2958,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2961,"note":"landing home"}
+{"t":3054,"action":"click","desc":"profile button","selector":"button.profile-button","at":{"x":126,"y":778},"element":{"hitOk":true,"hit":"SPAN.profile-copy","x":9,"y":756,"width":233,"height":44,"label":"Your account\nLocal studio"}}
+{"t":3054,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":778}}
+{"t":3056,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":3058,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":778,"button":"left","clickCount":1}}
+{"t":3567,"action":"click","desc":"Check for updates","selector":"button[role='menuitem']","at":{"x":126,"y":669},"element":{"hitOk":true,"hit":"BUTTON.","x":16,"y":654.40625,"width":219,"height":30,"label":"Check for updates"}}
+{"t":3567,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":669}}
+{"t":3574,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":669,"button":"left","clickCount":1}}
+{"t":3575,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":669,"button":"left","clickCount":1}}
+{"t":4370,"note":"STEP update_check: PASS {\"result\":{\"kind\":\"current\",\"currentVersion\":\"0.0.40-port.0\"},\"dom\":\"Videoclaw is up to date (0.0.40-port.0)\"}"}
+{"t":4370,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":4375,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":4881,"action":"click","desc":"Report a problem","selector":"button.report-btn","at":{"x":1209,"y":775},"element":{"hitOk":true,"hit":"SPAN.","x":1160.953125,"y":758,"width":97.046875,"height":34,"label":"Feedback"}}
+{"t":4882,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1209,"y":775}}
+{"t":4884,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1209,"y":775,"button":"left","clickCount":1}}
+{"t":4886,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1209,"y":775,"button":"left","clickCount":1}}
+{"t":6047,"action":"click","desc":"quick option","selector":"button.report-quick-option","at":{"x":530,"y":451},"element":{"hitOk":true,"hit":"BUTTON.report-quick-option","x":427,"y":435.015625,"width":205,"height":32,"label":"Something broke"}}
+{"t":6047,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":530,"y":451}}
+{"t":6050,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":530,"y":451,"button":"left","clickCount":1}}
+{"t":6051,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":530,"y":451,"button":"left","clickCount":1}}
+{"t":6053,"action":"click","desc":"detail","selector":"textarea.report-textarea","at":{"x":636,"y":553},"element":{"hitOk":true,"hit":"TEXTAREA.am-input report-textarea","x":427,"y":515.015625,"width":417,"height":76.5,"label":""}}
+{"t":6053,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":636,"y":553}}
+{"t":6055,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":636,"y":553,"button":"left","clickCount":1}}
+{"t":6056,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":636,"y":553,"button":"left","clickCount":1}}
+{"t":6057,"cdp":"Input.insertText","params":{"text":"M12 e2e report VCE94DO"}}
+{"t":6432,"action":"click","desc":"Send report","selector":"button.report-send","at":{"x":821,"y":722},"element":{"hitOk":true,"hit":"BUTTON.am-save report-send","x":788.890625,"y":705.15625,"width":64.109375,"height":33,"label":"Send"}}
+{"t":6432,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":821,"y":722}}
+{"t":6435,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":821,"y":722,"button":"left","clickCount":1}}
+{"t":6436,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":821,"y":722,"button":"left","clickCount":1}}
+{"t":8310,"note":"STEP feedback_submit: PASS {\"grant\":null,\"result\":{\"queued\":true,\"delivery\":\"delivered\"},\"sinks\":{\"feedback\":1,\"feedback-screenshot\":1},\"toast\":\"Thanks\"}"}
+{"t":8312,"action":"click","desc":"New video in Personal","selector":"button.client-new-chat","at":{"x":227,"y":241},"element":{"hitOk":true,"hit":"svg.[object SVGAnimatedString]","x":214,"y":228,"width":25,"height":25,"label":"New video in Personal"}}
+{"t":8313,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":241}}
+{"t":8615,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":241}}
+{"t":8618,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":8620,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":9829,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"hitOk":true,"hit":"TEXTAREA.","x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":9829,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":9839,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":9842,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":9845,"cdp":"Input.insertText","params":{"text":"把片头的颜色改成青色"}}
+{"t":9869,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":9872,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":11020,"note":"STEP claude_limit_card: PASS {\"sessionId\":\"335ef070-89b6-4983-a50f-5207d1c89ec5\",\"llmRoute\":\"claude-code\",\"card\":{\"kind\":\"error\",\"message\":\"Claude usage limit reached.\",\"accountLimit\":{\"account\":\"claude\",\"kind\":\"usage\"},\"llmRouteRequired\":true,\"canRetry\":true},\"offer\":\"{\\\"available\\\":true,\\\"budgetResets\\\":\\\"always-allow\\\"}\",\"memoryRead\":[{\"real\":true,\"result\":\"{\\\"ok\\\":true,\\\"value\\\":{\\\"revision\\\":null,\\\"entries\\\":[]}}\"}],\"planRead\":[{\"real\":true,\"result\":\"{\\\"ok\\\":true,\\\"value\\\":null}\"}]}"}
+{"t":11022,"action":"click","desc":"Continue this video with VideoClaw credits","selector":"button.failure-retry","at":{"x":445,"y":244},"element":{"hitOk":true,"hit":"BUTTON.failure-retry","x":316,"y":230.609375,"width":258.3125,"height":26,"label":"Continue this video with VideoClaw credits"}}
+{"t":11023,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":445,"y":244}}
+{"t":11025,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":445,"y":244,"button":"left","clickCount":1}}
+{"t":11027,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":445,"y":244,"button":"left","clickCount":1}}
+{"t":11698,"action":"click","desc":"Continue with credits","selector":"div.spend-transition-dialog button","at":{"x":728,"y":519},"element":{"hitOk":true,"hit":"BUTTON.remove-primary","x":646.90625,"y":503.6328125,"width":162.09375,"height":31,"label":"Continue with credits"}}
+{"t":11698,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":728,"y":519}}
+{"t":11699,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":728,"y":519,"button":"left","clickCount":1}}
+{"t":11701,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":728,"y":519,"button":"left","clickCount":1}}
+{"t":13550,"note":"STEP continue_on_credits: PASS {\"continuation\":{\"sessionId\":\"eb799223-9fde-5324-8e6b-45204ad93df7\",\"llmRoute\":\"gateway\",\"continuedFromSessionId\":\"335ef070-89b6-4983-a50f-5207d1c89ec5\",\"title\":\"把片头的颜色改成青色 · continued\"}}"}
+{"t":13553,"action":"click","desc":"composer","selector":"textarea","at":{"x":570,"y":721},"element":{"hitOk":true,"hit":"TEXTAREA.","x":287,"y":697,"width":566,"height":48,"label":""}}
+{"t":13553,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":570,"y":721}}
+{"t":13555,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":570,"y":721,"button":"left","clickCount":1}}
+{"t":13557,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":570,"y":721,"button":"left","clickCount":1}}
+{"t":13558,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":13559,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":13560,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Backspace","code":"Backspace","windowsVirtualKeyCode":8,"nativeVirtualKeyCode":8,"modifiers":0}}
+{"t":13561,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Backspace","code":"Backspace","windowsVirtualKeyCode":8,"nativeVirtualKeyCode":8,"modifiers":0}}
+{"t":13562,"cdp":"Input.insertText","params":{"text":"这是一次计费测试。不要调用任何工具，不要读写文件，只回复：完成 VCE94DO"}}
+{"t":13619,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":13621,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":22487,"note":"STEP credits_turn: PASS {\"result\":{\"kind\":\"result\",\"isError\":false,\"totalCostUsd\":0.0526324,\"numTurns\":1,\"durationMs\":5235},\"text\":\"完成 VCE94DO\",\"runtime\":[\"{\\\"ts\\\":\\\"2026-10-21T13:38:45.646Z\\\",\\\"level\\\":\\\"info\\\",\\\"event\\\":\\\"agent.runtime.started\\\",\\\"component\\\":\\\"agent-host\\\",\\\"sessionId\\\":\\\"eb799223-9fde-5324-8e6b-45204ad93df7\\\",\\\"llmRoute\\\":\\\"gateway\\\",\\\"model\\\":\\\"sonnet\\\",\\\"gateProxy\\\":false,\\\"engine\\\":true,\\\"boundJob\\\":\\\"video-20261021-335ef0\\\",\\\"lawsVersion\\\":\\\"1.20.0\\\",\\\"appendBytes\\\":79\"],\"ledgerEntries\":[{\"kind\":\"model_call\",\"model\":\"claude-sonnet-5-5\",\"upstreamModel\":\"MiniMax-M3.1-Flash\",\"inputTokens\":121,\"outputTokens\":92,\"cacheReadTokens\":1105,\"usd\":0.000089925},{\"kind\":\"model_call\",\"model\":\"claude-sonne"}
+{"t":22551,"note":"app exited 0"}
+{"t":22796,"note":"DONE allPass=true steps=update_check:ok feedback_submit:ok claude_limit_card:ok continue_on_credits:ok credits_turn:ok"}

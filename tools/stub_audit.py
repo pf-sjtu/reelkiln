@@ -46,7 +46,7 @@ AUDIT = {
  "characters:voices:list": (B, 61873, "moved a→b (docs/26, real-partial): voiceResult → characterVoiceContext → memoryBinding L36456 needs a verified Videoclaw account; the port answers with the original's ProjectMemoryError branch"),
  "characters:voice:approve": (B, 61876, "moved a→b (docs/26, real-partial): voiceResult → characterVoiceContext → memoryBinding L36456 needs a verified Videoclaw account; the port answers with the original's ProjectMemoryError branch"),
  "characters:voice:remove": (B, 61879, "moved a→b (docs/26, real-partial): voiceResult → characterVoiceContext → memoryBinding L36456 needs a verified Videoclaw account; the port answers with the original's ProjectMemoryError branch"),
- "characters:sheetPlan": (B, 61885, "moved a→b (docs/26): plan() = engine dry-run THEN quoteGatewayBudget (L19290) — without agentGatewayProxy the original returns status:error \"couldn't confirm the price\"; mint_image feature-flag decision also gateway-fed"),
+ "characters:sheetPlan": (B, 61885, "done-M12 (docs/29, real-partial): verbatim CharacterSheetBuilder.plan (engine dry-run + quoteProject through AgentGatewayProxy → shim quote)"),
  "characters:sheetStates": (A, 61892, "done-M9: host.characterSheetStates (local state files)"),
  "characters:retry": (A, 61896, "done-M9: store retry + assertGenerationAllowed; the rebuild it queues is paid (b)"),
  "job:originalContext": (A, 61754, "done-M9: host.getOriginalContext (local job files)"),
@@ -75,17 +75,17 @@ AUDIT = {
  "account:localResetPrepare": (A, 61496, "done-M9: local data reset plan (no network)"),
  "account:localResetCommit": (A, 61497, "done-M9: local data reset commit (relaunch)"),
  # ---- b, needs Claude / Codex / gateway credentials
- "sessionPlan:read": (B, 61920, "host.readSessionPlan L37031 → memoryBinding L36456 requires verified account+gateway authority"),
- "sessionPlan:choose": (B, 61928, "memoryBinding (account authority) + plan budget"),
- "sessionPlan:retry": (B, 61944, "memoryBinding (account authority)"),
- "memory:read": (B, 61955, "readProjectMemory L36472 → memoryBinding: 'unavailable until this account and project are verified'"),
- "memory:update": (B, 61960, "memoryBinding (account authority)"),
- "memory:undo": (B, 61965, "memoryBinding (account authority)"),
- "memory:openSource": (B, 61970, "memoryBinding (account authority)"),
+ "sessionPlan:read": (B, 61920, "done-M12 (docs/29, real-partial): sessionPlanReply L3995 over memoryBinding (verified shim authority); no plan can exist (propose_session_plan is studio MCP) → value null"),
+ "sessionPlan:choose": (B, 61928, "done-M12 (docs/29, real-partial): sessionPlanReply + assertPlanGenerationAllowed → the original 'missing' state reply"),
+ "sessionPlan:retry": (B, 61944, "done-M12 (docs/29, real-partial): sessionPlanReply + assertPlanGenerationAllowed → the original 'missing' state reply"),
+ "memory:read": (B, 61955, "done-M12 (docs/29): projectMemoryReply L10711 → verbatim ProjectMemoryStore (local MEMORY.md) bound by memoryBinding to the verified shim key"),
+ "memory:update": (B, 61960, "done-M12 (docs/29): updateProjectMemory L36628 (source verification) → ProjectMemoryStore.update + memory:changed"),
+ "memory:undo": (B, 61965, "done-M12 (docs/29): undoProjectMemory L36790 → ProjectMemoryStore.undo + memory:changed"),
+ "memory:openSource": (B, 61970, "done-M12 (docs/29): openProjectMemorySource L10755 → resolveProjectMemorySource → shell.openPath"),
  "taste:titles": (B, 61854, "done-M11 (docs/28): verbatim TasteTitleStore + resolveHelperCreds → {gateway}/anthropic/v1/messages on the local shim → MiniMax (metered)"),
- "characters:sheetBuild": (B, 61888, "assertGenerationAllowed + paid image generation via gateway"),
- "outbox:authoritySnapshot": (B, 61709, "telemetry outbox authority (gateway account)"),
- "telemetry:bindReplay": (B, 61710, "telemetry replay upload (gateway)"),
+ "characters:sheetBuild": (B, 61888, "done-M12 (docs/29, real-partial): verbatim CharacterSheetBuilder.build; scoped mint_image capability → shim 422 TOOL_NOT_OFFERED (no MiniMax multi-reference edit) → original failBuild"),
+ "outbox:authoritySnapshot": (B, 61709, "done-M12 (docs/29, real-partial): verbatim Outbox.authoritySnapshot (outbox only against the self-hosted loopback gateway)"),
+ "telemetry:bindReplay": (B, 61710, "done-M12 (docs/29, real-partial): original validation + replayIdsBySession + durable session-index enqueue (verbatim projection) → shim sinks"),
  "settings:saveGatewayKey": (B, 61393, "done-M11 (docs/28): applyManualKeyWrite → verbatim CredentialStore.setActiveKey → resolveAccount"),
  "settings:switchGateway": (B, 61377, "done-M11 (docs/28): switchGatewayKeys → settings.patch → verifyKeyAt (requiresRestart)"),
  "gateway:verify": (B, 61376, "done-M11 (docs/28): verifyKeyAt L60601 against the local shim /v1/me"),
@@ -114,21 +114,21 @@ AUDIT = {
  "engine:codexModels": (B, 61622, "done-M10 (docs/27): codexModels L51305 / discoverCodexModels L52291 ← MiniMax GET /v1/models through the gate"),
  "engine:claudeModels": (B, 61659, "done-M11 (docs/28, real-partial): original claudeModels/discover + verbatim partition; model source = MiniMax"),
  "engine:continueOnCodex": (B, 61661, "done-M11 (docs/28): host.continueOnCodex L52242 + codexHandoffOffer L52172 (MiniMax-backed Codex continuation)"),
- "engine:creditHandoffOffer": (B, 61655, "Videoclaw credits route"),
- "engine:continueOnCredits": (B, 61656, "Videoclaw credits route"),
+ "engine:creditHandoffOffer": (B, 61655, "done-M12 (docs/29, real-partial): host.creditHandoffOffer L51901 (Claude-limit precondition only via UI-e2e injection; spend-authority check reduced)"),
+ "engine:continueOnCredits": (B, 61656, "done-M12 (docs/29, real-partial): continueOnCredits/finishCreditContinuation L52012 → gateway-route continuation billed by the shim ledger"),
  "engine:agentProviderKeyStatus": (B, 61664, "done-M10 (docs/27): key presence only (openaiApi/openrouter not configured; MiniMax key is env)"),
- "engine:saveAgentProviderKey": (B, 61665, "agent-provider key for Codex harness"),
+ "engine:saveAgentProviderKey": (B, 61665, "done-M12 (docs/29, real-partial): original validation → CredentialStore.setProviderKey (stored only; codex providers run on MiniMax)"),
  "session:setModel": (B, 61784, "done-M10 (docs/27): host.setSessionModel L40895, Codex branch (catalog = MiniMax models); Claude branch still needs claudeModels"),
  "session:setReasoningEffort": (B, 61787, "done-M10 (docs/27): host.setSessionReasoningEffort L51735, Codex branch (low/medium/high)"),
- "library:sync": (B, 62092, "guardedAppLibrary → acquireLibraryGatewayLease"),
- "library:search": (B, 62115, "guardedAppLibrary → gateway lease"),
- "feedback:submit": (B, 62346, "feedback upload (gateway outbox)"),
- "feedback:grantUsageSharing": (B, 62350, "usage-sharing grant (gateway account)"),
- "workflowSubmit:start": (B, 62399, "workflow submission to gateway"),
- "app:update:check": (B, 61372, "startUpdateCheck L62583: release feed via gateway (nightly needs account)"),
- "app:update:preferences": (B, 61330, "createUpdatePreferences L62572: needs account (nightly entitlement)"),
- "app:update:channel": (B, 61334, "update channel switch; canSwitch needs enabled updater (darwin) + account"),
- "media:transcribeVoice": (B, 61911, "host.transcribeVoice: 'sign in before transcribing' + voice-dictation helper (mac-only, L10465) → b and c"),
+ "library:sync": (B, 62092, "done-M12 (docs/29, real-partial): guardedAppLibrary + acquireLibraryGatewayLease (proxy credentialsForBudgetedTools → shim budget); engine embed → shim 422"),
+ "library:search": (B, 62115, "done-M12 (docs/29, real-partial): as library:sync (search lease 1 call / $0.10)"),
+ "feedback:submit": (B, 62346, "done-M12 (docs/29, real-partial): FeedbackService.submit → Outbox feedback lane → shim /v1/feedback (+ screenshot sink)"),
+ "feedback:grantUsageSharing": (B, 62350, "done-M12 (docs/29, real-partial): durable consent patch; alpha-consent reconcile = local-studio policy"),
+ "workflowSubmit:start": (B, 62399, "done-M12 (docs/29, real-partial): WorkflowSubmissionService.submit/run → accountApiRequest refusal → original not-eligible branch"),
+ "app:update:check": (B, 61372, "done-M12 (docs/29): verbatim startUpdateCheck against the shim GET /v1/app/latest (current build)"),
+ "app:update:preferences": (B, 61330, "done-M12 (docs/29, real-partial): verbatim createUpdatePreferences.get (nightly not allowed)"),
+ "app:update:channel": (B, 61334, "done-M12 (docs/29, real-partial): createUpdatePreferences.set → canSwitch false on Linux (no appUpdater) → original refusal"),
+ "media:transcribeVoice": (B, 61911, "done-M12 (docs/29, real-partial): original session checks → VoiceDictation unavailable branch (macOS Speech helper, c)"),
  # ---- c, macOS/Windows-only or N/A on Linux
  "app:update:download": (C, 61362, "createAppUpdater L2223: enabled only when platform === 'darwin' (Linux state = disabled)"),
  "app:update:install": (C, 61367, "createAppUpdater L2223: Squirrel/mac installer only"),
@@ -141,20 +141,20 @@ def stubs_now():
 def main():
     now = set(stubs_now())
     missing = sorted(now - set(AUDIT))
-    stale = sorted(c for c, (cat, _, why) in AUDIT.items() if c in now and why.startswith(("done-M8", "done-M9", "done-M10")))
+    stale = sorted(c for c, (cat, _, why) in AUDIT.items() if c in now and why.startswith("done-"))
     done_not_real = stale
     counts = {"a": 0, "a_done": 0, "a_todo": 0, "b": 0, "b_done": 0, "b_stub": 0, "c": 0}
     for c, (cat, _, why) in AUDIT.items():
         counts[cat] += 1
         if cat == A: counts["a_done" if why.startswith(("done-M8", "done-M9", "done-M10")) else "a_todo"] += 1
-        if cat == B: counts["b_done" if why.startswith("done-M10") else ("b_stub" if c in now else "b_partial_other")] = counts.get("b_done" if why.startswith("done-M10") else ("b_stub" if c in now else "b_partial_other"), 0) + 1
+        if cat == B: counts["b_stub" if c in now else ("b_done" if why.startswith("done-") else "b_partial_other")] = counts.get("b_stub" if c in now else ("b_done" if why.startswith("done-") else "b_partial_other"), 0) + 1
     if "--json" in sys.argv:
         print(json.dumps({"total": len(AUDIT), "counts": counts, "stubNow": len(now), "unclassified": missing, "doneButStillStub": done_not_real,
                           "channels": [{"channel": c, "category": v[0], "line": v[1], "evidence": v[2]} for c, v in AUDIT.items()]}, ensure_ascii=False, indent=1))
     elif "--md" in sys.argv:
         print("| # | channel | 类 | 原始 handler 行 | 依据 |\n|---|---|---|---|---|")
         for i, (c, (cat, ln, why)) in enumerate(AUDIT.items(), 1):
-            print(f"| {i} | `{c}` | {cat}{' ✅' if why.startswith(('done-M8', 'done-M9', 'done-M10', 'done-M11')) else ''} | L{ln} | {why} |")
+            print(f"| {i} | `{c}` | {cat}{' ✅' if why.startswith('done-') else ''} | L{ln} | {why} |")
     else:
         print(f"audited {len(AUDIT)} (stub now {len(now)}): {counts}")
     if missing or done_not_real:
