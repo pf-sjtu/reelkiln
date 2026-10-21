@@ -250,6 +250,9 @@ test("CLI: models-sync / models-list / models-show / llm-model-info against a te
   const info = await runModelsCommand("llm-model-info", ["minimax"], { ...deps, registry: loadProviderRegistry({ json: { providers: [] } }) }) as any;
   assert.equal(info.ok, true);
   assert.equal(info.metadata.provider, "minimax-cn");
+  assert.equal(info.structuredOutput.configured, "tool");
+  const caps = info.metadata.capabilities;
+  if (caps.structuredOutput !== undefined) assert.equal(info.structuredOutput.suggested, caps.structuredOutput ? "native" : caps.toolCall ? "tool" : "off");
   await assert.rejects(runModelsCommand("models-list", ["--limit=-1"], deps), /non-negative/);
   await assert.rejects(runModelsCommand("models-list", ["--bogus"], deps), /Unknown option/);
   await assert.rejects(runModelsCommand("models-show", [], deps), /usage/);

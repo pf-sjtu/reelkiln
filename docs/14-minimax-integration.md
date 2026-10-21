@@ -25,6 +25,8 @@
 - [ ] `output_config.effort` 各档位、`thinking: disabled` → 400 的说法（本次未测）。
 - [ ] 图片输入、2000px/4.5MB 超限报错；`createLocalRuntime` 本体与 UI 选择器尚未移植到 port（见 §9）。
 
+> **第四轮补充（结构化输出，详见 docs/17）**：MiniMax-M3.1-Flash 在 Anthropic 兼容、OpenAI 兼容（chat / responses）、原生 v2 四个入口上都 **静默忽略** 原生结构化输出字段（`output_config.format` / `response_format` / `text.format`，200 + 自由文本，5/5）；文档中的 `response_format` 只对旧模型 `MiniMax-Text-01`（原生接口）有效。**强制工具调用**（Anthropic `tool_choice:{type:"tool"|"any"}`、OpenAI `tool_choice:{type:"function"}|"required"`）返回符合 schema 的 JSON **12/12**。→ preset `structuredOutput:"tool"`，Claude Code 子进程由 gate proxy 模拟（`agentCompat.emulateStructuredOutputs`）。
+
 ## 1. 结论速览
 
 | 项 | 结论 |
@@ -85,7 +87,7 @@ curl https://api.minimaxi.com/anthropic/v1/messages \
 
 ### 2.3 OpenAI 兼容（备用，不作为主路径）
 
-`POST https://api.minimaxi.com/v1/chat/completions`（官方文档 host 为 `api.minimax.cn` / `api.minimax.io`），`Authorization: Bearer`，图片用 `{"type":"image_url","image_url":{"url":"data:image/png;base64,..."}}`，思考深度字段为 `reasoning_effort`，思考内容在 `message.reasoning_content`。另有 OpenAI Responses 兼容端点（Codex `wire_api: "responses"` 理论上可用，未实测）。
+`POST https://api.minimaxi.com/v1/chat/completions`（官方文档 host 为 `api.minimax.cn` / `api.minimax.io`），`Authorization: Bearer`，图片用 `{"type":"image_url","image_url":{"url":"data:image/png;base64,..."}}`，思考深度字段为 `reasoning_effort`，思考内容在 `message.reasoning_content`。另有 OpenAI Responses 兼容端点（Codex `wire_api: "responses"` 理论上可用；第四轮只对它发过 1 次结构化输出探测：200，`text.format` 被忽略）。OpenAI 兼容 chat 的参数表 **没有 `response_format`**（实测被忽略），结构化输出请用强制 `tool_choice`（docs/17 §2）。
 > **2026-10-21 实测（docs/15 §0）**：OpenAI 兼容 chat 端点 `https://api.minimaxi.com/v1` 已通过通用框架（`openai-chat-completions`，`chatMaxTokensField: "max_completion_tokens"`，Bearer）发过 1 次带 base64 PNG 的请求，返回正确。配置见 `port/config/llm-providers.example.json` 的 `minimax-openai`（与内置 `minimax` preset 共用 `MINIMAX_API_KEY`；并发闸门按 key env 共享、取最小 `max`，所以两者同时启用时账号级并发仍为 1）。内置 preset 仍走 Anthropic 兼容端点，行为未变。
 
 ### 2.4 错误码 / 限流

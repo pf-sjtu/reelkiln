@@ -5,6 +5,8 @@
 
 ## 0. 已验证 / 未验证（2026-10-21 第三轮“真实 Claude Agent SDK 端到端”后，box，Node 24.22 / Electron 42.11.9）
 
+> **第四轮（docs/17）**：结构化输出（helper `structuredOutput: native|tool|off`，OpenAI `response_format` 透传 / Responses `text.format` / Anthropic `output_config.format`；MiniMax 用强制工具调用，实测 12/12）、gate proxy 结构化输出模拟、SDK 自动发现 + `npm run agent-sdk:install`、PORT-NEW `port:llm:routes` 路由列表 IPC + stub renderer 选择器。`npm test` **165/165**。
+>
 > 第三轮详见 **docs/16**：官方 `@anthropic-ai/claude-agent-sdk@0.3.305`（内置 Linux 原生 `claude` 2.1.305）经本框架路由对 MiniMax **真实跑通**一问一答 + Bash 工具往返；发现并处理了并发/结构化输出/key 暴露三个问题（gate proxy + `agentCompat`）。
 
 **已验证**
@@ -25,8 +27,8 @@
 
 **未验证 / 风险**
 
-- [x] ~~Claude Agent SDK `query()` 从未真实拉起~~ → **第三轮已真实跑通**（docs/16）。仍延后：原版 `createLocalRuntime` 的完整选项（流式输入、resume、hooks、studio MCP、权限适配/UI、session store）、AgentHost 会话生命周期；SDK 不是 port 依赖，需 `VIDEOCLAW_CLAUDE_AGENT_SDK` 指向一个装了它的目录。
-- [ ] `agentCompat` 中 `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的效果未实测（MiniMax 不需要）；`disableStructuredOutputs` 下 Claude Code 的回退行为未实测。
+- [x] ~~Claude Agent SDK `query()` 从未真实拉起~~ → **第三轮已真实跑通**（docs/16）。仍延后：原版 `createLocalRuntime` 的完整选项（流式输入、resume、hooks、studio MCP、权限适配/UI、session store）、AgentHost 会话生命周期；SDK 不是 port 的 npm 依赖；第四轮起自动发现（`npm run agent-sdk:install` → `port/vendor/`，或打包布局 / env，docs/17 §4）。
+- [ ] `agentCompat` 中 `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的效果未实测（MiniMax 不需要）；`disableStructuredOutputs` 下 Claude Code 的回退行为只看到 1 个样本（docs/17 §8）。MiniMax preset 已改用 `emulateStructuredOutputs`（真实验证，docs/17 §3）。
 - [ ] `openai-responses` 协议从未对任何真实端点发过请求（只有 mock）；`openai-chat-completions` 只对 MiniMax 的兼容端点实测过，未对 OpenAI/OpenRouter/DeepSeek 实测。
 - [ ] 多模态：PDF（`file`/`input_file`）、URL 图片、tool_use/tool_result 的转换只按公开 schema + mock 测试；真实端点只验证了 base64 PNG → chat `image_url`。
 - [ ] `auth.scheme="header"` / `x-api-key` 经**真实** Claude Code 子进程的效果（bearer 已实测；另两种只有 mock + gate proxy 单测）、`CLAUDE_CODE_EFFORT_LEVEL` 是否被采纳（实测请求体中 `output_config.effort` 为 `"high"`，preset 未设 effort）——未实测。
@@ -112,13 +114,15 @@ providers 文件路径：环境变量 **`VIDEOCLAW_LLM_PROVIDERS_FILE`**（设�
 | `chatMaxTokensField` | `max_tokens` | 仅 openai-chat：输出上限字段名；OpenAI 新模型（o 系列 / gpt-5.x）与 MiniMax 兼容端点用 `max_completion_tokens` |
 | `allowInsecureHttp` | `false` | 允许对非回环地址用明文 http（默认只允许 localhost/127.x/::1） |
 
-`agentCompat`（第三轮新增，docs/16 §4.2）：Claude Code 子进程兼容开关，`gateProxy` / `disableNonessentialTraffic` / `disableStructuredOutputs` / `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking` / `disableAdaptiveThinking`，全部默认 false，未知字段报 `CONFIG_INVALID`。
+`agentCompat`（第三轮新增，docs/16 §4.2）：Claude Code 子进程兼容开关，`gateProxy` / `disableNonessentialTraffic` / `disableStructuredOutputs` / `emulateStructuredOutputs`（第四轮，需 `gateProxy`，docs/17 §3.2）/ `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking` / `disableAdaptiveThinking`，全部默认 false，未知字段报 `CONFIG_INVALID`。
+
+`structuredOutput`（第四轮，docs/17 §3.1）：`"native"`（默认，协议自身字段：chat `response_format` 透传 / responses `text.format` / anthropic `output_config.format`）| `"tool"`（强制调用唯一工具 `structured_output`，参数即答案）| `"off"`。helper body 可用三种写法之一请求结构化输出：`output_config.format`、`output_format`、`response_format`。
 
 `baseUrl` 额外规则（§3.5）：不得含用户名/密码、query、fragment；非回环 http 需 `allowInsecureHttp`。`headers` 值与 `auth.prefix` 不得含换行；`model` 不得含控制字符。
 
 ### 2.1 内置 preset：`minimax`
 
-`protocol: anthropic-messages`，`baseUrl: https://api.minimaxi.com/anthropic`，`auth: bearer`，`apiKeyEnv: MINIMAX_API_KEY`，`model: MiniMax-M3.1-Flash`，`concurrency {max:1, cap:2}`（key 与 Pageway 共享），重试 429/529 + `base_resp.status_code=1002`，**不重试** 401/403 + 1004（鉴权）/1008（余额）→ `PROVIDER_CREDENTIAL_MISCONFIGURED`；`modelsDev.provider = "minimax-cn"`（minimaxi.com 为国内站）；env 覆盖 `MINIMAX_BASE_URL` / `MINIMAX_MODEL` / `MINIMAX_MAX_CONCURRENCY`；**第三轮**：`agentCompat {gateProxy, disableNonessentialTraffic, disableStructuredOutputs} = true`（真实 Claude Code 2.1.305 实测所需，原因见 docs/16 §4）。
+`protocol: anthropic-messages`，`baseUrl: https://api.minimaxi.com/anthropic`，`auth: bearer`，`apiKeyEnv: MINIMAX_API_KEY`，`model: MiniMax-M3.1-Flash`，`concurrency {max:1, cap:2}`（key 与 Pageway 共享），重试 429/529 + `base_resp.status_code=1002`，**不重试** 401/403 + 1004（鉴权）/1008（余额）→ `PROVIDER_CREDENTIAL_MISCONFIGURED`；`modelsDev.provider = "minimax-cn"`（minimaxi.com 为国内站）；env 覆盖 `MINIMAX_BASE_URL` / `MINIMAX_MODEL` / `MINIMAX_MAX_CONCURRENCY`；**第三轮**：`agentCompat {gateProxy, disableNonessentialTraffic} = true`（真实 Claude Code 2.1.305 实测所需，原因见 docs/16 §4）；**第四轮**：`disableStructuredOutputs` 改为不开、`emulateStructuredOutputs = true`，并新增 `structuredOutput: "tool"`（docs/17）。
 与 docs/14 唯一差异：helper 调用的鉴权头由 `x-api-key` 改为 `Bearer`（与子进程的 `ANTHROPIC_AUTH_TOKEN` 统一；两者在 docs/14 §0 均验证 200，本次用 Bearer 再次实测通过）。如需旧行为，在 providers 文件里写 `{"name":"minimax","auth":{"scheme":"x-api-key"}}`（注意这同时会让子进程改用 `ANTHROPIC_API_KEY`）。
 
 ### 2.2 热重载
@@ -255,9 +259,11 @@ sync_meta (source PK = 'models.dev', url, etag, last_modified, content_sha256, l
 | `llm-providers` | 已注册 provider 摘要（key 只显示 configured），以及 configError |
 | `llm-providers-validate [file]` | 严格校验 providers 文件（热重载前用）；非法 exit 1 |
 | `llm-ping <provider> [prompt] [image.png]` | **需 `VIDEOCLAW_LLM_LIVE=1`**；经 `LlmRouteService.sessionHelperComplete`（主进程同一路径）发 1 次真实请求，可带一张图片 |
-| `llm-agent-smoke <provider> [prompt] [--tool\|--key-probe]` | **需 `VIDEOCLAW_LLM_LIVE=1` + `VIDEOCLAW_CLAUDE_AGENT_SDK`**；真实 Claude Agent SDK 单轮会话（docs/16 §2） |
+| `llm-agent-smoke <provider> [prompt] [--tool\|--key-probe]` | **需 `VIDEOCLAW_LLM_LIVE=1`**；真实 Claude Agent SDK 单轮会话（docs/16 §2）；SDK 自动发现（docs/17 §4） |
+| `llm-structured <provider> [--mode native\|tool\|off]` | **需 `VIDEOCLAW_LLM_LIVE=1`**；1 次真实结构化输出请求，`verdict: SCHEMA_VALID / JSON_NOT_SCHEMA / NOT_JSON`（docs/17） |
+| `agent-sdk-check` | 离线：SDK 发现来源、版本、是否等于 pin、原生 `claude` 路径（docs/17 §4） |
 | `sqlite-check` | node:sqlite 能力探测（运行时、SQLite 版本、最低版本） |
-| `llm-model-info <provider> [--db P]` | provider → models.dev 元数据 |
+| `llm-model-info <provider> [--db P]` | provider → models.dev 元数据；第四轮起附 `structuredOutput {configured, suggested, matches}` |
 | `models-sync [--db P] [--url U] [--force] [--timeout MS]` | 同步 |
 | `models-list [--db P] [--provider ID] [--search Q] [--limit N] [--offset N]` | 列表（默认 50 条） |
 | `models-show <provider/model \| model> [--provider ID] [--raw]` | 单个模型元数据（`--raw` 附上游原始对象） |
@@ -272,8 +278,8 @@ sync_meta (source PK = 'models.dev', url, etag, last_modified, content_sha256, l
 | `MINIMAX_BASE_URL` / `MINIMAX_MODEL` / `MINIMAX_MAX_CONCURRENCY` | minimax preset 的 env 覆盖（并发封顶 2） |
 | `VIDEOCLAW_MODELS_DB` | models.dev SQLite 路径 |
 | `VIDEOCLAW_LOG_LEVEL` | 日志级别，默认 info |
-| `VIDEOCLAW_LLM_LIVE=1` | 允许 `llm-ping` / `llm-agent-smoke` 发真实请求 |
-| `VIDEOCLAW_CLAUDE_AGENT_SDK` | 装有 `@anthropic-ai/claude-agent-sdk` 的目录（包目录 / node_modules / 其上级） |
+| `VIDEOCLAW_LLM_LIVE=1` | 允许 `llm-ping` / `llm-structured` / `llm-agent-smoke` 发真实请求 |
+| `VIDEOCLAW_CLAUDE_AGENT_SDK` | （可选，最高优先级）装有 `@anthropic-ai/claude-agent-sdk` 的目录（包目录 / node_modules / 其上级）；不设时自动发现（docs/17 §4） |
 | `VIDEOCLAW_CLAUDE_CODE_EXECUTABLE` | 覆盖 `claude` 原生二进制路径（默认取 SDK 旁的 `claude-agent-sdk-<plat>-<arch>/claude`） |
 | `VIDEOCLAW_PORT_FAKE_SETTINGS=1` | 主进程不启用真实 Settings/路由服务，退回 QA fixture |
 | `VIDEOCLAW_PORT_SMOKE_LLM_ROUTE=<route>` | Electron 冒烟中额外执行 `settings:set({llmRoute})` + readiness |

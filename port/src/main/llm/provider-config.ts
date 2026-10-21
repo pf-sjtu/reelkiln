@@ -149,9 +149,9 @@ export const MINIMAX_PRESET: ProviderConfigInput = {
   // Code's output_config.format request → forced tool call → JSON text reply; verified end-to-end:
   // Claude Code 2.1.305 persisted the emulated ai-title).
   agentCompat: { gateProxy: true, disableNonessentialTraffic: true, emulateStructuredOutputs: true },
-  // docs/17 (verified 2026-10-21, 15 live probes): MiniMax-M3.1-Flash IGNORES output_config.format,
+  // docs/17 (verified 2026-10-21, 16 direct live probes + 4 via llm-structured): MiniMax-M3.1-Flash IGNORES output_config.format,
   // response_format (json_schema and json_object) and Responses text.format — 200 + free text —
-  // but a forced tool call returned schema-valid JSON 9/9 on both endpoints.
+  // but a forced tool call (tool_choice tool/function, also any/required) returned schema-valid JSON 12/12 on both endpoints.
   structuredOutput: "tool",
   retry: { maxRetries: 5, baseDelayMs: 2000, maxDelayMs: 60_000, retryStatuses: [429, 529], credentialStatuses: [401, 403], bodyCodePath: "base_resp.status_code", retryBodyCodes: [1002], credentialBodyCodes: [1004, 1008] },
   // api.minimaxi.com is the China site; models.dev lists the same models under minimax-cn.

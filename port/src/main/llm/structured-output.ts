@@ -10,7 +10,7 @@
 //   native → the protocol's own field (anthropic output_config.format / chat response_format /
 //            responses text.format) — use for servers that HONOR it (OpenAI, Anthropic, …)
 //   tool   → a single forced function/tool call whose parameters are the schema; the response's
-//            tool arguments are returned as the JSON text. Verified on MiniMax-M3.1-Flash (both the
+//            tool arguments are returned as the JSON text. Verified on MiniMax-M3.1-Flash (12/12 schema-valid, both the
 //            Anthropic- and the OpenAI-compatible endpoint), which silently IGNORES every native
 //            field (200 + free text) — docs/17 §2.
 //   off    → the format is dropped (logged); the caller must parse/validate free text itself.

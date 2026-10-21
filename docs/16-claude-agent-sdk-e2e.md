@@ -21,7 +21,7 @@
 LlmRouteService.sessionAgentRuntime(meta)          route-service.ts（PORT-NEW）
   └─ sessionRuntimeConfig(meta)                    原版 createLocalRuntime 的 options.env + sessionModel
   └─ provider.agentCompat.gateProxy ? startAgentGateProxy(provider) → proxiedAgentEnv(env)
-loadClaudeAgentSdk($VIDEOCLAW_CLAUDE_AGENT_SDK)    agent-sdk.ts：运行时 import() ESM sdk.mjs（esbuild 不改写）
+loadClaudeAgentSdk()  (env → 自动发现, docs/17 §4)  agent-sdk.ts：运行时 import() ESM sdk.mjs（esbuild 不改写）
 claudeCodeExecutableFor(packageDir)                原版 L19505 的打包分支：…/claude-agent-sdk-<plat>-<arch>[-musl]/claude[.exe]
 runAgentTurn(sdk, { runtime, prompt, cwd, executable, allowedTools, allowTool })
   └─ sdk.query({ prompt, options: minimalAgentOptions(...) })
@@ -77,7 +77,7 @@ proxy 的 debug 日志（`VIDEOCLAW_LOG_LEVEL=debug`）每个上游请求一行�
 | # | 现象（实测） | 影响 | 处理 |
 | --- | --- | --- | --- |
 | 1 | SDK 模式下，第一轮对话的同时 Claude Code **并行**发出 `generate_session_title` 侧请求（小模型 = `ANTHROPIC_SMALL_FAST_MODEL`），外加一个无鉴权的 `HEAD {base}/api/hello` 连通性探测。观测到上游同时在途 **2 个 POST**（含探测为 3） | 违反共享 key（与 Pageway 共用）的 **并发 1** 约束；主进程的账号级闸门（docs/15 §4）完全看不到子进程流量；多个视频同时跑时更糟 | **① 新增回环 gate proxy**（见 §4.1），所有子进程请求进 `providerGate(gateKey)`；实测关闭 #1 的开关后，标题请求被串行排队（`waitedMs≈6587`，`maxInflight:1`）。**② MiniMax preset 默认 `agentCompat.disableNonessentialTraffic=true`** → `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`：实测 **标题侧请求与 `/api/hello` 探测都消失**，每轮只剩 1 个请求（同时关掉遥测）。仅开 `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS` 不能去掉标题请求（已实测） |
-| 2 | 标题请求带 `output_config.format = {type:"json_schema",…}`（beta `structured-outputs-2025-12-15`）。直接对 MiniMax 发同样请求：**200，但忽略 schema**，返回普通文本（外加 thinking 块） | Claude Code 依赖结构化输出的功能会拿到非 JSON（标题生成会静默失败；其他用到 `outputFormat` 的路径同理） | MiniMax preset 默认 `agentCompat.disableStructuredOutputs=true` → `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS=1`。**未验证**：该开关下 Claude Code 内部改用何种回退方式（本轮的单轮/工具冒烟不触发结构化输出） |
+| 2 | 标题请求带 `output_config.format = {type:"json_schema",…}`（beta `structured-outputs-2025-12-15`）。直接对 MiniMax 发同样请求：**200，但忽略 schema**，返回普通文本（外加 thinking 块） | Claude Code 依赖结构化输出的功能会拿到非 JSON（标题生成会静默失败；其他用到 `outputFormat` 的路径同理） | ~~MiniMax preset 默认 `disableStructuredOutputs=true`~~ → **第四轮（docs/17 §3）改为 gate proxy 模拟**（`emulateStructuredOutputs=true`）：无工具的 `output_config.format` 请求 → 强制工具调用 → 回写成 JSON 文本，真实 Claude Code 持久化了模拟出的 `ai-title`。补充：真实 Claude Code 的标题提示词本身要求 JSON，所以原生（被忽略）时标题通常也能解析，但不是被约束的 |
 | 3 | **安全**：provider key 以 `ANTHROPIC_AUTH_TOKEN` 注入子进程，agent 自己的 Bash 工具能读到（实测 `echo LEN=${#ANTHROPIC_AUTH_TOKEN}` → 698 = 真实 key 长度） | 模型 / 提示注入可以把 key 读进上下文或外传 | gate proxy：子进程只拿到 69 字符的每会话随机 token（`vcgp_`+64 hex），proxy 校验 token 后换成真实鉴权头；子进程 env 中 provider key 出现 0 次（`childEnvHasProviderKey:false`，key-probe 实测 `LEN=69`）。proxy 拒绝真实 key 本身（只认 token），只转发 `/v1/*`，`/api/hello` 本地答 200 不外发 |
 | 4 | stderr：`[claude-code:unrecognized_model] {"model":"MiniMax-M3.1-Flash",…}` | 无功能影响；Claude Code 不认识模型 → `total_cost_usd`/`costUSD` 按默认价目估算（`costBasis:"unknown"`），**数字不可信** | 记录在案。provider 路由不要使用 SDK 结果里的费用字段；计费以 MiniMax 账单为准 |
 | 5 | Claude Code 对它判定为只读的命令（如 `echo hello`）**不调用 `canUseTool`** 直接执行；带参数展开的命令才会询问 | 不是 MiniMax 问题，但意味着 `canUseTool` 不是完整的工具审计点 | `runAgentTurn` 另外记录模型发出的所有 `tool_use`（`toolCalls`），与 `permissionChecks` 分开；完整权限体系（原版 `adaptClaudeCodeCanUseTool` + hooks）仍属延后项 |
@@ -99,7 +99,8 @@ proxy 的 debug 日志（`VIDEOCLAW_LOG_LEVEL=debug`）每个上游请求一行�
 | --- | --- | --- |
 | `gateProxy` | （走 §4.1 proxy） | **true** |
 | `disableNonessentialTraffic` | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` | **true** |
-| `disableStructuredOutputs` | `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS=1` | **true** |
+| `disableStructuredOutputs` | `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS=1` | false（第四轮起；原为 true） |
+| `emulateStructuredOutputs` | （gate proxy 改写，无 env） | **true**（第四轮，docs/17 §3.2） |
 | `disablePromptCaching` | `DISABLE_PROMPT_CACHING=1` | false（实测支持 cache_control） |
 | `disableExperimentalBetas` | `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` | false（实测接受全部 beta） |
 | `disableThinking` / `disableAdaptiveThinking` | `CLAUDE_CODE_DISABLE_THINKING=1` / `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` | false |
@@ -110,11 +111,13 @@ env 名取自 Claude Code 2.1.305 二进制中的字符串，前三个已实测�
 
 - 原版 `createLocalRuntime` 的完整选项：流式输入（`prompt: inputStream()`）、`resume` / `sessionStore` / `enableFileCheckpointing`、`replay-user-messages`、project 设置 + 签名校验的 hooks、studio MCP 服务器、`adaptClaudeCodeCanUseTool` 权限适配与 UI、`allowedTools/disallowedTools` 产品清单、`autoCompact` 设置、`effort` 选项。
 - AgentHost 会话生命周期（spawn/teardown、路由变更时 teardown、并发会话管理）、Claude Code 登录探测（`claude-code` 路由 readiness）、CredentialStore。
-- SDK 作为正式依赖与打包（electron-builder 的 asar.unpacked 布局）；现在需手动设置 `VIDEOCLAW_CLAUDE_AGENT_SDK`。
+- ~~SDK 需手动设置 `VIDEOCLAW_CLAUDE_AGENT_SDK`~~ → 第四轮：自动发现 + `npm run agent-sdk:install`（docs/17 §4）；electron-builder 打包配置仍未做。
 - 每个 proxy token 会登记进进程级脱敏集合且不移除（每会话 69 字节，长时间运行的轻微增长）。
 
 ## 6. 已验证 / 未验证
 
 **已验证**：Linux 上官方 SDK 0.3.305 + 原生 claude 2.1.305 正常运行；Node 24.22 与 Electron 42.11.9 均可加载 SDK 并跑通；经 `sessionRuntimeConfig()`/`sessionAgentRuntime()` 的 env/model 驱动真实 agent 对 MiniMax Anthropic 兼容端点完成一问一答、Bash 工具往返、canUseTool 允许/拒绝两条路径；gate proxy 下 `maxInflight` 始终为 1（含故意打开标题请求时的串行化）；子进程 env 不含 provider key（Bash 实测）；输出与日志中 key 出现 0 次；不兼容 #1-#3 的处理实测有效。
 
-**未验证**：`disableStructuredOutputs` 下 Claude Code 的回退行为；`disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的实际效果；子 agent（`Agent` 工具）、长对话自动压缩、图片输入经真实 Claude Code → MiniMax；`x-api-key` / `header` 鉴权方案经真实 Claude Code（只有 mock + proxy 单测）；Windows / macOS 原生二进制；多个视频同时运行时的实际排队时延；MiniMax 真实 429/529 下 Claude Code 自身的重试与我们闸门的叠加效果。
+**第四轮更新**：结构化输出改为 proxy 模拟并真实验证（docs/17）；SDK 自动发现真实验证（不设 env，`source:"vendor"`）。
+
+**未验证**：`disableStructuredOutputs` 下 Claude Code 的回退行为（仅 1 个样本）；`disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的实际效果；子 agent（`Agent` 工具）、长对话自动压缩、图片输入经真实 Claude Code → MiniMax；`x-api-key` / `header` 鉴权方案经真实 Claude Code（只有 mock + proxy 单测）；Windows / macOS 原生二进制；多个视频同时运行时的实际排队时延；MiniMax 真实 429/529 下 Claude Code 自身的重试与我们闸门的叠加效果。

@@ -54,7 +54,12 @@ export async function runModelsCommand(cmd: string, argv: string[], deps: Models
         const reg = deps.registry ?? getProviderRegistry();
         const cfg = reg.require(name);
         const md = providerModelMetadata(db, cfg);
-        return md ? { ok: true, step: cmd, provider: name, model: cfg.model, metadata: md } : { ok: false, step: cmd, provider: name, model: cfg.model, error: "no models.dev metadata for this model (run models-sync, or set modelsDev.provider/model in the provider config)" };
+        // docs/17: models.dev capability → suggested structuredOutput mode (a hint only: the catalog
+        // describes the model, not whether a given compatible endpoint honors the native field)
+        const caps = md?.capabilities;
+        const suggested = caps?.structuredOutput === true ? "native" : caps?.structuredOutput === false ? (caps.toolCall ? "tool" : "off") : undefined;
+        const structuredOutput = { configured: cfg.structuredOutput, ...(suggested ? { suggested, matches: suggested === cfg.structuredOutput } : {}) };
+        return md ? { ok: true, step: cmd, provider: name, model: cfg.model, metadata: md, structuredOutput } : { ok: false, step: cmd, provider: name, model: cfg.model, error: "no models.dev metadata for this model (run models-sync, or set modelsDev.provider/model in the provider config)" };
       }
       default:
         throw new Error(`unknown models subcommand ${cmd}`);
