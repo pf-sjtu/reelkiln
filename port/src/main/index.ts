@@ -2,13 +2,15 @@
 // Mirrors the original createWindow (out/main/index.js L60537-60560) and the IPC
 // registration pattern (trackIpcRequests → ipc.handle / ipc.on for every channel),
 // handlers are served by real-backend.ts where ported, else by the fake backend.
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, protocol } from "electron";
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
-import { createRealHandlers, portHandlers, sendHandlers } from "./real-backend";
+import { createRealHandlers, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
+import { VCMEDIA_SCHEME } from "./media/media.generated";
+import { handleVcmedia } from "./media/media-ipc";
 import { smokeScript } from "./smoke";
 import { homeSmokeScript, reloadSmokeScript, s1SmokeScript } from "./original-ui-smoke";
 import { resolveRendererEntry } from "./renderer-entry";
@@ -17,6 +19,9 @@ import { redactText } from "./llm/logger";
 const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1"; // PORT-NEW
 /** PORT-NEW: append every session:event / permission:request push (redacted JSONL) — evidence capture. */
 const EVENT_LOG = process.env.VIDEOCLAW_PORT_EVENT_LOG;
+
+// docs/22 M3: original L60356 — vcmedia:// is a privileged, streamable, CSP-bypassing scheme
+protocol.registerSchemesAsPrivileged([VCMEDIA_SCHEME as any]);
 
 let win: BrowserWindow | null = null;
 const sendToRenderer = createRendererEmitter(() => win);
@@ -82,11 +87,11 @@ function createWindow() {
         if (shot) { try { writeFileSync(shot, (await created.webContents.capturePage()).toPNG()); log(`[smoke] screenshot ${shot}`); } catch (e) { log(`[smoke] screenshot failed ${String(e)}`); } }
         let ok = home.ok;
         if (originalMode === "s1") {
-          const brief = readFileSync(process.env.VIDEOCLAW_PORT_SMOKE_S1!, "utf8").trim();
-          const r = await created.webContents.executeJavaScript(s1SmokeScript({ brief, timeoutMs: Number(process.env.VIDEOCLAW_PORT_SMOKE_S1_TIMEOUT_MS ?? 25 * 60_000), permission: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION === "deny" ? "deny" : "allow", permissionMode: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION_MODE, llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE }));
+          const brief = process.env.VIDEOCLAW_PORT_SMOKE_M3_SESSION ? "" : readFileSync(process.env.VIDEOCLAW_PORT_SMOKE_S1!, "utf8").trim();
+          const r = await created.webContents.executeJavaScript(s1SmokeScript({ brief, timeoutMs: Number(process.env.VIDEOCLAW_PORT_SMOKE_S1_TIMEOUT_MS ?? 25 * 60_000), permission: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION === "deny" ? "deny" : "allow", permissionMode: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION_MODE, llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE, attach: !!process.env.VIDEOCLAW_PORT_SMOKE_PICK_FILES, m3: process.env.VIDEOCLAW_PORT_SMOKE_M3 === "1", keepTasteTurn: process.env.VIDEOCLAW_PORT_SMOKE_KEEP_TASTE === "1", existingSession: process.env.VIDEOCLAW_PORT_SMOKE_M3_SESSION }));
           const out = process.env.VIDEOCLAW_PORT_SMOKE_S1_OUT;
           if (out) writeFileSync(out, redactText(JSON.stringify(r, null, 2)));
-          log(`[smoke] S1 ok=${r.ok} session=${JSON.stringify(r.session)} final=${JSON.stringify(r.final)} events=${r.events.length}`);
+          log(`[smoke] S1 ok=${r.ok} turnMs=${r.turnMs} session=${JSON.stringify(r.session)} final=${JSON.stringify(r.final)} events=${r.events.length} attachment=${JSON.stringify(r.attachment)?.slice(0, 800)} m3=${JSON.stringify(r.m3)?.slice(0, 1500)}`);
           ok = ok && r.ok;
         } else if (originalMode === "reload") {
           const r = await created.webContents.executeJavaScript(reloadSmokeScript());
@@ -129,6 +134,8 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  // original L62452: only files main granted (job snapshots, picked files) are served, with Range
+  protocol.handle("vcmedia", (req) => handleVcmedia(req, mediaCapabilities, (sid) => mediaRoots.chatMediaRoot(sid)));
   const real = registerIpc();
   // PORT-NEW smoke: preselect + acknowledge an LLM route (what the user does once in the first-launch
   // route picker / port Settings page) so the original home opens on that route.

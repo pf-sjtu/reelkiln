@@ -3,7 +3,7 @@
 
 Reads artifacts/manifests/ipc-channels.json (machine-extracted from the original bundle) and
 greps the port sources for handler/push registrations. Categories:
-  real      - served by a ported/PORT-NEW real implementation (real-backend / llm-runtime / agent-ipc)
+  real      - served by a ported/PORT-NEW real implementation (real-backend / llm-runtime / agent-ipc / media-ipc)
   real-env  - real only when a PORT-NEW env var is set (bootstrap:run), fake fixture otherwise
   fixture   - fake-backend.ts returns a canned value copied from the original QA fixtures
   stub      - registered but returns undefined / only logs (NOT IMPLEMENTED)
@@ -19,7 +19,7 @@ chans = json.loads((R / "artifacts/manifests/ipc-channels.json").read_text())
 src = lambda p: (R / "port/src/main" / p).read_text()
 key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
 assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
-real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts")))
+real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts")))
 real_env = {"bootstrap:run"}
 fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()

@@ -2,11 +2,15 @@
 """PORT-NEW (docs/20 §3.4): machine-checkable acceptance for main-flow scenario S1.
 
   python3 tools/accept_check.py JOB_DIR [--inputs FIXTURE_DIR] [--userdata UD --session SID]
+                                [--export EXPORTED.mp4] [--attachments]
 
 Engine-level criteria (E*) only need JOB_DIR; app-level criteria (A*) additionally read the
-port's userData (sessions.json / versions.json are NOT yet written by the port → reported
-"pending", never "pass"). Prints one JSON object; exit 0 iff every evaluated criterion passed
-and none is pending (use --engine-only to evaluate E* alone).
+port's userData (sessions.json / versions.json). Anything that cannot be evaluated is reported
+"pending", never "pass". docs/22: A3 also requires the approval in versions.json (a final record
+for v1 with madeFinalAtMs); --export checks the file:saveItemAs copy (X1: same bytes as v1 +
+ffprobe-playable); --attachments checks S1-L2 (L2: every fixture input was materialized by the
+attachment path into JOB_DIR/incoming/ byte-identical). Prints one JSON object; exit 0 iff every
+evaluated criterion passed and none is pending (use --engine-only to evaluate E* alone).
 """
 import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
@@ -21,7 +25,7 @@ def sha(p):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("job"); ap.add_argument("--inputs"); ap.add_argument("--engine-only", action="store_true")
-    ap.add_argument("--userdata"); ap.add_argument("--session")
+    ap.add_argument("--userdata"); ap.add_argument("--session"); ap.add_argument("--export"); ap.add_argument("--attachments", action="store_true")
     a = ap.parse_args()
     J = Path(a.job); F = J / "final.mp4"; res = {}
     def put(k, ok, detail=""): res[k] = {"ok": bool(ok), "detail": detail}
@@ -87,12 +91,36 @@ def main():
             try:
                 data = json.loads(reg.read_text()); s = next(x for x in data.get("sessions", []) if x.get("sessionId") == a.session)
                 put("A2_session_bound_to_job", s.get("jobId") == J.name, f"jobId={s.get('jobId')}")
-                if "finalizedAtMs" in s: put("A3_version_approved", True, str(s["finalizedAtMs"]))
+                if "finalizedAtMs" in s:
+                    try:
+                        vs = json.loads((Path(a.userdata) / "versions.json").read_text()).get(J.name, {})
+                        fin = [f for f in vs.get("finals", []) if f.get("n") == 1 and isinstance(f.get("madeFinalAtMs"), (int, float))]
+                        v1rec = next((v for v in vs.get("versions", []) if v.get("n") == 1), None)
+                        okv = bool(fin) and v1.is_file() and fin[-1].get("qaSha256") == sha(v1)
+                        put("A3_version_approved", okv, f"finalizedAtMs={s['finalizedAtMs']} finals(v1)={len(fin)} madeFinalAtMs={fin[-1].get('madeFinalAtMs') if fin else None} v1Recorded={bool(v1rec)}")
+                    except Exception as e:
+                        put("A3_version_approved", False, f"finalizedAtMs set but versions.json unreadable ({type(e).__name__})")
                 else: pend("A3_version_approved", "no finalizedAtMs on session meta")
             except Exception as e:
                 pend("A2_session_bound_to_job", f"registry unreadable or session absent ({type(e).__name__})")
         else:
             pend("A2_session_bound_to_job", "--userdata/--session not given")
+    if a.export:
+        X = Path(a.export); v1 = J / "versions" / "v1.mp4"
+        if X.is_file() and v1.is_file():
+            rc, out, err = sh("ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_name,width,height", "-of", "json", str(X))
+            d = float(json.loads(out or "{}").get("format", {}).get("duration", 0) or 0)
+            put("X1_export_copy_playable", sha(X) == sha(v1) and rc == 0 and abs(d - 6.5) <= 0.25, f"sha==v1:{sha(X) == sha(v1)} ffprobe_rc={rc} duration={d}")
+        else:
+            put("X1_export_copy_playable", False, f"missing {X if not X.is_file() else v1}")
+    if a.attachments:
+        inc = J / "incoming"
+        if a.inputs and inc.is_dir():
+            sums = dict(reversed(l.split()) for l in (Path(a.inputs) / "SHA256SUMS").read_text().splitlines())
+            got = {p.name: sha(p) for p in inc.iterdir() if p.is_file()}
+            put("L2_attachments_materialized", all(got.get(n) == h for n, h in sums.items()), f"incoming={sorted(got)}")
+        else:
+            put("L2_attachments_materialized", False, f"no {inc} (or --inputs missing)")
     failed = [k for k, r in res.items() if r["ok"] is False]
     pending = [k for k, r in res.items() if r["ok"] is None]
     print(json.dumps({"failed": failed, "pending": pending, "results": res}, indent=1))

@@ -26,12 +26,16 @@
 //   - a send while the same video is still running is refused (original folds it into the turn)
 //   - tools: an explicit allow-list (default Read/Glob/Grep) and a canUseTool that only allows
 //     paths inside the session cwd; no Bash, no MCP, no hooks, no permission UI
-// DEFERRED (docs/19 §5): display transcript / session:history, registry persistence of these
-//   sessions, resume, attachments, spend gates, permission cards, titles, job binding, studio MCP,
-//   hooks, steer/queued turns, retry, setModel/setPermissionMode.
+// docs/21 M2 added engine sessions, job binding, permission cards, sessions.json; docs/22 M3/M4 add
+//   the original VersionStore + JobWatchers (job snapshots, versions, approve/finalize) and the
+//   ComposerAttachmentStore (stage → materialize on Send).
+// DEFERRED: display transcript / session:history, resume, spend gates, titles, studio MCP,
+//   steer/queued turns, retry, setModel/setPermissionMode, materials ledger, done-accounting.
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve as resolvePath } from "node:path";
+import { JobWatcher, VersionStore, resolveCut, scanJob } from "../jobs/version-store.generated";
+import { attachmentContextLines, ComposerAttachmentStore } from "../attachments/composer-attachments.generated";
 import type { LlmRouteId } from "../../shared/llm-types";
 import { minimalAgentOptions, type ClaudeAgentSdkLike, type AgentQuery } from "../llm/agent-sdk";
 import { getLogger, redact, redactText, registerSecret, type Logger } from "../llm/logger";
@@ -71,6 +75,8 @@ export type SessionEvent =
   | { kind: "result"; isError: boolean; totalCostUsd: number; numTurns: number; durationMs: number; stoppedAfterMs?: number; stopTurnId?: string }
   | { kind: "error"; message: string; canRetry: boolean }
   | { kind: "permission_resolved"; requestId: string }
+  /** approveVersion (L47513): the approval line shown in the transcript. */
+  | { kind: "user_text"; text: string }
   /** PORT-NEW diagnostic (not an original kind): route/model/SDK the runtime started with. */
   | { kind: "port_runtime"; phase: "started" | "closed"; llmRoute: string; model?: string; gateProxy?: boolean; claudeCodeVersion?: string; reason?: string };
 
@@ -79,6 +85,8 @@ export interface AgentHostEmit {
   sessionsChanged(list: AgentSessionMeta[]): void;
   /** push permission:request (original emit.permissionRequest L61055). */
   permissionRequest?(req: PermissionRequest): void;
+  /** push job:snapshot {sessionId, snapshot} (original emit.jobSnapshot L61077). */
+  jobSnapshot?(sessionId: string, snapshot: any): void;
 }
 export interface AgentRuntimeHandle { llmRoute: LlmRouteId; model: string | undefined; env: Record<string, string>; proxy?: unknown; close(): Promise<void> }
 export interface AgentHostRouteService {
@@ -108,6 +116,10 @@ export interface AgentHostDeps {
   engine?: EngineSessionDeps;
   /** docs/21 M2: persist the host's session metas (sessions.json writeRegistry L36199). */
   persist?: (rows: Array<Record<string, unknown>>) => void;
+  /** docs/22 M3/M4: the registry directory (original dirname(registryFile) = userData). When set
+   *  (engine mode), the host owns the ORIGINAL VersionStore (versions.json, L34848) + JobWatchers
+   *  and the ComposerAttachmentStore (composer-attachments.json, L34841). */
+  stateDir?: string;
 }
 
 export class ComposerDeliveryError extends Error { constructor(m: string) { super(m); this.name = "ComposerDeliveryError"; } }
@@ -178,10 +190,25 @@ export class AgentHost {
   private sdk?: Promise<{ sdk: ClaudeAgentSdkLike; executable?: string; version?: string }>;
   private readonly tools: string[];
   private readonly now: () => number;
+  /** docs/22 M3: original AgentHost.versionStore / watchers (L34848, L47956). */
+  readonly versionStore?: any;
+  private readonly watchers = new Map<string, any>();
+  /** docs/22 M4: original AgentHost.attachmentStore (L34841). */
+  readonly attachmentStore?: any;
+  /** sends between the turn-slot claim and the runtime enqueue (attachment copies, job mint) */
+  private readonly preparing = new Set<string>();
   constructor(private readonly d: AgentHostDeps) {
     this.log = (d.logger ?? getLogger()).child({ component: "agent-host" });
     this.tools = d.tools ?? DEFAULT_AGENT_TOOLS;
     this.now = d.now ?? Date.now;
+    if (d.engine && d.stateDir) {
+      // L34848: onNewVersion → outbox job-log/job-final uploads + noteNewVersion ("done" notify);
+      // the port has no outbox/gateway, so the hook only logs (NOT PORTED: uploads, videoDone).
+      this.versionStore = new VersionStore(join(d.stateDir, "versions.json"), (jobId: string, _jobPath: string, version: any, event: string) => {
+        this.log.info("agent.version.new", { jobId, n: version?.n, event });
+      }, d.engine.workspaceRoot());
+      this.attachmentStore = new ComposerAttachmentStore(join(d.stateDir, "composer-attachments.json"));
+    }
   }
 
   listSessions(): AgentSessionMeta[] {
@@ -260,53 +287,91 @@ export class AgentHost {
     this.send(s, { kind: "status", status });
     this.d.emit.sessionsChanged(this.listSessions());
   }
-  private activeTurns(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.status === "running" || s.meta.status === "awaiting_permission") n++; return n; }
+  private activeTurns(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(s.meta.sessionId)) n++; return n; }
 
-  /** sendMessage (L41400) slice. Resolves when the message is queued into the runtime. */
+  /** sendMessage (L41400) / submitMessage / submitPreparedMessage (L41559) slice. Resolves when the
+   *  message is queued into the runtime. docs/22 M4: composer attachments are materialized into the
+   *  session's destination (secureComposerDestination L44705) and listed ahead of the turn text. */
   async sendMessage(sessionId: string, input: string | { text: string; clientTurnId?: string; attachmentIds?: string[] }): Promise<{ submitted: true; duplicate: boolean; attachmentIds: string[] }> {
+    const composer = typeof input !== "string";
+    if (composer && this.sessions.get(sessionId)?.meta.finalizedAtMs) { // L41425
+      throw new ComposerDeliveryError("This video is finalized. Undo Final to reopen it, or start a new video for this one.");
+    }
     const s = this.mustGet(sessionId);
     if (s.interrupting) await s.interrupting;
-    const req = typeof input === "string" ? { text: input, clientTurnId: "", attachmentIds: [] as string[] } : { text: String(input?.text ?? ""), clientTurnId: String(input?.clientTurnId ?? ""), attachmentIds: input?.attachmentIds ?? [] };
-    if (req.attachmentIds.length) throw new ComposerDeliveryError("Attachments are not supported in this port yet.");
-    if (!req.text.trim()) throw new Error("Write a message or attach a file before sending."); // L41445
-    if (req.clientTurnId && s.clientTurns.has(req.clientTurnId)) return { submitted: true, duplicate: true, attachmentIds: [] };
-    if (s.meta.status === "running" || s.meta.status === "awaiting_permission") throw new ComposerDeliveryError("This video is still working. Wait for the reply or press Stop.");
+    const req = typeof input === "string" ? { text: input, clientTurnId: "", attachmentIds: [] as string[] } : { text: String(input?.text ?? ""), clientTurnId: String(input?.clientTurnId ?? ""), attachmentIds: Array.isArray(input?.attachmentIds) ? input.attachmentIds.map(String) : [] };
+    const store = this.attachmentStore;
+    if (req.attachmentIds.length && !store) throw new ComposerDeliveryError("Attachments are not supported in this port yet.");
+    if (!req.text.trim() && req.attachmentIds.length === 0) throw new Error("Write a message or attach a file before sending."); // L41445
+    if (new Set(req.attachmentIds).size !== req.attachmentIds.length) throw new Error("Duplicate attachment ids are not allowed.");
+    if (req.attachmentIds.length && !req.clientTurnId.trim()) throw new Error("Missing composer turn id.");
+    if (req.clientTurnId && store && store.checkTurn(sessionId, req.clientTurnId, req.text, req.attachmentIds) === "duplicate") return { submitted: true, duplicate: true, attachmentIds: [...req.attachmentIds] };
+    if (req.clientTurnId && s.clientTurns.has(req.clientTurnId)) return { submitted: true, duplicate: true, attachmentIds: [...req.attachmentIds] };
+    if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(sessionId)) throw new ComposerDeliveryError("This video is still working. Wait for the reply or press Stop.");
     const limit = this.d.maxConcurrentTurns ?? 1;
     if (this.activeTurns() >= limit) throw new ComposerDeliveryError(`Another video is still working (this port runs ${limit} agent turn${limit === 1 ? "" : "s"} at a time). Wait for it or press Stop there.`);
     // claim the turn slot before any await so two concurrent sends cannot both pass the gate
     if (req.clientTurnId) s.clientTurns.add(req.clientTurnId);
+    this.preparing.add(sessionId);
+    const release = () => { if (req.clientTurnId) s.clientTurns.delete(req.clientTurnId); };
     let wireText = req.text;
-    if (this.d.engine) {
-      // submitPreparedMessage L41559-41600: first message mints + binds the job, then the turn text
-      // carries the app-owned session policy and production id.
-      s.lastUserText = req.text;
-      const jobId = firstMessageJobId(s.meta as any, req.text);
-      if (jobId) {
-        try { ensureJobDir(s.meta.cwd, jobId); } catch (e: any) { if (req.clientTurnId) s.clientTurns.delete(req.clientTurnId); throw new ComposerDeliveryError(redactText(String(e?.message ?? e))); }
-        this.commitBind(s, jobId, "first-message");
+    const useStore = !!(store && req.clientTurnId && this.d.engine);
+    try {
+      if (this.d.engine) {
+        s.lastUserText = req.text;
+        if (useStore && store.prepareTurn(sessionId, req.clientTurnId, req.text, req.attachmentIds) === "duplicate") { release(); return { submitted: true, duplicate: true, attachmentIds: [...req.attachmentIds] }; } // continueSend L41520
+        // submitPreparedMessage L41559-41600: first message mints + binds the job (watcher deferred)
+        const jobId = firstMessageJobId(s.meta as any, req.text);
+        if (jobId) {
+          try { ensureJobDir(s.meta.cwd, jobId); } catch (e: any) { throw new ComposerDeliveryError(redactText(String(e?.message ?? e))); }
+          this.commitBind(s, jobId, "first-message", false);
+        }
+        // L41588-41612: materialize every attachment into its destination, in order
+        const materialized: any[] = [];
+        if (req.attachmentIds.length) {
+          const draft = new Map<string, any>(store.list(sessionId, req.clientTurnId).map((a: any) => [a.id, a]));
+          for (const attachmentId of req.attachmentIds) {
+            const attachment = draft.get(attachmentId);
+            if (!attachment) throw new Error("One of those attachments is no longer in this draft.");
+            const destDir = this.secureComposerDestination(s, attachment.destination);
+            materialized.push(await store.materialize(sessionId, attachmentId, destDir, true));
+          }
+          if (materialized.some((a) => a.destination === "video")) this.watchers.get(sessionId)?.emit();
+        }
+        wireText = engineTurnText(s.meta as any, req.text);
+        if (materialized.length > 0) { // L41630-41656 (readerTools: local runtime)
+          const list2 = materialized.map((a) => `- ${a.id}: ${a.path}` + attachmentContextLines(a, true).map((line: string) => `\n${line}`).join("")).join("\n");
+          wireText = `[APP-OWNED COMPOSER ATTACHMENTS — ordered]\n${list2}\n[Use these files as source material where relevant.]\n\n` + wireText;
+        }
+        if (useStore) wireText = store.freezeRuntimeText(sessionId, req.clientTurnId, req.text, req.attachmentIds, wireText);
       }
-      wireText = engineTurnText(s.meta as any, req.text);
+    } catch (e) {
+      this.preparing.delete(sessionId);
+      release();
+      throw e;
     }
+    this.preparing.delete(sessionId);
     this.setStatus(s, "running");
     let rt: Runtime;
     try {
       rt = await this.ensureRuntime(s);
     } catch (e: any) {
-      if (req.clientTurnId) s.clientTurns.delete(req.clientTurnId);
-      if ((s.meta.status as SessionStatus) !== "running") return { submitted: true, duplicate: false, attachmentIds: [] }; // stopped / reset while spawning
+      release();
+      if ((s.meta.status as SessionStatus) !== "running") return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] }; // stopped / reset while spawning
       const message = redactText(String(e?.message ?? e));
       this.log.warn("agent.spawn_failed", { sessionId, error: e });
       this.send(s, { kind: "error", message, canRetry: true });
       this.setStatus(s, "error");
       throw new ComposerDeliveryError(message);
     }
-    if ((s.meta.status as SessionStatus) !== "running" || s.runtime !== rt) return { submitted: true, duplicate: false, attachmentIds: [] }; // stopped while spawning
+    if ((s.meta.status as SessionStatus) !== "running" || s.runtime !== rt) return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] }; // stopped while spawning
     const timeoutMs = this.d.turnTimeoutMs ?? (this.d.engine ? 20 * 60_000 : 5 * 60_000);
     s.turnTimer = setTimeout(() => { if (s.meta.status === "running" || s.meta.status === "awaiting_permission") { this.send(s, { kind: "error", message: `The turn did not finish within ${Math.round(timeoutMs / 1000)} s and was stopped.`, canRetry: true }); this.teardownRuntime(s, "turn-timeout"); this.setStatus(s, "error"); } }, timeoutMs);
     (s.turnTimer as any).unref?.();
     rt.queue.push({ type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() });
     rt.wake?.(); rt.wake = null;
-    return { submitted: true, duplicate: false, attachmentIds: [] };
+    if (useStore) { try { store.markTurnSubmitted(sessionId, req.clientTurnId, req.text, req.attachmentIds); } catch (e) { this.log.warn("agent.attachments.mark_submitted_failed", { sessionId, error: e }); } } // L41715
+    return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] };
   }
 
   private loadSdk() { return (this.sdk ??= this.d.loadSdk().catch((e) => { this.sdk = undefined; throw e; })); }
@@ -512,7 +577,7 @@ export class AgentHost {
   /** commitBind (L47615): persist, surface. Not ported: spend-accounting resets, JobWatcher
    *  (ensureWatcher → M3), beacon. rotateRuntimeForJobAttribution: an idle live runtime is retired so
    *  the next spawn pins VIDEOCLAW_BOUND_JOB; a RUNNING turn keeps its runtime (no replay — divergence). */
-  commitBind(s: Session, jobId: string, via: string): void {
+  commitBind(s: Session, jobId: string, via: string, watchImmediately = true): void {
     if (!isClientJobId(jobId)) return;
     const changed = s.meta.jobId !== jobId;
     s.meta.jobId = jobId;
@@ -521,6 +586,7 @@ export class AgentHost {
     this.d.emit.sessionsChanged(this.listSessions());
     this.log.info("agent.job.bound", { sessionId: s.meta.sessionId, jobId, via });
     if (changed && s.runtime && !s.runtime.dead && s.meta.status !== "running" && s.meta.status !== "awaiting_permission") this.teardownRuntime(s, "job-attribution");
+    if (watchImmediately) this.ensureWatcher(s, true);
   }
 
   /** canUseTool → permission card: rememberPermission + emit.permissionRequest (L50060-50085). */
@@ -643,8 +709,185 @@ export class AgentHost {
 
   /** App quit: retire everything. */
   async dispose(): Promise<void> {
+    for (const sessionId of [...this.watchers.keys()]) this.retireWatcher(sessionId); // L45572
     const closing: Promise<void>[] = [];
     for (const s of this.sessions.values()) { const rt = s.runtime; if (rt) { this.teardownRuntime(s, "dispose"); if (rt.closed) closing.push(rt.closed); } }
     await Promise.all(closing);
   }
+
+  // ── docs/22 M3: job snapshot / versions (original L45608-45626, L47448-47520, L47950-47983) ──
+
+  /** snapshotJobDir (L45608): THE job directory for a snapshot read; fails closed on traversal. */
+  snapshotJobDir(s: Session, jobId: string): string | null {
+    if (!isClientJobId(jobId)) return null;
+    const jobsRoot = join(s.meta.cwd, "jobs"); // expandTilde$1: port cwds are absolute
+    const jobPath = resolvePath(jobsRoot, jobId);
+    return relative(jobsRoot, jobPath) === jobId ? jobPath : null;
+  }
+  /** chatMediaRoot (L45616): read-only media scope of a video. */
+  chatMediaRoot(sessionId: string): string | null {
+    const s = this.sessions.get(sessionId);
+    const jobId = (s?.meta.jobId ?? (s?.meta as any)?.priorJobId) as string | undefined;
+    return s && jobId ? this.snapshotJobDir(s, jobId) : null;
+  }
+  /** getJobSnapshot (L45620) → job:get. */
+  getJobSnapshot(sessionId: string): any {
+    const s = this.mustGet(sessionId);
+    if (!s.meta.jobId || !this.versionStore) return null;
+    this.ensureWatcher(s);
+    const jobPath = this.snapshotJobDir(s, s.meta.jobId);
+    if (!jobPath) return null;
+    return this.enrich(scanJob(s.meta.jobId, jobPath));
+  }
+  /** historicalJobSnapshot (L45643): read-only projection of a released job (pure: no enrich, no watcher). */
+  historicalJobSnapshot(sessionId: string): any {
+    const s = this.sessions.get(sessionId);
+    const jobId = (s?.meta as any)?.priorJobId as string | undefined;
+    if (!s || !jobId || s.meta.jobId || !this.versionStore) return null;
+    const jobPath = this.snapshotJobDir(s, jobId);
+    if (!jobPath || !existsSync(jobPath)) return null;
+    const snapshot = scanJob(jobId, jobPath);
+    snapshot.versions = this.versionStore.versions(jobId);
+    snapshot.finals = this.versionStore.finals(jobId);
+    this.nameCandidateVersion(snapshot);
+    return snapshot;
+  }
+  /** nameCandidateVersion (L45661). */
+  private nameCandidateVersion(snapshot: any): void {
+    for (const render of snapshot.renders) {
+      if (!render.isCandidate) continue;
+      const n = this.versionStore.versionHolding(snapshot.jobId, render.path);
+      if (n !== undefined) render.versionN = n;
+    }
+  }
+  /** enrich (L47448): attach versions (minting finished renders) to a scan. NOT PORTED:
+   *  accountVersions (turn "done" accounting / videoDone notify, needs turnWindows). */
+  enrich(snapshot: any): any {
+    const vs = this.versionStore;
+    snapshot.versions = vs.sync(snapshot.jobId, snapshot.jobPath);
+    snapshot.finals = vs.finals(snapshot.jobId);
+    if (vs.hasBacklog(snapshot.jobId)) {
+      for (const watcher of this.watchers.values()) if (watcher.jobId === snapshot.jobId) watcher.rescanSoon();
+    }
+    this.nameCandidateVersion(snapshot);
+    snapshot.qaMarkedAtMs = [...snapshot.versions].reverse().find((v: any) => v.qaStatus === "clean")?.createdAtMs ?? null;
+    if (snapshot.cut.source !== "none") {
+      for (const v of snapshot.versions) {
+        const perVer = join(snapshot.jobPath, "versions", `v${v.n}.timeline.json`);
+        if (existsSync(perVer)) snapshot.cut.perVersion[v.n] = resolveCut(snapshot.jobPath, perVer, v.n).usedPaths;
+      }
+    }
+    return snapshot;
+  }
+  /** retireWatcher (L47949). */
+  retireWatcher(sessionId: string): void {
+    const watcher = this.watchers.get(sessionId);
+    if (!watcher) return;
+    watcher.close();
+    this.watchers.delete(sessionId);
+    this.versionStore?.releaseJob(watcher.jobId);
+  }
+  /** ensureWatcher (L47956). NOT PORTED in the snapshot hook: spendBudgets.reconcileSpend (no
+   *  spend ledger, $0), observePulseMedia (telemetry), publishMaterials (materials ledger). */
+  ensureWatcher(s: Session, replace = false): void {
+    if (!this.versionStore) return;
+    const existing = this.watchers.get(s.meta.sessionId);
+    if (existing && !replace) return;
+    if (existing) this.retireWatcher(s.meta.sessionId);
+    if (!s.meta.jobId) return;
+    const sessionId = s.meta.sessionId;
+    const jobId = s.meta.jobId;
+    this.watchers.set(sessionId, new JobWatcher(jobId, join(s.meta.cwd, "jobs", jobId), (snapshot: any) => {
+      try { this.d.emit.jobSnapshot?.(sessionId, this.enrich(snapshot)); } catch (e) { this.log.warn("agent.job_snapshot_failed", { sessionId, error: e }); }
+    }));
+    if (this.versionStore.hasBacklog(jobId)) this.watchers.get(sessionId)?.rescanSoon();
+  }
+  /** revertFinal (L47478). */
+  revertFinal(sessionId: string, n: number): void {
+    const s = this.mustGet(sessionId);
+    if (!s.meta.jobId || !this.versionStore) return;
+    const version = this.versionStore.revertFinal(s.meta.jobId, n);
+    if (!version) return;
+    this.watchers.get(sessionId)?.emit();
+  }
+  /** approveVersion (L47488) → version:approve: finalize, then (first approval only) the original
+   *  taste-capture follow-up turn. NOT PORTED: recordProductMilestone beacon, voice dictation cancel. */
+  approveVersion(sessionId: string, n: number): void {
+    const s = this.mustGet(sessionId);
+    if (!s.meta.jobId || !this.versionStore) return;
+    const vs = this.versionStore;
+    const everFinal = vs.finals(s.meta.jobId).some((r: any) => r.n === n);
+    const isCurrentFinal = vs.currentFinal(s.meta.jobId)?.n === n;
+    if (everFinal && !isCurrentFinal) { this.revertFinal(sessionId, n); return; }
+    const version = vs.approve(s.meta.jobId, n);
+    if (!version) return;
+    (s.meta as any).finalizedAtMs = Date.now();
+    this.saveRegistry();
+    this.d.emit.sessionsChanged(this.listSessions());
+    this.log.info("agent.version.approved", { sessionId, jobId: s.meta.jobId, n });
+    this.watchers.get(sessionId)?.emit();
+    if (everFinal) return;
+    const quotes = vs.versions(s.meta.jobId).flatMap((v: any) => v.feedback.map((f: string) => `V${v.n}: "${f}"`)).join("\n");
+    this.send(s, { kind: "user_text", text: `✅ V${n} approved` });
+    void this.sendMessage(sessionId, `✅ I'm approving V${n} — this is the one.
+
+Per the taste-capture protocol, distill the feedback I gave across the versions into a SHORT list of durable taste rules (project-level; promote to client/global ONLY if clearly generalizable). Propose them to me with AskUserQuestion (multiSelect) so I pick which to keep — do NOT write any taste file until I confirm. After I confirm, write the kept rules to the appropriate COMMITMENTS blocks and reply with what was committed.` + (quotes ? `
+
+Feedback log:
+${quotes}` : "")).catch((e) => this.log.info("agent.version.taste_capture_not_sent", { sessionId, error: e }));
+  }
+  /** unfinalizeSession (L…unfinalizeSession) → session:unfinalize (continuations not ported). */
+  unfinalizeSession(sessionId: string): AgentSessionMeta {
+    const s = this.mustGet(sessionId);
+    delete (s.meta as any).finalizedAtMs;
+    this.saveRegistry();
+    this.d.emit.sessionsChanged(this.listSessions());
+    return { ...s.meta };
+  }
+
+  // ── docs/22 M4: composer attachments (original L44705-44985, L51017) ──
+
+  /** mustGetWritable (L51017). */
+  mustGetWritable(sessionId: string): Session {
+    const s = this.mustGet(sessionId);
+    if ((s.meta as any).finalizedAtMs) throw new Error("This video is finalized. Undo Final to change its attachments.");
+    return s;
+  }
+  private requireStore(): any {
+    if (!this.attachmentStore) throw new Error("Attachments are not supported in this port yet.");
+    return this.attachmentStore;
+  }
+  /** secureComposerDestination (L44705): component-by-component, no symlinks, inside the workspace. */
+  secureComposerDestination(s: Session, destination: string): string {
+    const workspace = realpathSync(s.meta.cwd);
+    const tenant = ""; // getClient(clientId)?.tenant — port clients carry no tenant (library drops refused)
+    const parts = destination === "library" ? ["assets", tenant, "drops"] : s.meta.jobId ? ["jobs", s.meta.jobId, "incoming"] : ["incoming"];
+    if (parts.some((part) => !part || part === "." || part === ".." || part.includes("/"))) throw new Error("Attachment destination is not safely scoped to this project.");
+    let current = workspace;
+    for (const part of parts) {
+      current = join(current, part);
+      if (!existsSync(current)) mkdirSync(current);
+      const st = lstatSync(current);
+      if (st.isSymbolicLink() || !st.isDirectory()) throw new Error("Attachment destination is not a safe project directory.");
+    }
+    const canonical = realpathSync(current);
+    const rel = relative(workspace, canonical);
+    if (rel.startsWith("..") || isAbsolute(rel)) throw new Error("Attachment destination escaped this project.");
+    return canonical;
+  }
+  composerAttachmentSourcePaths(): Set<string> { return this.attachmentStore?.sourcePaths() ?? new Set(); }
+  stageComposerAttachments(request: any, onChanged: (a: unknown) => void): unknown[] {
+    this.mustGetWritable(String(request?.sessionId));
+    return this.requireStore().stage(request, onChanged);
+  }
+  listComposerAttachments(sessionId: string): unknown[] { this.mustGet(sessionId); return this.attachmentStore ? this.attachmentStore.list(sessionId) : []; }
+  composerAttachmentOwnership(sessionId: string, attachmentId: string): unknown { this.mustGet(sessionId); return this.requireStore().ownership(sessionId, attachmentId); }
+  removeComposerAttachment(sessionId: string, attachmentId: string): unknown { this.mustGetWritable(sessionId); return this.requireStore().remove(sessionId, attachmentId); }
+  retryComposerAttachment(sessionId: string, attachmentId: string, onChanged: (a: unknown) => void): unknown { this.mustGetWritable(sessionId); return this.requireStore().retry(sessionId, attachmentId, onChanged); }
+  setComposerAttachmentDestination(sessionId: string, attachmentIds: string[], destination: string): unknown {
+    this.mustGetWritable(sessionId);
+    if (destination === "library") throw new Error("This project has no library yet."); // libraryDropDir L44998 (no tenant)
+    return this.requireStore().setDestination(sessionId, attachmentIds, destination);
+  }
+  composerAttachmentPreview(sessionId: string, attachmentId: string, thumbnail?: (b: Buffer) => Buffer): Promise<unknown> { this.mustGet(sessionId); return this.requireStore().attachmentPreview(sessionId, attachmentId, thumbnail); }
 }

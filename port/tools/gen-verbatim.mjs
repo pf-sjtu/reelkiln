@@ -13,6 +13,7 @@ const repo = resolve(portRoot, "..");
 const SRC = {
   main: "app/reconstructed/main/index.js",
   wb: "app/out/main/chunks/workbookContents-ChzKjQX1.js",
+  rm: "app/out/main/chunks/rangeMedia-848zXGXe.js",
 };
 const lines = Object.fromEntries(Object.entries(SRC).map(([k, f]) => [k, readFileSync(join(repo, f), "utf8").split(/\r?\n/)]));
 
@@ -147,6 +148,87 @@ export const SPECS = [
     ],
     subs: [],
     exports: ["ALPHA_TERMS_VERSION", "canAcceptTerms", "ACCOUNT_CAPABILITIES", "accountCapabilitiesFrom", "canUseNightlyUpdates", "accountStateFrom", "onboardingStep", "keyVerificationRetry", "buildAccountSnapshot"],
+  },
+  {
+    // docs/22 M3: the channel-workspace containment checks the version store / attachments rely on.
+    out: "src/main/jobs/workspace-boundary.generated.ts",
+    imports: [
+      'import { existsSync, lstatSync, mkdirSync, realpathSync } from "node:fs";',
+      'import { isAbsolute, join, relative, resolve, sep } from "node:path";',
+    ],
+    slices: () => [
+      slice("main", /^function pathIsWithin\$1\(root, candidate\) \{/, /^}$/, /^function assertRealWorkspaceFile\(/),
+    ],
+    subs: [],
+    exports: ["pathIsWithin$1 as workspacePathIsWithin", "workspaceRootIdentity", "assertRealWorkspaceDirectory", "ensureRealWorkspaceDirectory", "assertRealWorkspaceFile"],
+  },
+  {
+    // docs/22 M3: VersionStore (L13344) + its registry claim/ops, scanJob (L14365) and JobWatcher (L14717).
+    out: "src/main/jobs/version-store.generated.ts",
+    imports: [
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { closeSync, constants, copyFileSync, existsSync, fstatSync, fsyncSync, ftruncateSync, linkSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, renameSync, rmSync, statSync, watch, writeFileSync, writeSync } from "node:fs";',
+      'import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";',
+      'import { assertRealWorkspaceDirectory, assertRealWorkspaceFile, ensureRealWorkspaceDirectory } from "./workspace-boundary.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const CLAIM_SCHEMA = "videoclaw\.version-registry-claim\/v1";/, /^}$/, /^class JobWatcher \{/),
+    ],
+    subs: [],
+    exports: ["readRenderRecords", "isFinishedMp4", "hashStableFile", "presentedVersions", "currentFinalRecord", "readRegistryStrict", "VersionStore", "scanJob", "resolveCut", "FINAL_CANDIDATE_SETTLE_MS", "JobWatcher"],
+  },
+  {
+    // docs/22 M3: vcmedia:// — the shipped rangeMedia chunk, MediaCapabilityRegistry (L10944), mediaFailure (L60433).
+    out: "src/main/media/media.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { lstatSync, realpathSync } from "node:fs";',
+      'import { extname, isAbsolute, normalize as normalize$2, relative } from "node:path";',
+    ],
+    slices: () => [
+      slice("rm", /^const MIME = \{/, /^}$/, /^function planMediaResponse\(/),
+      slice("main", /^function exactPath\(filePath\) \{/, /^}$/, /^class MediaCapabilityRegistry \{/),
+      slice("main", /^function mediaFailure\(state\) \{/, /^}$/),
+    ],
+    subs: [],
+    exports: ["VCMEDIA_SCHEME", "mimeFor", "planMediaResponse", "exactPath", "mediaFileIdentity", "inspectedFile", "MediaCapabilityRegistry", "mediaFailure"],
+  },
+  {
+    // docs/22 M4: the asset-kind / intake / workbook-page helpers of the shipped workbookContents chunk.
+    out: "src/main/attachments/asset-kinds.generated.ts",
+    imports: [],
+    slices: () => [
+      slice("wb", /^const VIDEO_EXTS = /, /^const CLIPBOARD_IMAGE_MAX_PIXELS = /),
+      slice("wb", /^const WORKBOOK_SCHEMA = /, /^}$/, /^function workbookSummary\(/),
+    ],
+    subs: [],
+    exports: ["assetExt", "assetKind", "isWorkbookName", "isPdfName", "isAcceptedAsset", "assetRejectReason", "INTAKE_FOLDER_MAX_DEPTH", "INTAKE_FOLDER_MAX_FILES", "INTAKE_FOLDER_MAX_BYTES", "INTAKE_FOLDER_MAX_VISITS", "folderRejectReason", "archiveRejectReason", "ARCHIVE_MAX_WORKBOOKS", "ARCHIVE_MAX_PDFS", "WORKBOOK_MAX_OUTPUT_BYTES", "PDF_MAX_BYTES", "PDF_MAX_PAGES", "PDF_MAX_TEXT_CHARS", "workbookRejectReason", "CLIPBOARD_IMAGE_MAX_BYTES", "CLIPBOARD_IMAGE_MAX_PIXELS", "isWorkbookContents", "workbookPage", "workbookSummary"],
+  },
+  {
+    // docs/22 M4: ComposerAttachmentStore (L16681) + intake copy helpers (L11240-11407), HEIC (L11525),
+    // clipboard/PDF context helpers (L16364-16680), composerTurnMessageUuid (L1194).
+    out: "src/main/attachments/composer-attachments.generated.ts",
+    imports: [
+      'import { execFile } from "node:child_process";',
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { chmodSync, closeSync, constants, copyFileSync, createReadStream, createWriteStream, existsSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, realpathSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";',
+      'import { copyFile, link, open, rm } from "node:fs/promises";',
+      'import { basename, dirname, extname, join, resolve } from "node:path";',
+      'import { promisify } from "node:util";',
+      'import { mediaFileIdentity } from "../media/media.generated";',
+      'import { extractArchive } from "./attachments-unported";',
+      'import { ARCHIVE_MAX_PDFS, ARCHIVE_MAX_WORKBOOKS, archiveRejectReason, assetKind, assetRejectReason, CLIPBOARD_IMAGE_MAX_BYTES, CLIPBOARD_IMAGE_MAX_PIXELS, folderRejectReason, INTAKE_FOLDER_MAX_BYTES, INTAKE_FOLDER_MAX_DEPTH, INTAKE_FOLDER_MAX_FILES, INTAKE_FOLDER_MAX_VISITS, isAcceptedAsset, isPdfName, isWorkbookContents, isWorkbookName, PDF_MAX_BYTES, PDF_MAX_PAGES, PDF_MAX_TEXT_CHARS, WORKBOOK_MAX_OUTPUT_BYTES, workbookPage, workbookRejectReason, workbookSummary } from "./asset-kinds.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function voiceNoteClock\(seconds\) \{/, /^}$/),
+      slice("main", /^function sha256Utf8\(value\) \{/, /^}$/),
+      slice("main", /^function composerTurnMessageUuid\(_sessionId, clientTurnId\) \{/, /^}$/),
+      slice("main", /^const PROGRESS_INTERVAL_MS = 100;/, /^}$/, /^function friendlyCopyError\(err\) \{/),
+      slice("main", /^const execFileP = promisify\(execFile\);/, /^}$/, /^async function convertHeicToJpg\(/),
+      slice("main", /^const PNG_SIGNATURE = /, /^}$/, /^class ComposerAttachmentStore \{/),
+    ],
+    subs: [],
+    exports: ["voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFileTo", "friendlyCopyError", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
   },
 ];
 

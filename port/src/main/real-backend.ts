@@ -26,7 +26,13 @@
 //   permission:respond (send, L61790) / interaction:replayPending (L61701) → host permission cards.
 //   docs/21 M1 home boot (home-boot.ts): account:snapshot, app:update:get, workflowSubmit:eligibility,
 //   bootstrap:status, client:list / client:create.
-import { app, utilityProcess } from "electron";
+//   docs/22 M3: job:get / job:historicalSnapshot (+ push job:snapshot) → AgentHost + the verbatim
+//   VersionStore / scanJob / JobWatcher (jobs/version-store.generated.ts); version:approve /
+//   version:revertFinal / session:unfinalize; vcmedia:// (index.ts, media/media-ipc.ts);
+//   file:saveItemAs / file:revealItem / file:openPath. docs/22 M4: intake:pickFiles,
+//   attachment:stage/list/ownership/remove/retry/destination (+ push attachment:changed) → the
+//   verbatim ComposerAttachmentStore (attachments/composer-attachments.generated.ts).
+import { app, dialog, shell, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -49,6 +55,12 @@ import { agentHostEmit, agentIpcHandlers, agentToolsFromEnv, PORT_AGENT_TOOLS_EN
 import { claudeCodeExecutableFor, loadClaudeAgentSdk } from "./llm/agent-sdk";
 import { accountSnapshot, bootstrapStatus, replayPendingInteractions, workflowSubmitEligibility } from "./home-boot";
 import type { EngineSessionDeps } from "./agent/engine-session";
+import { createMediaCapabilities, exposeJobSnapshot, fileIpcHandlers, smokeDialog } from "./media/media-ipc";
+
+/** docs/22 M3: the main-process media capability registry (original L60408) behind vcmedia://. */
+export const mediaCapabilities = createMediaCapabilities();
+/** docs/22 M3: host.chatMediaRoot for the vcmedia HEAD grant (set once the AgentHost exists). */
+export const mediaRoots: { chatMediaRoot: (sessionId: string) => string | null } = { chatMediaRoot: () => null };
 
 /** PORT-NEW env var: VIDEOCLAW_PORT_AGENT_ENGINE=0 → docs/19 confined chat sessions even with an engine. */
 export const PORT_AGENT_ENGINE_ENV = "VIDEOCLAW_PORT_AGENT_ENGINE";
@@ -153,6 +165,14 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     "client:list": () => registry.listClients(),
     "client:create": (name: unknown) => registry.createClient(name, saveRegistry),
     "interaction:replayPending": () => undefined,
+    // docs/22 M3/M4: file:* + intake:pickFiles (original L61917-62001, L62157)
+    ...(fileIpcHandlers({
+      dialog: smokeDialog({ showSaveDialog: (o) => dialog.showSaveDialog(o), showOpenDialog: (o) => dialog.showOpenDialog(o as any) }, process.env, log),
+      shell: { showItemInFolder: (p) => { if (process.env.VIDEOCLAW_PORT_SMOKE === "1") { log(`[smoke] showItemInFolder ${p}`); return; } shell.showItemInFolder(p); }, openPath: (p) => shell.openPath(p) },
+      downloadsDir: () => app.getPath("downloads"),
+      media: mediaCapabilities,
+      sessionIds: () => (handlers["session:list"]?.() as any[] ?? []).map((m: any) => m.sessionId),
+    }) as Partial<Record<InvokeChannel, Handler>>),
   };
   if (process.env[PORT_REAL_BOOTSTRAP_ENV] === "1") handlers["bootstrap:run"] = () => core.runAll();
   if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1") {
@@ -184,8 +204,15 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       }
       const emit = agentHostEmit(push, allSessions);
       host = new AgentHost({
-        emit: { ...emit, permissionRequest: (req) => { push("permission:request", req); } },
+        emit: {
+          ...emit,
+          permissionRequest: (req) => { push("permission:request", req); },
+          // original emit.jobSnapshot L61077: grant the snapshot's files, then push
+          jobSnapshot: (sessionId, snapshot) => { exposeJobSnapshot(mediaCapabilities, snapshot); push("job:snapshot", { sessionId, snapshot }); },
+        },
         engine: engineDeps,
+        // docs/22: versions.json + composer-attachments.json live next to sessions.json (L34841-34848)
+        ...(engineDeps ? { stateDir: app.getPath("userData") } : {}),
         persist: engineDeps ? () => saveRegistry() : undefined,
         service: llm.service,
         loadSdk: async () => { const l = await loadClaudeAgentSdk(); log(`[port] Claude Agent SDK ${l.version} from ${l.source}`); return { sdk: l.sdk, version: l.version, executable: claudeCodeExecutableFor(l.packageDir) }; },
@@ -202,6 +229,25 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         log(`[port] AgentHost ENGINE mode; restored ${restored} session(s) from sessions.json`);
       }
       Object.assign(handlers, agentIpcHandlers(h, allSessions));
+      if (engineDeps) {
+        mediaRoots.chatMediaRoot = (sessionId) => h.chatMediaRoot(sessionId);
+        const attachmentChanged = (attachment: unknown) => { push("attachment:changed", attachment); }; // L62190
+        Object.assign(handlers, {
+          // docs/22 M3 (original L61751-61771)
+          "job:get": (sessionId: unknown) => exposeJobSnapshot(mediaCapabilities, h.getJobSnapshot(String(sessionId))),
+          "job:historicalSnapshot": (sessionId: unknown) => exposeJobSnapshot(mediaCapabilities, h.historicalJobSnapshot(String(sessionId))),
+          "version:approve": (sessionId: unknown, n: unknown) => h.approveVersion(String(sessionId), Number(n)),
+          "version:revertFinal": (sessionId: unknown, n: unknown) => h.revertFinal(String(sessionId), Number(n)),
+          "session:unfinalize": (sessionId: unknown) => h.unfinalizeSession(String(sessionId)),
+          // docs/22 M4 (original L62193-62219)
+          "attachment:stage": (req: unknown) => h.stageComposerAttachments(req, attachmentChanged),
+          "attachment:list": (sessionId: unknown) => h.listComposerAttachments(String(sessionId)),
+          "attachment:ownership": (sessionId: unknown, id: unknown) => h.composerAttachmentOwnership(String(sessionId), String(id)),
+          "attachment:remove": (sessionId: unknown, id: unknown) => h.removeComposerAttachment(String(sessionId), String(id)),
+          "attachment:retry": (sessionId: unknown, id: unknown) => h.retryComposerAttachment(String(sessionId), String(id), attachmentChanged),
+          "attachment:destination": (sessionId: unknown, ids: unknown, destination: unknown) => h.setComposerAttachmentDestination(String(sessionId), (Array.isArray(ids) ? ids : []).map(String), String(destination)),
+        } as Partial<Record<InvokeChannel, Handler>>);
+      }
       handlers["interaction:replayPending"] = () => replayPendingInteractions(h.listPendingInteractions(), push);
       sendHandlers["permission:respond"] = (requestId: unknown, response: unknown) => h.respondPermission(String(requestId), response as any);
       app.on("will-quit", () => { void h.dispose(); llm.dispose(); if (engineDeps) flushRegistry(); });
