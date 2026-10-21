@@ -2,6 +2,7 @@
 // Resolution reads the key from the UNSANITIZED environment (sanitizedAgentEnv strips every *KEY*
 // name), registers it with the logger's redactor, and returns a ResolvedProvider. A ResolvedProvider
 // holds the key: pass it to describeProvider() before printing/logging anything.
+import { unwatchFile, watchFile, type Stats } from "node:fs";
 import { LlmProviderError } from "./errors";
 import { getLogger, registerSecret } from "./logger";
 import { loadProvidersFile, parseProviderConfigs, parseProvidersFile, type AuthConfig, type LlmProtocol, type ProviderConfig, type ProviderConfigInput, BUILTIN_PRESETS } from "./provider-config";
@@ -135,17 +136,85 @@ export function loadProviderRegistry(o: { file?: string; json?: unknown; env?: N
   return new ProviderRegistry(file ? loadProvidersFile(file, { required: !o.file, presets }) : parseProviderConfigs([], presets), builtin);
 }
 let current: ProviderRegistry | undefined;
+let generation = 0;
+function presetsOnly(error: string): ProviderRegistry { return new ProviderRegistry(parseProviderConfigs([]), undefined, error); }
+function loadGraceful(env: NodeJS.ProcessEnv = process.env): ProviderRegistry {
+  try {
+    return loadProviderRegistry({ env });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    getLogger().error("llm.providers.config_invalid", { error: msg, file: env[PROVIDERS_FILE_ENV] });
+    return presetsOnly(msg);
+  }
+}
 /** Graceful variant used by the route plumbing: an invalid providers file is logged (without
  *  content) and the built-in presets stay usable; `configError` records what went wrong. */
 export function getProviderRegistry(): ProviderRegistry {
-  if (current) return current;
-  try {
-    current = loadProviderRegistry();
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    getLogger().error("llm.providers.config_invalid", { error: msg, file: process.env[PROVIDERS_FILE_ENV] });
-    current = new ProviderRegistry(parseProviderConfigs([]), undefined, msg);
-  }
-  return current;
+  return (current ??= loadGraceful());
 }
 export function setProviderRegistry(r: ProviderRegistry | undefined): void { current = r; }
+/** Increments on every effective registry change (reload that altered the provider set/config). */
+export function providerRegistryGeneration(): number { return generation; }
+
+// ---------------------------------------------------------------------------------------------
+// Hot reload (docs/15 §2.2): explicit reloadProviderRegistry() — called by the file watcher, by
+// SIGHUP in the main process, or by tests — re-runs the SAME strict load. Invalid config never
+// half-applies: the registry falls back to the built-in presets (configError set, error logged)
+// exactly like an invalid file at startup; fixing the file and reloading restores it.
+
+export interface RegistryChange { previous: ProviderRegistry; current: ProviderRegistry; generation: number; added: string[]; removed: string[]; changed: string[] }
+export type RegistryListener = (change: RegistryChange) => void;
+const listeners = new Set<RegistryListener>();
+/** Subscribe to effective registry changes; returns an unsubscribe function. Listener errors are
+ *  logged and never break the reload. */
+export function onProviderRegistryChange(fn: RegistryListener): () => void {
+  listeners.add(fn);
+  return () => { listeners.delete(fn); };
+}
+
+const fp = (c: ProviderConfig) => JSON.stringify(c);
+export function diffRegistries(a: ProviderRegistry, b: ProviderRegistry): { added: string[]; removed: string[]; changed: string[] } {
+  const added = b.names().filter((n) => !a.has(n));
+  const removed = a.names().filter((n) => !b.has(n));
+  const changed = b.names().filter((n) => a.has(n) && fp(a.get(n)!) !== fp(b.get(n)!));
+  return { added, removed, changed };
+}
+
+export interface ReloadResult { ok: boolean; changed: boolean; generation: number; providers: string[]; error?: string; added: string[]; removed: string[]; updated: string[] }
+export function reloadProviderRegistry(o: { env?: NodeJS.ProcessEnv; reason?: string } = {}): ReloadResult {
+  const previous = getProviderRegistry();
+  const next = loadGraceful(o.env ?? process.env);
+  const d = diffRegistries(previous, next);
+  const changed = d.added.length + d.removed.length + d.changed.length > 0 || previous.configError !== next.configError;
+  const log = getLogger();
+  if (changed) {
+    current = next;
+    generation++;
+    log.info("llm.providers.reloaded", { reason: o.reason ?? "explicit", generation, providers: next.names(), added: d.added, removed: d.removed, updated: d.changed, configError: next.configError });
+    for (const fn of [...listeners]) {
+      try { fn({ previous, current: next, generation, ...d }); } catch (e) { log.error("llm.providers.listener_failed", { error: e }); }
+    }
+  } else log.debug("llm.providers.reload_noop", { reason: o.reason ?? "explicit" });
+  return { ok: !next.configError, changed, generation, providers: next.names(), ...(next.configError ? { error: next.configError } : {}), added: d.added, removed: d.removed, updated: d.changed };
+}
+
+export interface ProvidersFileWatcher { readonly file: string; close(): void }
+/** Watches the providers file and reloads on change. Uses fs.watchFile (stat polling): identical
+ *  behaviour on Windows/macOS/Linux, survives editors' atomic save (write tmp + rename) and the file
+ *  being created later or deleted (deletion → reload → CONFIG_INVALID → presets only). The poller is
+ *  unref'd so it never keeps the process alive. Changes are debounced. */
+export function watchProvidersFile(o: { file?: string; intervalMs?: number; debounceMs?: number; env?: NodeJS.ProcessEnv } = {}): ProvidersFileWatcher | null {
+  const env = o.env ?? process.env;
+  const file = o.file ?? env[PROVIDERS_FILE_ENV]?.trim();
+  if (!file) return null;
+  let timer: NodeJS.Timeout | undefined;
+  const onStat = (cur: Stats, prev: Stats) => {
+    if (cur.mtimeMs === prev.mtimeMs && cur.size === prev.size && cur.ino === prev.ino) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => reloadProviderRegistry({ env, reason: "file-changed" }), o.debounceMs ?? 200);
+    timer.unref?.();
+  };
+  watchFile(file, { interval: o.intervalMs ?? 1000, persistent: false }, onStat);
+  getLogger().info("llm.providers.watching", { file, intervalMs: o.intervalMs ?? 1000 });
+  return { file, close: () => { clearTimeout(timer); unwatchFile(file, onStat); } };
+}

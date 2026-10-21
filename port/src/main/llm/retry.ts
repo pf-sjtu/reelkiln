@@ -6,30 +6,39 @@ import { LlmProviderError, PROVIDER_CREDENTIAL_CODE } from "./errors";
 export class ConcurrencyLimiter {
   private active = 0;
   private readonly waiters: Array<() => void> = [];
-  constructor(readonly max: number) {
-    if (!(max >= 1)) throw new Error("ConcurrencyLimiter: max must be >= 1");
+  constructor(private limit: number) {
+    if (!(limit >= 1)) throw new Error("ConcurrencyLimiter: max must be >= 1");
   }
+  get max(): number { return this.limit; }
   get running(): number { return this.active; }
   get pending(): number { return this.waiters.length; }
+  /** Resize in place (provider config hot-reload). Growing admits waiters immediately; shrinking
+   *  lets in-flight calls finish and only admits new ones once below the new limit. */
+  setMax(n: number): void {
+    if (!(n >= 1)) throw new Error("ConcurrencyLimiter: max must be >= 1");
+    this.limit = n;
+    while (this.active < this.limit && this.waiters.length) { this.active++; this.waiters.shift()!(); }
+  }
   async run<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.active >= this.max) await new Promise<void>((r) => this.waiters.push(r));
+    if (this.active >= this.limit) await new Promise<void>((r) => this.waiters.push(r));
     else this.active++;
     try {
       return await fn();
     } finally {
-      const next = this.waiters.shift();
-      if (next) next(); // hand the slot over directly (active unchanged)
-      else this.active--;
+      if (this.active > this.limit || !this.waiters.length) this.active--;
+      else this.waiters.shift()!(); // hand the slot over directly (active unchanged)
     }
   }
 }
 
 const gates = new Map<string, ConcurrencyLimiter>();
-/** One process-wide gate per provider name; the first caller fixes its size (keys are often shared
- *  with other pipelines, so the limit is account-level, not per-call-site). */
+/** One process-wide gate per provider name (keys are often shared with other pipelines, so the
+ *  limit is account-level, not per-call-site). Callers pass the provider's CURRENT resolved limit;
+ *  after a config hot-reload changes it the gate is resized in place (in-flight calls unaffected). */
 export function providerGate(provider: string, maxConcurrency: number): ConcurrencyLimiter {
   let g = gates.get(provider);
   if (!g) gates.set(provider, (g = new ConcurrencyLimiter(maxConcurrency)));
+  else if (maxConcurrency >= 1 && g.max !== maxConcurrency) g.setMax(maxConcurrency);
   return g;
 }
 export function resetProviderGatesForTests(): void { gates.clear(); }

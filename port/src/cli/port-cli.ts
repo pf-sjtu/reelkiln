@@ -11,6 +11,7 @@
 //   node dist/cli/port-cli.cjs codex-handshake <codexExe>
 //   node dist/cli/port-cli.cjs run-bash "<command>"
 //   node dist/cli/port-cli.cjs llm-providers           (offline; registered providers, keys only as configured:true/false)
+//   node dist/cli/port-cli.cjs llm-providers-validate [file]   (strict pre-deploy check of a providers file; exit 1 if invalid)
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt]   (ONE real request via the generic helper path)
 //   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
 //   node dist/cli/port-cli.cjs models-list [--provider ID] [--search Q] [--limit N]
@@ -33,7 +34,7 @@ import { runBash } from "../main/engine/run-bash";
 import { bootstrapTool } from "../main/platform";
 import { describeMiniMaxConfig, minimaxConfig } from "../main/llm/minimax";
 import { anthropicMessages, helperCredsForProvider } from "../main/llm/llm-route";
-import { describeProvider, getProviderRegistry } from "../main/llm/provider-registry";
+import { describeProvider, getProviderRegistry, loadProviderRegistry, PROVIDERS_FILE_ENV } from "../main/llm/provider-registry";
 import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
 
 const [, , cmd, a1, a2, a3] = process.argv;
@@ -107,6 +108,13 @@ async function main() {
       case "llm-providers": {
         const reg = getProviderRegistry();
         return out({ ok: !reg.configError, step: cmd, providers: reg.summaries(), ...(reg.configError ? { configError: reg.configError } : {}) });
+      }
+      case "llm-providers-validate": { // PORT-NEW: validate before swapping the watched file (hot reload)
+        const file = a1 ?? process.env[PROVIDERS_FILE_ENV]?.trim();
+        if (!file) return out({ ok: false, step: cmd, error: `usage: llm-providers-validate <file> (or set ${PROVIDERS_FILE_ENV})` });
+        if (!existsSync(file)) return out({ ok: false, step: cmd, file, error: "file not found" }), void (process.exitCode = 1);
+        const reg = loadProviderRegistry({ file }); // strict: throws CONFIG_INVALID → caught below, exit 1
+        return out({ ok: true, step: cmd, file, providers: reg.summaries() });
       }
       case "minimax-ping":
       case "llm-ping": { // PORT-NEW live check; explicit opt-in so CI/tests never hit a real provider
