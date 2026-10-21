@@ -1,0 +1,35 @@
+{"t":1565,"cdp":"Page.enable","params":{}}
+{"t":1618,"cdp":"Runtime.enable","params":{}}
+{"t":3220,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"hitOk":true,"hit":"BUTTON.tour-skip","x":639,"y":659,"width":56.78125,"height":27,"label":"Skip tour"}}
+{"t":3220,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":3222,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":3224,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":3227,"note":"landing home"}
+{"t":3342,"action":"click","desc":"New video in Personal","selector":"button.client-new-chat","at":{"x":227,"y":241},"element":{"hitOk":true,"hit":"svg.[object SVGAnimatedString]","x":214,"y":228,"width":25,"height":25,"label":"New video in Personal"}}
+{"t":3342,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":241}}
+{"t":3657,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":241}}
+{"t":3673,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":3675,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":4885,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"hitOk":true,"hit":"TEXTAREA.","x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":4885,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":4890,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":4893,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":4894,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":4896,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":4896,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Backspace","code":"Backspace","windowsVirtualKeyCode":8,"nativeVirtualKeyCode":8,"modifiers":0}}
+{"t":4898,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Backspace","code":"Backspace","windowsVirtualKeyCode":8,"nativeVirtualKeyCode":8,"modifiers":0}}
+{"t":4898,"cdp":"Input.insertText","params":{"text":"现在只做一件事：调用 project_memory 工具一次，action 为 save，记住这条项目偏好：\"片尾统一使用白色字幕\"。不要运行任何其他工具。保存后只回复：已记住 VCOEI6P"}}
+{"t":4943,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":4946,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":365068,"note":"STEP studio_tool_on_route: FAIL {\"error\":\"timeout waiting for Remembered something\"}"}
+{"t":365126,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":365129,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":367540,"action":"click","desc":"spend chip","selector":"button.vs-spend","at":{"x":708,"y":71},"element":{"hitOk":true,"hit":"SPAN.vs-spend-headline","x":665.890625,"y":56,"width":84.078125,"height":30,"label":"$0.01 spent"}}
+{"t":367541,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":708,"y":71}}
+{"t":367544,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":708,"y":71,"button":"left","clickCount":1}}
+{"t":367547,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":708,"y":71,"button":"left","clickCount":1}}
+{"t":368110,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":368113,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":368116,"note":"STEP usage_display: FAIL {\"metered\":[{\"meter\":\"proxy\",\"totalUsd\":0.006711099,\"runtimeUsd\":0.006711099,\"sdkEstimateUsd\":0,\"sources\":\"\\\"models.dev:minimax-cn/MiniMax-M3.1-Flash\\\"\"}],\"proxyRequestLogs\":0,\"chip\":\"$0.01 spent\",\"breakdown\":\"Production services\\n$0.00\\nVideoclaw gateway reasoning\\n$0.01\\nVideoclaw spend\\n$0.01\\n$0.01 in progress · paid work allowed\",\"displayedTotalCostUsd\":0.006711099,\"reasoningRow\":\"0.01\",\"expectedReasoningRow\":\"0.01\",\"spend\":{\"sessionId\":\"c3e52290-af47-4711-b756-ca12aa2b780f\",\"accountingEpoch\":1,\"policy\":\"unlimited_for_video\",\"coveredPlans\":[],\"committedCents\":0,\"reservedCents\":0,\"provisionalLlmCents\":1,\"provisionalLlmRevision\":1,\"nextGatewayReconciliationSequence\":1,\"lastAppliedGatewayR"}
+{"t":368196,"note":"app exited 0"}
+{"t":368421,"note":"DONE allPass=false steps=studio_tool_on_route:FAIL usage_display:FAIL"}

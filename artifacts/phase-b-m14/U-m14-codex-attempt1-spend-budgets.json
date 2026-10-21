@@ -1,0 +1,28 @@
+{
+ "schema": "videoclaw.spend-budgets/v3",
+ "authority": {
+  "gatewayOrigin": "http://localhost",
+  "mode": "local",
+  "keySha256": null
+ },
+ "nextReservationId": 1,
+ "nextAccountingEpoch": 2,
+ "accountedSinceLedgerCents": 0,
+ "entries": [
+  {
+   "sessionId": "c3e52290-af47-4711-b756-ca12aa2b780f",
+   "accountingEpoch": 1,
+   "policy": "unlimited_for_video",
+   "coveredPlans": [],
+   "committedCents": 0,
+   "reservedCents": 0,
+   "provisionalLlmCents": 1,
+   "provisionalLlmRevision": 1,
+   "nextGatewayReconciliationSequence": 1,
+   "lastAppliedGatewayReconciliationSequence": 0,
+   "gatewayReservedCents": 0,
+   "committedUnknownSpend": false,
+   "pendingReservations": []
+  }
+ ]
+}

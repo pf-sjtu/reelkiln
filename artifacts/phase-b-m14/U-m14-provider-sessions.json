@@ -1,0 +1,28 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "2ebc9173-db96-47f8-b07f-c7cec99ba2b0",
+   "title": "统一白色片尾字幕",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.008377843,
+   "createdAt": 1792600651576,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "automatic",
+   "jobId": "project-memory-action-save-20261021-2ebc91",
+   "sdkSessionId": "6f563fe5-36ed-4fd8-81b3-dd1dd2a35113",
+   "contextEpoch": "3f1257c4-d881-4ec1-97e6-fdd6cd166a7c",
+   "sessionPlanRequired": true
+  }
+ ],
+ "trashWorkspaces": []
+}

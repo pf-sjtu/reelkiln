@@ -1,0 +1,30 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "c3e52290-af47-4711-b756-ca12aa2b780f",
+   "title": "现在只做一件事：调用 project_memory 工具一次，action 为 save，记住这条项目偏好：\"片尾统一使用白色字幕\"。不要运行任何其他工具。保…",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "error",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.006711099,
+   "createdAt": 1792600861637,
+   "clientId": "personal",
+   "agentHarness": "codex-app-server",
+   "codexProvider": "chatgpt",
+   "titleOrigin": "fallback",
+   "jobId": "project-memory-action-save-20261021-c3e522",
+   "modelOverride": "MiniMax-M3.1-Flash",
+   "codexReasoningEffort": "medium",
+   "sdkSessionId": "01a15f56-77ee-7f31-9d8d-5cc304b967f9",
+   "contextEpoch": "1d9276d6-c595-4e58-a00c-fad5701c0b51",
+   "sessionPlanRequired": true
+  }
+ ],
+ "trashWorkspaces": []
+}

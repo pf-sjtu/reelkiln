@@ -1,0 +1,148 @@
+{
+ "phase": "provider",
+ "started": "2026-10-21T16:37:29.440Z",
+ "steps": {
+  "studio_tool_on_route": {
+   "ok": true,
+   "sessionId": "2ebc9173-db96-47f8-b07f-c7cec99ba2b0",
+   "llmRoute": "minimax",
+   "agentHarness": "claude-code",
+   "codexProvider": null,
+   "tools": [
+    "mcp__studio__project_memory {\"action\":\"save\",\"expectedRevision\":null,\"entry\":{\"text\":\"项目偏好：片尾统一使用白色字幕。\",\"sources\":[{\"kind\":\"message\",\"sessionId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\",\"turnId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\",\"label\":\"用户偏好：片尾统一使用白色字幕\"}]}}",
+    "mcp__studio__project_memory {\"action\":\"read\",\"limit\":8}",
+    "mcp__studio__project_memory {\"action\":\"save\",\"entry\":{\"text\":\"项目偏好：片尾统一使用白色字幕。\",\"sources\":[{\"kind\":\"message\",\"label\":\"用户偏好：片尾统一使用白色字幕\",\"sessionId\":\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\",\"turnId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\"}]}}",
+    "mcp__studio__project_memory {\"action\":\"save\",\"expectedRevision\":null,\"entry\":{\"text\":\"项目偏好：片尾统一使用白色字幕。\",\"sources\":[{\"kind\":\"message\",\"label\":\"用户偏好：片尾统一使用白色字幕\",\"sessionId\":\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\",\"turnId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\"}]}}"
+   ],
+   "notice": "Remembered something\n项目偏好：片尾统一使用白色字幕。\nEdit\nUndo",
+   "onDisk": true,
+   "result": {
+    "kind": "result",
+    "isError": false,
+    "totalCostUsd": 0.008377843,
+    "numTurns": 5,
+    "durationMs": 48801
+   }
+  },
+  "usage_display": {
+   "ok": true,
+   "metered": [
+    {
+     "meter": "proxy",
+     "totalUsd": 0.008377843,
+     "runtimeUsd": 0.008377843,
+     "sdkEstimateUsd": 0.28540550000000003,
+     "sources": "\"models.dev:minimax-cn/MiniMax-M3.1-Flash\""
+    }
+   ],
+   "proxyRequestLogs": 0,
+   "chip": "$0.01 spent",
+   "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\n$0.01 in progress · paid work allowed",
+   "displayedTotalCostUsd": 0.008377843,
+   "resultEventTotalCostUsd": 0.008377843,
+   "reasoningRow": "0.01",
+   "expectedReasoningRow": "0.01",
+   "spend": {
+    "sessionId": "2ebc9173-db96-47f8-b07f-c7cec99ba2b0",
+    "accountingEpoch": 1,
+    "policy": "unlimited_for_video",
+    "coveredPlans": [],
+    "committedCents": 0,
+    "reservedCents": 0,
+    "provisionalLlmCents": 1,
+    "provisionalLlmRevision": 1,
+    "nextGatewayReconciliationSequence": 1,
+    "lastAppliedGatewayReconciliationSequence": 0,
+    "gatewayReservedCents": 0,
+    "committedUnknownSpend": false,
+    "pendingReservations": []
+   }
+  }
+ },
+ "code": "VCR1747",
+ "landing": "home",
+ "session": {
+  "sessionId": "2ebc9173-db96-47f8-b07f-c7cec99ba2b0",
+  "llmRoute": "minimax",
+  "agentHarness": "claude-code",
+  "codexProvider": null
+ },
+ "tool": {
+  "tools": [
+   "mcp__studio__project_memory {\"action\":\"save\",\"expectedRevision\":null,\"entry\":{\"text\":\"项目偏好：片尾统一使用白色字幕。\",\"sources\":[{\"kind\":\"message\",\"sessionId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\",\"turnId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\",\"label\":\"用户偏好：片尾统一使用白色字幕\"}]}}",
+   "mcp__studio__project_memory {\"action\":\"read\",\"limit\":8}",
+   "mcp__studio__project_memory {\"action\":\"save\",\"entry\":{\"text\":\"项目偏好：片尾统一使用白色字幕。\",\"sources\":[{\"kind\":\"message\",\"label\":\"用户偏好：片尾统一使用白色字幕\",\"sessionId\":\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\",\"turnId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\"}]}}",
+   "mcp__studio__project_memory {\"action\":\"save\",\"expectedRevision\":null,\"entry\":{\"text\":\"项目偏好：片尾统一使用白色字幕。\",\"sources\":[{\"kind\":\"message\",\"label\":\"用户偏好：片尾统一使用白色字幕\",\"sessionId\":\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\",\"turnId\":\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\"}]}}"
+  ],
+  "notice": "Remembered something\n项目偏好：片尾统一使用白色字幕。\nEdit\nUndo",
+  "onDisk": true,
+  "result": {
+   "kind": "result",
+   "isError": false,
+   "totalCostUsd": 0.008377843,
+   "numTurns": 5,
+   "durationMs": 48801
+  }
+ },
+ "usage": {
+  "metered": [
+   {
+    "meter": "proxy",
+    "totalUsd": 0.008377843,
+    "runtimeUsd": 0.008377843,
+    "sdkEstimateUsd": 0.28540550000000003,
+    "sources": "\"models.dev:minimax-cn/MiniMax-M3.1-Flash\""
+   }
+  ],
+  "proxyRequestLogs": 0,
+  "chip": "$0.01 spent",
+  "breakdown": "Production services\n$0.00\nVideoclaw gateway reasoning\n$0.01\nVideoclaw spend\n$0.01\n$0.01 in progress · paid work allowed",
+  "displayedTotalCostUsd": 0.008377843,
+  "resultEventTotalCostUsd": 0.008377843,
+  "reasoningRow": "0.01",
+  "expectedReasoningRow": "0.01",
+  "spend": {
+   "sessionId": "2ebc9173-db96-47f8-b07f-c7cec99ba2b0",
+   "accountingEpoch": 1,
+   "policy": "unlimited_for_video",
+   "coveredPlans": [],
+   "committedCents": 0,
+   "reservedCents": 0,
+   "provisionalLlmCents": 1,
+   "provisionalLlmRevision": 1,
+   "nextGatewayReconciliationSequence": 1,
+   "lastAppliedGatewayReconciliationSequence": 0,
+   "gatewayReservedCents": 0,
+   "committedUnknownSpend": false,
+   "pendingReservations": []
+  }
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": true,
+ "finished": "2026-10-21T16:39:27.588Z"
+}

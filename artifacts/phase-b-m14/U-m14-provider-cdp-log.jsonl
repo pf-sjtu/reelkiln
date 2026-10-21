@@ -1,0 +1,33 @@
+{"t":1652,"cdp":"Page.enable","params":{}}
+{"t":1700,"cdp":"Runtime.enable","params":{}}
+{"t":3400,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"hitOk":true,"hit":"BUTTON.tour-skip","x":639,"y":659,"width":56.78125,"height":27,"label":"Skip tour"}}
+{"t":3400,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":3409,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":3411,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":3413,"note":"landing home"}
+{"t":3509,"action":"click","desc":"New video in Personal","selector":"button.client-new-chat","at":{"x":227,"y":241},"element":{"hitOk":true,"hit":"svg.[object SVGAnimatedString]","x":214,"y":228,"width":25,"height":25,"label":"New video in Personal"}}
+{"t":3509,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":241}}
+{"t":3826,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":241}}
+{"t":3843,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":3844,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":241,"button":"left","clickCount":1}}
+{"t":5053,"action":"click","desc":"composer","selector":"textarea","at":{"x":766,"y":721},"element":{"hitOk":true,"hit":"TEXTAREA.","x":287,"y":697,"width":958,"height":48,"label":""}}
+{"t":5053,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":5059,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":5062,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":5063,"cdp":"Input.dispatchKeyEvent","params":{"type":"rawKeyDown","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2,"commands":["selectAll"]}}
+{"t":5064,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"a","code":"KeyA","windowsVirtualKeyCode":65,"modifiers":2}}
+{"t":5065,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Backspace","code":"Backspace","windowsVirtualKeyCode":8,"nativeVirtualKeyCode":8,"modifiers":0}}
+{"t":5066,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Backspace","code":"Backspace","windowsVirtualKeyCode":8,"nativeVirtualKeyCode":8,"modifiers":0}}
+{"t":5067,"cdp":"Input.insertText","params":{"text":"现在只做一件事：调用 project_memory 工具一次，action 为 save，记住这条项目偏好：\"片尾统一使用白色字幕\"。不要运行任何其他工具。保存后只回复：已记住 VCR1747"}}
+{"t":5110,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0,"text":"\r"}}
+{"t":5113,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Enter","code":"Enter","windowsVirtualKeyCode":13,"nativeVirtualKeyCode":13,"modifiers":0}}
+{"t":117240,"note":"STEP studio_tool_on_route: PASS {\"sessionId\":\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\",\"llmRoute\":\"minimax\",\"agentHarness\":\"claude-code\",\"codexProvider\":null,\"tools\":[\"mcp__studio__project_memory {\\\"action\\\":\\\"save\\\",\\\"expectedRevision\\\":null,\\\"entry\\\":{\\\"text\\\":\\\"项目偏好：片尾统一使用白色字幕。\\\",\\\"sources\\\":[{\\\"kind\\\":\\\"message\\\",\\\"sessionId\\\":\\\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\\\",\\\"turnId\\\":\\\"42a33eee-9a10-51e6-9e3d-e9a8656f640c\\\",\\\"label\\\":\\\"用户偏好：片尾统一使用白色字幕\\\"}]}}\",\"mcp__studio__project_memory {\\\"action\\\":\\\"read\\\",\\\"limit\\\":8}\",\"mcp__studio__project_memory {\\\"action\\\":\\\"save\\\",\\\"entry\\\":{\\\"text\\\":\\\"项目偏好：片尾统一使用白色字幕。\\\",\\\"sources\\\":[{\\\"kind\\\":\\\"message\\\",\\\"label\\\":\\\"用户偏好：片尾统一使用白色字幕\\\",\\\"sessionId\\\":\\\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\\\""}
+{"t":119247,"action":"click","desc":"spend chip","selector":"button.vs-spend","at":{"x":690,"y":71},"element":{"hitOk":true,"hit":"SPAN.vs-spend-headline","x":647.9375,"y":56,"width":84.078125,"height":30,"label":"$0.01 spent"}}
+{"t":119247,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":690,"y":71}}
+{"t":119251,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":690,"y":71,"button":"left","clickCount":1}}
+{"t":119253,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":690,"y":71,"button":"left","clickCount":1}}
+{"t":119835,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyDown","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":119850,"cdp":"Input.dispatchKeyEvent","params":{"type":"keyUp","key":"Escape","code":"Escape","windowsVirtualKeyCode":27,"nativeVirtualKeyCode":27,"modifiers":0}}
+{"t":119857,"note":"STEP usage_display: PASS {\"metered\":[{\"meter\":\"proxy\",\"totalUsd\":0.008377843,\"runtimeUsd\":0.008377843,\"sdkEstimateUsd\":0.28540550000000003,\"sources\":\"\\\"models.dev:minimax-cn/MiniMax-M3.1-Flash\\\"\"}],\"proxyRequestLogs\":0,\"chip\":\"$0.01 spent\",\"breakdown\":\"Production services\\n$0.00\\nVideoclaw gateway reasoning\\n$0.01\\nVideoclaw spend\\n$0.01\\n$0.01 in progress · paid work allowed\",\"displayedTotalCostUsd\":0.008377843,\"resultEventTotalCostUsd\":0.008377843,\"reasoningRow\":\"0.01\",\"expectedReasoningRow\":\"0.01\",\"spend\":{\"sessionId\":\"2ebc9173-db96-47f8-b07f-c7cec99ba2b0\",\"accountingEpoch\":1,\"policy\":\"unlimited_for_video\",\"coveredPlans\":[],\"committedCents\":0,\"reservedCents\":0,\"provisionalLlmCents\":1,\"provisionalLlmRevision\":1,\"n"}
+{"t":119957,"note":"app exited 0"}
+{"t":120183,"note":"DONE allPass=true steps=studio_tool_on_route:ok usage_display:ok"}

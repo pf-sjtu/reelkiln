@@ -127,10 +127,11 @@ try {
     const notice = await waitFor("Remembered something", () => find("div.memory-notice", { text: "Remembered something" }), { timeoutMs: 6 * 60_000, every: 1000 });
     await waitFor("turn result", async () => results(sid)[0] ?? null, { timeoutMs: 5 * 60_000, every: 1000 });
     await waitIdle(sid, 60_000).catch(() => null); await sleep(1500); await shot("01-memory-notice");
-    const tools = sessEvents(sid).filter((e) => e.kind === "tool_start").map((e) => e.toolName ?? e.name);
+    // the Codex harness surfaces studio dynamicTools as provider_dynamic with the tool's summary (codexEventToSdkMessages)
+    const tools = sessEvents(sid).filter((e) => e.kind === "tool_start").map((e) => `${e.toolName ?? e.name}${e.detail ? " " + e.detail : ""}`);
     const disk = memoryOnDisk().filter((f) => /MEMORY\.md$/.test(f.file)).map((f) => f.text).join("\n");
     summary.tool = { tools, notice: notice.label, onDisk: /白色字幕/.test(disk), result: results(sid)[0] };
-    verdict("studio_tool_on_route", (PHASE === "codex" ? meta.agentHarness === "codex-app-server" : meta.llmRoute === "minimax") && tools.some((t) => /project_memory/.test(String(t))) && /白色字幕/.test(disk), { ...summary.session, ...summary.tool });
+    verdict("studio_tool_on_route", (PHASE === "codex" ? meta.agentHarness === "codex-app-server" : meta.llmRoute === "minimax") && tools.some((t) => /project_memory|Use project memory/.test(String(t))) && /白色字幕/.test(disk), { ...summary.session, ...summary.tool });
   });
   await step("usage_display", async () => {
     await sleep(2000);
@@ -139,11 +140,17 @@ try {
     const chip = await bodyText().then((t) => /\$([0-9]+\.[0-9]{2}) spent/.exec(t)?.[0] ?? null);
     let breakdown = null;
     try { await click("spend chip", "button.vs-spend"); breakdown = await waitFor("spend breakdown", async () => cdp.eval(`(() => { const b = document.querySelector(".vs-breakdown"); return b ? b.innerText : null; })()`), { timeoutMs: 10_000 }); await sleep(500); await shot("02-spend-breakdown"); await key("Escape", 27); } catch (e) { breakdown = `error: ${String(e?.message ?? e).slice(0, 200)}`; }
-    const total = sessRow(sid)?.totalCostUsd;
+    const lastM = metered.at(-1);
+    // the meta is persisted lazily (as in the original, L50739-50777 does not save): read what the renderer was
+    // pushed (session:changed) — the value behind the breakdown's reasoning row
+    const pushed = () => evRows().filter((r) => r.ch === "session:changed").flatMap((r) => (Array.isArray(r.payload) ? r.payload : [])).filter((x) => x?.sessionId === sid).map((x) => x.totalCostUsd).at(-1);
+    const total = await waitFor("pushed totalCostUsd", async () => { const t = pushed(); return lastM && Number.isFinite(t) && Math.abs(t - lastM.totalUsd) < 1e-9 ? { t } : null; }, { timeoutMs: 20_000, every: 500 }).then((x) => x.t, () => pushed());
+    const resultCost = results(sid).at(-1)?.totalCostUsd;
+    const reasoningRow = /Videoclaw gateway reasoning\s*\$([0-9]+\.[0-9]{2})/.exec(breakdown ?? "")?.[1];
     const spend = (readJson(join(UD, "spend-budgets.json"))?.entries ?? []).find((x) => x.sessionId === sid) ?? null;
-    summary.usage = { metered, proxyRequestLogs: proxyUsage, chip, breakdown, displayedTotalCostUsd: total, spend };
+    summary.usage = { metered, proxyRequestLogs: proxyUsage, chip, breakdown, displayedTotalCostUsd: total, resultEventTotalCostUsd: resultCost, reasoningRow, expectedReasoningRow: Number.isFinite(total) ? total.toFixed(2) : null, spend };
     const last = metered.at(-1);
-    verdict("usage_display", !!last && last.meter === "proxy" && /models\.dev/.test(String(last.sources)) && Number.isFinite(total) && Math.abs(total - last.totalUsd) < 1e-9 && (!Number.isFinite(last.sdkEstimateUsd) || last.sdkEstimateUsd !== total) && !!breakdown && !/^error/.test(breakdown), summary.usage);
+    verdict("usage_display", !!last && last.meter === "proxy" && /models\.dev/.test(String(last.sources)) && Number.isFinite(total) && Math.abs(total - last.totalUsd) < 1e-9 && (!Number.isFinite(last.sdkEstimateUsd) || last.sdkEstimateUsd !== total) && reasoningRow === total.toFixed(2) && Math.abs(resultCost - total) < 1e-9, summary.usage);
   });
 } catch (e) { summary.error = String(e?.stack ?? e); say(`ERROR ${summary.error}`); try { await shot("99-error"); } catch {} }
 finally {
