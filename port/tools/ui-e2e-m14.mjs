@@ -191,7 +191,7 @@ try {
     const resp = await waitFor("budget applied", async () => { const r = spendRow(sidB); return r?.policy === "capped" && r.ceilingApprovalId ? r : null; }, { timeoutMs: 20_000 }).catch(() => null);
     await waitFor("budget turn result", async () => results(sidB).length > r0 || null, { timeoutMs: 5 * 60_000, every: 1000 });
     await waitIdle(sidB, 60_000).catch(() => null); await sleep(1500); await shot("04b-budget-set");
-    const chip = await bodyText().then((t) => /\$[0-9.]+ (?:of \$[0-9.]+|spent)[^\n]{0,30}/.exec(t)?.[0] ?? null);
+    const chip = await cdp.eval(`(() => { const b = document.querySelector("button.vs-spend"); return b ? b.innerText : null; })()`);
     const reply = sessEvents(sidB).filter((e) => e.kind === "assistant_text").map((e) => e.text).slice(-1)[0];
     summary.budget = { cardText, spend: spendRow(sidB), settled: sessEvents(sidB).filter((e) => e.kind === "ask_settled").map((e) => e.record).slice(-1)[0], chip, reply: String(reply ?? "").slice(0, 200), jobId: sessRow(sidB)?.jobId };
     verdict("budget_card", !!card && !!resp && resp.ceilingCents === 5 && /true/i.test(String(reply)), summary.budget);
@@ -201,7 +201,8 @@ try {
     const r0 = results(sidB).length; const ev0 = sessEvents(sidB).length;
     const jobId = sessRow(sidB)?.jobId;
     await sendTurn(`现在只做配音测试：先调用 search_models（query 为 "speech"，kind 为 "audio"）找到 MiniMax 语音模型，然后用返回的 model_id 调用 call_model 一次，job_id 为 "${jobId}"，input 为 {"text":"你好，欢迎来到 Videoclaw。","voice_id":"female-shaonv"}。不要运行其他工具、不要读写文件。完成后只回复保存的文件路径和 ${CODE}`);
-    await waitFor("B running", async () => sessRow(sidB)?.status === "running" || null, { timeoutMs: 30_000, every: 300 });
+    // running = the turn's own status event (sessions.json is not flushed on every status change)
+    await waitFor("B running", async () => sessEvents(sidB).slice(ev0).some((e) => e.kind === "status" && (e.status === "running" || e.state === "running")) || sessEvents(sidB).slice(ev0).some((e) => e.kind === "port_runtime" || e.kind === "thinking" || e.kind === "tool_start") || null, { timeoutMs: 30_000, every: 200 });
     // A while B's turn holds the only turn slot
     await step("plan_build_fails_while_busy", async () => {
       await openById(sidA);
@@ -211,8 +212,8 @@ try {
       const retry = await waitFor("Retry button", () => find(".session-plan-card button.session-plan-primary", { text: "^Retry$" }), { timeoutMs: 30_000 }).catch(() => null);
       await sleep(600); await shot("05a-plan-failed-retry");
       const plan = sessRow(sidA)?.sessionPlan;
-      summary.buildFailed = { bRunning: sessRow(sidB)?.status, choose: { ok: chose.ok, real: chose.real, result: String(chose.result ?? chose.error).slice(0, 300) }, retryButton: !!retry, plan: plan && { phase: plan.phase, decision: plan.decision?.action, message: plan.message }, card: await planText() };
-      verdict("plan_build_fails_while_busy", plan?.phase === "failed" && plan?.decision?.action === "build" && !!retry, summary.buildFailed);
+      summary.buildFailed = { bTurnEnded: results(sidB).length > r0, choose: { ok: chose.ok, real: chose.real, result: String(chose.result ?? chose.error).slice(0, 300) }, retryButton: !!retry, plan: plan && { phase: plan.phase, decision: plan.decision?.action, message: plan.message }, card: await planText() };
+      verdict("plan_build_fails_while_busy", results(sidB).length === r0 && plan?.phase === "failed" && plan?.decision?.action === "build" && !!retry, summary.buildFailed);
     });
     await waitFor("paid turn result", async () => results(sidB).length > r0 || null, { timeoutMs: 8 * 60_000, every: 1000 });
     await openById(sidB); await waitIdle(sidB, 60_000).catch(() => null); await sleep(2000); await shot("06-paid-done");
@@ -224,11 +225,11 @@ try {
     const all = (ledger()?.entries ?? []).filter((e) => e.clientJob === jobId);
     const ledgerUsd = all.reduce((a, e) => a + e.usd, 0);
     const cents = (usd) => { const raw = usd * 100, n = Math.round(raw); return Math.abs(raw - n) < 1e-9 ? n : Math.ceil(raw); };
-    const chip = await bodyText().then((t) => /\$([0-9]+\.[0-9]{2}) (?:spent|of)[^\n]{0,24}/.exec(t)?.[0] ?? null);
+    const chip = await cdp.eval(`(() => { const b = document.querySelector("button.vs-spend"); return b ? b.innerText : null; })()`);
     const reply = ev.filter((e) => e.kind === "assistant_text").map((e) => e.text).slice(-1)[0];
     const paidLog = mainLogRows(/agent\.paid\.model_call|\[local-gateway\] model_call/).map((l) => l.slice(0, 300)).slice(-4);
-    summary.paid = { jobId, tools, files, paidEntries: paid.map((e) => ({ model: e.model, usd: e.usd, units: e.units, maximumUsd: e.maximumUsd })), jobLedgerUsd: ledgerUsd, expectedChipPrefix: `$${(cents(ledgerUsd) / 100).toFixed(2)}`, chip, spend: spendRow(sidB), reply: String(reply ?? "").slice(0, 300), paidLog };
-    verdict("paid_tts", tools.some((t) => /search_models$/.test(t)) && tools.some((t) => /call_model$/.test(t)) && files.some((x) => /\.mp3$/.test(x.f) && x.bytes > 1000) && paid.length >= 1 && paid.every((e) => e.usd > 0 && e.usd <= e.maximumUsd), summary.paid);
+    summary.paid = { jobId, tools, files, paidEntries: paid.map((e) => ({ model: e.model, usd: e.usd, units: e.units, maximumUsd: e.pricing?.maximumUsd, pricing: e.pricing?.source })), jobLedgerUsd: ledgerUsd, expectedChipPrefix: `$${(cents(ledgerUsd) / 100).toFixed(2)}`, chip, spend: spendRow(sidB), reply: String(reply ?? "").slice(0, 300), paidLog };
+    verdict("paid_tts", tools.some((t) => /search_models$/.test(t)) && tools.some((t) => /call_model$/.test(t)) && files.some((x) => /\.mp3$/.test(x.f) && x.bytes > 1000) && paid.length >= 1 && paid.every((e) => e.usd > 0 && e.usd <= e.pricing?.maximumUsd), summary.paid);
   });
   // ---- A4: Retry → the saved build choice dispatches → stop right away (no production)
   await step("plan_retry", async () => {
@@ -246,7 +247,7 @@ try {
     await waitFor("build turn ended", async () => results(sidA).length > r0 || null, { timeoutMs: 120_000, every: 1000 }).catch(() => null);
     await waitIdle(sidA, 120_000).catch(() => null);
     // the drained call (if any) lands in the ledger; the host reconciles once the shim reports no call in flight
-    const settled = await waitFor("settled after stop", async () => mainLogRows(/agent\.spend\.settled_after_stop/).find((l) => l.includes(sidA)) ?? null, { timeoutMs: 150_000, every: 1000 }).catch(() => null);
+    const settled = await waitFor("settled after stop", async () => mainLogRows(/agent\.spend\.settled_after_stop/).find((l) => l.includes(sidA) && Date.parse(/"ts":"([^"]+)"/.exec(l)?.[1] ?? "") >= turnMs - 1000) ?? null, { timeoutMs: 150_000, every: 1000 }).catch(() => null);
     await sleep(1500);
     const jobA = sessRow(sidA)?.jobId;
     const llmA = (ledger()?.entries ?? []).filter((e) => e.clientJob === jobA && e.kind !== "paid_tool").reduce((a, e) => a + e.usd, 0);

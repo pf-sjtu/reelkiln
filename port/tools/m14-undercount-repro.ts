@@ -19,6 +19,7 @@ const outDir = resolve(process.argv[2] ?? "m14-undercount"); mkdirSync(outDir, {
 const INTERRUPT_AT = Number(arg("--interrupt-at-call", "3"));
 const HOLD_MS = Number(arg("--hold-ms", "1500"));
 const TAG = arg("--tag", "run");
+const PERMISSION_MODE = arg("--permission-mode", "bypassPermissions");
 setLoggerForTests(createLogger({ level: "silent" }));
 const realKey = process.env.MINIMAX_API_KEY;
 for (const k of Object.keys(process.env)) if (k.startsWith("__CURSOR_SANDBOX")) delete process.env[k];
@@ -58,7 +59,7 @@ const scrub = (s: string) => s.split(realKey).join("[MINIMAX_API_KEY]");
     await inputDone;
   }
   const q: any = sdk.query({ prompt: input(), options: {
-    cwd, model: "sonnet", env, ...(exe ? { pathToClaudeCodeExecutable: exe } : {}), permissionMode: "bypassPermissions", allowDangerouslySkipPermissions: true,
+    cwd, model: "sonnet", env, ...(exe ? { pathToClaudeCodeExecutable: exe } : {}), permissionMode: PERMISSION_MODE, ...(PERMISSION_MODE === "bypassPermissions" ? { allowDangerouslySkipPermissions: true } : { canUseTool: async (_n: string, input: any) => ({ behavior: "allow", updatedInput: input }) }),
     includePartialMessages: true, settingSources: [], strictMcpConfig: true, mcpServers: {}, systemPrompt: { type: "preset", preset: "claude_code" },
     tools: ["Bash"], maxTurns: 12, persistSession: false, stderr: () => {},
   } });
@@ -85,7 +86,7 @@ const scrub = (s: string) => s.split(realKey).join("[MINIMAX_API_KEY]");
   const ledger = JSON.parse(JSON.stringify((shim as any).ledger));
   const entries = ledger.entries.filter((e: any) => e.kind === "model_call");
   const out = {
-    tag: TAG, sdkVersion: version, interruptAtCall: INTERRUPT_AT, holdMs: HOLD_MS, interruptedAtMs: interruptedAt, interruptAck,
+    tag: TAG, permissionMode: PERMISSION_MODE, sdkVersion: version, interruptAtCall: INTERRUPT_AT, holdMs: HOLD_MS, interruptedAtMs: interruptedAt, interruptAck,
     streamedCalls: calls,
     resultMessage: result && { subtype: result.subtype, is_error: result.is_error, num_turns: result.num_turns, modelUsage: result.modelUsage, usage: result.usage, total_cost_usd: result.total_cost_usd },
     ledger: entries.map((e: any) => ({ at: e.at, model: e.model, inputTokens: e.inputTokens, outputTokens: e.outputTokens, cacheReadTokens: e.cacheReadTokens, usd: e.usd, status: e.status, clientJob: e.clientJob })),

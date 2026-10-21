@@ -1,0 +1,37 @@
+TOTAL 184 {'real': 110, 'real-partial': 43, 'push-real': 19, 'push-none': 4, 'fixture': 4, 'stub': 2, 'local': 1, 'real-env': 1}
+sessionPlan	4	push-real=1, real=2, real-partial=1	read choose retry changed
+memory	5	push-real=1, real=4	read update undo openSource changed
+quickstart	6	push-real=1, real=5	catalog impression previewed start mark catalogChanged
+session	17	push-real=2, real=13, real-partial=2	create list reorder rename deletionPlan delete send retry interrupt setPermissionMode setModel setReasoningEffort history unfinalize startContinuation event changed
+permission	3	push-real=1, real=2	respond shown request
+quit	1	real=1	rendererState
+interaction	1	real=1	replayPending
+file	5	local=1, real=4	openPath openExternal revealItem saveItemAs
+analytics	1	real=1	playbackCompleted
+client	5	real=5	list create rename remove reorder
+project	1	real=1	seedPack
+taste	4	real=4	list commit decline titles
+characters	14	push-none=1, push-real=1, real=7, real-partial=5	list voices:list voice:approve voice:remove create sheetPlan sheetBuild sheetStates approve retry discard delete build
+job	5	push-real=1, real=4	get originalContext snapshot adopt historicalSnapshot
+spend	3	push-real=1, real=2	get setCeiling snapshot
+outbox	1	real-partial=1	authoritySnapshot
+telemetry	1	real-partial=1	bindReplay
+version	2	real=2	approve revertFinal
+settings	4	real=4	get set saveGatewayKey switchGateway
+app	10	fixture=2, push-none=1, push-real=1, real=2, real-partial=2, stub=2	restart update:preferences update:channel update:state update:get update:check update
+gateway	3	real=2, real-partial=1	verify meter topup
+account	15	push-real=2, real=4, real-partial=9	snapshot refresh signInGoogle signInEmail resendEmail cancelSignIn emailSent signOut consent ensureAccess mintKey claimKey localResetPrepare localResetCommit changed
+engine	21	fixture=1, push-none=1, real=7, real-partial=12	claudeCodeStatus claudeCodeConnect claudeCodeConnectCancel claudeCodeSignOutImpact claudeCodeSignOut llmRouteReadiness codexStatus codexConnectChatGpt codexConnectCancel codexDisconnectImpact codexDisconnectChatGpt codexModels claudeModels codexHandoffOffer continueOnCodex creditHandoffOffer continueOnCredits agentProviderKeyStatus saveAgentProviderKey pendingToast
+input	2	push-real=1, real=1	respond request
+media	4	fixture=1, real=1, real-partial=2	requestMic voiceDictationStatus transcribeVoice discardVoice
+library	9	push-real=1, real=6, real-partial=2	stats scan addSource removeSource sync search preview setTenant syncProgress
+bootstrap	5	push-real=1, real=3, real-env=1	status run revertEngine revealSetupLog progress
+intake	1	real=1	pickFiles
+attachment	12	push-real=1, real=10, real-partial=1	stage list ownership remove retry destination pasteImage voiceNote captureMoment momentPreview preview changed
+materials	2	push-real=1, real=1	preview changed
+stats	1	real=1	stageEtas
+window	1	push-none=1	
+feedback	4	real=1, real-partial=3	capture submit discard grantUsageSharing
+workflowSubmit	2	real=1, real-partial=1	eligibility start
+editorRender	4	push-real=1, real=3	start cancel state event
+hfPreview	5	push-real=1, real=4	available start stop editApply event

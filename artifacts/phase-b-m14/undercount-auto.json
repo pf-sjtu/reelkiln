@@ -1,0 +1,430 @@
+{
+ "tag": "auto",
+ "permissionMode": "auto",
+ "sdkVersion": "0.3.305",
+ "interruptAtCall": 99,
+ "holdMs": 1500,
+ "streamedCalls": [
+  {
+   "id": "07281583a85c3b51dbc30550be071b93",
+   "t": 9905,
+   "input": 0,
+   "output": 105,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "0728158e4c485bde1451a2a939fd7ca1",
+   "t": 21854,
+   "input": 0,
+   "output": 87,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "072815949c5ff8aa60ed9b4ec07fb466",
+   "t": 26225,
+   "input": 0,
+   "output": 124,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "0728159f596ca79f8512005ee3b5453f",
+   "t": 40185,
+   "input": 0,
+   "output": 75,
+   "stopped": "tool_use"
+  },
+  {
+   "id": "072815a554cbe9c9d567e9cf99c35fd4",
+   "t": 43361,
+   "input": 0,
+   "output": 177,
+   "stopped": "end_turn"
+  }
+ ],
+ "resultMessage": {
+  "subtype": "success",
+  "is_error": false,
+  "num_turns": 5,
+  "modelUsage": {
+   "claude-sonnet-5-5": {
+    "inputTokens": 5155,
+    "outputTokens": 578,
+    "cacheReadInputTokens": 13824,
+    "cacheCreationInputTokens": 0,
+    "webSearchRequests": 0,
+    "costUSD": 0.0174724,
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "thinkingTokens": 5,
+    "canonicalModel": "claude-sonnet-5-5",
+    "provider": "firstParty",
+    "costBasis": "list"
+   }
+  },
+  "usage": {
+   "input_tokens": 4260,
+   "cache_creation_input_tokens": 0,
+   "cache_read_input_tokens": 13696,
+   "output_tokens": 568,
+   "output_tokens_details": {
+    "thinking_tokens": 5
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 0,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "",
+   "iterations": [],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "total_cost_usd": 0.0174724
+ },
+ "ledger": [
+  {
+   "at": 1792598658385,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 895,
+   "outputTokens": 10,
+   "cacheReadTokens": 128,
+   "usd": 0.00014217,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  },
+  {
+   "at": 1792598667644,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 2772,
+   "outputTokens": 105,
+   "cacheReadTokens": 128,
+   "usd": 0.00048072,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  },
+  {
+   "at": 1792598674725,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 103,
+   "outputTokens": 87,
+   "cacheReadTokens": 2944,
+   "usd": 0.00011181,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  },
+  {
+   "at": 1792598679228,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 104,
+   "outputTokens": 124,
+   "cacheReadTokens": 3072,
+   "usd": 0.00013608,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  },
+  {
+   "at": 1792598684756,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 30407,
+   "outputTokens": 62,
+   "cacheReadTokens": 128,
+   "usd": 0.00460017,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  },
+  {
+   "at": 1792598692574,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 1158,
+   "outputTokens": 75,
+   "cacheReadTokens": 3200,
+   "usd": 0.0002667,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  },
+  {
+   "at": 1792598699207,
+   "model": "claude-sonnet-5-5",
+   "inputTokens": 123,
+   "outputTokens": 177,
+   "cacheReadTokens": 4352,
+   "usd": 0.00018993,
+   "status": 200,
+   "clientJob": "m14-under-auto"
+  }
+ ],
+ "ledgerUsd": 0.005927579999999999,
+ "messages": [
+  {
+   "t": 475,
+   "type": "system",
+   "subtype": "init"
+  },
+  {
+   "t": 479,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 16455,
+   "type": "assistant",
+   "id": "07281583a85c3b51dbc30550be071b93",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 16872,
+   "type": "assistant",
+   "id": "07281583a85c3b51dbc30550be071b93",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 16894,
+   "type": "system",
+   "subtype": "informational"
+  },
+  {
+   "t": 17944,
+   "type": "user"
+  },
+  {
+   "t": 17948,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 22653,
+   "type": "assistant",
+   "id": "0728158e4c485bde1451a2a939fd7ca1",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 23947,
+   "type": "assistant",
+   "id": "0728158e4c485bde1451a2a939fd7ca1",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 24974,
+   "type": "user"
+  },
+  {
+   "t": 24977,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 27097,
+   "type": "assistant",
+   "id": "072815949c5ff8aa60ed9b4ec07fb466",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 28453,
+   "type": "assistant",
+   "id": "072815949c5ff8aa60ed9b4ec07fb466",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 32466,
+   "type": "system",
+   "subtype": "permission_check_status"
+  },
+  {
+   "t": 33982,
+   "type": "system",
+   "subtype": "permission_check_status"
+  },
+  {
+   "t": 34006,
+   "type": "user"
+  },
+  {
+   "t": 34009,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 41542,
+   "type": "assistant",
+   "id": "0728159f596ca79f8512005ee3b5453f",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 41824,
+   "type": "assistant",
+   "id": "0728159f596ca79f8512005ee3b5453f",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 41866,
+   "type": "user"
+  },
+  {
+   "t": 41870,
+   "type": "system",
+   "subtype": "status"
+  },
+  {
+   "t": 48432,
+   "type": "assistant",
+   "id": "072815a554cbe9c9d567e9cf99c35fd4",
+   "usage": {
+    "in": 0,
+    "out": 0
+   }
+  },
+  {
+   "t": 48446,
+   "type": "result",
+   "subtype": "success"
+  }
+ ],
+ "upstreamRequests": [
+  {
+   "startMs": 510,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 0,
+   "messages": 1,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.09f; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. You are naming a coding",
+   "lastUserHead": "<session>\nRun these four shell commands, strictly one Bash tool call each, one after another (never in parallel), then reply with a one-paragraph summary of all four outputs: 1) `echo one; sleep 1` 2)",
+   "status": 429,
+   "endMs": 1958
+  },
+  {
+   "startMs": 4090,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 0,
+   "messages": 1,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.09f; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. You are naming a coding",
+   "lastUserHead": "<session>\nRun these four shell commands, strictly one Bash tool call each, one after another (never in parallel), then reply with a one-paragraph summary of all four outputs: 1) `echo one; sleep 1` 2)",
+   "status": 200,
+   "endMs": 7443
+  },
+  {
+   "startMs": 7603,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 2,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "# Environment\nYou have been invoked in the following environment: \n - Primary working directory: /tmp/vc-m14-under-4CKCr4/ws\n - Is a git repository: false\n - Platform: linux\n - Shell: unknown\n - OS Ve",
+   "status": 200,
+   "endMs": 9900
+  },
+  {
+   "startMs": 17960,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 5,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996995 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 21849
+  },
+  {
+   "startMs": 24988,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 8,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996866 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 26221
+  },
+  {
+   "startMs": 28481,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 64,
+   "tools": 0,
+   "messages": 1,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.034; cc_entrypoint=sdk-ts; You are a security monitor for autonomous AI coding agents.\n\n## Context\n\nThe agent you",
+   "lastUserHead": "<transcript>\n {\"user\":\"Run these four shell commands, strictly one Bash tool call each, one after another (never in parallel), then reply with a one-paragraph summary of all four outputs: 1) `echo one",
+   "status": 400,
+   "endMs": 29339
+  },
+  {
+   "startMs": 29356,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 2112,
+   "tools": 0,
+   "messages": 1,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.034; cc_entrypoint=sdk-ts; You are a security monitor for autonomous AI coding agents.\n\n## Context\n\nThe agent you",
+   "lastUserHead": "<transcript>\n {\"user\":\"Run these four shell commands, strictly one Bash tool call each, one after another (never in parallel), then reply with a one-paragraph summary of all four outputs: 1) `echo one",
+   "status": 200,
+   "endMs": 33978
+  },
+  {
+   "startMs": 34020,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 11,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996700 tokens left</total_tokens>",
+   "status": 429,
+   "endMs": 34598
+  },
+  {
+   "startMs": 36619,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 11,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14996700 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 40176
+  },
+  {
+   "startMs": 41886,
+   "model": "MiniMax-M3.1-Flash",
+   "maxTokens": 128000,
+   "stream": true,
+   "tools": 2,
+   "messages": 14,
+   "systemHead": "x-anthropic-billing-header: cc_version=2.1.305.d78; cc_entrypoint=sdk-ts; You are a Claude agent, built on Anthropic's Claude Agent SDK. \nYou are an agent worki",
+   "lastUserHead": "<total_tokens>14995567 tokens left</total_tokens>",
+   "status": 200,
+   "endMs": 43357
+  }
+ ]
+}

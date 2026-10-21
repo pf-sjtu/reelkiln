@@ -1,0 +1,121 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "ea460ca2-5ca8-4546-becf-e7ffc2c82b5b",
+   "title": "现在只做一件事：调用 set_video_budget 工具一次，amount_usd 为 0.05。不要运行任何其他工具。工具返回后只回复 approved…",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.020293,
+   "createdAt": 1792599163071,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "gateway",
+   "titleOrigin": "fallback",
+   "jobId": "set-video-budget-amount-usd-0-05-approve-20261021-ea460c",
+   "sdkSessionId": "49094929-69de-44b8-998d-40bce7f55718",
+   "acceptedOperations": [
+    {
+     "id": "89a75c19-9d08-4b07-956b-67006b0b77ee",
+     "path": "/v1/model_call",
+     "sha256": "e7c984464f8dd2857db7d4df86cd1dd56acd932d13363da6d3b0d45d761f3b75",
+     "owner": {
+      "account_id": "490e70eced8a104e2b887f493cd3f8f9b627c8a61c0761c2de6c35c9df68ed0e",
+      "gateway_url": "http://127.0.0.1:47731",
+      "environment": "local",
+      "project_id": "personal",
+      "client_job": "set-video-budget-amount-usd-0-05-approve-20261021-ea460c"
+     },
+     "cwd": "<RUN>/Videoclaw",
+     "createdAt": 1792599269084
+    }
+   ],
+   "contextEpoch": "5af1cd7d-a4a7-4f53-95d4-3aaeb54ae206",
+   "sessionPlanRequired": true
+  },
+  {
+   "sessionId": "1442b32e-6aee-4429-acdf-cef7662155b1",
+   "title": "做一个10秒竖屏咖啡倒入的短视频。现在只做方案：直接调用 propose_session_plan 工具一次（context 写简短说明；fallback 里…",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.01705,
+   "createdAt": 1792599053392,
+   "clientId": "personal",
+   "agentHarness": "claude-code",
+   "llmRoute": "gateway",
+   "titleOrigin": "fallback",
+   "jobId": "10-propose-session-plan-context-fallback-20261021-1442b3",
+   "sdkSessionId": "b0e820cc-2b43-42b6-9709-c511e09ea3b3",
+   "contextEpoch": "d99188ab-50e7-4a19-9e7f-ad8fb9593639",
+   "sessionPlan": {
+    "version": 1,
+    "id": "c67f5908-7834-4831-b98e-a606420c66ce",
+    "revision": 3,
+    "binding": {
+     "gatewayUrl": "http://127.0.0.1:47731",
+     "canonicalKeyId": "5cf2508838a610fd5b39c46c3688f6d0e94e01a181711acb0cda41b44317533a",
+     "clientId": "personal",
+     "jobId": "10-propose-session-plan-context-fallback-20261021-1442b3"
+    },
+    "sourceTurnId": "1efbac0e-e44c-5d82-ba63-693c14f06164",
+    "phase": "awaiting-decision",
+    "text": "竖屏 6 秒纯视觉：暖侧光下的深色台面，浓缩咖啡从壶嘴缓缓注入杯中，油脂层在液面旋开，最后停在满杯热气升腾的特写。无旁白，底噪为轻爵士音乐床，全片 12 dB 之下平稳不间断。",
+    "canvas": {
+     "width": 1080,
+     "height": 1920,
+     "previewAspectRatio": "9:16"
+    },
+    "shots": [
+     {
+      "description": "竖屏微距侧拍：浓缩咖啡壶嘴倾倒，深色液体成细流注入白瓷杯，暖侧光勾出液面高光，浅景深；无旁白"
+     },
+     {
+      "description": "镜头缓慢上移至杯口，满杯浓缩表面油脂旋纹清晰，热气升腾，背景暖光虚化；无旁白，音乐床收尾"
+     }
+    ],
+    "budget": {
+     "spentCents": 2,
+     "heldCents": 0
+    },
+    "references": [],
+    "simpleFallback": true,
+    "brief": "在已确认的 8 秒方案基础上把成片时长改为 6 秒，画布与风格不变：无旁白，暖侧光咖啡倾倒两镜头，底部轻爵士音乐床平稳置于 12 dB 之下。"
+   },
+   "sessionPlanDetails": {
+    "id": "c67f5908-7834-4831-b98e-a606420c66ce",
+    "revision": 3,
+    "title": "咖啡倾倒 6 秒",
+    "videoSeconds": 6,
+    "shots": [
+     {
+      "label": "倾倒特写",
+      "seconds": 4
+     },
+     {
+      "label": "满杯热气",
+      "seconds": 2
+     }
+    ],
+    "paidOperations": [
+     {
+      "tool": "mint_video",
+      "role": "insert",
+      "count": 2,
+      "seconds": 3
+     }
+    ],
+    "storyboard": true
+   },
+   "dismissedSessionPlan": "c67f5908-7834-4831-b98e-a606420c66ce:3",
+   "sessionPlanRequired": true
+  }
+ ],
+ "trashWorkspaces": []
+}

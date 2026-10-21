@@ -1,0 +1,45 @@
+{
+ "schema": "videoclaw.spend-budgets/v3",
+ "authority": {
+  "gatewayOrigin": "http://localhost",
+  "mode": "local",
+  "keySha256": null
+ },
+ "nextReservationId": 2,
+ "nextAccountingEpoch": 3,
+ "accountedSinceLedgerCents": 0,
+ "entries": [
+  {
+   "sessionId": "1442b32e-6aee-4429-acdf-cef7662155b1",
+   "accountingEpoch": 1,
+   "policy": "unlimited_for_video",
+   "coveredPlans": [],
+   "committedCents": 2,
+   "reservedCents": 0,
+   "provisionalLlmCents": 0,
+   "provisionalLlmRevision": 1,
+   "nextGatewayReconciliationSequence": 8,
+   "lastAppliedGatewayReconciliationSequence": 7,
+   "gatewayReservedCents": 0,
+   "committedUnknownSpend": false,
+   "pendingReservations": []
+  },
+  {
+   "sessionId": "ea460ca2-5ca8-4546-becf-e7ffc2c82b5b",
+   "accountingEpoch": 2,
+   "policy": "capped",
+   "ceilingCents": 5,
+   "ceilingApprovalId": "64ff1c05-eb4e-4160-b5fc-65c0c7fbf0e1",
+   "coveredPlans": [],
+   "committedCents": 3,
+   "reservedCents": 0,
+   "provisionalLlmCents": 0,
+   "provisionalLlmRevision": 1,
+   "nextGatewayReconciliationSequence": 5,
+   "lastAppliedGatewayReconciliationSequence": 4,
+   "gatewayReservedCents": 0,
+   "committedUnknownSpend": false,
+   "pendingReservations": []
+  }
+ ]
+}
