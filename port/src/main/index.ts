@@ -3,6 +3,7 @@
 // registration pattern (trackIpcRequests → ipc.handle / ipc.on for every channel),
 // handlers are served by real-backend.ts where ported, else by the fake backend.
 import { app, BrowserWindow, ipcMain } from "electron";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
@@ -65,8 +66,11 @@ function createWindow() {
           job: process.env.VIDEOCLAW_PORT_SMOKE_JOB,
           renderTimeoutMs: 10 * 60_000,
           llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE,
+          uiSelect: process.env.VIDEOCLAW_PORT_SMOKE_UI_SELECT,
         }));
         for (const r of results) log(`[smoke] ${JSON.stringify(r).slice(0, 1500)}`);
+        const shot = process.env.VIDEOCLAW_PORT_SMOKE_SCREENSHOT; // PORT-NEW docs/18: PNG of the page after the smoke
+        if (shot) { try { writeFileSync(shot, (await created.webContents.capturePage()).toPNG()); log(`[smoke] screenshot ${shot}`); } catch (e) { log(`[smoke] screenshot failed ${String(e)}`); } }
         const failed = results.filter((r: any) => !r.ok).map((r: any) => r.name);
         log(`[smoke] DONE failed=${JSON.stringify(failed)}`);
         app.exit(0);

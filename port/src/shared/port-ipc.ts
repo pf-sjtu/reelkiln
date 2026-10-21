@@ -7,8 +7,17 @@ import type { LlmProtocolId, LlmRouteId } from "./llm-types";
 export const PORT_IPC = {
   /** () → LlmRoutesView: every selectable LLM route + the current one. */
   llmRoutes: "port:llm:routes",
+  /** () → PortDiagnostics: packaged-app self check (docs/18): SDK discovery, node:sqlite, paths. */
+  diagnostics: "port:diagnostics",
 } as const;
 export type PortInvokeChannel = (typeof PORT_IPC)[keyof typeof PORT_IPC];
+/** PORT-NEW push channels (main → renderer). */
+export const PORT_PUSH = {
+  /** (view: LlmRoutesView) — effective route changed (settings:set) or the providers file was
+   *  (re)loaded (hot reload / SIGHUP: providers added/removed, configError set/cleared). */
+  llmRoutesChanged: "port:llm:routesChanged",
+} as const;
+export type PortPushChannel = (typeof PORT_PUSH)[keyof typeof PORT_PUSH];
 
 export interface LlmRouteOption {
   id: LlmRouteId;
@@ -40,8 +49,28 @@ export interface LlmRoutesView {
   configError?: string;
 }
 
+export interface AgentSdkStatus {
+  ok: boolean;
+  source?: string;
+  packageDir?: string;
+  version?: string;
+  pinned: string;
+  matchesPin?: boolean;
+  /** native `claude` executable next to the SDK (null = not found) */
+  executable?: string | null;
+  error?: string;
+}
+export interface PortDiagnostics {
+  app: { version: string; packaged: boolean; resourcesPath: string | null; appPath: string; userData: string; electron?: string; node: string; chrome?: string; platform: string; arch: string };
+  sqlite: { ok: boolean; sqliteVersion?: string; error?: string };
+  agentSdk: AgentSdkStatus;
+}
+
 export interface VideoclawPortBridge {
   llmRoutes(): Promise<LlmRoutesView>;
+  diagnostics(): Promise<PortDiagnostics>;
+  /** Subscribe to port:llm:routesChanged; returns an unsubscribe function. */
+  onLlmRoutesChanged(cb: (view: LlmRoutesView) => void): () => void;
 }
 declare global {
   interface Window { videoclawPort?: VideoclawPortBridge }

@@ -3,20 +3,63 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
-    <title>Videoclaw port — IPC smoke test</title>
-    <style>body{font:13px system-ui;background:#faf6ec;margin:16px}pre{background:#fff;padding:8px;max-height:40vh;overflow:auto}li{font-family:monospace}</style>
+    <title>Videoclaw Port</title>
+    <style>
+      body{font:13px system-ui,sans-serif;background:#faf6ec;color:#222;margin:0}
+      header{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid #e4dccb;background:#f4eedf}
+      header h1{font-size:15px;margin:0 16px 0 0}
+      nav button{border:1px solid #d6cdb8;background:#fff;border-radius:6px;padding:4px 12px;cursor:pointer}
+      nav button[aria-selected="true"]{background:#2d2a24;color:#fff;border-color:#2d2a24}
+      main{padding:16px;max-width:920px}
+      section.card{background:#fff;border:1px solid #e4dccb;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+      section.card h2{font-size:14px;margin:0 0 4px}
+      .muted{color:#7a7366}.hint{color:#7a7366;margin:0 0 10px}
+      .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+      #llmNotice[data-tone="ok"]{color:#1d6b35}#llmNotice[data-tone="error"]{color:#a12b1f}#llmNotice[data-tone="info"]{color:#555}
+      #llmConfigError{background:#fdecea;color:#a12b1f;padding:6px 8px;border-radius:6px;margin-bottom:8px}
+      label.route{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #eee5d3;border-radius:8px;margin-bottom:6px;cursor:pointer}
+      label.route.selected{border-color:#2d2a24;background:#fbf8f1}
+      label.route.disabled{opacity:.6;cursor:not-allowed}
+      .route-head{display:flex;gap:8px;align-items:baseline}.route-title{font-weight:600}.route-id{color:#7a7366;font-size:12px}
+      .route-detail{color:#555;margin-top:2px}.route-reason{color:#8a5a00;margin-top:4px;font-size:12px}
+      .badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+      .badge{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid}
+      .badge.ok{color:#1d6b35;border-color:#9fd3ad;background:#eef8f0}.badge.warn{color:#8a5a00;border-color:#ecc97a;background:#fff7e3}
+      .badge.muted{color:#6d675c;border-color:#ddd5c4;background:#f7f4ee}.badge.info{color:#28507a;border-color:#a9c3e0;background:#eef4fb}
+      dl#diagnostics{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin:0}dt{color:#7a7366}dd{margin:0;word-break:break-all}dd.ok{color:#1d6b35}dd.warn{color:#a12b1f}
+      pre{background:#fff;padding:8px;max-height:40vh;overflow:auto}li{font-family:monospace}
+    </style>
   </head>
   <body>
-    <h1>Videoclaw Windows port — scaffold</h1>
-    <p id="summary"></p>
-    <section id="llm">
-      <label for="llmRoute"><b>LLM route</b> (PORT-NEW, docs/17 §5)</label>
-      <select id="llmRoute"></select>
-      <span id="llmRouteInfo"></span>
-    </section>
-    <button id="ping">Ping fake backend</button>
-    <pre id="log"></pre>
-    <ol id="methods"></ol>
+    <header>
+      <h1>Videoclaw Port</h1>
+      <nav>
+        <button id="tab-settings" data-view="settings" aria-selected="true">Settings</button>
+        <button id="tab-debug" data-view="debug" aria-selected="false">Debug</button>
+      </nav>
+    </header>
+    <main>
+      <div id="view-settings">
+        <section class="card" id="llm">
+          <h2>LLM route</h2>
+          <p class="hint">Which model provider new videos use for the agent session and helper calls. Keys come from environment variables and are never shown here.</p>
+          <div class="toolbar"><span id="llmRouteStatus" class="muted">Loading…</span><button id="llmRefresh">Refresh</button><span id="llmNotice" role="status"></span></div>
+          <div id="llmConfigError" hidden></div>
+          <div id="llmRoutes" role="radiogroup" aria-label="LLM route"></div>
+        </section>
+        <section class="card">
+          <h2>About this build</h2>
+          <dl id="diagnostics"></dl>
+        </section>
+      </div>
+      <div id="view-debug" hidden>
+        <h2>IPC smoke test (scaffold)</h2>
+        <p id="summary"></p>
+        <button id="ping">Ping fake backend</button>
+        <pre id="log"></pre>
+        <ol id="methods"></ol>
+      </div>
+    </main>
     <script src="./renderer.js"></script>
   </body>
 </html>

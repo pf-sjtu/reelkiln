@@ -9,9 +9,9 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { InvokeChannel } from "../shared/ipc-contract";
-import { PORT_IPC, type PortInvokeChannel } from "../shared/port-ipc";
+import { PORT_IPC, type LlmRoutesView, type PortInvokeChannel } from "../shared/port-ipc";
 import { getLogger, type Logger } from "./llm/logger";
-import { reloadProviderRegistry, watchProvidersFile, type ProvidersFileWatcher } from "./llm/provider-registry";
+import { onProviderRegistryChange, reloadProviderRegistry, watchProvidersFile, type ProvidersFileWatcher } from "./llm/provider-registry";
 import { bindRegistryReloads, LlmRouteService, type SessionMetaLike } from "./llm/route-service";
 import { PROD_GATEWAY_URL, rendererWritableSettingsPatch, SettingsStore } from "./settings/settings-store";
 import { getProviderRegistry } from "./llm/provider-registry";
@@ -24,6 +24,9 @@ export interface LlmRuntimeDeps {
   sessionMeta?: (sessionId: string) => SessionMetaLike | undefined;
   /** AgentHost.onLlmRouteChanged — runtime teardown is NOT PORTED; default logs. */
   onLlmRouteChanged?: () => void;
+  /** PORT-NEW push port:llm:routesChanged (docs/18 §5): called with the fresh route list whenever the
+   *  effective route changes or the provider registry reloads. */
+  onRoutesChanged?: (view: LlmRoutesView) => void;
   watch?: boolean;
   /** Install a SIGHUP → reload handler (POSIX only; ignored on win32). */
   sighup?: boolean;
@@ -54,6 +57,21 @@ export function createLlmRuntime(d: LlmRuntimeDeps): LlmRuntime {
     if (d.onLlmRouteChanged) d.onLlmRouteChanged();
     else log.info("llm.route.on_changed", { route, note: "AgentHost.onLlmRouteChanged (runtime teardown) not ported" });
   });
+  // registry listeners run in registration order: bindRegistryReloads (above) revalidates the
+  // settings first, so the view pushed here already reflects a re-adopted / parked route
+  let lastPushed = "";
+  const emitRoutes = (reason: string) => {
+    if (!d.onRoutesChanged) return;
+    try {
+      const view = service.listRoutes();
+      const sig = JSON.stringify(view);
+      if (sig === lastPushed) return; // a reload that changes the route fires both hooks → one push
+      lastPushed = sig;
+      d.onRoutesChanged(view);
+    } catch (e) { log.error("llm.routes.push_failed", { reason, error: e }); }
+  };
+  const offRoutesRoute = service.onRouteChanged(() => emitRoutes("route"));
+  const offRoutesReg = onProviderRegistryChange(() => emitRoutes("registry"));
   const watcher = d.watch === false ? null : watchProvidersFile({ env });
   const onHup = () => { reloadProviderRegistry({ env, reason: "SIGHUP" }); };
   const hup = d.sighup !== false && process.platform !== "win32";
@@ -76,6 +94,6 @@ export function createLlmRuntime(d: LlmRuntimeDeps): LlmRuntime {
   };
   return {
     settings, service, handlers, portHandlers, watcher,
-    dispose: () => { unbind(); offRoute(); watcher?.close(); if (hup) process.off("SIGHUP", onHup); },
+    dispose: () => { unbind(); offRoute(); offRoutesRoute(); offRoutesReg(); watcher?.close(); if (hup) process.off("SIGHUP", onHup); },
   };
 }

@@ -32,7 +32,8 @@ import { validateEngineSessionContext } from "./engine/session-context.generated
 import { assertInstalledEngineProductionContract, inspectInstalledEngineProductionContract } from "./engine/production-contract.generated";
 import { bootstrapTool, killTree, resolveBootstrapToolRoots } from "./platform";
 import { createLlmRuntime } from "./llm-runtime";
-import { PORT_IPC, type PortInvokeChannel } from "../shared/port-ipc";
+import { PORT_IPC, PORT_PUSH, type PortInvokeChannel } from "../shared/port-ipc";
+import { portDiagnostics } from "./port-diagnostics";
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
@@ -59,6 +60,8 @@ function forkEditorRenderWorker(): RenderWorker { // original L60654-60670
 export const portHandlers: Partial<Record<PortInvokeChannel, Handler>> = {
   // fallback when the LLM runtime is not running (fake settings): an honest "nothing to choose"
   [PORT_IPC.llmRoutes]: () => ({ current: "claude-code", routes: [], configError: "LLM runtime not running (fake settings backend)" }),
+  // docs/18: packaged-app self check (SDK discovery, node:sqlite, paths) — independent of the LLM runtime
+  [PORT_IPC.diagnostics]: () => portDiagnostics({ version: app.getVersion(), packaged: app.isPackaged, resourcesPath: process.resourcesPath ?? null, appPath: app.getAppPath(), userData: app.getPath("userData") }),
 };
 
 export function createRealHandlers(push: (channel: string, ...a: unknown[]) => boolean, log: (m: string) => void): Partial<Record<InvokeChannel, Handler>> {
@@ -123,6 +126,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         userData: app.getPath("userData"),
         sessionMeta: (id) => registry.sessions.get(id)?.meta as any,
         onLlmRouteChanged: () => log("[port] llmRoute changed — AgentHost.onLlmRouteChanged (runtime teardown) NOT PORTED"),
+        onRoutesChanged: (view) => { push(PORT_PUSH.llmRoutesChanged, view); },
       });
       Object.assign(handlers, llm.handlers);
       Object.assign(portHandlers, llm.portHandlers);

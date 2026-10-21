@@ -26,6 +26,7 @@
 //   node dist/cli/port-cli.cjs minimax-config          (docs/14 alias; = the "minimax" preset)
 //   VIDEOCLAW_MINIMAX_LIVE=1 node dist/cli/port-cli.cjs minimax-ping   (docs/14 alias of llm-ping minimax)
 // Every subcommand prints one JSON line `{ok, step, ...}` so results can be pasted back.
+import { agentSdkStatus } from "../main/port-diagnostics";
 import { mkdtempSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -147,11 +148,10 @@ async function main() {
         const result = r.ok ? { ok: true, text: r.text.slice(0, 400), chars: r.text.length } : r;
         return out({ ok: r.ok, step: cmd, provider: describeProvider(p), image: image ? { bytes: Buffer.from(image, "base64").length, mediaType } : undefined, result, ms: Date.now() - t0 });
       }
-      case "agent-sdk-check": { // PORT-NEW docs/17 §4 (offline; does not import the SDK)
-        const d = discoverClaudeAgentSdk();
-        const version = JSON.parse(readFileSync(join(d.packageDir, "package.json"), "utf8")).version;
-        const executable = claudeCodeExecutableFor(d.packageDir);
-        return out({ ok: !!executable, step: cmd, source: d.source, packageDir: d.packageDir, version, pinned: PINNED_CLAUDE_AGENT_SDK_VERSION, matchesPin: version === PINNED_CLAUDE_AGENT_SDK_VERSION, executable: executable ?? null, ...(executable ? {} : { error: "native claude binary for this platform not found next to the SDK (optional dependency skipped?)" }) });
+      case "agent-sdk-check": { // PORT-NEW docs/17 §4 / docs/18 (offline; does not import the SDK)
+        const st = agentSdkStatus();
+        if (!st.ok) process.exitCode = 1;
+        return out({ step: cmd, ...st, resourcesPath: (process as { resourcesPath?: string }).resourcesPath ?? null });
       }
       case "llm-structured": { // PORT-NEW docs/17: structured output through the route service
         if (process.env.VIDEOCLAW_LLM_LIVE !== "1") return out({ ok: false, step: cmd, error: "set VIDEOCLAW_LLM_LIVE=1 to make a real request" });

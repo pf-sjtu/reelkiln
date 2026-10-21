@@ -3,7 +3,10 @@
 // via webContents.executeJavaScript, so every call crosses the same IPC boundary the UI uses.
 // Optional: VIDEOCLAW_PORT_SMOKE_SESSION + VIDEOCLAW_PORT_SMOKE_JOB select an editorRender job.
 // Optional (PORT-NEW, docs/15): VIDEOCLAW_PORT_SMOKE_LLM_ROUTE=<route> → settings:set({llmRoute}) + readiness.
-export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: string; renderTimeoutMs: number; llmRoute?: string }): string {
+// Optional (PORT-NEW, docs/18): VIDEOCLAW_PORT_SMOKE_UI_SELECT=<route> → click that route's radio on the
+// Settings page, check settings:get + the port:llm:routesChanged push + the re-rendered page, then click
+// the previously active route again (restores the user's choice).
+export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: string; renderTimeoutMs: number; llmRoute?: string; uiSelect?: string }): string {
   return `(async () => {
     const api = window.videoclaw; const out = [];
     const rec = async (name, fn) => { const t0 = Date.now(); try { const v = await fn(); out.push({ name, ok: true, ms: Date.now() - t0, value: v }); return v; } catch (e) { out.push({ name, ok: false, ms: Date.now() - t0, error: String(e && e.message || e) }); } };
@@ -14,8 +17,29 @@ export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: 
     ${o.llmRoute ? `await rec("settings:set(llmRoute)", () => api.setSettings({ llmRoute: ${JSON.stringify(o.llmRoute)} }));` : ""}
     await rec("engine:llmRouteReadiness", () => api.llmRouteReadiness(undefined));
     await rec("port:llm:routes", () => window.videoclawPort ? window.videoclawPort.llmRoutes() : Promise.reject(new Error("window.videoclawPort missing")));
+    await rec("port:diagnostics", () => window.videoclawPort.diagnostics());
     await new Promise((r) => setTimeout(r, 300));
-    await rec("renderer:llmRoute selector", () => { const s = document.getElementById("llmRoute"); return s ? { options: [...s.options].map((o) => o.value + (o.disabled ? "(disabled)" : "")), selected: s.value } : null; });
+    const pageRows = () => [...document.querySelectorAll("#llmRoutes label.route")].map((l) => { const i = l.querySelector("input"); return { id: l.dataset.route, checked: !!(i && i.checked), disabled: !!(i && i.disabled), badges: [...l.querySelectorAll(".badge")].map((b) => b.textContent) }; });
+    const pageSelected = () => (pageRows().find((r) => r.checked) || {}).id;
+    await rec("settings-page:llmRoutes", () => { const rows = pageRows(); if (!rows.length) throw new Error("no rows rendered"); return { status: document.getElementById("llmRouteStatus").textContent, rows }; });
+    await rec("settings-page:diagnostics", () => [...document.querySelectorAll("#diagnostics dt")].map((dt) => dt.textContent + ": " + dt.nextElementSibling.textContent));
+    ${o.uiSelect ? `
+    const waitFor = async (pred, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (pred()) return true; await new Promise((r) => setTimeout(r, 50)); } return false; };
+    const clickRoute = async (id) => {
+      const pushes = []; const off = window.videoclawPort.onLlmRoutesChanged((v) => pushes.push(v.current));
+      const input = document.querySelector('#llmRoutes label.route[data-route="' + id + '"] input');
+      if (!input) { off(); throw new Error("route row not rendered: " + id); }
+      if (input.disabled) { off(); throw new Error("route row disabled: " + id); }
+      input.click();
+      const rendered = await waitFor(() => pageSelected() === id && pushes.includes(id), 5000);
+      off();
+      const persisted = (await api.getSettings()).llmRoute;
+      if (!rendered || persisted !== id) throw new Error(JSON.stringify({ rendered, persisted, pushes, selected: pageSelected() }));
+      return { selected: pageSelected(), persisted, pushes, notice: document.getElementById("llmNotice").textContent };
+    };
+    const before = pageSelected();
+    await rec("settings-page:select(" + ${JSON.stringify(o.uiSelect)} + ")", () => clickRoute(${JSON.stringify(o.uiSelect)}));
+    if (before && before !== ${JSON.stringify(o.uiSelect)}) await rec("settings-page:restore(" + before + ")", () => clickRoute(before));` : ""}
     ${o.runBootstrap ? `await rec("bootstrap:run", () => api.bootstrapRun());` : ""}
     ${o.session && o.job ? `
     const events = [];
