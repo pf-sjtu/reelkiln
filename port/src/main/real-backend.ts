@@ -812,6 +812,30 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       handlers["app:update:install"] = async () => ((await refreshInstallRelease()) ? appUpdater?.install() : appUpdater?.state());
       void updateShutdownStarted;
       handlers["app:update:get"] = () => currentUpdateInfo; // L61329
+      // restartApp (L60767-60789) + prepareAppRestart (L53887): PORT runs the prod channel, so
+      // stagingFlightProfile (L60305, staging-only) is null → normal relaunch, or the managed dev launcher's exit code.
+      let restartPending = false;
+      handlers["app:restart"] = () => {
+        if (restartPending) return true;
+        const launcher = !app.isPackaged && process.env.VIDEOCLAW_DEV_RESTART_CONTROLLER === "1"; // MANAGED_DEV_RESTART_ENV (L53847)
+        restartPending = true;
+        setImmediate(() => {
+          if (smoke()) { log(`[smoke] app:restart ${launcher ? "launcher-restart 75" : "normal-relaunch"}`); return; }
+          if (launcher) app.exit(75); else { app.relaunch(); app.exit(0); }
+        });
+        return true;
+      };
+      // §11.6 launch-time engine toast (L61306-61320).
+      let pendingEngineToast: { version: string } | null = null;
+      {
+        const eng = core.currentEngine();
+        if (eng) {
+          const last = (llm.settings.get() as any).lastEngineVersion;
+          if (last && last !== eng.version) pendingEngineToast = { version: eng.version };
+          if (last !== eng.version) llm.settings.patch({ lastEngineVersion: eng.version } as any);
+        }
+      }
+      handlers["engine:pendingToast"] = () => { const toast = pendingEngineToast; pendingEngineToast = null; return toast; };
       const credentialsVault: any = credentials;
       Object.assign(handlers, remainingChannels({
         host: h,

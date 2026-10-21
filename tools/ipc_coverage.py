@@ -19,11 +19,12 @@ from pathlib import Path
 R = Path(__file__).resolve().parent.parent
 chans = json.loads((R / "artifacts/manifests/ipc-channels.json").read_text())
 src = lambda p: (R / "port/src/main" / p).read_text()
-key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
-assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
+key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:-]+)"\s*:')
+assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:-]+)"\]\s*=')
 real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts"))) | set(key_re.findall(src("codex/codex-channels.ts"))) | set(key_re.findall(src("account/account-service.ts"))) | set(key_re.findall(src("gateway/gateway-channels.ts"))) | set(key_re.findall(src("remaining-channels.ts")))
 real_env = {"bootstrap:run"}
 # docs/24 → docs/25: session:history now replays the display transcript + SDK transcript (real).
+# docs/33: channel names with '-' (app:update:state-changed, …) are matched now.
 # docs/25 real-partial: original handler shape, some original branches not ported (reason given).
 PARTIAL = {
     "session:setPermissionMode": "docs/32: the spend-policy branch is ported (Bypass ⇒ unlimited_for_video, leaving Bypass ⇒ ask_each via spendPolicyForMaterialChange, capped-limit removal consent); still partial: codex containment is enforced in the codex runtime (docs/27) instead of the original applyPermissionMode codex branch",
@@ -58,15 +59,14 @@ PARTIAL = {
     "outbox:authoritySnapshot": "outbox exists only against the self-hosted loopback gateway (never posts to the production gateway)",
     "telemetry:bindReplay": "durable session-index enqueue only with telemetry on; delivered to the shim's local sinks",
     "feedback:submit": "delivered through the outbox to the self-hosted shim (/v1/feedback + screenshot sink), not to Videoclaw support",
-    "feedback:grantUsageSharing": "AlphaConsentCoordinator not ported → reconcileUsageSharing = local-studio consent",
+    "feedback:grantUsageSharing": "docs/33: AlphaConsentCoordinator + reconcileUsageSharing are the original bodies; the alpha-consent beacon is delivered through the outbox to the self-hosted shim, not to Videoclaw",
     "library:sync": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax embo-01 is text-only 1536-d, docs/30 §2)",
     "library:search": "real scoped gateway lease; the engine's multimodal embed is refused by the shim (MiniMax embo-01 is text-only 1536-d, docs/30 §2)",
     "engine:creditHandoffOffer": "the Claude-allowance precondition needs a real Claude subscription (USER DIRECTIVE: none) — reachable only by UI-e2e injection; spend-authority equality reduced to isBlocked",
-    "engine:continueOnCredits": "continuation is real (gateway route → shim → MiniMax, ledger-charged); materializeGatewaySpendPolicy not ported",
     "engine:saveAgentProviderKey": "stored in the vault only — the openai-api/openrouter Codex providers run on MiniMax (docs/27)",
     "workflowSubmit:start": "no Videoclaw account plane → accountApiRequest refuses → the original not-eligible branch",
     "app:update:preferences": "nightly entitlement needs a managed account → nightlyAllowed false",
-    "app:update:channel": "createAppUpdater is darwin-only → canSwitchChannel false → the original 'wait for the current update' refusal",
+    "app:update:channel": "docs/33: createAppUpdater is ported, but its gate is darwin-only (the Linux AppImage download/install path is proven only through the harness seam) → canSwitchChannel false on a normal Linux launch → the original 'wait for the current update' refusal",
     "characters:sheetPlan": "engine dry-run + gateway quote (shim local price table); needs the installed engine's build_character_sheet tool",
     "characters:sheetBuild": "real build path; the shim refuses mint_image (MiniMax image-01 cannot do multi-reference identity edits) → original failBuild",
     "media:transcribeVoice": "(c) VoiceDictation needs the macOS Speech helper → the original unavailable answer",
@@ -74,7 +74,7 @@ PARTIAL = {
 fixture = set(key_re.findall(src("fake-backend.ts")))
 pushes = set()
 for f in (R / "port/src/main").rglob("*.ts"):
-    pushes |= set(re.findall(r'push\(\s*"([a-zA-Z]+:[a-zA-Z:]+)"', f.read_text()))
+    pushes |= set(re.findall(r'push\(\s*"([a-zA-Z]+:[a-zA-Z:-]+)"', f.read_text()))
 rows = []
 for c in chans:
     ch, d = c["channel"], c["dir"]
