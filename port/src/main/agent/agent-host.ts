@@ -33,11 +33,17 @@
 // docs/25: session:history replays the display-transcript sidecar + the SDK transcript (resume on respawn).
 // DEFERRED: spend gates, studio MCP,
 //   steer/queued turns, retry, setModel/setPermissionMode, materials ledger, done-accounting.
-import { randomUUID } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join, relative, resolve as resolvePath } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve as resolvePath } from "node:path";
 import { JobWatcher, VersionStore, resolveCut, scanJob } from "../jobs/version-store.generated";
+import { deletionBlockMessage, moveProjectToTrash, planProjectTrash, PROJECT_TRASH_RETENTION_MS } from "../jobs/project-trash.generated";
+import { assembleOriginalVideoContext, readPromiseBrief } from "../jobs/original-context.generated";
+import { MaterialsLedger } from "../materials/materials-ledger.generated";
+import { SessionSpendBudgets, spendBudgetAuthority } from "../spend/spend-budgets.generated";
+import { normalizeSpendCeilingUsd } from "../spend/spend-wb.generated";
+import { resolveJobDir } from "../engine/job-boundary";
 import { attachmentContextLines, ComposerAttachmentStore } from "../attachments/composer-attachments.generated";
 import type { LlmRouteId } from "../../shared/llm-types";
 import { minimalAgentOptions, type ClaudeAgentSdkLike, type AgentQuery } from "../llm/agent-sdk";
@@ -52,7 +58,7 @@ import {
 import { fallbackSessionTitle, NEW_VIDEO_TITLE } from "./session-title.generated";
 import { PORT_PROVIDER_TITLES_ENV, proposeProviderSessionTitle, type HelperComplete } from "./session-title";
 import {
-  appendDisplayStop, appendDisplayTranscript, displayTranscriptPath, historyToEvents, isDisplayTurnId, isFlattenedClaudeCompactedHistory,
+  appendDisplayMaterial, appendDisplayStop, appendDisplayTranscript, displayTranscriptPath, historyToEvents, isDisplayTurnId, isFlattenedClaudeCompactedHistory,
   readDisplayTranscript, rejectedFallbackMessageIds, sdkUserMessageText, visibleInSdkHistory,
 } from "./history.generated";
 
@@ -96,6 +102,10 @@ export interface AgentHostEmit {
   permissionRequest?(req: PermissionRequest): void;
   /** push job:snapshot {sessionId, snapshot} (original emit.jobSnapshot L61077). */
   jobSnapshot?(sessionId: string, snapshot: any): void;
+  /** docs/26: push materials:changed (original emit.materials L61095). */
+  materials?(sessionId: string, ledger: unknown): void;
+  /** docs/26: push spend:snapshot {sessionId, snapshot} (original emit.spendSnapshot L61086). */
+  spendSnapshot?(sessionId: string, snapshot: unknown): void;
 }
 export interface AgentRuntimeHandle { llmRoute: LlmRouteId; model: string | undefined; env: Record<string, string>; proxy?: unknown; close(): Promise<void> }
 export interface AgentHostRouteService {
@@ -139,6 +149,11 @@ export interface AgentHostDeps {
   engineProfileDir?: () => string;
   /** docs/25: the project order (clients) listSessions (L38348) ranks videos by. */
   clientOrder?: () => string[];
+  /** docs/26: the registry half deleteProject (L39248) needs — trashWorkspaces, a synchronous flush,
+   *  and the removedSessionIds tombstone a whole-file write must honour. */
+  registry?: { addTrashWorkspace(path: string): void; flush(): boolean; markRemoved(sessionId: string): void; unmarkRemoved(sessionId: string): void };
+  /** docs/26: setJobBusyProbe (L39083) — an editor render / HyperFrames preview holding a job's files. */
+  jobBusyProbe?: (jobId: string) => boolean;
 }
 
 export class ComposerDeliveryError extends Error { constructor(m: string) { super(m); this.name = "ComposerDeliveryError"; } }
@@ -180,7 +195,14 @@ interface Session {
   titleCancellation?: number;
   /** docs/25: last assistant message id (display-transcript anchor, persistDisplayTurn L41820). */
   lastAssistantMessageId?: string;
+  /** docs/26: the batch delivered to the live turn; becomes failedInputs when the turn errors (retryTurn L42565). */
+  inflight?: DeliveredInput[];
+  failedInputs?: DeliveredInput[];
+  failedTurnCanRetry?: boolean;
+  /** publishMaterials (L44932) digest of the last pushed ledger. */
+  materialsDigest?: string;
 }
+interface DeliveredInput { msg: Record<string, any>; displayTexts: string[]; attachmentIds: string[] }
 interface PendingPermission { request: PermissionRequest; sessionId: string; runtime?: Runtime; order: number; resolve: (r: CanUseToolResult) => void }
 
 export const DEFAULT_AGENT_TOOLS = ["Read", "Glob", "Grep"];
@@ -223,6 +245,14 @@ export class AgentHost {
   readonly attachmentStore?: any;
   /** sends between the turn-slot claim and the runtime enqueue (attachment copies, job mint) */
   private readonly preparing = new Set<string>();
+  /** docs/26: deleteProject latch (L39154). */
+  private readonly deletingSessions = new Set<string>();
+  /** docs/26: MaterialsLedger (L34844) + SessionSpendBudgets (L34832). */
+  readonly materialsLedger?: any;
+  readonly spendBudgets: any;
+  private spendBudgetFile?: string;
+  /** #479 quickstartResume (setQuickstartResume L38880). */
+  private quickstartResume?: (meta: AgentSessionMeta) => boolean;
   constructor(private readonly d: AgentHostDeps) {
     this.log = (d.logger ?? getLogger()).child({ component: "agent-host" });
     this.tools = d.tools ?? DEFAULT_AGENT_TOOLS;
@@ -234,7 +264,17 @@ export class AgentHost {
         this.log.info("agent.version.new", { jobId, n: version?.n, event });
       }, d.engine.workspaceRoot());
       this.attachmentStore = new ComposerAttachmentStore(join(d.stateDir, "composer-attachments.json"));
+      this.materialsLedger = new MaterialsLedger(d.stateDir);
     }
+    // L34832: the per-video spend ledger. No gateway key exists in the port → the original's
+    // spendBudgetAuthority(gatewayUrl, undefined) authority; persisted to spend-budgets.json (L34826).
+    this.spendBudgetFile = d.stateDir ? join(d.stateDir, "spend-budgets.json") : undefined;
+    this.spendBudgets = new SessionSpendBudgets(
+      (sessionId: string, snapshot: unknown) => { try { this.d.emit.spendSnapshot?.(sessionId, snapshot); } catch {} },
+      (state: unknown) => this.writeSpendBudgets(state),
+      spendBudgetAuthority("http://localhost", undefined),
+    );
+    this.loadSpendBudgets();
   }
 
   listSessions(): AgentSessionMeta[] {
@@ -351,11 +391,23 @@ export class AgentHost {
     return { running: !!s?.runtime && !s.runtime.dead, llmRoute: s?.runtime?.llmRoute, status: s?.meta.status };
   }
 
-  /** createSession (L38726) slice: id, cwd, route pin, status idle, session:changed. */
-  createSession(req: { title?: string; clientId?: string; permissionMode?: string } = {}): AgentSessionMeta {
-    const sessionId = randomUUID();
+  /** createSession (L38726) slice: id, cwd, route pin, status idle, session:changed. docs/26: the
+   *  continuation branch (continueFromSessionId → same cwd/route/client, "· continued", adoptCandidate),
+   *  Quickstart provenance (meta.quickstart), sidebarOrder at the top of the project, internal sessionId. */
+  createSession(req: { title?: string; clientId?: string; permissionMode?: string; continueFromSessionId?: string } = {}, quickstart?: Record<string, unknown>, internal?: { sessionId?: string; deferJobAdoption?: boolean }): AgentSessionMeta {
+    const sessionId = internal?.sessionId ?? randomUUID();
+    const continued = req?.continueFromSessionId ? this.sessions.get(req.continueFromSessionId) : undefined;
+    if (req?.continueFromSessionId && !continued) throw new Error("The conversation to continue no longer exists.");
+    const priorContinuation = continued ? this.completedContinuation(continued) : undefined;
+    if (priorContinuation) {
+      if (!internal?.deferJobAdoption && continued?.meta.jobId && !priorContinuation.meta.jobId && (priorContinuation.meta.adoptCandidate as any)?.jobId === continued.meta.jobId) {
+        return (this.adoptJob(priorContinuation.meta.sessionId, continued.meta.jobId) ?? priorContinuation.meta) as AgentSessionMeta;
+      }
+      return priorContinuation.meta;
+    }
     let cwd: string;
-    if (this.d.engine) {
+    if (continued) cwd = continued.meta.cwd;
+    else if (this.d.engine) {
       // resolveSessionCwd (L36115): an installed engine → the channel-owned workspace, created on demand
       cwd = this.d.engine.workspaceRoot();
       mkdirSync(cwd, { recursive: true });
@@ -365,14 +417,24 @@ export class AgentHost {
       // a small fixture so a read-only tool call has something to find (PORT-NEW)
       writeFileSync(join(cwd, "README.txt"), "Videoclaw port agent session folder.\n");
     }
-    const llmRoute = this.d.service.newSessionLlmRoute({});
+    const llmRoute = continued ? continued.meta.llmRoute : this.d.service.newSessionLlmRoute({});
+    const clientId = continued?.meta.clientId ?? (typeof req?.clientId === "string" ? req.clientId : "personal");
+    const existingSidebarOrders = [...this.sessions.values()].filter((o) => o.meta.clientId === clientId).map((o) => o.meta.sidebarOrder as number | undefined).filter((order): order is number => order !== undefined);
+    const sidebarOrder = existingSidebarOrders.length ? Math.min(...existingSidebarOrders) - 1 : undefined;
+    const title = continued ? `${continued.meta.title} · continued` : typeof req?.title === "string" && req.title ? req.title.slice(0, 120) : NEW_VIDEO_TITLE;
     const meta: AgentSessionMeta = {
-      sessionId, title: typeof req?.title === "string" && req.title ? req.title.slice(0, 120) : "New video", cwd, status: "idle",
+      sessionId, title, ...(continued || (typeof req?.title === "string" && req.title) ? { titleOrigin: "manual" } : {}), cwd, status: "idle",
       permissionMode: typeof req?.permissionMode === "string" ? req.permissionMode : "auto", totalCostUsd: 0, createdAt: this.now(),
-      clientId: typeof req?.clientId === "string" ? req.clientId : "personal", agentHarness: "claude-code", ...(llmRoute ? { llmRoute } : {}), portAgentHost: true,
+      clientId, ...(sidebarOrder !== undefined ? { sidebarOrder } : {}), agentHarness: "claude-code", ...(llmRoute ? { llmRoute } : {}),
+      ...(quickstart ? { quickstart } : {}),
+      ...(continued?.meta.jobId ? { adoptCandidate: { jobId: continued.meta.jobId, reason: "owned", ownerSessionId: continued.meta.sessionId, ownerTitle: continued.meta.title } } : {}),
+      portAgentHost: true,
     };
     this.sessions.set(sessionId, { meta, openTools: new Set(), clientTurns: new Set(), staleResults: 0, epoch: 0, ...(this.d.engine ? { preexistingJobs: listJobIds(cwd) } : {}) });
-    this.log.info("agent.session.created", { sessionId, llmRoute, engine: !!this.d.engine });
+    if (!continued) { try { this.spendBudgets.setUnlimited(sessionId); } catch (e) { this.log.warn("agent.spend.set_unlimited_failed", { sessionId, error: e }); } } // L38866
+    this.log.info("agent.session.created", { sessionId, llmRoute, engine: !!this.d.engine, continued: !!continued, quickstart: !!quickstart });
+    if (continued && !internal?.deferJobAdoption) continued.meta.continuation = { clientActionId: `recovery:${sessionId}`, sessionId };
+    if (continued?.meta.jobId && !internal?.deferJobAdoption) return (this.adoptJob(sessionId, continued.meta.jobId) ?? meta) as AgentSessionMeta;
     this.saveRegistry();
     this.d.emit.sessionsChanged(this.listSessions());
     return { ...meta };
@@ -389,6 +451,9 @@ export class AgentHost {
   private setStatus(s: Session, status: SessionStatus): void { // L50990 slice
     if (status === "running") s.turnStartedAtMs = this.now();
     else { delete s.turnStartedAtMs; if (s.turnTimer) { clearTimeout(s.turnTimer); s.turnTimer = undefined; } }
+    // docs/26 (retryTurn L42565): an errored turn keeps what it was delivering as failedInputs; a clean end drops it
+    if (status === "error" && s.inflight?.length) { s.failedInputs = s.inflight; s.inflight = undefined; }
+    else if (status === "idle") s.inflight = undefined;
     s.meta.status = status;
     this.send(s, { kind: "status", status });
     this.d.emit.sessionsChanged(this.listSessions());
@@ -404,6 +469,7 @@ export class AgentHost {
       throw new ComposerDeliveryError("This video is finalized. Undo Final to reopen it, or start a new video for this one.");
     }
     const s = this.mustGet(sessionId);
+    if (this.deletingSessions.has(sessionId)) throw new ComposerDeliveryError("This video is being deleted."); // ensureRuntime L39388
     if (s.interrupting) await s.interrupting;
     const req = typeof input === "string" ? { text: input, clientTurnId: "", attachmentIds: [] as string[] } : { text: String(input?.text ?? ""), clientTurnId: String(input?.clientTurnId ?? ""), attachmentIds: Array.isArray(input?.attachmentIds) ? input.attachmentIds.map(String) : [] };
     const store = this.attachmentStore;
@@ -467,35 +533,49 @@ export class AgentHost {
     }
     this.preparing.delete(sessionId);
     if (typeof s.meta.pendingPermissionMode === "string") { s.meta.permissionMode = s.meta.pendingPermissionMode; delete s.meta.pendingPermissionMode; if (s.runtime && !s.runtime.dead) this.teardownRuntime(s, "permission-mode"); this.saveRegistry(); } // applyPendingPermissionMode (before a send)
+    const msg = { type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() };
+    s.failedInputs = undefined; s.failedTurnCanRetry = undefined; // a new send supersedes the failed one (L41700)
     this.setStatus(s, "running");
+    const delivered = await this.deliver(s, { msg, displayTexts: displayTexts ?? (req.text.trim() ? [req.text] : []), attachmentIds: req.attachmentIds }, release);
+    if (!delivered) return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] };
+    // L41757-41763: once delivered, a fallback/attachment title may be replaced by a proposed one
+    if (req.text.trim() && (s.meta.titleOrigin === "fallback" || s.meta.titleOrigin === "attachment") && !req.text.startsWith("✅")) {
+      this.nameSession(s, req.text, titleCancellation === s.titleCancellation);
+    }
+    if (useStore) {
+      try { store.markTurnSubmitted(sessionId, req.clientTurnId, req.text, req.attachmentIds); } catch (e) { this.log.warn("agent.attachments.mark_submitted_failed", { sessionId, error: e }); } // L41715
+      if (req.attachmentIds.length > 0) this.publishMaterials(sessionId); // L41746
+    }
+    return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] };
+  }
+  /** deliver (L41860) slice — spawn/resume the runtime, arm the turn timer, persist the display row, enqueue.
+   *  Shared by sendMessage and retryTurn. Returns false when the turn was stopped while spawning. */
+  private async deliver(s: Session, input: DeliveredInput, release: () => void = () => {}): Promise<boolean> {
+    const sessionId = s.meta.sessionId;
+    s.inflight = [input];
     let rt: Runtime;
     try {
       rt = await this.ensureRuntime(s);
     } catch (e: any) {
       release();
-      if ((s.meta.status as SessionStatus) !== "running") return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] }; // stopped / reset while spawning
+      if ((s.meta.status as SessionStatus) !== "running") return false; // stopped / reset while spawning
       const message = redactText(String(e?.message ?? e));
       this.log.warn("agent.spawn_failed", { sessionId, error: e });
       this.send(s, { kind: "error", message, canRetry: true });
       this.setStatus(s, "error");
       throw new ComposerDeliveryError(message);
     }
-    if ((s.meta.status as SessionStatus) !== "running" || s.runtime !== rt) return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] }; // stopped while spawning
+    if ((s.meta.status as SessionStatus) !== "running" || s.runtime !== rt) return false; // stopped while spawning
     const timeoutMs = this.d.turnTimeoutMs ?? (this.d.engine ? 20 * 60_000 : 5 * 60_000);
     s.turnTimer = setTimeout(() => { if (s.meta.status === "running" || s.meta.status === "awaiting_permission") { this.send(s, { kind: "error", message: `The turn did not finish within ${Math.round(timeoutMs / 1000)} s and was stopped.`, canRetry: true }); this.teardownRuntime(s, "turn-timeout"); this.setStatus(s, "error"); } }, timeoutMs);
     (s.turnTimer as any).unref?.();
-    const msg = { type: "user", message: { role: "user", content: [{ type: "text", text: wireText }] }, parent_tool_use_id: null, session_id: "", uuid: randomUUID() };
     // docs/25: persistDisplayTurn (L41820) BEFORE delivery — the sidecar row the history replay maps
     // the SDK transcript's engine text back to (what the user typed, not the app-owned preambles)
-    this.persistDisplayTurn(s, msg, displayTexts ?? (req.text.trim() ? [req.text] : []), req.attachmentIds);
-    rt.queue.push(msg);
+    this.persistDisplayTurn(s, input.msg, input.displayTexts, input.attachmentIds);
+    rt.queue.push(input.msg);
     rt.wake?.(); rt.wake = null;
-    // L41757-41763: once delivered, a fallback/attachment title may be replaced by a proposed one
-    if (req.text.trim() && (s.meta.titleOrigin === "fallback" || s.meta.titleOrigin === "attachment") && !req.text.startsWith("✅")) {
-      this.nameSession(s, req.text, titleCancellation === s.titleCancellation);
-    }
-    if (useStore) { try { store.markTurnSubmitted(sessionId, req.clientTurnId, req.text, req.attachmentIds); } catch (e) { this.log.warn("agent.attachments.mark_submitted_failed", { sessionId, error: e }); } } // L41715
-    return { submitted: true, duplicate: false, attachmentIds: [...req.attachmentIds] };
+    this.log.info("agent.turn.delivered", { sessionId, resumed: !!s.meta.sdkSessionId, sdkSessionId: s.meta.sdkSessionId ?? null });
+    return true;
   }
 
   /** cancelSessionTitle (L41772). */
@@ -613,6 +693,7 @@ export class AgentHost {
    *  restoreFailedTurn (no turn-receipt store → failure cards are not rebuilt), compacted-history beacon. */
   async getHistory(sessionId: string): Promise<any[]> {
     const s = this.mustGet(sessionId);
+    this.publishMaterials(sessionId, false); // L43700
     const composerMaterials = this.attachmentStore ? this.attachmentStore.materials(sessionId) : [];
     const displayIndex = readDisplayTranscript(this.d.stateDir ? displayTranscriptPath(this.d.stateDir, sessionId) : "", composerMaterials);
     if (!s.meta.sdkSessionId) return this.restoreHistoryState(s, historyToEvents([], displayIndex, undefined));
@@ -1102,6 +1183,7 @@ export class AgentHost {
     const jobId = s.meta.jobId;
     this.watchers.set(sessionId, new JobWatcher(jobId, join(s.meta.cwd, "jobs", jobId), (snapshot: any) => {
       try { this.d.emit.jobSnapshot?.(sessionId, this.enrich(snapshot)); } catch (e) { this.log.warn("agent.job_snapshot_failed", { sessionId, error: e }); }
+      this.publishMaterials(sessionId); // L47978
     }));
     if (this.versionStore.hasBacklog(jobId)) this.watchers.get(sessionId)?.rescanSoon();
   }
@@ -1193,4 +1275,399 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     return this.requireStore().setDestination(sessionId, attachmentIds, destination);
   }
   composerAttachmentPreview(sessionId: string, attachmentId: string, thumbnail?: (b: Buffer) => Buffer): Promise<unknown> { this.mustGet(sessionId); return this.requireStore().attachmentPreview(sessionId, attachmentId, thumbnail); }
+
+  // ── docs/26: local / no-credential channels (original line refs per method) ──
+
+  /** hasActiveJobWork (L47569). */
+  private hasActiveJobWork(s: Session): boolean { return s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(s.meta.sessionId); }
+  /** jobOwners (L47549). */
+  private jobOwners(sessionId: string, jobId: string): Session[] {
+    const target = this.sessions.get(sessionId);
+    const cwd = target?.meta.cwd;
+    if (!cwd) return [];
+    return [...this.sessions.values()]
+      .filter((other) => other.meta.sessionId !== sessionId && other.meta.jobId === jobId && other.meta.cwd === cwd)
+      .sort((a, b) => a.meta.createdAt - b.meta.createdAt || a.meta.sessionId.localeCompare(b.meta.sessionId));
+  }
+  /** completedContinuation (L38929). */
+  private completedContinuation(s: Session): Session | undefined {
+    const receipt = s.meta.continuation as { sessionId?: string } | undefined;
+    if (!receipt?.sessionId) return undefined;
+    return this.sessions.get(receipt.sessionId);
+  }
+  /** deletionBlock (L39140): credit handoffs / workflow submissions do not exist in the port. */
+  private deletionBlock(s: Session): string | undefined {
+    if (this.hasActiveJobWork(s)) return "active-production";
+    if (s.meta.jobId && this.d.jobBusyProbe?.(s.meta.jobId)) return "active-render";
+    return undefined;
+  }
+  /** isDeleting (L39154). */
+  isDeleting(sessionId: string): boolean { return this.deletingSessions.has(sessionId); }
+  /** canonicalPath (L39196). */
+  private canonicalPath(path: string): string { try { return realpathSync(resolvePath(path)); } catch { return resolvePath(path); } }
+  /** jobDirectorySharedElsewhere (L39183). */
+  private jobDirectorySharedElsewhere(sessionId: string, jobPath: string): boolean {
+    const mine = this.canonicalPath(jobPath);
+    for (const other of this.sessions.values()) {
+      if (other.meta.sessionId === sessionId || !other.meta.jobId) continue;
+      if (this.canonicalPath(join(other.meta.cwd, "jobs", other.meta.jobId)) === mine) return true;
+    }
+    return false;
+  }
+  /** ownedProjectData (L39172): only `jobs/<jobId>/` is ever owned, and only when no other video names it. */
+  private ownedProjectData(s: Session): Array<{ label: string; path: string }> {
+    const jobId = s.meta.jobId;
+    if (!jobId || !isClientJobId(jobId)) return [];
+    if (this.jobOwners(s.meta.sessionId, jobId).length > 0) return [];
+    const jobPath = join(s.meta.cwd, "jobs", jobId);
+    if (!existsSync(jobPath)) return [];
+    if (this.jobDirectorySharedElsewhere(s.meta.sessionId, jobPath)) return [];
+    return [{ label: `jobs/${jobId}`, path: jobPath }];
+  }
+  /** planProjectDeletion (L39205) — session:deletionPlan: read-only preview of a delete. */
+  async planProjectDeletion(sessionId: string): Promise<unknown> {
+    const s = this.sessions.get(sessionId);
+    if (!s) return null;
+    const blocked = this.deletionBlock(s);
+    const sharedJob = Boolean(s.meta.jobId && this.jobOwners(sessionId, s.meta.jobId).length > 0);
+    const base = { sessionId, title: s.meta.title, ...(s.meta.jobId ? { jobId: s.meta.jobId } : {}), ...(sharedJob ? { sharedJob: true } : {}) };
+    try {
+      const plan = await planProjectTrash(s.meta.cwd, this.ownedProjectData(s));
+      return { ...base, ...(blocked ? { blocked } : {}), items: plan.items.map(({ label, bytes }: any) => ({ label, bytes })), totalBytes: plan.totalBytes, exact: plan.exact };
+    } catch {
+      return { ...base, blocked: "unreadable", items: [], totalBytes: 0, exact: false };
+    }
+  }
+  /** jobNamedByAnySession (L39352). */
+  private jobNamedByAnySession(sessionId: string, jobId: string): boolean {
+    for (const other of this.sessions.values()) if (other.meta.sessionId !== sessionId && other.meta.jobId === jobId) return true;
+    return false;
+  }
+  /** deleteProject (L39248) — session:delete: the video's own job moves into the workspace trash
+   *  (verbatim moveProjectToTrash, 7-day retention) and the registry row goes. Beacons: no outbox. */
+  async deleteProject(sessionId: string): Promise<unknown> {
+    const s = this.sessions.get(sessionId);
+    if (!s) return { ok: false, reason: "That video is no longer in the sidebar." };
+    if (this.deletingSessions.has(sessionId)) return { ok: false, reason: "This video is already being deleted." };
+    const blocked = this.deletionBlock(s);
+    if (blocked) return { ok: false, blocked, reason: deletionBlockMessage(blocked) };
+    const reg = this.d.registry;
+    const flush = () => (reg ? reg.flush() : true);
+    this.deletingSessions.add(sessionId);
+    try {
+      const candidates = this.ownedProjectData(s);
+      const jobId = candidates.length > 0 ? s.meta.jobId : undefined;
+      if (candidates.length > 0) {
+        reg?.addTrashWorkspace(this.canonicalPath(s.meta.cwd));
+        if (!flush()) return { ok: false, reason: "Videoclaw could not save the trash location. Nothing was moved." };
+      }
+      let registryRemoved = false;
+      const persistRemoval = () => {
+        reg?.markRemoved(sessionId);
+        if (!flush()) { reg?.unmarkRemoved(sessionId); throw new Error("Videoclaw could not save the video deletion."); }
+        registryRemoved = true;
+      };
+      this.teardownRuntime(s, "delete");
+      if (s.interrupting) await s.interrupting;
+      this.retireWatcher(sessionId);
+      let trashedBytes = 0;
+      if (candidates.length > 0) {
+        const late = this.deletionBlock(s);
+        if (late) { this.ensureWatcher(s, true); return { ok: false, blocked: late, reason: deletionBlockMessage(late) }; }
+        const moved: any = await moveProjectToTrash({
+          workspace: s.meta.cwd, sessionId, clientId: s.meta.clientId, title: s.meta.title, ...(jobId ? { jobId } : {}), candidates,
+          beforeComplete: persistRemoval,
+          beforeMove: () => { const racing = this.deletionBlock(s); if (racing) throw new Error(deletionBlockMessage(racing)); },
+        });
+        if (!moved.ok) {
+          if (registryRemoved) {
+            this.sessions.set(sessionId, s);
+            reg?.unmarkRemoved(sessionId);
+            if (!flush()) moved.reason += " The video list could not be restored on disk; keep this app open and retry.";
+          }
+          this.ensureWatcher(s, true);
+          return { ok: false, reason: moved.reason };
+        }
+        trashedBytes = moved.entry.totalBytes;
+        if (jobId && !this.jobNamedByAnySession(sessionId, jobId)) this.versionStore?.forgetJob(jobId, candidates[0].path);
+      }
+      if (!registryRemoved) {
+        try { persistRemoval(); } catch (error: any) { this.ensureWatcher(s, true); return { ok: false, reason: error.message }; }
+      }
+      this.removeSession(sessionId);
+      try { this.spendBudgets.clear(sessionId); } catch {}
+      this.log.info("agent.project.deleted", { sessionId, jobId: jobId ?? null, trashedBytes });
+      return { ok: true, trashedBytes, retentionDays: Math.round(PROJECT_TRASH_RETENTION_MS / 864e5) };
+    } finally {
+      this.deletingSessions.delete(sessionId);
+    }
+  }
+  /** setQuickstartResume (L38880). */
+  setQuickstartResume(resume: (meta: AgentSessionMeta) => boolean): void { this.quickstartResume = resume; }
+  /** quickstartStartFailed (L38888). */
+  quickstartStartFailed(sessionId: string, message: string): void {
+    const s = this.sessions.get(sessionId);
+    if (!s) return;
+    this.send(s, { kind: "error", message: redactText(message), stage: "Starting your Quickstart", canRetry: true } as any);
+    this.setStatus(s, "error");
+  }
+  /** updateQuickstartFirstTurn (L38899). */
+  updateQuickstartFirstTurn(sessionId: string, firstTurn: { clientTurnId: string; attachmentIds: string[]; submittedAt?: number }): AgentSessionMeta {
+    const s = this.mustGet(sessionId);
+    if (!s.meta.quickstart) throw new Error("That video was not created from a Quickstart.");
+    s.meta.quickstart = { ...(s.meta.quickstart as object), firstTurn: { clientTurnId: firstTurn.clientTurnId, attachmentIds: [...firstTurn.attachmentIds], ...(firstTurn.submittedAt === undefined ? {} : { submittedAt: firstTurn.submittedAt }) } };
+    this.saveRegistry();
+    this.d.emit.sessionsChanged(this.listSessions());
+    return { ...s.meta };
+  }
+  /** retryTurn (L42565) — session:retry: the normal (non-terms-recovery) path. Re-delivers the failed batch
+   *  into a fresh (resumed) runtime. NOT PORTED: spend gate (no paid work), terms recovery (no mac login),
+   *  heldTurnReplay (no spend holds). The port's host-wide turn gate refuses while another video works. */
+  retryTurn(sessionId: string): boolean {
+    const s = this.mustGet(sessionId);
+    if (s.failedTurnCanRetry === false) return false;
+    if (s.meta.finalizedAtMs) return false;
+    const batch = s.failedInputs ?? [];
+    if (batch.length === 0) {
+      const qs = s.meta.quickstart as { firstTurn?: { submittedAt?: number } } | undefined;
+      if (qs && !qs.firstTurn?.submittedAt) return this.quickstartResume?.(s.meta) ?? false;
+      return false;
+    }
+    if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(sessionId)) return false;
+    const limit = this.d.maxConcurrentTurns ?? 1;
+    if (this.activeTurns() >= limit) throw new ComposerDeliveryError(`Another video is still working (this port runs ${limit} agent turn${limit === 1 ? "" : "s"} at a time). Wait for it or press Stop there.`);
+    s.failedTurnCanRetry = undefined;
+    s.failedInputs = undefined;
+    this.log.info("agent.turn.retried", { sessionId, jobId: s.meta.jobId ?? null, sdkSessionId: s.meta.sdkSessionId ?? null, resent: batch.length });
+    this.setStatus(s, "running");
+    for (const input of batch) void this.deliver(s, input).catch((e) => this.log.warn("agent.retry.deliver_failed", { sessionId, error: e }));
+    return true;
+  }
+  /** noteAdoptCandidate (L47697) slice (no beacon). */
+  private noteAdoptCandidate(s: Session, jobId: string, reason: string): void {
+    if (s.meta.jobId) return;
+    const cur = s.meta.adoptCandidate as any;
+    const owners = this.jobOwners(s.meta.sessionId, jobId);
+    const owner = owners.find((c) => this.hasActiveJobWork(c)) ?? owners[0];
+    const nextReason = owner ? "owned" : reason === "owned" ? "preexisting" : reason;
+    if (cur?.jobId !== jobId && cur?.reason === "owned" && nextReason === "preexisting") return;
+    const next = { jobId, reason: nextReason, ...(owner ? { ownerSessionId: owner.meta.sessionId, ownerTitle: owner.meta.title } : {}) };
+    if (cur?.jobId === next.jobId && cur.reason === next.reason && cur.ownerSessionId === (next as any).ownerSessionId && cur.ownerTitle === (next as any).ownerTitle && cur.blockedReason === undefined) return;
+    s.meta.adoptCandidate = next;
+    this.saveRegistry();
+    this.d.emit.sessionsChanged(this.listSessions());
+  }
+  /** adoptJob (L47802) — job:adopt: the explicit OUTPUT-rail adopt / dismiss. NOT PORTED: saved gateway
+   *  operations, completed model results, gateway spend-policy materialization (no gateway). */
+  adoptJob(sessionId: string, jobId: string | null): AgentSessionMeta | null {
+    const s = this.sessions.get(sessionId);
+    if (!s) return null;
+    if (jobId === null) {
+      if (s.meta.adoptCandidate) { delete s.meta.adoptCandidate; this.saveRegistry(); this.d.emit.sessionsChanged(this.listSessions()); }
+      return s.meta;
+    }
+    if (s.meta.jobId || (s.meta.adoptCandidate as any)?.jobId !== jobId) return s.meta;
+    if (this.deletingSessions.has(sessionId)) return s.meta;
+    if (!existsSync(join(s.meta.cwd, "jobs", jobId))) {
+      delete s.meta.adoptCandidate; this.saveRegistry(); this.d.emit.sessionsChanged(this.listSessions());
+      return s.meta;
+    }
+    let owners = this.jobOwners(sessionId, jobId);
+    let owner = owners.find((c) => this.hasActiveJobWork(c)) ?? owners[0];
+    const offeredOwnerId = (s.meta.adoptCandidate as any).ownerSessionId as string | undefined;
+    if ((offeredOwnerId && !owners.some((c) => c.meta.sessionId === offeredOwnerId)) || (!offeredOwnerId && owners.length > 0)) {
+      this.noteAdoptCandidate(s, jobId, owner ? "owned" : "preexisting");
+      return s.meta;
+    }
+    const activeOwner = owners.find((c) => this.hasActiveJobWork(c));
+    if (activeOwner) {
+      s.meta.adoptCandidate = { jobId, reason: "owned", ownerSessionId: activeOwner.meta.sessionId, ownerTitle: activeOwner.meta.title, blockedReason: "owner-active" };
+      this.saveRegistry(); this.d.emit.sessionsChanged(this.listSessions());
+      return s.meta;
+    }
+    owners = this.jobOwners(sessionId, jobId);
+    owner = owners[0];
+    if (owners.some((c) => this.deletingSessions.has(c.meta.sessionId))) { this.noteAdoptCandidate(s, jobId, owner ? "owned" : "preexisting"); return s.meta; }
+    for (const priorOwner of owners) {
+      try { this.spendBudgets.clear(priorOwner.meta.sessionId); } catch {} // clearSpendAccounting
+      delete priorOwner.meta.jobId;
+      if (priorOwner.runtime && !priorOwner.runtime.dead) this.teardownRuntime(priorOwner, "job-attribution"); // rotateRuntimeForJobAttribution
+      this.retireWatcher(priorOwner.meta.sessionId);
+      this.log.info("agent.job.transferred", { jobId, from: priorOwner.meta.sessionId, to: sessionId });
+    }
+    this.commitBind(s, jobId, "adopt", true);
+    return s.meta;
+  }
+  /** startContinuationChat (L38972) — session:startContinuation: the finalized video's job moves into a new
+   *  chat whose id is a pure function of {source, clientActionId}. Credit continuations: none in the port. */
+  startContinuationChat(sourceSessionId: string, clientActionId: string): AgentSessionMeta {
+    const src = this.mustGet(sourceSessionId);
+    if (this.deletingSessions.has(sourceSessionId)) throw new Error("This video is being deleted.");
+    if (typeof clientActionId !== "string" || !clientActionId.trim()) throw new Error("Missing continuation action id.");
+    if (!src.meta.finalizedAtMs) throw new Error("Only a finalized video can be continued in a new video.");
+    const targetId = (src.meta.continuation as any)?.sessionId ?? continuationSessionUuid(sourceSessionId, clientActionId);
+    if (src.meta.jobId && this.hasActiveJobWork(src)) throw new Error("Finish or stop the current step first.");
+    if (!this.sessions.get(targetId)) this.createSession({ continueFromSessionId: sourceSessionId }, undefined, { sessionId: targetId, deferJobAdoption: true });
+    if ((src.meta.continuation as any)?.sessionId !== targetId) src.meta.continuation = { clientActionId, sessionId: targetId };
+    this.flushRegistry();
+    const movedJobId = src.meta.jobId;
+    if (movedJobId) {
+      this.adoptJob(targetId, movedJobId);
+      if (this.sessions.get(targetId)?.meta.jobId !== movedJobId) throw new Error("Finish or stop the current step first.");
+      src.meta.priorJobId = movedJobId;
+      this.flushRegistry();
+    } else {
+      const owned = this.sessions.get(targetId)?.meta.jobId;
+      if (owned && src.meta.priorJobId !== owned) { src.meta.priorJobId = owned; this.flushRegistry(); }
+    }
+    this.d.emit.sessionsChanged(this.listSessions());
+    return this.mustGet(targetId).meta;
+  }
+  private flushRegistry(): boolean {
+    if (this.d.registry) return this.d.registry.flush();
+    this.saveRegistry();
+    return true;
+  }
+  /** getOriginalContext (L45675) — job:originalContext. */
+  async getOriginalContext(sessionId: string): Promise<unknown> {
+    const s = this.sessions.get(sessionId);
+    if (!s?.meta.jobId) return null;
+    const jobPath = this.snapshotJobDir(s, s.meta.jobId);
+    if (!jobPath) return null;
+    const brief = readPromiseBrief(dirname(jobPath), jobPath);
+    const events = await this.getHistory(sessionId);
+    return assembleOriginalVideoContext(brief, events);
+  }
+  /** getSpendSnapshot (L45686) — spend:get. Safe for any id. */
+  getSpendSnapshot(sessionId: string): unknown { return this.spendBudgets.snapshot(sessionId); }
+  /** setSpendCeiling (L47158) + installSpendPolicy (L47222) — spend:setCeiling. The original asks the gateway
+   *  first (writeGatewaySpendPolicy); with no gateway key it returns before any request (L47290), which is
+   *  the only state the port can be in — so the local ledger is the whole authority. */
+  async setSpendCeiling(sessionId: string, usd: unknown, options?: { confirmDisableBypass?: boolean; approvalRequestId?: string }): Promise<unknown> {
+    const current = this.mustGet(sessionId);
+    if (current.meta.permissionMode === "bypassPermissions" && options?.confirmDisableBypass !== true) throw new Error("Turn off Bypass before setting a hard spending limit.");
+    const requestedUsd = normalizeSpendCeilingUsd(usd as number);
+    if (requestedUsd === null || requestedUsd <= 0) throw new Error("Spend budget must be a positive finite amount.");
+    if (options?.approvalRequestId !== undefined) throw new Error("That spending approval is no longer waiting."); // setApprovalSpendCeiling: no pending spend approvals exist
+    const disablingBypass = current.meta.permissionMode === "bypassPermissions";
+    if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
+    this.spendBudgets.setCeiling(sessionId, requestedUsd);
+    if (disablingBypass) {
+      current.meta.permissionMode = "auto";
+      this.saveRegistry();
+      this.d.emit.sessionsChanged(this.listSessions());
+      try { if (current.runtime && !current.runtime.dead) await (current.runtime.query as any).setPermissionMode?.("auto"); } catch { this.teardownRuntime(current, "permission-mode"); }
+    }
+    const snapshot = this.spendBudgets.snapshot(sessionId);
+    const usedUsd = (snapshot.spentUsd ?? 0) + snapshot.reservedUsd;
+    return { snapshot, ...(usedUsd > requestedUsd ? { warning: `You've already used $${usedUsd.toFixed(2)}. New paid work will wait until you raise the budget.` } : {}) };
+  }
+  /** loadSpendBudgets (L36570) slice: restore spend-budgets.json; NOT PORTED: the storage-block marker. */
+  private loadSpendBudgets(): void {
+    if (!this.spendBudgetFile) return;
+    let saved: string | undefined;
+    try {
+      saved = readFileSync(this.spendBudgetFile, "utf-8");
+      const { migrated } = this.spendBudgets.restore(JSON.parse(saved));
+      if (migrated) this.writeSpendBudgets(this.spendBudgets.exportState());
+    } catch (err: any) {
+      if (this.spendBudgets.isBlocked()) return;
+      if (saved === undefined && err?.code === "ENOENT") return;
+      this.spendBudgets.blockDueToCorruption();
+      this.log.warn("agent.spend.load_failed", { error: err });
+    }
+  }
+  /** writeSpendBudgets (L36640) slice: tmp → rename. */
+  private writeSpendBudgets(state: unknown): void {
+    if (!this.spendBudgetFile) return;
+    mkdirSync(dirname(this.spendBudgetFile), { recursive: true });
+    const temporary = `${this.spendBudgetFile}.tmp-${process.pid}`;
+    writeFileSync(temporary, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
+    renameSync(temporary, this.spendBudgetFile);
+  }
+  /** respondInput (L44689) — input:respond. The port has no request_input tool (studio MCP not ported), so
+   *  pendingInputs is always empty: takePendingInput finds nothing and the answer is dropped (original branch). */
+  respondInput(requestId: string, response: unknown): void {
+    this.log.info("agent.input.respond_no_pending", { requestId: String(requestId).slice(0, 64), kind: (response as any)?.kind ?? null });
+  }
+  /** discardVoice (L45705) — media:discardVoice: voiceDictations is empty (no on-device dictation helper). */
+  discardVoice(_sessionId: string, _recordingId: string): void {}
+  /** assertComposerWritable (L44801). */
+  assertComposerWritable(sessionId: string): void { this.mustGetWritable(sessionId); }
+  /** stageComposerAttachments with a captured moment (L44747). */
+  stageComposerMoment(request: any, onChanged: (a: unknown) => void, moment: unknown): unknown[] {
+    this.mustGetWritable(String(request?.sessionId));
+    return this.requireStore().stage(request, onChanged, moment);
+  }
+  /** stageVoiceNote (L44753): an ordinary audio chip. The on-device transcript (voiceDictationStatus) is
+   *  unavailable off macOS, so no background transcription starts — the original's `available:false` path. */
+  stageVoiceNote(sessionId: string, _recordingId: string, note: { file: unknown; seconds: number }, onChanged: (a: unknown) => void): unknown[] {
+    this.mustGetWritable(sessionId);
+    return this.requireStore().stage({ sessionId, destination: "video", files: [note.file] }, onChanged, undefined, { seconds: note.seconds });
+  }
+  /** composerMomentPreview (L44956). */
+  composerMomentPreview(sessionId: string, attachmentId: string, thumbnail?: (b: Buffer) => Buffer): unknown { this.mustGet(sessionId); return this.requireStore().momentPreview(sessionId, attachmentId, thumbnail); }
+  /** sessionMaterials (L44828). */
+  sessionMaterials(sessionId: string): unknown { return this.readMaterials(this.mustGet(sessionId)); }
+  /** readMaterials (L44913). */
+  private readMaterials(s: Session, limit?: number): any {
+    if (!this.materialsLedger) return { entries: [], total: 0 };
+    const boundJob: any = resolveJobDir({ sessionId: s.meta.sessionId, jobId: s.meta.jobId }, (id) => this.sessions.get(id)?.meta as any);
+    const qs = s.meta.quickstart as { starterId?: string } | undefined;
+    return this.materialsLedger.read(s.meta.sessionId, this.attachmentStore.materials(s.meta.sessionId),
+      boundJob.ok ? { dir: join(boundJob.jobPath, "incoming", "quickstart"), ...(qs?.starterId ? { starterId: qs.starterId } : {}) } : undefined, limit);
+  }
+  /** materialPreview (L44876) — materials:preview (the vcmedia grant is added by the IPC layer, L62197). */
+  materialPreview(sessionId: string, id: string): any {
+    const s = this.mustGet(sessionId);
+    if (!this.materialsLedger) return null;
+    const entry = this.readMaterials(s, Infinity).entries.find((item: any) => item.id === id);
+    if (!entry) return null;
+    const bound: any = resolveJobDir({ sessionId, jobId: s.meta.jobId }, (key) => this.sessions.get(key)?.meta as any);
+    const path = this.materialsLedger.resolve(sessionId, id, this.attachmentStore.materials(sessionId), bound.ok ? { dir: join(bound.jobPath, "incoming", "quickstart") } : undefined);
+    if (!path || !["image", "video", "audio"].includes(entry.kind)) return { entry };
+    try {
+      const st = statSync(path);
+      if (!st.isFile()) return { entry: { ...entry, state: "missing" } };
+      return { entry, asset: { path, name: entry.name, kind: entry.kind, scope: "source", sizeBytes: st.size, mtimeMs: st.mtimeMs } };
+    } catch {
+      return { entry: { ...entry, state: "missing" } };
+    }
+  }
+  /** publishMaterials (L44932): journal new ledger rows into the display transcript, push material_arrived
+   *  + materials:changed. */
+  publishMaterials(sessionId: string, emitArrivals = true): void {
+    const s = this.sessions.get(sessionId);
+    if (!s || !this.materialsLedger || !this.d.stateDir) return;
+    try {
+      const ledger = this.readMaterials(s, Infinity);
+      const digest = JSON.stringify(ledger);
+      if (s.materialsDigest === digest) return;
+      let persisted = true;
+      const file = displayTranscriptPath(this.d.stateDir, sessionId);
+      const seen = new Set(readDisplayTranscript(file).ordered.flatMap((row: any) => (row.kind === "material" ? [row.entry.id] : [])));
+      for (const entry of ledger.entries) {
+        if (seen.has(entry.id)) continue;
+        if (appendDisplayMaterial(file, entry, s.lastAssistantMessageId)) {
+          if (emitArrivals) this.send(s, { kind: "material_arrived", entry } as any);
+        } else persisted = false;
+      }
+      if (persisted) s.materialsDigest = digest;
+      this.d.emit.materials?.(sessionId, ledger);
+    } catch {}
+  }
+  /** runningVideoCount (local reset prepare). */
+  runningVideoCount(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.status === "running" || s.meta.status === "awaiting_permission") n++; return n; }
+  /** closeAll (L43010) slice: tear every runtime down (local reset commit). */
+  closeAll(): number[] { for (const s of this.sessions.values()) this.teardownRuntime(s, "local-reset"); return []; }
+  /** host session meta by id (HyperFrames preview / editor render liveSession L62403). */
+  liveSession(sessionId: string): AgentSessionMeta | undefined { return this.isDeleting(sessionId) ? undefined : this.sessions.get(sessionId)?.meta; }
+}
+
+/** continuationSessionUuid (L1200) — verbatim. */
+export function continuationSessionUuid(sourceSessionId: string, clientActionId: string): string {
+  const hex = createHash("sha256").update(`videoclaw-continuation-chat\0${sourceSessionId}\0${clientActionId}`, "utf8").digest("hex").slice(0, 32).split("");
+  hex[12] = "5";
+  hex[16] = ((Number.parseInt(hex[16], 16) & 3) | 8).toString(16);
+  return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20).join("")}`;
 }

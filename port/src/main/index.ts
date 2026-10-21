@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
-import { createRealHandlers, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
+import { createRealHandlers, finishPendingLocalReset, mediaCapabilities, mediaRoots, portHandlers, sendHandlers } from "./real-backend";
 import { VCMEDIA_SCHEME } from "./media/media.generated";
 import { handleVcmedia } from "./media/media-ipc";
 import { smokeScript } from "./smoke";
@@ -140,6 +140,8 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  // finishPendingLocalReset (original L62452 → L62614): a committed reset completes before anything opens
+  if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1" && !(await finishPendingLocalReset(log))) return;
   // original L62452: only files main granted (job snapshots, picked files) are served, with Range
   protocol.handle("vcmedia", (req) => handleVcmedia(req, mediaCapabilities, (sid) => mediaRoots.chatMediaRoot(sid)));
   const real = registerIpc();

@@ -35,10 +35,11 @@
 //   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
 //   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
 //   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
-import { app, dialog, shell, systemPreferences, utilityProcess } from "electron";
-import { appendFileSync, existsSync, rmSync, statSync } from "node:fs";
+import { app, BrowserWindow, dialog, nativeImage, session as electronSession, shell, systemPreferences, utilityProcess } from "electron";
+import { appendFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { InvokeChannel } from "../shared/ipc-contract";
 import { EditorRenderController, type RenderWorker } from "./engine/editor-render";
 import { resolveEditorRenderEngine } from "./engine/engine-env";
@@ -63,6 +64,20 @@ import { CharacterStore } from "./characters/character-store.generated";
 import { createQuickstartCatalog } from "./quickstart/quickstart-ipc";
 import { PORT_PROVIDER_TITLES_ENV } from "./agent/session-title";
 import { localChannelHandlers } from "./local-channels";
+import { localChannels26 } from "./local-channels-26";
+import { QuickstartStartCoordinator } from "./quickstart/quickstart-start.generated";
+import { writeProjectPack } from "./taste/project-pack.generated";
+import { createLibraryMutationGate, libraryAddSource, libraryErrorMessage, libraryKey, libraryPreview, libraryRemoveSource, libraryScan, libraryStats } from "./library/library.generated";
+import { configureLibraryEnv } from "./library/library-env";
+import { configureVoiceTools } from "./attachments/voice-tools";
+import { attachmentIntakeHandlers } from "./attachments/attachment-ipc";
+import { sweepClipboardImageIntake } from "./attachments/composer-attachments.generated";
+import { FeedbackService } from "./feedback/feedback.generated";
+import { configureFeedbackEnv, recordMainLog } from "./feedback/feedback-env";
+import { HyperframesPreviewController, validateInPolicyWorker } from "./hyperframes/hf-preview.generated";
+import { LocalResetController, LocalResetRecoveryError, LOCAL_RESET_MARKER, runPendingLocalReset } from "./account/local-reset.generated";
+import { CredentialStore } from "./account/local-reset-env";
+import { purgeExpiredProjectTrash } from "./jobs/project-trash.generated";
 
 /** exposeCharacters (L60415): grant each character's sheet + refs to vcmedia. */
 export function exposeCharacters<T extends { sheetPath?: string; refs: string[] }>(media: { grant(p: string, s: string): boolean; grantMany(p: string[], s: string): void }, characters: T[]): T[] {
@@ -104,6 +119,52 @@ function forkEditorRenderWorker(): RenderWorker { // original L60654-60670
     onExit: (cb) => { child.on("exit", (code: number) => cb(code)); },
     kill: () => { child.kill(); },
   };
+}
+
+/** forkHfPreviewWorker / forkHfPolicyWorker (original L60687 / L60716). */
+function forkUtility(file: string, serviceName: string): RenderWorker {
+  const child = utilityProcess.fork(join(__dirname, file), [], { serviceName });
+  return {
+    postMessage: (m) => child.postMessage(m),
+    onMessage: (cb) => { child.on("message", (m: any) => cb(m)); },
+    onExit: (cb) => { child.on("exit", (code: number) => cb(code)); },
+    kill: () => { child.kill(); },
+  };
+}
+
+/** PORT-NEW env: the workspace root (original workspaceRoot L9176, channel "prod"). */
+const portWorkspaceRoot = () => join(homedir(), "Videoclaw");
+/** finishPendingLocalReset (L62614): a committed local reset finishes BEFORE anything else opens. */
+export async function finishPendingLocalReset(log: (m: string) => void): Promise<boolean> {
+  const userData = app.getPath("userData");
+  if (!existsSync(join(userData, LOCAL_RESET_MARKER))) return true;
+  for (;;) {
+    try {
+      await runPendingLocalReset({
+        userDataDir: userData,
+        channel: "prod",
+        workspace: portWorkspaceRoot(),
+        packaged: app.isPackaged,
+        // initializeWorkspaceChannel (L4454) directory set
+        initializeWorkspace: (workspace: string) => { for (const d of ["jobs", "assets", "incoming", "taste", join("taste", "packs"), ".claude"]) mkdirSync(join(workspace, d), { recursive: true }); },
+        rebuildEngineWorkspace: () => false, // PORT: the engine pointer lived in userData and is gone; setup re-runs
+        verifyEngineWorkspace: () => {},
+        clearBrowserStorage: async () => { await electronSession.defaultSession.clearStorageData(); await electronSession.defaultSession.clearCache(); },
+        log: (line: string) => { recordMainLog("local-reset", line); log(`[local-reset] ${line}`); },
+      });
+      return true;
+    } catch (err) {
+      const step = err instanceof LocalResetRecoveryError ? (err as any).step : "unknown";
+      log(`[local-reset] blocked at ${step}`);
+      if (process.env.VIDEOCLAW_PORT_UI_E2E === "1" || process.env.VIDEOCLAW_PORT_SMOKE === "1") { app.exit(1); return false; }
+      const { response } = await dialog.showMessageBox({
+        type: "error", buttons: ["Try again", "Quit VideoClaw"], defaultId: 0, cancelId: 1,
+        message: "VideoClaw didn’t finish resetting this Mac",
+        detail: `${err instanceof LocalResetRecoveryError ? (err as Error).message : "Something went wrong."} VideoClaw won’t open until the reset is finished, so nothing runs half-reset. Your archived workspace and your other AI accounts are untouched.`,
+      });
+      if (response !== 0) { app.exit(0); return false; }
+    }
+  }
 }
 
 /** PORT-NEW channels (shared/port-ipc.ts) filled by createRealHandlers; index.ts registers them. */
@@ -158,8 +219,11 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
   // AgentHost registry file: join(app.getPath("userData"), "sessions.json") (original L61106).
   const registry = new SessionRegistry(join(app.getPath("userData"), "sessions.json"));
   registry.load();
+  // docs/26: liveSession (L62403) — the AgentHost owns the rows in engine mode (registry.takeSessions)
+  let hostRef: AgentHost | undefined;
+  const liveSession = (id: string) => ((hostRef?.liveSession(id) as any) ?? registry.liveSession(id)) as any;
   const editorRender = new EditorRenderController({
-    getSession: (id) => registry.liveSession(id) as any,
+    getSession: (id) => liveSession(id),
     resolveEngine: () => resolveEditorRenderEngine({
       isPackaged: app.isPackaged,
       env: process.env,
@@ -235,6 +299,100 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     Object.assign(sendHandlers, local.send);
   };
   bindLocal();
+  // ── docs/26: the remaining local channels (local-channels-26.ts) ──
+  const sessionEnvDeps0 = { currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p: string) => core.enginePathEnv(p) };
+  configureLibraryEnv(() => engineSessionEnv(sessionEnvDeps0) as Record<string, string>);
+  // voiceTools (L10465) = the bundled helper roots; PORT-NEW fallback: the installed engine's bin/ffmpeg
+  configureVoiceTools(() => [...roots, ...(core.currentEngine() ? [join(core.currentEngine()!.path, "bin")] : [])]);
+  configureFeedbackEnv({ currentEngine: () => core.currentEngine() });
+  const resolveEngineForPreview = () => resolveEditorRenderEngine({
+    isPackaged: app.isPackaged, env: process.env, currentEngine: () => core.currentEngine(),
+    engineSessionEnv: () => engineSessionEnv(sessionEnvDeps0), workspaceRoot,
+  });
+  const hfPreview = new HyperframesPreviewController({ // L62417
+    getSession: liveSession,
+    resolvePreviewAssets: () => { // resolveHyperframesPreviewAssets (L60671)
+      const engine: any = resolveEngineForPreview();
+      if (!engine) return null;
+      const playerScriptPath = join(engine.root, "hyperframes", "node_modules", "hyperframes", "dist", "hyperframes-player.global.js");
+      const runtimeDir = join(engine.root, "hyperframes", "runtime");
+      return existsSync(playerScriptPath) && existsSync(runtimeDir) ? { playerScriptPath, runtimeDir } : null;
+    },
+    forkWorker: () => forkUtility("hyperframesPreviewWorker.cjs", "videoclaw-hf-preview"),
+    validateComposition: (compositionDir: string, entryPath: string, runtimeDir: string) => validateInPolicyWorker(() => forkUtility("hyperframesPolicyWorker.cjs", "videoclaw-hf-policy"), { compositionDir, entryPath, runtimeDir }),
+    emit: (event: unknown) => push("hfPreview:event", event),
+    isRenderActive: (jobId: string) => (editorRender.state() as any)?.jobId === jobId,
+    log: (kind: string, detail: string) => { recordMainLog(kind, detail); log(`[main-log] ${kind} ${detail}`); },
+  });
+  const feedback = new FeedbackService({ // L62298 (no outbox / account / settings store in the port)
+    win: () => BrowserWindow.getAllWindows()[0] ?? null,
+    settings: () => ({ telemetry: false }),
+    listSessions: () => (handlers["session:list"]?.() as any[]) ?? [],
+    getJobSnapshot: (sessionId: string) => { try { return hostRef?.getJobSnapshot(sessionId) ?? null; } catch { return null; } },
+    mediaRecoveryEvidence: () => undefined,
+    bootstrapStatus: () => core.status(),
+    outboxSummary: () => ({ pending: 0 }),
+    updateDiagnostics: () => ({ state: null }),
+    outboxFailureEvidence: () => [],
+    enqueueFeedback: async () => { throw new Error("Feedback delivery needs a Videoclaw account."); },
+    patchSettings: () => {},
+    blockedReason: () => "signed-out",
+    grantUsageSharing: async () => {},
+  });
+  feedback.sweep();
+  const localReset = new LocalResetController({ // L61459
+    userDataDir: app.getPath("userData"),
+    channel: "prod",
+    workspace: () => portWorkspaceRoot(),
+    keepSharedDevWorkspace: false,
+    assertCredentialsMutable: () => new CredentialStore({ file: join(app.getPath("userData"), "credentials.dat"), packaged: app.isPackaged }).assertCanMutate(),
+    runningVideos: () => hostRef?.runningVideoCount() ?? 0,
+    unsyncedRecords: () => 0, // no outbox
+    blockPaidWork: () => {},
+    stopAuthenticatedWork: () => {},
+    stopEditorRendering: () => { try { const st: any = editorRender.state(); if (st?.requestId) void editorRender.cancel(st.requestId); } catch {} hfPreview.stop("closed"); return []; },
+    codexProcessesStopped: async () => true, // no codex harness in the port
+    stopEngineChildren: () => hostRef?.closeAll() ?? [],
+    processesExited: async () => true,
+    flushOutbox: async () => {},
+    stopOutbox: async () => {},
+    relaunch: () => { if (smoke()) { log("[smoke] local-reset relaunch requested"); return; } app.relaunch(); app.exit(0); },
+    log: (line: string) => { recordMainLog("local-reset", line); log(`[local-reset] ${line}`); },
+  });
+  const clipboardIntakeDir = join(app.getPath("userData"), "composer-clipboard"); // L62215
+  const libraryGate = createLibraryMutationGate();
+  let quickstartStart: { start(req: unknown): Promise<any> } | undefined;
+  const bindLocal26 = (host?: AgentHost) => {
+    Object.assign(handlers, localChannels26({
+      host, registry, saveRegistry, absCwd,
+      media: mediaCapabilities as any,
+      pathToVcmedia: (p) => `vcmedia://local${pathToFileURL(p).pathname}`,
+      quickstart: quickstartStart,
+      writeProjectPack: (cwd, slug, name, brief) => writeProjectPack(cwd, slug, name, brief),
+      library: {
+        stats: libraryStats, scan: libraryScan, addSource: libraryAddSource, removeSource: libraryRemoveSource, preview: libraryPreview,
+        errorMessage: libraryErrorMessage, key: libraryKey, gate: libraryGate, previewCacheDir: join(app.getPath("userData"), "library-previews"),
+      },
+      pickDirectory: async () => {
+        const preset = process.env.VIDEOCLAW_PORT_SMOKE_PICK_DIR;
+        if (smoke() && preset) return preset;
+        const res = await dialog.showOpenDialog({ title: "Add a footage or stills folder", properties: ["openDirectory", "createDirectory"] });
+        return res.canceled || !res.filePaths[0] ? null : res.filePaths[0];
+      },
+      characterStore,
+      exposeCharacter: localDeps.exposeCharacter,
+      sheetStates: () => [], // CharacterSheetBuilder.statesFor: builds start only via characters:sheetBuild (paid)
+      // characterVoiceErrorText(ProjectMemoryError) from memoryBinding (L36456): no verified account
+      characterVoiceUnavailable: () => ({ ok: false, message: "Project memory is unavailable until this account and project are verified." }),
+      bootstrap: core,
+      feedback,
+      hfPreview,
+      localReset,
+      attachments: host?.attachmentStore ? attachmentIntakeHandlers({ host, intakeDir: clipboardIntakeDir, media: mediaCapabilities, image: (b) => nativeImage.createFromBuffer(b) as any, onChanged: (a) => { push("attachment:changed", a); } }) : undefined,
+      recordMainLog,
+    }) as Partial<Record<InvokeChannel, Handler>>);
+  };
+  bindLocal26();
   if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1") {
     try {
       let host: AgentHost | undefined;
@@ -269,7 +427,18 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
           permissionRequest: (req) => { push("permission:request", req); },
           // original emit.jobSnapshot L61077: grant the snapshot's files, then push
           jobSnapshot: (sessionId, snapshot) => { exposeJobSnapshot(mediaCapabilities, snapshot); push("job:snapshot", { sessionId, snapshot }); },
+          // docs/26: L61095 / L61086
+          materials: (_sessionId, ledger) => { push("materials:changed", ledger); },
+          spendSnapshot: (sessionId, snapshot) => { push("spend:snapshot", { sessionId, snapshot }); },
         },
+        // docs/26: deleteProject's registry half + setJobBusyProbe (L62438)
+        registry: {
+          addTrashWorkspace: (p) => { registry.trashWorkspaces.add(p); },
+          flush: () => flushRegistry(),
+          markRemoved: (id) => { registry.removedSessionIds.add(id); },
+          unmarkRemoved: (id) => { registry.removedSessionIds.delete(id); },
+        },
+        jobBusyProbe: (jobId) => (editorRender.state() as any)?.jobId === jobId || hfPreview.activeJobId() === jobId,
         engine: engineDeps,
         // docs/22: versions.json + composer-attachments.json live next to sessions.json (L34841-34848)
         ...(engineDeps ? { stateDir: app.getPath("userData") } : {}),
@@ -292,8 +461,47 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         const restored = h.restoreSessions(registry.takeSessions() as any);
         log(`[port] AgentHost ENGINE mode; restored ${restored} session(s) from sessions.json`);
       }
+      hostRef = h;
       Object.assign(handlers, agentIpcHandlers(h, allSessions));
       bindLocal(h);
+      if (engineDeps) {
+        // QuickstartStartCoordinator wiring (L61195); prepareNewSession = studio bundle revalidation (not ported → no-op)
+        const attachmentChangedQ = (attachment: unknown) => { push("attachment:changed", attachment); };
+        const coordinator: any = new QuickstartStartCoordinator(quickstart.store, {
+          listSessions: () => h.listSessions(),
+          createSession: (req: any, provenance: any) => h.createSession(req, provenance),
+          listComposerAttachments: (id: string) => h.listComposerAttachments(id),
+          stageComposerAttachments: (req: any, cb: any) => h.stageComposerAttachments(req, cb),
+          retryComposerAttachment: (id: string, aid: string, cb: any) => h.retryComposerAttachment(id, aid, cb),
+          updateQuickstartFirstTurn: (id: string, ft: any) => h.updateQuickstartFirstTurn(id, ft),
+          sendMessage: (id: string, req: any) => h.sendMessage(id, req), // 3rd arg (composer=true) is implied by the object request
+        }, {
+          prepareNewSession: async () => {},
+          onAttachmentChanged: attachmentChangedQ,
+          onStarted: (session: any) => log(`[port] quickstart started ${String(session?.sessionId ?? "").slice(0, 8)}`), // starter_started beacon: no outbox
+          onFailed: (session: any, message: string) => h.quickstartStartFailed(session.sessionId, message),
+          now: () => Date.now(),
+          wait: (ms: number) => new Promise((r) => setTimeout(r, ms)),
+        });
+        h.setQuickstartResume((session: any) => {
+          const attempt = coordinator.resume(session);
+          if (!attempt) return false;
+          void attempt.catch((reason: unknown) => h.quickstartStartFailed(session.sessionId, reason instanceof Error ? reason.message : "Quickstart could not resume."));
+          return true;
+        });
+        quickstartStart = coordinator;
+        sweepClipboardImageIntake(clipboardIntakeDir, h.composerAttachmentSourcePaths()); // L62216
+        // startup trash purge (L62509): every workspace that may hold a .videoclaw-trash
+        void (async () => {
+          const rootsToPurge = new Set<string>([workspaceRoot(), ...registry.trashWorkspaces]);
+          for (const m of h.listSessions()) if (m.cwd) rootsToPurge.add(absCwd(m.cwd));
+          for (const root of rootsToPurge) {
+            const result: any = await purgeExpiredProjectTrash(root).catch(() => undefined);
+            if (result && (result.purged.length > 0 || result.skipped > 0 || result.unreconciled > 0)) recordMainLog("project-trash-purge", `root=${root} purged=${result.purged.length} retained=${result.retained} skipped=${result.skipped} unreconciled=${result.unreconciled} deferred=${result.deferred}`);
+          }
+        })();
+      }
+      bindLocal26(h);
       if (engineDeps) {
         mediaRoots.chatMediaRoot = (sessionId) => h.chatMediaRoot(sessionId);
         const attachmentChanged = (attachment: unknown) => { push("attachment:changed", attachment); }; // L62190

@@ -14,6 +14,9 @@ const SRC = {
   main: "app/reconstructed/main/index.js",
   wb: "app/out/main/chunks/workbookContents-ChzKjQX1.js",
   rm: "app/out/main/chunks/rangeMedia-848zXGXe.js",
+  ce: "app/out/main/chunks/compositionEdit-Dc8_ecez.js",
+  hfw: "app/out/main/hyperframesPreviewWorker.js",
+  hfp: "app/out/main/hyperframesPolicyWorker.js",
 };
 const lines = Object.fromEntries(Object.entries(SRC).map(([k, f]) => [k, readFileSync(join(repo, f), "utf8").split(/\r?\n/)]));
 
@@ -26,6 +29,15 @@ function find(src, re, from = 0) {
 function slice(src, startRe, endRe, afterRe) {
   const s = find(src, startRe);
   const e = find(src, endRe, afterRe ? find(src, afterRe, s) : s);
+  return { src, s, e, text: lines[src].slice(s, e + 1).join("\n") };
+}
+
+/** [start, stop) — from the line matching `startRe` up to (not including) the first `stopRe` line after it, or EOF. */
+function sliceUntil(src, startRe, stopRe) {
+  const s = find(src, startRe);
+  let e = lines[src].length - 1;
+  if (stopRe) e = find(src, stopRe, s + 1) - 1;
+  while (e > s && lines[src][e].trim() === "") e--;
   return { src, s, e, text: lines[src].slice(s, e + 1).join("\n") };
 }
 
@@ -228,7 +240,7 @@ export const SPECS = [
       slice("main", /^const PNG_SIGNATURE = /, /^}$/, /^class ComposerAttachmentStore \{/),
     ],
     subs: [],
-    exports: ["voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFile", "streamCopyFileTo", "HEIC_RE$1", "convertHeicToJpg", "friendlyCopyError", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
+    exports: ["voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFile", "streamCopyFileTo", "HEIC_RE$1", "convertHeicToJpg", "friendlyCopyError", "fileSha256", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
   },
   {
     // docs/24 (B): characters:list (L61860) → host.listCharacters → the ORIGINAL CharacterStore (L11564-11792).
@@ -310,7 +322,7 @@ export const SPECS = [
       slice("main", /^function imagePathOf\(name, input\)/, /^}$/, /^function isRealUserText\(/),
     ],
     subs: [],
-    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine"],
+    exports: ["displayTranscriptPath", "engineMessageSha256", "sdkUserMessageText", "appendDisplayTranscript", "appendDisplayStop", "isDisplayTurnId", "readDisplayTranscript", "visibleInSdkHistory", "rejectedFallbackMessageIds", "isFlattenedClaudeCompactedHistory", "historyToEvents", "legacyDisplayText", "isRealUserText", "engineFamilyLine", "friendlyToolLine", "appendDisplayMaterial", "isSessionMaterial", "errorCauses", "classifyError", "sanitizeErrorText"],
   },
 
   {
@@ -343,6 +355,248 @@ export const SPECS = [
     ],
     subs: [],
     exports: ["computeStageEtas"],
+  },
+  // ── docs/26 (M9): the remaining local / no-credential channels ──
+  {
+    // session:deletionPlan / session:delete (L61732-61746 → planProjectDeletion L39205 / deleteProject L39248):
+    // the ORIGINAL workspace trash (L14786-15174) + deletionBlockMessage (L339).
+    out: "src/main/jobs/project-trash.generated.ts",
+    imports: [
+      'import { randomUUID } from "node:crypto";',
+      'import { lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";',
+      'import { lstat, readdir, rm } from "node:fs/promises";',
+      'import { dirname, isAbsolute, join, relative, resolve } from "node:path";',
+    ],
+    slices: () => [
+      slice("main", /^function deletionBlockMessage\(block\) \{/, /^}$/),
+      slice("main", /^const PROJECT_TRASH_DIR = /, /^}$/, /^async function purgeExpiredProjectTrash\(/),
+    ],
+    subs: [],
+    exports: ["deletionBlockMessage", "PROJECT_TRASH_DIR", "PROJECT_TRASH_SCHEMA", "PROJECT_TRASH_RETENTION_MS", "pathIsWithin", "planProjectTrash", "moveProjectToTrash", "readTrashEntry", "purgeExpiredProjectTrash"],
+  },
+  {
+    // library:stats/scan/addSource/removeSource/preview (L62065-62153): the ORIGINAL engine library CLI
+    // wrappers (tools/index_media.py, L16044-16362) + the mutation gate (L55792-55809).
+    out: "src/main/library/library.generated.ts",
+    imports: [
+      'import { spawn } from "node:child_process";',
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";',
+      'import { homedir } from "node:os";',
+      'import { join } from "node:path";',
+      'import { classifyError, engineSessionEnv, errorCauses, EXTRA_PATHS, sanitizeErrorText, UV_PYTHON_POLICY_ENV } from "./library-env";',
+    ],
+    slices: () => [
+      slice("main", /^const COMMAND_BROKER_AMBIENT_ALLOWLIST = /, /^}$/, /^async function libraryPreview\(/),
+      slice("main", /^const BUSY_MESSAGE = \{$/, /^}$/, /^function createLibraryMutationGate\(/),
+    ],
+    subs: [],
+    exports: ["commandBrokerEnv", "CLOUD_ROOT", "resolveEngineRoot", "engineEnv", "runEngine", "libraryErrorMessage", "libraryStats", "libraryScan", "libraryAddSource", "libraryRemoveSource", "librarySync", "librarySearch", "libraryPreview", "libraryKey", "createLibraryMutationGate"],
+  },
+  {
+    // attachment:captureMoment / attachment:momentPreview (L62220-62255): stageVideoMoment + videoMomentThumbnail (L55584-55676).
+    out: "src/main/attachments/video-moment.generated.ts",
+    imports: [
+      'import { randomUUID } from "node:crypto";',
+      'import { mkdirSync, rmSync, writeFileSync } from "node:fs";',
+      'import { basename, join } from "node:path";',
+      'import { CLIPBOARD_IMAGE_MAX_BYTES } from "./asset-kinds.generated";',
+      'import { fileSha256, friendlyCopyError, isClipboardPng } from "./composer-attachments.generated";',
+    ],
+    slices: () => [
+      slice("main", /^async function stageVideoMoment\(request2, context\) \{/, /^}$/, /^function videoMomentThumbnail\(/),
+    ],
+    subs: [],
+    exports: ["stageVideoMoment", "videoMomentThumbnail"],
+  },
+  {
+    // attachment:voiceNote (L62265-62271): voiceNoteIntakeFile (L10535) + its audio checks (L10503-10534),
+    // VOICE_NOTE_* (L282-283) and the transcription error copy (L10451-10464).
+    out: "src/main/attachments/voice-note.generated.ts",
+    imports: [
+      'import { execFile } from "node:child_process";',
+      'import { existsSync } from "node:fs";',
+      'import { mkdir, mkdtemp, open, rename, rm, stat, writeFile } from "node:fs/promises";',
+      'import { tmpdir } from "node:os";',
+      'import { join } from "node:path";',
+      'import { voiceNoteClock } from "./composer-attachments.generated";',
+      'import { voiceTools } from "./voice-tools";',
+    ],
+    slices: () => [
+      slice("main", /^const VOICE_NOTE_MAX_BYTES = /, /^const VOICE_NOTE_MAX_SECONDS = /),
+      slice("main", /^const errors = \{$/, /^};$/),
+      slice("main", /^function isVoiceNoteAudio\(audio\) \{/, /^}$/, /^async function voiceNoteIntakeFile\(/),
+    ],
+    subs: [],
+    exports: ["VOICE_NOTE_MAX_BYTES", "VOICE_NOTE_MAX_SECONDS", "errors as voiceErrors", "isVoiceNoteAudio", "wavSeconds", "voiceNoteIntakeFile"],
+  },
+  {
+    // hfPreview:* composition helpers — the shipped compositionEdit chunk (parseComposition / applyTextEdit), whole file.
+    out: "src/main/hyperframes/composition-edit.generated.ts",
+    imports: [],
+    slices: () => [sliceUntil("ce", /^function attr\(html, name\) \{/, /^export \{$/)],
+    subs: [],
+    exports: ["parseComposition", "applyTextEdit"],
+  },
+  {
+    // hfPreview:available/start/stop/editApply (L62437-62445): HyperframesPreviewController (L56487-56842) +
+    // validateInPolicyWorker (L56848-56878).
+    out: "src/main/hyperframes/hf-preview.generated.ts",
+    imports: [
+      'import { randomBytes } from "node:crypto";',
+      'import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";',
+      'import { resolveJobBoundary } from "../engine/job-boundary";',
+      'import { applyTextEdit, parseComposition } from "./composition-edit.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const START_TIMEOUT_MS = 1e4;$/, /^}$/, /^class HyperframesPreviewController \{/),
+      slice("main", /^const POLICY_TIMEOUT_MS = 5e3;$/, /^}$/, /^function validateInPolicyWorker\(/),
+    ],
+    subs: [],
+    exports: ["PREVIEW_ERROR", "EDIT_ERROR", "HyperframesPreviewController", "validateInPolicyWorker"],
+  },
+  {
+    // utilityProcess worker out/main/hyperframesPreviewWorker.js (whole file; rangeMedia import → media.generated).
+    out: "src/main/workers/hf-preview-worker.generated.ts",
+    imports: [
+      'import { createServer } from "node:http";',
+      'import { existsSync, realpathSync, statSync, createReadStream } from "node:fs";',
+      'import { resolve, normalize, relative, sep } from "node:path";',
+      'import { planMediaResponse } from "../media/media.generated";',
+    ],
+    slices: () => [sliceUntil("hfw", /^const MIME = \{$/, /^export \{$/)],
+    subs: [],
+    exports: ["startPreviewServer"],
+  },
+  {
+    // utilityProcess worker out/main/hyperframesPolicyWorker.js (whole file).
+    out: "src/main/workers/hf-policy-worker.generated.ts",
+    imports: [
+      'import { realpathSync, statSync, readFileSync, lstatSync, readdirSync } from "node:fs";',
+      'import { resolve, extname, relative, sep } from "node:path";',
+      'import { parseComposition } from "../hyperframes/composition-edit.generated";',
+    ],
+    slices: () => [sliceUntil("hfp", /^const TEXT_EXTENSIONS = /, null)],
+    subs: [],
+    exports: ["validatePreviewComposition"],
+  },
+  {
+    // materials:preview (L62197) → host.materialPreview (L44876) over the ORIGINAL MaterialsLedger (L18107-18352)
+    // + materialKindForName (L1884-1895).
+    out: "src/main/materials/materials-ledger.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { appendFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";',
+      'import { basename, dirname, join, resolve, sep } from "node:path";',
+      'import { isSessionMaterial } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      slice("main", /^const MATERIALS_LEDGER_LIMIT = 200;$/, /^}$/, /^function materialKindForName\(/),
+      slice("main", /^const JOURNAL_VERSION = 1;$/, /^}$/, /^function fileTimeMs\(/),
+    ],
+    subs: [],
+    exports: ["MATERIALS_LEDGER_LIMIT", "materialKindForName", "ledgerPath", "materialIdForPath", "MaterialsLedger", "quickstartReceipts"],
+  },
+  {
+    // normalizeSpendCeilingUsd (workbookContents chunk L8-16).
+    out: "src/main/spend/spend-wb.generated.ts",
+    imports: [],
+    slices: () => [slice("wb", /^function normalizeSpendCeiling\(usd\) \{/, /^const normalizeSpendCeilingUsd = /)],
+    subs: [],
+    exports: ["normalizeSpendCeiling", "normalizeSpendCeilingUsd"],
+  },
+  {
+    // feedback:capture / feedback:discard (L62342-62349) → the ORIGINAL FeedbackService (L57059-57393) +
+    // feedbackConsentState (L1180) + redact (L1975). feedback:submit stays (b): outbox → gateway.
+    out: "src/main/feedback/feedback.generated.ts",
+    imports: [
+      'import { app } from "electron";',
+      'import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";',
+      'import { version } from "node:os";',
+      'import { join } from "node:path";',
+      'import { currentEngine, mainLogSnapshot, recordMainLog } from "./feedback-env";',
+      'import { classifyError } from "../agent/history.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function feedbackConsentState\(inputs\) \{/, /^}$/),
+      slice("main", /^const REDACTIONS = \[$/, /^}$/, /^function redact\(serialized\) \{/),
+      sliceUntil("main", /^const FEEDBACK_LIMITS = \{$/, /^async function sendBlockedFeedback\(/),
+    ],
+    subs: [],
+    exports: ["feedbackConsentState", "redact", "FEEDBACK_LIMITS", "buildFeedbackBundle", "FeedbackService"],
+  },
+  {
+    // account:localResetPrepare / account:localResetCommit (L61497-61498) → the ORIGINAL LocalResetController
+    // (L5826) + runPendingLocalReset (L5960) + helpers (L5650-6162) + LOCAL_RESET_REFUSAL_COPY (L638).
+    out: "src/main/account/local-reset.generated.ts",
+    imports: [
+      'import { randomUUID } from "node:crypto";',
+      'import { accessSync, chmodSync, closeSync, constants, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";',
+      'import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";',
+      'import { CredentialStore, CredentialStoreError, sanitizeErrorText } from "./local-reset-env";',
+    ],
+    slices: () => [
+      slice("main", /^const LOCAL_RESET_REFUSAL_COPY = \{$/, /^};$/),
+      sliceUntil("main", /^function writeSettingsFile\(file, value\) \{$/, /^function resolveGatewayKeys\(/),
+      sliceUntil("main", /^const LOCAL_RESET_MARKER = "reset-pending\.json";$/, /^function realContainedDirectory\(/),
+    ],
+    subs: [],
+    exports: ["LOCAL_RESET_REFUSAL_COPY", "LOCAL_RESET_MARKER", "LocalResetController", "LocalResetRecoveryError", "runPendingLocalReset", "readResetMarker"],
+  },
+  {
+    // spend:get / spend:setCeiling (L61755-61756) → host.getSpendSnapshot (L45686) / setSpendCeiling (L47158):
+    // the ORIGINAL per-video spend ledger SessionSpendBudgets (L26966-28133). The port has no paid tools, so
+    // only setCeiling / snapshot move it; no gateway key → writeGatewaySpendPolicy's `if (!cfg.gatewayKey) return`.
+    out: "src/main/spend/spend-budgets.generated.ts",
+    imports: [
+      'import { createHash, randomUUID } from "node:crypto";',
+      'import { isDeepStrictEqual } from "node:util";',
+      'import { isClientJobId } from "../engine/session";',
+      'import { normalizeSpendCeilingUsd } from "./spend-wb.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function isLegacySpendPlanApproval\(value\) \{/, /^}$/, /^class SessionSpendBudgets \{/),
+    ],
+    subs: [],
+    exports: ["SpendBudgetAuthorityMismatchError", "spendBudgetAuthority", "DEFAULT_AUTHORITY", "validatePersistedState", "toCents", "fromCents", "SessionSpendBudgets"],
+  },
+  {
+    // quickstart:start (L61294) → the ORIGINAL QuickstartStartCoordinator (L33623-33974).
+    out: "src/main/quickstart/quickstart-start.generated.ts",
+    imports: ['import { beginQuickstartLatency, measureQuickstartLatency } from "./quickstart-catalog.generated";'],
+    slices: () => [
+      slice("main", /^function validateRequest\(request2\) \{/, /^}$/, /^class QuickstartStartCoordinator \{/),
+    ],
+    subs: [],
+    exports: ["validateRequest", "sameQuickstartBinding", "quickstartRequestFor", "QuickstartStartCoordinator"],
+  },
+  {
+    // project:seedPack (L61827) → host.seedProjectPack (L36444) → writeProjectPack (L15492-15553).
+    out: "src/main/taste/project-pack.generated.ts",
+    imports: [
+      'import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";',
+      'import { join } from "node:path";',
+      'import { readCommitments, writeCommitments } from "./taste.generated";',
+    ],
+    slices: () => [
+      slice("main", /^function isPlaceholder\(text2\) \{/, /^}$/),
+      slice("main", /^function packReadme\(projectName, brief, briefCard\) \{/, /^}$/, /^function writeProjectPack\(/),
+    ],
+    subs: [],
+    exports: ["packReadme", "writeProjectPack"],
+  },
+  {
+    // job:originalContext (L61754) → host.getOriginalContext (L45675): readPromiseBrief + assembleOriginalVideoContext (L31469-…).
+    out: "src/main/jobs/original-context.generated.ts",
+    imports: [
+      'import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, realpathSync } from "node:fs";',
+      'import { dirname, isAbsolute, join, relative, resolve } from "node:path";',
+    ],
+    slices: () => [
+      slice("main", /^const MAX_PROMISE_BYTES = 256 \* 1024;$/, /^}$/, /^function assembleOriginalVideoContext\(/),
+    ],
+    subs: [],
+    exports: ["readPromiseBrief", "assembleOriginalVideoContext"],
   },
 ];
 

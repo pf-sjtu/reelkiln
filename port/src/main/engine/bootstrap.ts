@@ -14,7 +14,7 @@
 // npm/npx (.cmd + CVE-2024-27980), tar (System32 bsdtar), chmod no-op on win32.
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { chmodSync, copyFileSync, createReadStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, createReadStream, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { promisify } from "node:util";
 import { composeEnginePath, exeName, isWin, npmInvocation, pathEnvKey, pathMod, tarInvocation, type Invocation, type Plat } from "../platform";
 
@@ -160,6 +160,8 @@ export interface EngineRef { version: string; path: string; buildSha256?: string
 export interface BootstrapHooks {
   /** PORT-NEW: optional acceptance override for the doctor verdict (default: report.ok, as in the original L9975). */
   doctorAccepts?: (report: any) => boolean;
+  /** revertEngine (L10243): a running video blocks an engine flip (original hooks.safeToFlip). */
+  safeToFlip?: () => boolean;
   resolveEngineSource(): Promise<{ manifest: EngineManifest; fetch: (onBytes?: (r: number, t?: number) => void) => Promise<string> }>; // L9496
   validateEngineSessionContext(enginePath: string): void; // L4188
   assertInstalledEngineProductionContract(enginePath: string): void; // L6982
@@ -397,6 +399,60 @@ export class BootstrapCore {
     writeFileSync(stagingPath, JSON.stringify(pointer), { mode: 384 });
     renameSync(stagingPath, pointerPath);
     return true;
+  }
+  /** previousEngine (L9232): the retained N-1 engine named by the pointer, when still installed. */
+  previousEngine(): EngineRef | null {
+    let pointer: any;
+    try { pointer = JSON.parse(readFileSync(this.enginePointerFile(), "utf-8")); } catch { pointer = undefined; }
+    const previous = pointer?.previous;
+    if (!previous?.path || previous.path === pointer?.path || !this.exists(this.pm.join(previous.path, "ENGINE_VERSION.json"))) return null;
+    return previous;
+  }
+  /** pruneOldEngines (L9260): remove engine-* dirs except the active + retained previous. */
+  pruneOldEngines(keep: string | undefined, keepPrevious: string | undefined): string[] {
+    const root = this.enginesRoot();
+    if (!existsSync(root)) return [];
+    const keepNames = new Set([keep, keepPrevious].filter((path): path is string => Boolean(path)).map((path) => this.pm.basename(path)));
+    const removed: string[] = [];
+    for (const name of readdirSync(root)) {
+      const p = this.pm.join(root, name);
+      if (keepNames.has(name) || !name.startsWith("engine-")) continue;
+      try {
+        if (!lstatSync(p).isDirectory()) continue;
+        rmSync(p, { recursive: true, force: true });
+        removed.push(name);
+      } catch {}
+    }
+    return removed;
+  }
+  /** revertEngine (L10240) — bootstrap:revertEngine: revalidate and atomically reactivate the N-1 engine.
+   *  PORT: no background installer / pending flip exists, so only `running` gates; safeToFlip = hooks. */
+  async revertEngine() {
+    if (this.running) throw new Error("Wait for the current setup or update to finish.");
+    if (!(this.hooks.safeToFlip?.() ?? true)) throw new Error("Finish the running video before reverting the engine.");
+    const active = this.currentEngine();
+    const previous = this.previousEngine();
+    if (!active || !previous) throw new Error("No previous engine is available.");
+    this.running = true;
+    const doctorWorkspace = this.pm.join(previous.path, ".videoclaw-revert-doctor-workspace");
+    try {
+      rmSync(doctorWorkspace, { recursive: true, force: true });
+      this.hooks.writeWorkspace(previous.path, doctorWorkspace);
+      const report = await this.doctor(previous.path, doctorWorkspace);
+      if (!(this.hooks.doctorAccepts ? this.hooks.doctorAccepts(report) : report.ok)) throw new Error(`previous engine failed doctor → ${doctorFailures(report)}`);
+      await this.activateEngine(previous.path);
+      this.lastDoctor = report;
+      this.beacon?.("engine-reverted", `${active.version} → ${previous.version}`);
+      this.pruneOldEngines(previous.path, active.path);
+      return this.status();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.beacon?.("engine-revert-failed", `${active.version} → ${previous.version}: ${message.slice(0, 400)}`);
+      throw error;
+    } finally {
+      rmSync(doctorWorkspace, { recursive: true, force: true });
+      this.running = false;
+    }
   }
 }
 

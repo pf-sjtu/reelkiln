@@ -8,3 +8,10 @@ export const ipcRenderer = {
 };
 export const webUtils = { getPathForFile: (_f: unknown) => "/mock/path" };
 export const contextBridge = { exposeInMainWorld: () => {} };
+/** docs/26: `app` for main-process verbatim slices under test (FeedbackService). userData follows
+ *  VC_TEST_USERDATA so each test points it at its own temp dir. */
+export const app = {
+  getPath: (_name: string) => process.env.VC_TEST_USERDATA ?? "/tmp/vc-electron-mock-userdata",
+  getVersion: () => "0.0.0-test",
+  isPackaged: false,
+};

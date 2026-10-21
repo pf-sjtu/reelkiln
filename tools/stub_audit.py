@@ -3,7 +3,7 @@
 (116 = the 93 still stub + the 23 made real in M8). Every channel carries the original handler line in
 app/reconstructed/main/index.js (ipcMain registration) and, where it decides the category, the host /
 module line. Categories:
-  a  = local, no credential: implementable on Linux now (done-M8 = implemented this round)
+  a  = local, no credential: implementable on Linux now (done-M8 = docs/25, done-M9 = docs/26)
   b  = needs Claude Code / Codex / Videoclaw gateway (account, credits, telemetry upload, paid generation)
   c  = macOS/Windows-only or N/A on Linux (original disables / uses a mac-only helper on linux)
 Usage: python3 tools/stub_audit.py [--md] [--json]   (fails if a current stub is unclassified)"""
@@ -37,43 +37,43 @@ AUDIT = {
  "quickstart:impression": (A, 61254, "done-M8: validation; outbox?.enqueue no-op (gateway)"),
  "quickstart:previewed": (A, 61274, "done-M8: validation; outbox?.enqueue no-op (gateway)"),
  # ---- a, local but NOT yet implemented (next rounds)
- "quickstart:start": (A, 61294, "quickstartCoordinator.start: copies starter media into a new video, first turn on the active route (MiniMax ok)"),
- "session:deletionPlan": (A, 61732, "host.planProjectDeletion L39205 (ownedProjectData, deletionBlock)"),
- "session:delete": (A, 61739, "host.deleteProject L39248 → moveProjectToTrash (local trash); session-index retire is gateway, optional"),
- "session:retry": (A, 61776, "host.retryTurn L42565 (failedInputs replay; Claude terms-recovery branch is b)"),
- "session:startContinuation": (A, 61766, "host.startContinuationChat (local continuation chat over a finalized video)"),
- "project:seedPack": (A, 61827, "host.seedProjectPack L36444 → writeProjectPack (local files)"),
- "characters:voices:list": (A, 61873, "host.readCharacterVoices (local voice store; samples are produced by paid TTS = b)"),
- "characters:voice:approve": (A, 61876, "host.approveCharacterVoice (local, sha-pinned)"),
- "characters:voice:remove": (A, 61879, "host.removeCharacterVoice (local)"),
- "characters:sheetPlan": (A, 61885, "CharacterSheetBuilder.plan L34875 (engine dry-run, free)"),
- "characters:sheetStates": (A, 61892, "host.characterSheetStates (local state files)"),
- "characters:retry": (A, 61896, "store retry + assertGenerationAllowed; the rebuild it queues is paid (b)"),
- "job:originalContext": (A, 61754, "host.getOriginalContext (local job files)"),
- "job:adopt": (A, 61759, "host.adoptJob (local registry/job fence)"),
- "spend:get": (A, 61755, "host.getSpendSnapshot L45686 → spendBudgets.snapshot (local ledger; only paid work moves it)"),
- "spend:setCeiling": (A, 61756, "host.setSpendCeiling (local spend-budget store)"),
- "input:respond": (A, 61830, "host.respondInput L44689 (pendingInputs from studio MCP request tools, not ported yet)"),
- "media:discardVoice": (A, 61914, "drops a pending dictation; trivial, pairs with transcribeVoice (b/c)"),
- "library:stats": (A, 62065, "engine library CLI, local index"),
- "library:scan": (A, 62068, "engine library CLI, local scan"),
- "library:addSource": (A, 62071, "local source list + scan"),
- "library:removeSource": (A, 62085, "local source list"),
- "library:preview": (A, 62122, "local ffmpeg thumbnail"),
- "library:setTenant": (A, 62154, "local tenant binding"),
- "bootstrap:revertEngine": (A, 61302, "bootstrap.revertEngine (previous engine-current.json)"),
- "attachment:pasteImage": (A, 62272, "clipboard nativeImage → intake file"),
- "attachment:voiceNote": (A, 62265, "voiceNoteIntakeFile L10535 (ffmpeg, local)"),
- "attachment:captureMoment": (A, 62220, "ffmpeg frame grab of a version"),
- "attachment:momentPreview": (A, 62249, "ffmpeg preview"),
- "attachment:preview": (A, 62256, "local thumbnail"),
- "materials:preview": (A, 62197, "local materials ledger preview"),
- "feedback:capture": (A, 62341, "local evidence capture (screenshot + logs); submit is b"),
- "hfPreview:start": (A, 62440, "local HyperFrames preview worker"),
- "hfPreview:stop": (A, 62441, "local HyperFrames preview worker"),
- "hfPreview:editApply": (A, 62444, "local composition edit"),
- "account:localResetPrepare": (A, 61496, "local data reset plan (no network)"),
- "account:localResetCommit": (A, 61497, "local data reset commit (relaunch)"),
+ "quickstart:start": (A, 61294, "done-M9: quickstartCoordinator.start: copies starter media into a new video, first turn on the active route (MiniMax ok)"),
+ "session:deletionPlan": (A, 61732, "done-M9: host.planProjectDeletion L39205 (ownedProjectData, deletionBlock)"),
+ "session:delete": (A, 61739, "done-M9: host.deleteProject L39248 → moveProjectToTrash (local trash); session-index retire is gateway, optional"),
+ "session:retry": (A, 61776, "done-M9 (real-partial): host.retryTurn L42565 (failedInputs replay; Claude terms-recovery branch is b)"),
+ "session:startContinuation": (A, 61766, "done-M9: host.startContinuationChat (local continuation chat over a finalized video)"),
+ "project:seedPack": (A, 61827, "done-M9: host.seedProjectPack L36444 → writeProjectPack (local files)"),
+ "characters:voices:list": (B, 61873, "moved a→b (docs/26, real-partial): voiceResult → characterVoiceContext → memoryBinding L36456 needs a verified Videoclaw account; the port answers with the original's ProjectMemoryError branch"),
+ "characters:voice:approve": (B, 61876, "moved a→b (docs/26, real-partial): voiceResult → characterVoiceContext → memoryBinding L36456 needs a verified Videoclaw account; the port answers with the original's ProjectMemoryError branch"),
+ "characters:voice:remove": (B, 61879, "moved a→b (docs/26, real-partial): voiceResult → characterVoiceContext → memoryBinding L36456 needs a verified Videoclaw account; the port answers with the original's ProjectMemoryError branch"),
+ "characters:sheetPlan": (B, 61885, "moved a→b (docs/26): plan() = engine dry-run THEN quoteGatewayBudget (L19290) — without agentGatewayProxy the original returns status:error \"couldn't confirm the price\"; mint_image feature-flag decision also gateway-fed"),
+ "characters:sheetStates": (A, 61892, "done-M9: host.characterSheetStates (local state files)"),
+ "characters:retry": (A, 61896, "done-M9: store retry + assertGenerationAllowed; the rebuild it queues is paid (b)"),
+ "job:originalContext": (A, 61754, "done-M9: host.getOriginalContext (local job files)"),
+ "job:adopt": (A, 61759, "done-M9: host.adoptJob (local registry/job fence)"),
+ "spend:get": (A, 61755, "done-M9: host.getSpendSnapshot L45686 → spendBudgets.snapshot (local ledger; only paid work moves it)"),
+ "spend:setCeiling": (A, 61756, "done-M9: host.setSpendCeiling (local spend-budget store)"),
+ "input:respond": (A, 61830, "done-M9 (real-partial): host.respondInput L44689 (pendingInputs from studio MCP request tools, not ported yet)"),
+ "media:discardVoice": (A, 61914, "done-M9 (real-partial): drops a pending dictation; trivial, pairs with transcribeVoice (b/c)"),
+ "library:stats": (A, 62065, "done-M9: engine library CLI, local index"),
+ "library:scan": (A, 62068, "done-M9: engine library CLI, local scan"),
+ "library:addSource": (A, 62071, "done-M9: local source list + scan"),
+ "library:removeSource": (A, 62085, "done-M9: local source list"),
+ "library:preview": (A, 62122, "done-M9: local ffmpeg thumbnail"),
+ "library:setTenant": (A, 62154, "done-M9: local tenant binding"),
+ "bootstrap:revertEngine": (A, 61302, "done-M9: bootstrap.revertEngine (previous engine-current.json)"),
+ "attachment:pasteImage": (A, 62272, "done-M9: clipboard nativeImage → intake file"),
+ "attachment:voiceNote": (A, 62265, "done-M9 (real-partial): voiceNoteIntakeFile L10535 (ffmpeg, local)"),
+ "attachment:captureMoment": (A, 62220, "done-M9: ffmpeg frame grab of a version"),
+ "attachment:momentPreview": (A, 62249, "done-M9: ffmpeg preview"),
+ "attachment:preview": (A, 62256, "done-M9: local thumbnail"),
+ "materials:preview": (A, 62197, "done-M9: local materials ledger preview"),
+ "feedback:capture": (A, 62341, "done-M9 (real-partial): local evidence capture (screenshot + logs); submit is b"),
+ "hfPreview:start": (A, 62440, "done-M9: local HyperFrames preview worker"),
+ "hfPreview:stop": (A, 62441, "done-M9: local HyperFrames preview worker"),
+ "hfPreview:editApply": (A, 62444, "done-M9: local composition edit"),
+ "account:localResetPrepare": (A, 61496, "done-M9: local data reset plan (no network)"),
+ "account:localResetCommit": (A, 61497, "done-M9: local data reset commit (relaunch)"),
  # ---- b, needs Claude / Codex / gateway credentials
  "sessionPlan:read": (B, 61920, "host.readSessionPlan L37031 → memoryBinding L36456 requires verified account+gateway authority"),
  "sessionPlan:choose": (B, 61928, "memoryBinding (account authority) + plan budget"),
@@ -141,19 +141,19 @@ def stubs_now():
 def main():
     now = set(stubs_now())
     missing = sorted(now - set(AUDIT))
-    stale = sorted(c for c, (cat, _, why) in AUDIT.items() if c in now and why.startswith("done-M8"))
+    stale = sorted(c for c, (cat, _, why) in AUDIT.items() if c in now and why.startswith(("done-M8", "done-M9")))
     done_not_real = stale
     counts = {"a": 0, "a_done": 0, "a_todo": 0, "b": 0, "c": 0}
     for c, (cat, _, why) in AUDIT.items():
         counts[cat] += 1
-        if cat == A: counts["a_done" if why.startswith("done-M8") else "a_todo"] += 1
+        if cat == A: counts["a_done" if why.startswith(("done-M8", "done-M9")) else "a_todo"] += 1
     if "--json" in sys.argv:
         print(json.dumps({"total": len(AUDIT), "counts": counts, "stubNow": len(now), "unclassified": missing, "doneButStillStub": done_not_real,
                           "channels": [{"channel": c, "category": v[0], "line": v[1], "evidence": v[2]} for c, v in AUDIT.items()]}, ensure_ascii=False, indent=1))
     elif "--md" in sys.argv:
         print("| # | channel | 类 | 原始 handler 行 | 依据 |\n|---|---|---|---|---|")
         for i, (c, (cat, ln, why)) in enumerate(AUDIT.items(), 1):
-            print(f"| {i} | `{c}` | {cat}{' ✅' if why.startswith('done-M8') else ''} | L{ln} | {why} |")
+            print(f"| {i} | `{c}` | {cat}{' ✅' if why.startswith(('done-M8', 'done-M9')) else ''} | L{ln} | {why} |")
     else:
         print(f"audited {len(AUDIT)} (stub now {len(now)}): {counts}")
     if missing or done_not_real:

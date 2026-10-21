@@ -112,7 +112,9 @@ export interface SessionMeta { sessionId: string; cwd: string; jobId?: string; c
 
 export class SessionRegistry {
   sessions = new Map<string, { meta: SessionMeta }>();
-  clients: { clientId: string; name: string }[] = [];
+  clients: { clientId: string; name: string; tenant?: string }[] = [];
+  /** docs/26: AgentHost.trashWorkspaces (L34844) — workspaces holding a `.videoclaw-trash` (deleteProject L39270). */
+  trashWorkspaces = new Set<string>();
   constructor(readonly registryFile: string, private o: { now?: () => number } = {}) {}
   /** loadRegistry L35661 (read-only subset; see header). Returns whether healing changed anything. */
   load(): boolean {
@@ -126,6 +128,7 @@ export class SessionRegistry {
     }
     const metas: any[] = Array.isArray(raw) ? raw : (raw.sessions ?? []);
     this.clients = Array.isArray(raw) ? [...DEFAULT_CLIENTS] : (raw.clients ?? [...DEFAULT_CLIENTS]);
+    if (!Array.isArray(raw) && Array.isArray(raw.trashWorkspaces)) for (const w of raw.trashWorkspaces) if (typeof w === "string" && isAbsolute(w)) this.trashWorkspaces.add(w);
     let healedAny = false;
     for (const meta of metas) {
       if (!meta || typeof meta.sessionId !== "string") continue;
@@ -244,6 +247,26 @@ export class SessionRegistry {
     for (const id of sessionIds) { this.sessions.delete(id); removeSession(id); }
     return this.listClients();
   }
+  /** setClientTenant (L36424) — library:setTenant: bind a client to a media-library tenant slug. */
+  setClientTenant(clientId: string, tenant: unknown, save: () => void) {
+    const client = this.clients.find((c) => c.clientId === clientId);
+    if (!client) throw new Error(`unknown client: ${clientId}`);
+    client.tenant =
+      String(tenant ?? "")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, "-")
+        .slice(0, 40) || clientId;
+    save();
+    return client;
+  }
+  /** seedProjectPack (L36444) — project:seedPack: bind the tenant, write taste/packs/<slug>/README.md. */
+  seedProjectPack(clientId: string, cwd: string, brief: unknown, save: () => void, writeProjectPack: (cwd: string, slug: string, name: string, brief: string) => string) {
+    const client = this.getClient(clientId);
+    if (!client) throw new Error(`unknown client: ${clientId}`);
+    const tenant = client.tenant ?? this.setClientTenant(clientId, client.name, save).tenant!;
+    const packPath = writeProjectPack(cwd, tenant, client.name, String(brief ?? ""));
+    return { client: this.getClient(clientId), packPath };
+  }
   /** writeRegistry (L36199) for `rows` (the AgentHost's registryRows()): whole-file write that
    *  carries through disk rows/clients this instance never saw; tmp → fsync → rename → fsync dir. */
   writeRegistry(rows: Array<Record<string, any>>, ownIds: Set<string> = new Set(rows.map((r) => r.sessionId))): boolean {
@@ -261,6 +284,7 @@ export class SessionRegistry {
           sessions.push(meta);
         }
         if (!Array.isArray(disk)) { migrations = disk?.migrations; if (Array.isArray(disk?.trashWorkspaces)) trashWorkspaces = disk.trashWorkspaces.filter((r: unknown) => typeof r === "string" && isAbsolute(r)); }
+        for (const w of trashWorkspaces) if (typeof w === "string") this.trashWorkspaces.add(w);
         const diskClients = Array.isArray(disk) ? [] : (disk?.clients ?? []);
         for (const c of diskClients) {
           if (!c || typeof c.clientId !== "string") continue;
@@ -268,6 +292,7 @@ export class SessionRegistry {
         }
       } catch {}
       sessions.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+      trashWorkspaces = [...this.trashWorkspaces].sort();
       const temporary = `${this.registryFile}.${randomUUID()}.tmp`;
       try {
         const fd = openSync(temporary, "wx", 384);
