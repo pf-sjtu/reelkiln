@@ -1,0 +1,12 @@
+a6db779e70b4a2329a8be79a33e2f36d9edd5dcc1e7e7f0f2d70e722707f51f7  Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-7aa708/final.mp4
+a6db779e70b4a2329a8be79a33e2f36d9edd5dcc1e7e7f0f2d70e722707f51f7  Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-7aa708/versions/v1.mp4
+a6db779e70b4a2329a8be79a33e2f36d9edd5dcc1e7e7f0f2d70e722707f51f7  export/s1.mp4
+6c87f8d98d1c39e1267371b88a8d790d65b7d13f269926943e1be4b4b2fd37f1  Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-7aa708/incoming/clip_a.mp4
+572389d3b0a03bcfc5688172b121edd3d0e3a5fc8b9b46d662003b5464dbee64  Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-7aa708/incoming/clip_b.mp4
+f21e9d4b2e9d4aa2fcc9d5beee32919fa185ecf5090b306dbaacf59cd53aac2b  Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-7aa708/incoming/clip_c.mp4
+c79d88498e1e0442e81819a149690b0e0f9d354fd9e5c2d365b0b4ae2082e242  Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-7aa708/incoming/music.mp3
+9724939462d08bfa34e1f8ad407cc608fdd11d9c28a8c5a020aa8ef3d445b058  in/SHA256SUMS
+6c87f8d98d1c39e1267371b88a8d790d65b7d13f269926943e1be4b4b2fd37f1  in/clip_a.mp4
+572389d3b0a03bcfc5688172b121edd3d0e3a5fc8b9b46d662003b5464dbee64  in/clip_b.mp4
+f21e9d4b2e9d4aa2fcc9d5beee32919fa185ecf5090b306dbaacf59cd53aac2b  in/clip_c.mp4
+c79d88498e1e0442e81819a149690b0e0f9d354fd9e5c2d365b0b4ae2082e242  in/music.mp3

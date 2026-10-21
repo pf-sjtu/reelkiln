@@ -1,0 +1,67 @@
+{"t":27,"note":"launch dev electron (UI_E2E mode, CDP :9364)"}
+{"t":649,"cdp":"Page.enable","params":{}}
+{"t":669,"cdp":"Runtime.enable","params":{}}
+{"t":673,"note":"page target file://<REPO>/app/out/renderer/index.html"}
+{"t":2185,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":2186,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":2198,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2200,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2794,"screenshot":"01-home.png"}
+{"t":2797,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":2800,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":2800,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":2814,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":2816,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":2835,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":2835,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":2905,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":2907,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":2909,"cdp":"Input.insertText","params":{"text":"S1 UI e2e"}}
+{"t":2912,"action":"insertText","into":"input.new-client-input","text":"S1 UI e2e"}
+{"t":2915,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":2915,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":2932,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":2933,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":3245,"action":"click","desc":"New video in S1 UI e2e","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in S1 UI e2e"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":3245,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":3499,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":3515,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":3518,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":3898,"screenshot":"02-new-video.png"}
+{"t":3898,"note":"STEP project_video: PASS {\"clientId\":\"s1-ui-e2e\",\"sessionId\":\"2ea06d41-b8c6-4bed-bd2b-e810981142d4\",\"title\":\"New video\"}"}
+{"t":3901,"action":"dropFiles","at":{"x":766,"y":721},"files":["clip_a.mp4","clip_b.mp4","clip_c.mp4","music.mp3"]}
+{"t":3901,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":3904,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":3909,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":5101,"screenshot":"03-attachments.png"}
+{"t":5101,"note":"STEP attach: PASS {\"via\":\"drop\",\"ready\":[\"clip_a.mp4\",\"clip_b.mp4\",\"clip_c.mp4\",\"music.mp3\"],\"storeFile\":true}"}
+{"t":5104,"action":"click","desc":"composer textarea","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"tag":"TEXTAREA","cls":"","label":""},"hit":{"hitTag":"TEXTAREA","hitCls":"","onTarget":true}}
+{"t":5105,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":5115,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":5118,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":5119,"cdp":"Input.insertText","params":{"text":"动手之前，请先用 AskUserQuestion 工具问我一个单选问题：这条视频的成片画幅要「竖屏 9:16」还是「横屏 16:9」（就这两个选项）。等我在卡片上回答之后，用一句话复述我选了哪个，然后结束本回合，这一回合不要调用其他任何工具、不要开始剪辑。"}}
+{"t":5166,"action":"insertText","into":"textarea","chars":128}
+{"t":5663,"screenshot":"04-brief-typed.png"}
+{"t":5666,"action":"click","desc":"Send","selector":"button.send-btn","at":{"x":1228,"y":768},"element":{"x":1211,"y":751,"width":34,"height":34,"tag":"BUTTON","cls":"send-btn","label":"Send"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":5666,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1228,"y":768}}
+{"t":5681,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":5683,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":6173,"note":"STEP brief_send: PASS {\"typedMatches\":true}"}
+{"t":22280,"screenshot":"05q-question-card-1.png"}
+{"t":22284,"action":"click","desc":"question 1 first option","at":{"x":332,"y":344},"element":{"x":292,"y":327.921875,"width":80.84375,"height":32,"label":"竖屏 9:16"}}
+{"t":22284,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":332,"y":344}}
+{"t":22287,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":332,"y":344,"button":"left","clickCount":1}}
+{"t":22289,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":332,"y":344,"button":"left","clickCount":1}}
+{"t":22647,"screenshot":"05r-question-card-1-selected.png"}
+{"t":22652,"action":"click","desc":"question card Answer","selector":".question-card .q-submit","at":{"x":333,"y":422},"element":{"x":292,"y":406.921875,"width":82.78125,"height":31,"tag":"BUTTON","cls":"q-submit","label":"Answer"},"hit":{"hitTag":"BUTTON","hitCls":"q-submit","onTarget":true}}
+{"t":22652,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":333,"y":422}}
+{"t":22664,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":333,"y":422,"button":"left","clickCount":1}}
+{"t":22667,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":333,"y":422,"button":"left","clickCount":1}}
+{"t":22671,"note":"answered question card 1 (main) [\"竖屏 9:16\"]"}
+{"t":24173,"note":"answer verdict {\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":1,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[\"竖屏 9:16\"],\"textsAfter\":1,\"firstTextsAfter\":[\"你选了竖屏 9:16。\"],\"accepted\":true}"}
+{"t":24174,"note":"STEP question_card_1: PASS {\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":1,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[\"竖屏 9:16\"],\"textsAfter\":1,\"firstTextsAfter\":[\"你选了竖屏 9:16。\"],\"accepted\":true}"}
+{"t":24174,"note":"stop-after card"}
+{"t":24246,"screenshot":"99-error.png"}
+{"t":24251,"cdp":"Browser.close","params":{}}
+{"t":24318,"note":"app exited 0"}
+{"t":24562,"note":"DONE allPass=true"}

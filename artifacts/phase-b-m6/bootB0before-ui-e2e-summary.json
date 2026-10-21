@@ -1,0 +1,91 @@
+{
+ "started": "2026-10-21T08:42:27.971Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "quickstart_catalog": {
+   "ok": false,
+   "loading": true,
+   "error": null,
+   "cards": [],
+   "images": 0,
+   "filters": []
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "71736539-e443-4b70-a038-eef280b8920f",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Quickstarts' (button.quickstart-entry)",
+   "how": "click → original quickstart:catalog"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "sessionId": "71736539-e443-4b70-a038-eef280b8920f",
+ "jobId": null,
+ "consoleErrors": [
+  "TypeError: Cannot read properties of undefined (reading 'find')\n    at file://<EXTRA>/app/out/renderer/assets/index-D5K1mOs0.js:31748:24",
+  "TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<EXTRA>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18"
+ ],
+ "consoleErrorCount": 2,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 1,
+  "index-D5K1mOs0.js:39778": 1
+ },
+ "attachVia": "drop",
+ "stopAfter": "attach",
+ "allPass": false,
+ "finished": "2026-10-21T08:42:53.182Z"
+}

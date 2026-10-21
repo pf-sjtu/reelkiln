@@ -1,0 +1,3 @@
+{"ts":"2026-10-21T08:42:27.855Z","level":"info","event":"llm.runtime.ready","component":"llm-runtime","route":"claude-code","providers":["minimax"],"watching":null}
+{"ts":"2026-10-21T08:42:27.865Z","level":"info","event":"llm.route.changed","component":"llm-route","from":"claude-code","to":"minimax"}
+{"ts":"2026-10-21T08:42:51.611Z","level":"info","event":"agent.session.created","component":"agent-host","sessionId":"71736539-e443-4b70-a038-eef280b8920f","llmRoute":"minimax","engine":true}

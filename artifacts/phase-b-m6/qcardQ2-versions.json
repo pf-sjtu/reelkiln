@@ -1,0 +1,29 @@
+{
+ "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-9b30ba": {
+  "lastQaMs": 0,
+  "versions": [
+   {
+    "n": 1,
+    "path": "<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-9b30ba/versions/v1.mp4",
+    "createdAtMs": 1792575625940.2708,
+    "completedAtMs": 1792575625940.2708,
+    "sizeBytes": 12200497,
+    "approved": true,
+    "reviewed": false,
+    "feedback": [],
+    "renderSha256": "e6ff9742c77d315f357ee99ecd36a034c74c584e4a9f3a7e73b5913c5084c7b5",
+    "approvedAtMs": 1792575680934
+   }
+  ],
+  "finals": [
+   {
+    "id": "4d02a537-4b26-4eda-a3c2-0e93737263ae",
+    "n": 1,
+    "path": "<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261021-9b30ba/versions/v1.mp4",
+    "qaSha256": "e6ff9742c77d315f357ee99ecd36a034c74c584e4a9f3a7e73b5913c5084c7b5",
+    "madeFinalAtMs": 1792575680934,
+    "via": "promote"
+   }
+  ]
+ }
+}

@@ -1,0 +1,48 @@
+{"t":26,"note":"launch dev electron (UI_E2E mode, CDP :9361)"}
+{"t":643,"cdp":"Page.enable","params":{}}
+{"t":803,"cdp":"Runtime.enable","params":{}}
+{"t":845,"note":"page target file://<REPO>/app/out/renderer/index.html"}
+{"t":2056,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":2056,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":2073,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2076,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2716,"screenshot":"01-home.png"}
+{"t":2720,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":2723,"action":"click","desc":"sidebar Quickstarts","selector":"button.quickstart-entry","at":{"x":126,"y":119},"element":{"x":9,"y":103,"width":233,"height":31,"tag":"BUTTON","cls":"you-entry quickstart-entry ","label":"Quickstarts"},"hit":{"hitTag":"BUTTON","hitCls":"you-entry quickstart-entry ","onTarget":true}}
+{"t":2723,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":119}}
+{"t":2738,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":2740,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":3637,"screenshot":"01b-quickstarts.png"}
+{"t":3639,"note":"STEP quickstart_catalog: PASS {\"loading\":false,\"error\":null,\"cards\":[\"Founder camera story\"],\"images\":3,\"filters\":[]}"}
+{"t":3641,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":3641,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":3643,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":3662,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":3677,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":3677,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":3687,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":3688,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":3689,"cdp":"Input.insertText","params":{"text":"S1 UI e2e"}}
+{"t":3691,"action":"insertText","into":"input.new-client-input","text":"S1 UI e2e"}
+{"t":3693,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":3693,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":3703,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":3705,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":4013,"action":"click","desc":"New video in S1 UI e2e","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in S1 UI e2e"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":4013,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":4271,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":4288,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":4290,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":4656,"screenshot":"02-new-video.png"}
+{"t":4656,"note":"STEP project_video: PASS {\"clientId\":\"s1-ui-e2e\",\"sessionId\":\"c90ca3cc-05c0-4a09-85f3-c9707b8acc16\",\"title\":\"New video\"}"}
+{"t":4657,"action":"dropFiles","at":{"x":766,"y":721},"files":["clip_a.mp4","clip_b.mp4","clip_c.mp4","music.mp3"]}
+{"t":4657,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":4673,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":4680,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":5874,"screenshot":"03-attachments.png"}
+{"t":5874,"note":"STEP attach: PASS {\"via\":\"drop\",\"ready\":[\"clip_a.mp4\",\"clip_b.mp4\",\"clip_c.mp4\",\"music.mp3\"],\"storeFile\":true}"}
+{"t":5874,"note":"stop-after attach"}
+{"t":5951,"screenshot":"99-error.png"}
+{"t":5955,"cdp":"Browser.close","params":{}}
+{"t":5997,"note":"app exited 0"}
+{"t":6241,"note":"DONE allPass=true"}

@@ -1,0 +1,90 @@
+{
+ "started": "2026-10-21T08:41:42.598Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "quickstart_catalog": {
+   "ok": true,
+   "loading": false,
+   "error": null,
+   "cards": [
+    "Founder camera story"
+   ],
+   "images": 3,
+   "filters": []
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "c90ca3cc-05c0-4a09-85f3-c9707b8acc16",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Quickstarts' (button.quickstart-entry)",
+   "how": "click → original quickstart:catalog"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "sessionId": "c90ca3cc-05c0-4a09-85f3-c9707b8acc16",
+ "jobId": null,
+ "consoleErrors": [],
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "attachVia": "drop",
+ "stopAfter": "attach",
+ "allPass": true,
+ "finished": "2026-10-21T08:41:47.705Z"
+}

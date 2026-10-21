@@ -1,0 +1,57 @@
+{
+ "note": "docs/24 (A): post-hoc re-evaluation of qcardQ2's taste_question_card verdict with the narrowed refusal regex (port/tools/ui-e2e/plan.mjs DECLINE_RE). The in-run regex may have matched non-refusal text (see oldRegexMatchedContext).",
+ "oldRegex": "/declin|denied by user|user (?:has )?(?:rejected|dismissed)|拒绝|没有回答|未回答/i",
+ "oldRegexMatchedContext": [
+  "户指定的片段顺序与每个 in/out 入出点执行，不自行重定时、不改结构。\n\n## ANTI-COMMITMENTS (declined proposals — do not re-raise)\n- _(none yet)_\n```\n\nHm"
+ ],
+ "newRegex": "/declined this step|denied by user|\\b(?:user|you)\\s+(?:has\\s+|have\\s+)?(?:declined|denied|rejected|dismissed|skipped)\\s+(?:the|this|my|your)\\s+(?:question|step|card|prompt)|\\b(?:question|AskUserQuestion|step)\\s+was\\s+(?:declined|denied|rejected|dismissed)|拒绝了(?:这个|该)?(?:问题|提问)|没有回答|未回答/i",
+ "inRunVerdict": {
+  "permissionResolved": true,
+  "toolEnd": {
+   "isError": false,
+   "terminal": "ok"
+  },
+  "mainDecision": {
+   "behavior": "allow",
+   "answers": 2,
+   "tool": "AskUserQuestion"
+  },
+  "declinedMentioned": false,
+  "pickedLabelsEchoed": [
+   "只用音乐床，丢弃素材原声",
+   "严格照我给的顺序和入出点"
+  ],
+  "textsAfter": 2,
+  "firstTextsAfter": [
+   "The user kept:\n1. 只用音乐床，丢弃素材原声 → project scope → taste/packs/_starter/README.md COMMITMENTS\n2. 严格照我给的顺序和入出点 → user scope → taste/GLOBAL.md COMMITMENTS\n\nNot kept: no captions/overlays, local-no-paid, crop-to-fill, vertical 9:16.\n\nNow write:\n- taste/packs/_starter/README.md → ## COMMITMENTS: add dated entry.\n- Create taste/GLOBAL.md with COMMITMENTS block.\n- Also silent observation append for the approval: taste/packs/_starter/observations.jsonl (tenant scope, current tenant). The tenant here is \"",
+   "Got it — two rules kept. Writing them now."
+  ],
+  "accepted": true
+ },
+ "reVerdict": {
+  "permissionResolved": true,
+  "toolEnd": {
+   "isError": false,
+   "terminal": "ok"
+  },
+  "mainDecision": {
+   "behavior": "allow",
+   "answers": 2,
+   "tool": "AskUserQuestion"
+  },
+  "declinedMentioned": false,
+  "pickedLabelsEchoed": [
+   "只用音乐床，丢弃素材原声",
+   "严格照我给的顺序和入出点"
+  ],
+  "textsAfter": 2,
+  "firstTextsAfter": [
+   "The user kept:\n1. 只用音乐床，丢弃素材原声 → project scope → taste/packs/_starter/README.md COMMITMENTS\n2. 严格照我给的顺序和入出点 → user scope → taste/GLOBAL.md COMMITMENTS\n\nNot kept: no captions/overlays, local-no-paid, crop-to-fill, vertical 9:16.\n\nNow write:\n- taste/packs/_starter/README.md → ## COMMITMENTS: add dated entry.\n- Create taste/GLOBAL.md with COMMITMENTS block.\n- Also silent observation append for the approval: taste/packs/_starter/observations.jsonl (tenant scope, current tenant). The tenant here is \"",
+   "Got it — two rules kept. Writing them now."
+  ],
+  "accepted": true
+ },
+ "assistantTextAfter": [
+  "Got it — two rules kept. Writing them now."
+ ]
+}

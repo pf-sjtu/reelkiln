@@ -1,0 +1,48 @@
+{"t":26,"note":"launch dev electron (UI_E2E mode, CDP :9362)"}
+{"t":375,"cdp":"Page.enable","params":{}}
+{"t":418,"cdp":"Runtime.enable","params":{}}
+{"t":427,"note":"page target file://<EXTRA>/app/out/renderer/index.html"}
+{"t":1939,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":1939,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":1945,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":1946,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2501,"screenshot":"01-home.png"}
+{"t":2503,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":2505,"action":"click","desc":"sidebar Quickstarts","selector":"button.quickstart-entry","at":{"x":126,"y":119},"element":{"x":9,"y":103,"width":233,"height":31,"tag":"BUTTON","cls":"you-entry quickstart-entry ","label":"Quickstarts"},"hit":{"hitTag":"BUTTON","hitCls":"you-entry quickstart-entry ","onTarget":true}}
+{"t":2505,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":126,"y":119}}
+{"t":2507,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":2508,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":126,"y":119,"button":"left","clickCount":1}}
+{"t":23415,"screenshot":"01b-quickstarts.png"}
+{"t":23418,"note":"STEP quickstart_catalog: FAIL {\"loading\":true,\"error\":null,\"cards\":[],\"images\":0,\"filters\":[]}"}
+{"t":23421,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":23421,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":23427,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":23429,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":23443,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":23443,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":23461,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":23462,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":23462,"cdp":"Input.insertText","params":{"text":"S1 UI e2e"}}
+{"t":23464,"action":"insertText","into":"input.new-client-input","text":"S1 UI e2e"}
+{"t":23466,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":23466,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":23477,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":23478,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":23789,"action":"click","desc":"New video in S1 UI e2e","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in S1 UI e2e"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":23789,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":24044,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":24061,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":24064,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":24426,"screenshot":"02-new-video.png"}
+{"t":24426,"note":"STEP project_video: PASS {\"clientId\":\"s1-ui-e2e\",\"sessionId\":\"71736539-e443-4b70-a038-eef280b8920f\",\"title\":\"New video\"}"}
+{"t":24428,"action":"dropFiles","at":{"x":766,"y":721},"files":["clip_a.mp4","clip_b.mp4","clip_c.mp4","music.mp3"]}
+{"t":24428,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":24430,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":24436,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<RUN>/in/clip_a.mp4","<RUN>/in/clip_b.mp4","<RUN>/in/clip_c.mp4","<RUN>/in/music.mp3"],"dragOperationsMask":19}}}
+{"t":25591,"screenshot":"03-attachments.png"}
+{"t":25591,"note":"STEP attach: PASS {\"via\":\"drop\",\"ready\":[\"clip_a.mp4\",\"clip_b.mp4\",\"clip_c.mp4\",\"music.mp3\"],\"storeFile\":true}"}
+{"t":25592,"note":"stop-after attach"}
+{"t":25638,"screenshot":"99-error.png"}
+{"t":25642,"cdp":"Browser.close","params":{}}
+{"t":25684,"note":"app exited 0"}
+{"t":25927,"note":"DONE allPass=false"}

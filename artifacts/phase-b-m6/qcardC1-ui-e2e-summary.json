@@ -1,0 +1,147 @@
+{
+ "started": "2026-10-21T09:15:39.822Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "2ea06d41-b8c6-4bed-bd2b-e810981142d4",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  },
+  "brief_send": {
+   "ok": true,
+   "typedMatches": true
+  },
+  "question_card_1": {
+   "ok": true,
+   "permissionResolved": true,
+   "toolEnd": {
+    "isError": false,
+    "terminal": "ok"
+   },
+   "mainDecision": {
+    "behavior": "allow",
+    "answers": 1,
+    "tool": "AskUserQuestion"
+   },
+   "declinedMentioned": false,
+   "pickedLabelsEchoed": [
+    "竖屏 9:16"
+   ],
+   "textsAfter": 1,
+   "firstTextsAfter": [
+    "你选了竖屏 9:16。"
+   ],
+   "accepted": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)"
+  },
+  {
+   "element": "composer textarea",
+   "how": "click + Input.insertText(brief)"
+  },
+  {
+   "element": "composer Send (button.send-btn)",
+   "how": "click"
+  },
+  {
+   "element": "AskUserQuestion card (.question-card): first .q-option per question + 'Answer' (.q-submit)",
+   "how": "click"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "questionCards": [
+  {
+   "phase": "main",
+   "questions": 1,
+   "picked": [
+    "竖屏 9:16"
+   ],
+   "atMs": 1792574161820,
+   "requestId": "7c498643-b661-40d3-99b0-368449614527",
+   "toolUseId": "call_01a15dbef3d272fa99b5a6dd",
+   "verdict": {
+    "permissionResolved": true,
+    "toolEnd": {
+     "isError": false,
+     "terminal": "ok"
+    },
+    "mainDecision": {
+     "behavior": "allow",
+     "answers": 1,
+     "tool": "AskUserQuestion"
+    },
+    "declinedMentioned": false,
+    "pickedLabelsEchoed": [
+     "竖屏 9:16"
+    ],
+    "textsAfter": 1,
+    "firstTextsAfter": [
+     "你选了竖屏 9:16。"
+    ],
+    "accepted": true
+   }
+  }
+ ],
+ "sessionId": "2ea06d41-b8c6-4bed-bd2b-e810981142d4",
+ "jobId": null,
+ "consoleErrors": [],
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "attachVia": "drop",
+ "stopAfter": "card",
+ "allPass": true,
+ "finished": "2026-10-21T09:16:03.395Z"
+}

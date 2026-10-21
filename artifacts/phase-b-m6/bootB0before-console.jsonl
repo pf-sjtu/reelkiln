@@ -1,0 +1,2 @@
+{"t":23510,"kind":"exception","text":"TypeError: Cannot read properties of undefined (reading 'find')\n    at file://<EXTRA>/app/out/renderer/assets/index-D5K1mOs0.js:31748:24","url":"file://<EXTRA>/app/out/renderer/assets/index-D5K1mOs0.js","line":31747}
+{"t":24099,"kind":"exception","text":"TypeError: Cannot read properties of undefined (reading 'length')\n    at file://<EXTRA>/app/out/renderer/assets/index-D5K1mOs0.js:39778:18","url":"file://<EXTRA>/app/out/renderer/assets/index-D5K1mOs0.js","line":39777}
