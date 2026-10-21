@@ -3,14 +3,17 @@
 > 状态：已在 `port/` 落地（2026-10-21）。本文 **不含任何密钥**；密钥只存在于环境变量中，配置文件里只写环境变量 **名**。
 > 取代 docs/14 中“MiniMax 特判”的实现：MiniMax 现在只是本框架的一个内置 preset（行为保持 docs/14 已验证的结论）。
 
-## 0. 已验证 / 未验证（2026-10-21 第二轮“生产化”后，box，Node 24.22 / Electron 42.11.9）
+## 0. 已验证 / 未验证（2026-10-21 第三轮“真实 Claude Agent SDK 端到端”后，box，Node 24.22 / Electron 42.11.9）
+
+> 第三轮详见 **docs/16**：官方 `@anthropic-ai/claude-agent-sdk@0.3.305`（内置 Linux 原生 `claude` 2.1.305）经本框架路由对 MiniMax **真实跑通**一问一答 + Bash 工具往返；发现并处理了并发/结构化输出/key 暴露三个问题（gate proxy + `agentCompat`）。
 
 **已验证**
 
 | 项 | 结果 |
 | --- | --- |
 | `npm run build`（gen + tsc + esbuild）| 通过 |
-| `npm test`（node:test）| **139/139 通过**（第一轮 111 + 本轮 28：multimodal 6 / hot-reload 4 / main-wiring 8 / sqlite 2 / hardening 8） |
+| `npm test`（node:test）| **150/150 通过**（第一轮 111 + 第二轮 28 + 第三轮 11：`llm-agent-sdk.test.ts`） |
+| **真实 Claude Agent SDK 端到端（第三轮）** | `llm-agent-smoke minimax`：一问一答 ✅、`--tool` Bash 往返 ✅、`--key-probe` 子进程只见 69 字符会话 token（非 698 字符 key）✅、Electron 42 下 `--tool` ✅；gate proxy `maxInflight` 恒为 1；输出/日志 key 0 次（docs/16 §3） |
 | 同一测试套件跑在 **Node 22.13.0** | 139/139 通过（`npx node@22.13.0 --test dist-test/*.test.cjs`） |
 | 原始行为差分 | `Settings` 类（加载/归一化/get/patch/写盘字节/legacy 凭据）、`rendererWritableSettingsPatch`、`sessionLlmRoute`/`sessionHelperKind`/`sessionModel`、`createLocalRuntime` 子进程 env 块（claude-code / gateway / 无 key gateway）、`anthropicClientJobCustomHeaders`（shipped chunk）——均与原文逐值一致；此前的 `resolvedLlmRoute`/`sanitizedAgentEnv`/`resolveHelperCreds` 差分仍通过 |
 | 主进程接线（真 Electron）| `xvfb-run electron .` + `VIDEOCLAW_PORT_SMOKE=1 VIDEOCLAW_PORT_SMOKE_LLM_ROUTE=acme`（临时 providers 文件 + 假 key）：`settings:get` → 真 Settings；`settings:set({llmRoute:"acme"})` → 写入 `userData/settings.json`、触发 `llm.route.changed`；`engine:llmRouteReadiness` → `{route:"acme",ready:true}`；userData 下所有文件中 **假 key 出现 0 次** |
@@ -22,10 +25,11 @@
 
 **未验证 / 风险**
 
-- [ ] **Claude Agent SDK `query()` 本体仍未移植**（SDK 不是 port 依赖，AgentHost 会话生命周期未移植）：provider 路由的子进程 env/model 已按原版 `createLocalRuntime` 组装并经差分测试，但没有真的拉起 `claude` 子进程跑一轮对话（box 无 Linux `claude` 二进制）。
+- [x] ~~Claude Agent SDK `query()` 从未真实拉起~~ → **第三轮已真实跑通**（docs/16）。仍延后：原版 `createLocalRuntime` 的完整选项（流式输入、resume、hooks、studio MCP、权限适配/UI、session store）、AgentHost 会话生命周期；SDK 不是 port 依赖，需 `VIDEOCLAW_CLAUDE_AGENT_SDK` 指向一个装了它的目录。
+- [ ] `agentCompat` 中 `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking*` 的效果未实测（MiniMax 不需要）；`disableStructuredOutputs` 下 Claude Code 的回退行为未实测。
 - [ ] `openai-responses` 协议从未对任何真实端点发过请求（只有 mock）；`openai-chat-completions` 只对 MiniMax 的兼容端点实测过，未对 OpenAI/OpenRouter/DeepSeek 实测。
 - [ ] 多模态：PDF（`file`/`input_file`）、URL 图片、tool_use/tool_result 的转换只按公开 schema + mock 测试；真实端点只验证了 base64 PNG → chat `image_url`。
-- [ ] `auth.scheme="header"` / `x-api-key` 在 Claude Agent SDK 子进程中的实际效果、`CLAUDE_CODE_EFFORT_LEVEL` 是否被采纳——同上一轮，未实测。
+- [ ] `auth.scheme="header"` / `x-api-key` 经**真实** Claude Code 子进程的效果（bearer 已实测；另两种只有 mock + gate proxy 单测）、`CLAUDE_CODE_EFFORT_LEVEL` 是否被采纳（实测请求体中 `output_config.effort` 为 `"high"`，preset 未设 effort）——未实测。
 - [ ] Windows / macOS 上实际运行（`fs.watchFile`、`node:sqlite`、settings 原子写 `rename`/`chmod`）——只在 Linux 上跑过；代码按跨平台 API 写，`SIGHUP` 在 win32 上不安装。
 - [ ] 真实 429/529 + `retry-after`、真实 deadline 触发——仍只有 mock。
 - [ ] `claude-code` 路由的 readiness（原版的 Claude Code 登录探测）未移植：该情况下 `engine:llmRouteReadiness` 返回 `undefined`（与原 fake backend 相同）。
@@ -108,11 +112,13 @@ providers 文件路径：环境变量 **`VIDEOCLAW_LLM_PROVIDERS_FILE`**（设�
 | `chatMaxTokensField` | `max_tokens` | 仅 openai-chat：输出上限字段名；OpenAI 新模型（o 系列 / gpt-5.x）与 MiniMax 兼容端点用 `max_completion_tokens` |
 | `allowInsecureHttp` | `false` | 允许对非回环地址用明文 http（默认只允许 localhost/127.x/::1） |
 
+`agentCompat`（第三轮新增，docs/16 §4.2）：Claude Code 子进程兼容开关，`gateProxy` / `disableNonessentialTraffic` / `disableStructuredOutputs` / `disablePromptCaching` / `disableExperimentalBetas` / `disableThinking` / `disableAdaptiveThinking`，全部默认 false，未知字段报 `CONFIG_INVALID`。
+
 `baseUrl` 额外规则（§3.5）：不得含用户名/密码、query、fragment；非回环 http 需 `allowInsecureHttp`。`headers` 值与 `auth.prefix` 不得含换行；`model` 不得含控制字符。
 
 ### 2.1 内置 preset：`minimax`
 
-`protocol: anthropic-messages`，`baseUrl: https://api.minimaxi.com/anthropic`，`auth: bearer`，`apiKeyEnv: MINIMAX_API_KEY`，`model: MiniMax-M3.1-Flash`，`concurrency {max:1, cap:2}`（key 与 Pageway 共享），重试 429/529 + `base_resp.status_code=1002`，**不重试** 401/403 + 1004（鉴权）/1008（余额）→ `PROVIDER_CREDENTIAL_MISCONFIGURED`；`modelsDev.provider = "minimax-cn"`（minimaxi.com 为国内站）；env 覆盖 `MINIMAX_BASE_URL` / `MINIMAX_MODEL` / `MINIMAX_MAX_CONCURRENCY`。
+`protocol: anthropic-messages`，`baseUrl: https://api.minimaxi.com/anthropic`，`auth: bearer`，`apiKeyEnv: MINIMAX_API_KEY`，`model: MiniMax-M3.1-Flash`，`concurrency {max:1, cap:2}`（key 与 Pageway 共享），重试 429/529 + `base_resp.status_code=1002`，**不重试** 401/403 + 1004（鉴权）/1008（余额）→ `PROVIDER_CREDENTIAL_MISCONFIGURED`；`modelsDev.provider = "minimax-cn"`（minimaxi.com 为国内站）；env 覆盖 `MINIMAX_BASE_URL` / `MINIMAX_MODEL` / `MINIMAX_MAX_CONCURRENCY`；**第三轮**：`agentCompat {gateProxy, disableNonessentialTraffic, disableStructuredOutputs} = true`（真实 Claude Code 2.1.305 实测所需，原因见 docs/16 §4）。
 与 docs/14 唯一差异：helper 调用的鉴权头由 `x-api-key` 改为 `Bearer`（与子进程的 `ANTHROPIC_AUTH_TOKEN` 统一；两者在 docs/14 §0 均验证 200，本次用 Bearer 再次实测通过）。如需旧行为，在 providers 文件里写 `{"name":"minimax","auth":{"scheme":"x-api-key"}}`（注意这同时会让子进程改用 `ANTHROPIC_API_KEY`）。
 
 ### 2.2 热重载
@@ -134,6 +140,8 @@ providers 文件路径：环境变量 **`VIDEOCLAW_LLM_PROVIDERS_FILE`**（设�
 | bearer | `ANTHROPIC_AUTH_TOKEN=K` |
 | x-api-key | `ANTHROPIC_API_KEY=K` |
 | header | `ANTHROPIC_CUSTOM_HEADERS="<header>: <prefix>K"`（与 provider `headers` 一起，换行分隔） |
+
+（第三轮：`agentCompat.gateProxy` 开启时，上表的 key 不再进入子进程——`sessionAgentRuntime()` 把 `ANTHROPIC_BASE_URL` 换成回环 gate proxy、`ANTHROPIC_AUTH_TOKEN` 换成每会话随机 token，见 docs/16 §4.1。）
 
 外加 `ANTHROPIC_BASE_URL`、`ANTHROPIC_MODEL` 与五个别名变量（`ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL`、`ANTHROPIC_SMALL_FAST_MODEL`、`CLAUDE_CODE_SUBAGENT_MODEL`）、可选 `CLAUDE_CODE_EFFORT_LEVEL`、隔离的 `CLAUDE_CONFIG_DIR`。**gateway 的 job 头（customHeaders）永不转发给第三方。** 只有 `anthropic-messages` provider 能驱动 Claude Agent SDK；`openai-*` provider 被选为 agent 路由时抛 `UNSUPPORTED_PROTOCOL`（仍可用于 helper 调用）。key 缺失 → `KEY_MISSING`（消息只含 env 名）。
 
@@ -170,7 +178,9 @@ providers 文件路径：环境变量 **`VIDEOCLAW_LLM_PROVIDERS_FILE`**（设�
 
 `LlmRouteService` 移植了 AgentHost 中决定“谁付费”的部分：`newSessionLlmRoute`（L38769，新视频固定当前路由）、`sessionLlmRoute`（L40823，PORT-NEW：固定的 provider 名即使暂时未注册也保持 → fail-closed）、`sessionHelperKind`/`sessionHelperCreds`（provider 视频的 helper 请求走该 provider）、`sessionModel`（L40865，provider 默认用其 model）、`sessionHelperComplete`、`localRuntimeEnv`/`sessionRuntimeConfig`（`createLocalRuntime` L23214-23330 的完整 `options.env`：`sanitizedAgentEnv` 之后显式注入 base URL + token/header + 5 个别名 + 隔离 `CLAUDE_CONFIG_DIR=userData/engine-profile` + 原版的 connectors-off / no-self-starting-work 等）。
 
-**延后（及原因）**：Claude Agent SDK `query()` 的实际调用（SDK 不在 port 依赖中，且依赖未移植的 AgentHost 会话/权限/hooks/MCP 体系）；AgentHost 的会话生命周期与 `onLlmRouteChanged` 的 runtime teardown；CredentialStore（gateway key 库）；Claude Code 登录探测；设置 UI 的 provider 选择器（renderer 未移植）。这些接入时只需把 `sessionRuntimeConfig()` 的 `env`/`model` 原样传给 `query()`。
+**第三轮已补上的部分**：`sessionAgentRuntime()`（= `sessionRuntimeConfig()` + 可选 gate proxy）+ `agent-sdk.ts`（运行时加载 SDK、原版打包布局的 `claude` 路径、最小 `query()` 选项、单轮 `runAgentTurn`），经 `llm-agent-smoke` 对 MiniMax 真实跑通，见 docs/16。
+
+**仍延后（及原因）**：原版 `query()` 的完整选项与 AgentHost 会话/权限/hooks/MCP 体系（未移植）；AgentHost 的会话生命周期与 `onLlmRouteChanged` 的 runtime teardown；CredentialStore（gateway key 库）；Claude Code 登录探测；设置 UI 的 provider 选择器（renderer 未移植）。这些接入时把 `sessionAgentRuntime()` 的 `env`/`model` 原样传给 `query()`，子进程退出后调用 `close()`。
 
 ### 3.5 生产加固
 
@@ -245,6 +255,7 @@ sync_meta (source PK = 'models.dev', url, etag, last_modified, content_sha256, l
 | `llm-providers` | 已注册 provider 摘要（key 只显示 configured），以及 configError |
 | `llm-providers-validate [file]` | 严格校验 providers 文件（热重载前用）；非法 exit 1 |
 | `llm-ping <provider> [prompt] [image.png]` | **需 `VIDEOCLAW_LLM_LIVE=1`**；经 `LlmRouteService.sessionHelperComplete`（主进程同一路径）发 1 次真实请求，可带一张图片 |
+| `llm-agent-smoke <provider> [prompt] [--tool\|--key-probe]` | **需 `VIDEOCLAW_LLM_LIVE=1` + `VIDEOCLAW_CLAUDE_AGENT_SDK`**；真实 Claude Agent SDK 单轮会话（docs/16 §2） |
 | `sqlite-check` | node:sqlite 能力探测（运行时、SQLite 版本、最低版本） |
 | `llm-model-info <provider> [--db P]` | provider → models.dev 元数据 |
 | `models-sync [--db P] [--url U] [--force] [--timeout MS]` | 同步 |
@@ -261,13 +272,15 @@ sync_meta (source PK = 'models.dev', url, etag, last_modified, content_sha256, l
 | `MINIMAX_BASE_URL` / `MINIMAX_MODEL` / `MINIMAX_MAX_CONCURRENCY` | minimax preset 的 env 覆盖（并发封顶 2） |
 | `VIDEOCLAW_MODELS_DB` | models.dev SQLite 路径 |
 | `VIDEOCLAW_LOG_LEVEL` | 日志级别，默认 info |
-| `VIDEOCLAW_LLM_LIVE=1` | 允许 `llm-ping` 发真实请求 |
+| `VIDEOCLAW_LLM_LIVE=1` | 允许 `llm-ping` / `llm-agent-smoke` 发真实请求 |
+| `VIDEOCLAW_CLAUDE_AGENT_SDK` | 装有 `@anthropic-ai/claude-agent-sdk` 的目录（包目录 / node_modules / 其上级） |
+| `VIDEOCLAW_CLAUDE_CODE_EXECUTABLE` | 覆盖 `claude` 原生二进制路径（默认取 SDK 旁的 `claude-agent-sdk-<plat>-<arch>/claude`） |
 | `VIDEOCLAW_PORT_FAKE_SETTINGS=1` | 主进程不启用真实 Settings/路由服务，退回 QA fixture |
 | `VIDEOCLAW_PORT_SMOKE_LLM_ROUTE=<route>` | Electron 冒烟中额外执行 `settings:set({llmRoute})` + readiness |
 
 ## 7. 错误码
 
-`LlmProviderError.code`：`CONFIG_INVALID | UNKNOWN_PROVIDER | KEY_MISSING | UNSUPPORTED_PROTOCOL | UNSUPPORTED_CONTENT | PROVIDER_CREDENTIAL_MISCONFIGURED | RATE_LIMITED | TIMEOUT | NETWORK | BAD_RESPONSE`；helper 层另有 `NO_CREDENTIALS`（该视频的路由没有可用凭据）；同步错误码见 §4.4；`SqliteUnavailableError.code = SQLITE_UNAVAILABLE`。
+`LlmProviderError.code`：`CONFIG_INVALID | UNKNOWN_PROVIDER | KEY_MISSING | UNSUPPORTED_PROTOCOL | UNSUPPORTED_CONTENT | PROVIDER_CREDENTIAL_MISCONFIGURED | RATE_LIMITED | TIMEOUT | NETWORK | BAD_RESPONSE | SDK_UNAVAILABLE`（第三轮：SDK 未配置/找不到）；helper 层另有 `NO_CREDENTIALS`（该视频的路由没有可用凭据）；同步错误码见 §4.4；`SqliteUnavailableError.code = SQLITE_UNAVAILABLE`。
 
 ## 8. 测试
 
@@ -277,3 +290,4 @@ sync_meta (source PK = 'models.dev', url, etag, last_modified, content_sha256, l
 - `test/models-dev.test.ts`（10）：fixture（`test/fixtures/models-dev-api.sample.json`，2026-10-21 真实 api.json 裁剪：5 个 provider / 10 个模型，含 tiers、`provider` 覆盖、embedding、deprecated、含 `/` 的 model id）、宽松解析、迁移、幂等 upsert + 剪枝、查找顺序、provider 元数据、304/unchanged/force、离线安全各失败分支、validator 只发给同源 URL、CLI 四个命令。测试不访问网络。
 - `test/minimax.test.ts`（已有 10 个，改为断言 preset 行为；Bearer）。
 - 第二轮新增：`test/llm-multimodal.test.ts`（6：两种协议的图片/PDF/文档/工具/tool_choice/stop 转换、不可表示内容的 typed 错误、mock 端到端图片上线）、`test/llm-hot-reload.test.ts`（4：显式重载增删改、非法配置回退与恢复、watcher 原地写与原子 rename、闸门扩缩容）、`test/llm-main-wiring.test.ts`（8：Settings / rendererWritableSettingsPatch / AgentHost 方法 / createLocalRuntime env 差分、provider 路由暂停与恢复、真实子进程 env 注入、helper 与 readiness、IPC handlers + 热重载联动）、`test/sqlite-capability.test.ts`（2）、`test/llm-hardening.test.ts`（8：配置规则、env 覆盖/key 校验、脱敏模式、非 JSON/超大响应、deadline/取消/网络原因、全流程无 key、models 同步 URL 脱敏与流式封顶、同 key 多 provider 共用账号级闸门）。
+- 第三轮新增：`test/llm-agent-sdk.test.ts`（11：`minimalAgentOptions` 原样传 env/model、mock SDK 边界上的消息收集/canUseTool 白名单/脱敏、失败/抛错/超时、从目录加载 ESM SDK 与包名校验、原版打包布局的 `claude` 路径（含 musl / win32）、`agentCompat` → env 与 preset 合并、gate proxy 的 token 校验/鉴权替换/流式透传/本地探测、三种鉴权与 502、闸门串行化与 helper 共享闸门与中断释放、`proxiedAgentEnv`、`sessionAgentRuntime` 经 mock SDK + mock 上游端到端）。
