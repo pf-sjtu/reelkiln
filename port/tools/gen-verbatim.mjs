@@ -79,6 +79,75 @@ export const SPECS = [
     subs: [],
     exports: ["PRODUCTION_VERDICT_SCHEMA", "PRODUCTION_ANALYZER", "ROUTE_RECEIPT_SCHEMA", "exactPythonConstant", "inspectInstalledEngineProductionContract", "assertInstalledEngineProductionContract"],
   },
+  {
+    // PORT (docs/21 M2): the app-owned session context the original injects into every local
+    // Claude Code session (systemPrompt.append) + the workspace CLAUDE.md / execution contract.
+    out: "src/main/agent/session-assembly.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { existsSync } from "node:fs";',
+      'import { join } from "node:path";',
+      'import { VOICE_GUARD } from "../engine/voice-guard";',
+      'import { readRequired, sourceHashes, sessionSha256 as sha256$4, SessionContextError } from "../engine/session-context.generated";',
+      'import { venvPython } from "../platform";',
+    ],
+    slices: () => [
+      slice("main", /^const POLICY_REFUSAL_MARKER = /, /^}$/, /^function isPolicyRefusalMessage\(/),
+      slice("main", /^const CHARACTER_VOICE_GUIDANCE = /, /^}$/, /^function assembleSessionContext\(/),
+      slice("main", /^const ENGINE_PYTHON_PROBLEM = /, /^}$/, /^function legacyDevSessionContext\(/),
+      slice("main", /^const WORKSPACE_LAUNCHER_LINE = /, /^}$/, /^function migrateWorkspaceClaudeMd\(/),
+      slice("main", /^function permissionModeMeaning\(/, /^}$/),
+      slice("main", /^const JOB_RE = /, /^const JOB_RE = /),
+      slice("main", /^const PRIOR_WORK_REFERENCE = /, /^}$/, /^function classifyPriorWorkIntent\(/),
+      slice("main", /^function deriveTitle\(/, /^}$/),
+      slice("main", /^function deterministicJobId\(/, /^}$/),
+    ],
+    subs: [
+      ['existsSync(join(engineDir, ".venv", "bin", "python"))', "existsSync(venvPython(engineDir))", 1],
+    ],
+    exports: ["POLICY_REFUSAL_MARKER", "policyRefusalMessage", "isPolicyRefusalMessage", "CHARACTER_VOICE_GUIDANCE", "ENGINE_TOOL_LAUNCHER", "ENGINE_PIPE_RULE", "PROJECT_MEMORY_GUIDANCE", "ACCOUNT_PREFERENCE_GUIDANCE", "WORKFLOW_ADVISOR_GUIDANCE", "workflowIndexSection", "assembleSessionContext", "assertEnginePython", "assembleLocalSessionContext", "legacyDevSessionContext", "EXECUTION_CONTRACT_MARKER", "EXECUTION_CONTRACT", "workspaceClaudeMd", "migrateWorkspaceClaudeMd", "permissionModeMeaning", "JOB_RE", "classifyPriorWorkIntent", "deriveTitle", "deterministicJobId"],
+  },
+  {
+    // PORT (docs/21 M2): the ORIGINAL production permission model for agent Bash — the engine's
+    // production_guard.py --verdict-json analyzer + authorizeProductionCommand + app-owned refusals.
+    out: "src/main/agent/production-auth.generated.ts",
+    imports: [
+      'import { spawn } from "node:child_process";',
+      'import { createHash } from "node:crypto";',
+      'import { existsSync } from "node:fs";',
+      'import { isAbsolute, join, resolve } from "node:path";',
+      'import { venvPython } from "../platform";',
+      'import { policyRefusalMessage } from "./session-assembly.generated";',
+      'import { classifyProductionCommand, buildInputBoundExecutionPlan, processStore } from "./production-auth-unported";',
+    ],
+    slices: () => [
+      slice("main", /^const ENGINE_TO_GATEWAY_TOOL = /, /^};$/, /^const FEATURE_FLAG_REASON_COPY = /),
+      slice("main", /^function featureFlagDecision\(/, /^}$/),
+      slice("main", /^const PYTHON_MISSING_REASON =/, /^}$/, /^function checkProductionVerdict\(/),
+      slice("main", /^const JOB_ID_RE\$1 = /, /^const BOUND_JOB_ENV = /),
+      slice("main", /^const PROTECTED_TOOLS = /, /^\]\);$/),
+      slice("main", /^const READ_ONLY_MODES = \{/, /^};$/),
+      slice("main", /^function productionVerdictNeedsInputBinding\(/, /^}$/),
+      slice("main", /^function argValue\(/, /^}$/),
+      slice("main", /^function sha256\$2\(/, /^}$/, /^async function authorizeProductionCommand\(/),
+      slice("main", /^const PYTHON_HELPER = /, /^}$/, /^function appOwnedVideoCommandRefusal\(/),
+      slice("main", /^const FINAL_RENDER_TIMEOUT_MS = /, /^}$/, /^function withFinalRenderWindow\(/),
+    ],
+    subs: [
+      ['const python = join(engine, ".venv", "bin", "python");', "const python = venvPython(engine);", 1],
+    ],
+    exports: ["PRODUCTION_VERDICT_SCHEMA", "PRODUCTION_ANALYZER", "parseProductionVerdictResult", "checkProductionVerdict", "BOUND_JOB_ENV", "PROTECTED_TOOLS", "READ_ONLY_MODES", "productionVerdictNeedsInputBinding", "argValue", "blockedGatewayToolForVerdict", "authorizeProductionCommand", "AUTOMATIC_ENGINE_STEP_REFUSAL", "appOwnedVideoCommandRefusal", "FINAL_RENDER_TIMEOUT_MS", "verdictRunsFinalRender", "verdictRunsVerifiedEngineTool", "withFinalRenderWindow"],
+  },
+  {
+    // docs/21 M1: account:snapshot (L61406) — the pure snapshot builder from the shipped chunk.
+    out: "src/main/account-snapshot.generated.ts",
+    imports: [],
+    slices: () => [
+      slice("wb", /^const ALPHA_TERMS_VERSION = /, /^}$/, /^function buildAccountSnapshot\(/),
+    ],
+    subs: [],
+    exports: ["ALPHA_TERMS_VERSION", "canAcceptTerms", "ACCOUNT_CAPABILITIES", "accountCapabilitiesFrom", "canUseNightlyUpdates", "accountStateFrom", "onboardingStep", "keyVerificationRetry", "buildAccountSnapshot"],
+  },
 ];
 
 export function render(spec) {

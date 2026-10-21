@@ -155,7 +155,7 @@ test("claude / codex executable resolution (original order; win32 suffix)", () =
 });
 
 import { writeWorkspacePartial } from "../src/main/engine/workspace";
-test("writeWorkspacePartial: dirs, taste packs, verbatim settings.json", () => {
+test("writeWorkspacePartial: dirs, taste packs, CLAUDE.md (verbatim contract) then validateEngineSessionContext refuses an incomplete engine (L9650-9689 order)", () => {
   const root = mkdtempSync(join(tmpdir(), "vc-wsp-"));
   const eng = join(root, "e");
   mkdirSync(join(eng, ".claude"), { recursive: true });
@@ -163,8 +163,16 @@ test("writeWorkspacePartial: dirs, taste packs, verbatim settings.json", () => {
   writeFileSync(join(eng, "taste", "packs", "_starter", "README.md"), "x");
   writeFileSync(join(eng, ".claude", "settings.json"), '{"a":1}\r\n');
   const ws = join(root, "w");
-  writeWorkspacePartial(eng, ws);
+  assert.throws(() => writeWorkspacePartial(eng, ws), /installed engine cannot start a session/);
   for (const d of ["jobs", "assets", "incoming", "taste/packs", ".claude"]) assert.ok(existsSync(join(ws, d)), d);
   assert.equal(readFileSync(join(ws, "taste", "packs", "_starter", "README.md"), "utf8"), "x");
-  assert.equal(readFileSync(join(ws, ".claude", "settings.json"), "utf8"), '{"a":1}\r\n');
+  const md = readFileSync(join(ws, "CLAUDE.md"), "utf8");
+  assert.match(md, /videoclaw-execution-contract:3/);
+  assert.ok(!existsSync(join(ws, ".claude", "settings.json")), "settings copied only after validation");
+  // migration: an old CLAUDE.md without the contract marker gains it, user text preserved
+  writeFileSync(join(ws, "CLAUDE.md"), "# my notes\n");
+  assert.throws(() => writeWorkspacePartial(eng, ws));
+  const migrated = readFileSync(join(ws, "CLAUDE.md"), "utf8");
+  assert.match(migrated, /# my notes/);
+  assert.match(migrated, /videoclaw-execution-contract:3/);
 });

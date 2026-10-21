@@ -45,7 +45,8 @@ if (!args.includes("--no-sdk")) {
 } else console.error("[package] --no-sdk: the agent path will need VIDEOCLAW_CLAUDE_AGENT_SDK or ~/.videoclaw/claude-agent-sdk");
 
 const outDir = resolve(root, opt("out") ?? "release");
-const config = builderConfig({ platform, arch, sdkDir, version: pkg.version, outDir });
+const originalRendererDir = join(root, "..", "app", "out", "renderer");
+const config = builderConfig({ platform, arch, sdkDir, version: pkg.version, outDir, originalRendererDir: existsSync(join(originalRendererDir, "index.html")) ? originalRendererDir : null });
 const targetsArg = opt("targets");
 if (targetsArg) config[platform].target = targetsArg.split(",").map((t) => ({ target: t, arch: [arch] }));
 

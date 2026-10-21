@@ -7,12 +7,15 @@
 //  - SessionRegistry: READ-ONLY subset of AgentHost.loadRegistry (L35661-35830) +
 //    listSessions (L38348) + isDeleting (L39154) — the part the session-scoped handlers
 //    (editorRender/hfPreview/workflowSubmission `getSession`) consume. Not ported: the
-//    agent runtime, createSession (L38726), registry writes, beacons, title fallback from
-//    transcripts, retirePlanContract, healCodexPermissionMode, healSessionCwd, media recovery.
+//    agent runtime, createSession (L38726), beacons, title fallback from transcripts,
+//    retirePlanContract, healCodexPermissionMode, healSessionCwd, media recovery.
+//  - docs/21 M2: registry WRITES — writeRegistry (L36199, merge-with-disk, tmp+fsync+rename) for
+//    the rows the AgentHost owns, DEFAULT_CLIENTS (L34377), listClients / createClient (L36329-36365)
+//    with projectNameError (L288) verbatim.
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { validateInstalledEngineSessionContext, SessionContextError } from "./session-context.generated";
 import { UV_PYTHON_POLICY_ENV } from "./bootstrap";
 
@@ -87,11 +90,29 @@ const PRIVATE_META_KEYS = ["postCompactRouteBarrier", "contextEpoch", "acceptedO
 const NEW_VIDEO_TITLE_PLACEHOLDER_OLD = "New session";
 export const NEW_VIDEO_TITLE = "New video"; // L266
 
+export const DEFAULT_CLIENTS = [{ clientId: "personal", name: "Personal" }]; // L34377
+export function projectNameError(name: unknown, projects: Array<{ clientId: string; name: string }>, currentId?: string): string | null { // L288
+  if (typeof name !== "string" || !name.trim()) return "Enter a project name.";
+  if (name.trim().length > 80) return "Use 80 characters or fewer.";
+  if (/[\u0000-\u001f\u007f]/.test(name.trim()))
+    return "Remove the unsupported character from the name.";
+  const normalized = name.trim().normalize("NFKC").toLowerCase();
+  if (
+    projects.some(
+      (p) =>
+        p.clientId !== currentId && p.name.trim().normalize("NFKC").toLowerCase() === normalized,
+    )
+  ) {
+    return "A project already uses that name.";
+  }
+  return null;
+}
+
 export interface SessionMeta { sessionId: string; cwd: string; jobId?: string; clientId: string; status: string; title?: string; runtime?: string; createdAt?: number; sidebarOrder?: number; [k: string]: unknown }
 
 export class SessionRegistry {
   sessions = new Map<string, { meta: SessionMeta }>();
-  clients: { clientId: string }[] = [];
+  clients: { clientId: string; name: string }[] = [];
   constructor(readonly registryFile: string, private o: { now?: () => number } = {}) {}
   /** loadRegistry L35661 (read-only subset; see header). Returns whether healing changed anything. */
   load(): boolean {
@@ -100,11 +121,11 @@ export class SessionRegistry {
     try {
       raw = JSON.parse(readFileSync(this.registryFile, "utf-8"));
     } catch {
-      this.clients = []; // original: [...DEFAULT_CLIENTS] + corrupt-copy + beacon + recoverOrphanSessions — NOT PORTED
+      this.clients = [...DEFAULT_CLIENTS]; // original also: corrupt-copy + beacon + recoverOrphanSessions — NOT PORTED
       return false;
     }
     const metas: any[] = Array.isArray(raw) ? raw : (raw.sessions ?? []);
-    this.clients = Array.isArray(raw) ? [] : (raw.clients ?? []);
+    this.clients = Array.isArray(raw) ? [...DEFAULT_CLIENTS] : (raw.clients ?? [...DEFAULT_CLIENTS]);
     let healedAny = false;
     for (const meta of metas) {
       if (!meta || typeof meta.sessionId !== "string") continue;
@@ -146,6 +167,66 @@ export class SessionRegistry {
         }
         return (b.createdAt ?? 0) - (a.createdAt ?? 0);
       });
+  }
+  /** Hand the healed rows to the AgentHost (which then owns them) and stop serving them here. */
+  takeSessions(): SessionMeta[] { const rows = [...this.sessions.values()].map((s) => s.meta); this.sessions.clear(); return rows; }
+  listClients() { return [...this.clients]; } // L36329
+  createClient(name: unknown, save: () => void) { // L36346
+    const error = projectNameError(name, this.clients);
+    if (error) throw new Error(error);
+    const trimmed = (name as string).trim();
+    const base =
+      trimmed
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .slice(0, 32) || randomUUID().slice(0, 8);
+    let clientId = base;
+    while (this.clients.some((client2) => client2.clientId === clientId)) {
+      clientId = `${base.slice(0, 23)}-${randomUUID().slice(0, 8)}`;
+    }
+    const client = { clientId, name: trimmed };
+    this.clients.push(client);
+    save();
+    return client;
+  }
+  /** writeRegistry (L36199) for `rows` (the AgentHost's registryRows()): whole-file write that
+   *  carries through disk rows/clients this instance never saw; tmp → fsync → rename → fsync dir. */
+  writeRegistry(rows: Array<Record<string, any>>, ownIds: Set<string> = new Set(rows.map((r) => r.sessionId))): boolean {
+    try {
+      mkdirSync(dirname(this.registryFile), { recursive: true });
+      const sessions = [...rows];
+      const clients = [...this.clients];
+      let migrations: unknown, trashWorkspaces: unknown[] = [];
+      try {
+        const disk = JSON.parse(readFileSync(this.registryFile, "utf-8"));
+        const diskSessions = Array.isArray(disk) ? disk : (disk?.sessions ?? []);
+        for (const meta of diskSessions) {
+          if (!meta || typeof meta.sessionId !== "string") continue;
+          if (ownIds.has(meta.sessionId) || this.sessions.has(meta.sessionId)) continue;
+          sessions.push(meta);
+        }
+        if (!Array.isArray(disk)) { migrations = disk?.migrations; if (Array.isArray(disk?.trashWorkspaces)) trashWorkspaces = disk.trashWorkspaces.filter((r: unknown) => typeof r === "string" && isAbsolute(r)); }
+        const diskClients = Array.isArray(disk) ? [] : (disk?.clients ?? []);
+        for (const c of diskClients) {
+          if (!c || typeof c.clientId !== "string") continue;
+          if (!clients.some((k) => k.clientId === c.clientId)) clients.push(c);
+        }
+      } catch {}
+      sessions.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+      const temporary = `${this.registryFile}.${randomUUID()}.tmp`;
+      try {
+        const fd = openSync(temporary, "wx", 384);
+        try { writeFileSync(fd, JSON.stringify({ clients, sessions, migrations, trashWorkspaces }, null, 2)); fsyncSync(fd); } finally { closeSync(fd); }
+        renameSync(temporary, this.registryFile);
+        if (process.platform !== "win32") { const directory = openSync(dirname(this.registryFile), "r"); try { fsyncSync(directory); } finally { closeSync(directory); } } // PORT: no dir fsync on win32
+      } finally {
+        rmSync(temporary, { force: true });
+      }
+      return true;
+    } catch (err) {
+      console.error("registry save failed", err);
+      return false;
+    }
   }
   isDeleting(_sessionId: string): boolean { return false; } // L39154: deletions are not ported, so none is ever in flight
   /** liveSession L62403 */

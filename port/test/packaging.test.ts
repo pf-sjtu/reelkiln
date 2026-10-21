@@ -24,6 +24,8 @@ test("builderConfig (linux): asar app = dist + package.json only; SDK as extraRe
   assert.notEqual(c.productName, "Videoclaw", "separate userData from the original app");
   assert.equal(c.publish, null);
   assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1" }).extraResources, []);
+  // docs/21 M1: the unmodified original renderer ships as resources/renderer-original
+  assert.deepEqual(builderConfig({ platform: "linux", arch: "x64", sdkDir: null, version: "1", originalRendererDir: "/r/app/out/renderer" }).extraResources.map((e: any) => [e.from, e.to]), [["/r/app/out/renderer", "renderer-original"]]);
   assert.throws(() => builderConfig({ platform: "beos" as any, arch: "x64", version: "1" }));
 });
 

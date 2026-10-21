@@ -19,6 +19,13 @@
 //   session:create / session:send /  — original L61690 / L61772 / L61780 → host.createSession / sendMessage /
 //   session:interrupt (+ push         interrupt, served by the PORT-NEW minimal AgentHost (docs/19, agent/agent-host.ts)
 //   session:event / session:changed)  bound to the LLM route service; session:list merges sessions.json + host sessions.
+//   docs/21 M2: when an engine is installed the AgentHost runs ENGINE sessions (agent/engine-session.ts):
+//   workspace cwd, engineSessionEnv, assembled session context, project hooks, the original Bash
+//   permission model, first-message job binding; sessions.json is WRITTEN (writeRegistry L36199) and
+//   restored on launch. PORT-NEW opt-out: VIDEOCLAW_PORT_AGENT_ENGINE=0 keeps the docs/19 confined chat.
+//   permission:respond (send, L61790) / interaction:replayPending (L61701) → host permission cards.
+//   docs/21 M1 home boot (home-boot.ts): account:snapshot, app:update:get, workflowSubmit:eligibility,
+//   bootstrap:status, client:list / client:create.
 import { app, utilityProcess } from "electron";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -40,6 +47,13 @@ import { portDiagnostics } from "./port-diagnostics";
 import { AgentHost } from "./agent/agent-host";
 import { agentHostEmit, agentIpcHandlers, agentToolsFromEnv, PORT_AGENT_TOOLS_ENV } from "./agent/agent-ipc";
 import { claudeCodeExecutableFor, loadClaudeAgentSdk } from "./llm/agent-sdk";
+import { accountSnapshot, bootstrapStatus, replayPendingInteractions, workflowSubmitEligibility } from "./home-boot";
+import type { EngineSessionDeps } from "./agent/engine-session";
+
+/** PORT-NEW env var: VIDEOCLAW_PORT_AGENT_ENGINE=0 → docs/19 confined chat sessions even with an engine. */
+export const PORT_AGENT_ENGINE_ENV = "VIDEOCLAW_PORT_AGENT_ENGINE";
+/** Real handlers for ORIGINAL send (ipc.on) channels; index.ts routes them. */
+export const sendHandlers: Partial<Record<string, Handler>> = {};
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
@@ -91,7 +105,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       assertInstalledEngineProductionContract: (e) => assertInstalledEngineProductionContract(e),
       inspectProductionCompatible: (e) => inspectInstalledEngineProductionContract(e).compatible,
       ensureEngineCommandShims: (e) => ensureEngineCommandShims(e),
-      writeWorkspace: (e, ws) => { const r = writeWorkspacePartial(e, ws ?? workspaceRoot()); log(`[port] PARTIAL writeWorkspace; NOT PORTED: ${r.notPorted.join(", ")}`); },
+      writeWorkspace: (e, ws) => { const r = writeWorkspacePartial(e, ws ?? workspaceRoot()); log(`[port] writeWorkspace (CLAUDE.md + session-context validated); NOT PORTED: ${r.notPorted.join(", ")}`); },
       validateEngineSessionContext: (e) => { validateEngineSessionContext(e); },
       assertEngineMoneyCompatibility: (e) => assertEngineMoneyCompatibility(e),
       ...(process.env[PORT_ACCEPT_GATEWAY_RED_ENV] === "1"
@@ -119,11 +133,26 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
     killGroup: (pgid) => { try { killTree(pgid, "SIGKILL"); } catch {} }, // original: process.kill(-pgid,"SIGKILL")
     log: (kind, detail) => log(`[main-log] ${kind} ${detail}`),
   });
+  let registryTimer: ReturnType<typeof setTimeout> | null = null;
+  let pendingRows: () => Array<Record<string, unknown>> = () => [];
+  const saveRegistry = () => { // saveRegistry L36125: 250 ms debounce
+    if (registryTimer) return;
+    registryTimer = setTimeout(() => { registryTimer = null; registry.writeRegistry(pendingRows()); }, 250);
+  };
+  const flushRegistry = () => { if (registryTimer) { clearTimeout(registryTimer); registryTimer = null; } return registry.writeRegistry(pendingRows()); };
   const handlers: Partial<Record<InvokeChannel, Handler>> = {
     "editorRender:start": (req: unknown) => editorRender.start(req as any),
     "editorRender:cancel": (requestId: unknown) => editorRender.cancel(requestId as string),
     "editorRender:state": () => editorRender.state(),
     "session:list": () => registry.listSessions(),
+    // docs/21 M1 home boot
+    "account:snapshot": () => accountSnapshot(),
+    "app:update:get": () => null, // currentUpdateInfo (L60463) — no update checker in the port
+    "workflowSubmit:eligibility": () => workflowSubmitEligibility(),
+    "bootstrap:status": () => bootstrapStatus(core, { packaged: app.isPackaged, productionCompatible: (p) => inspectInstalledEngineProductionContract(p).compatible }),
+    "client:list": () => registry.listClients(),
+    "client:create": (name: unknown) => registry.createClient(name, saveRegistry),
+    "interaction:replayPending": () => undefined,
   };
   if (process.env[PORT_REAL_BOOTSTRAP_ENV] === "1") handlers["bootstrap:run"] = () => core.runAll();
   if (process.env.VIDEOCLAW_PORT_FAKE_SETTINGS !== "1") {
@@ -139,16 +168,43 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       Object.assign(handlers, llm.handlers);
       Object.assign(portHandlers, llm.portHandlers);
       const allSessions = () => [...(registry.listSessions() as any[]), ...(host?.listSessions() ?? [])];
+      const engineMode = process.env[PORT_AGENT_ENGINE_ENV] !== "0" && !!core.currentEngine();
+      const sessionEnvDeps = { currentEngine: () => core.currentEngine(), workspaceRoot, enginePathEnv: (p: string) => core.enginePathEnv(p) };
+      const engineDeps: EngineSessionDeps | undefined = engineMode ? {
+        workspaceRoot,
+        currentEngine: () => core.currentEngine(),
+        engineSessionEnv: () => engineSessionEnv(sessionEnvDeps),
+        assertProductionContract: (e) => assertInstalledEngineProductionContract(e),
+        isPackaged: app.isPackaged,
+      } : undefined;
+      if (engineDeps) {
+        // writeWorkspace at session start keeps CLAUDE.md / settings current (the original runs it on
+        // every activation; an engine staged by an older port build lacks CLAUDE.md)
+        try { const eng = core.currentEngine(); if (eng) writeWorkspacePartial(eng.path, workspaceRoot()); } catch (e) { log(`[port] writeWorkspace at launch failed: ${e instanceof Error ? e.message : String(e)}`); }
+      }
+      const emit = agentHostEmit(push, allSessions);
       host = new AgentHost({
-        emit: agentHostEmit(push, allSessions),
+        emit: { ...emit, permissionRequest: (req) => { push("permission:request", req); } },
+        engine: engineDeps,
+        persist: engineDeps ? () => saveRegistry() : undefined,
         service: llm.service,
         loadSdk: async () => { const l = await loadClaudeAgentSdk(); log(`[port] Claude Agent SDK ${l.version} from ${l.source}`); return { sdk: l.sdk, version: l.version, executable: claudeCodeExecutableFor(l.packageDir) }; },
         sessionsRoot: join(app.getPath("userData"), "agent-sessions"),
         tools: agentToolsFromEnv(process.env[PORT_AGENT_TOOLS_ENV]),
+        // PORT-NEW: VIDEOCLAW_PORT_TURN_TIMEOUT_MS overrides the per-turn safety net (engine default 20 min)
+        ...(Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) > 0 ? { turnTimeoutMs: Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) } : {}),
       });
       const h = host;
+      if (engineDeps) {
+        // loadRegistry hand-off: the host owns (and persists) every sessions.json row from now on
+        pendingRows = () => h.registryRows();
+        const restored = h.restoreSessions(registry.takeSessions() as any);
+        log(`[port] AgentHost ENGINE mode; restored ${restored} session(s) from sessions.json`);
+      }
       Object.assign(handlers, agentIpcHandlers(h, allSessions));
-      app.on("will-quit", () => { void h.dispose(); llm.dispose(); });
+      handlers["interaction:replayPending"] = () => replayPendingInteractions(h.listPendingInteractions(), push);
+      sendHandlers["permission:respond"] = (requestId: unknown, response: unknown) => h.respondPermission(String(requestId), response as any);
+      app.on("will-quit", () => { void h.dispose(); llm.dispose(); if (engineDeps) flushRegistry(); });
     } catch (e) {
       // graceful degradation: the fake settings fixtures stay in place
       log(`[port] LLM runtime failed to start, settings stay on the fake backend: ${e instanceof Error ? e.message : String(e)}`);

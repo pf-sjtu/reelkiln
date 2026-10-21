@@ -3,16 +3,20 @@
 // registration pattern (trackIpcRequests → ipc.handle / ipc.on for every channel),
 // handlers are served by real-backend.ts where ported, else by the fake backend.
 import { app, BrowserWindow, ipcMain } from "electron";
-import { writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
-import { createRealHandlers, portHandlers } from "./real-backend";
+import { createRealHandlers, portHandlers, sendHandlers } from "./real-backend";
 import { smokeScript } from "./smoke";
+import { homeSmokeScript, reloadSmokeScript, s1SmokeScript } from "./original-ui-smoke";
+import { resolveRendererEntry } from "./renderer-entry";
+import { redactText } from "./llm/logger";
 
 const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1"; // PORT-NEW
+/** PORT-NEW: append every session:event / permission:request push (redacted JSONL) — evidence capture. */
+const EVENT_LOG = process.env.VIDEOCLAW_PORT_EVENT_LOG;
 
 let win: BrowserWindow | null = null;
 const sendToRenderer = createRendererEmitter(() => win);
@@ -21,8 +25,12 @@ const backend = createFakeBackend(sendToRenderer, log);
 
 function registerIpc() {
   const { ipc } = trackIpcRequests(ipcMain);
-  const push = SMOKE
-    ? (ch: string, ...a: unknown[]) => { log(`[smoke] push ${ch} ${JSON.stringify(a).slice(0, 400)}`); return sendToRenderer(ch as any, ...(a as [])); }
+  const record = (ch: string, a: unknown[]) => {
+    if (!EVENT_LOG || !/^(session:event|session:changed|permission:request)$/.test(ch)) return;
+    try { appendFileSync(EVENT_LOG, redactText(JSON.stringify({ t: new Date().toISOString(), ch, payload: a[0] })) + "\n"); } catch {}
+  };
+  const push = SMOKE || EVENT_LOG
+    ? (ch: string, ...a: unknown[]) => { record(ch, a); if (SMOKE) log(`[smoke] push ${ch} ${JSON.stringify(a).slice(0, 400)}`); return sendToRenderer(ch as any, ...(a as [])); }
     : sendToRenderer;
   const real = createRealHandlers(push as typeof sendToRenderer, log);
   for (const ch of INVOKE_CHANNELS) {
@@ -32,12 +40,15 @@ function registerIpc() {
   log(`[port] real (ported) handlers: ${Object.keys(real).join(", ")}`);
   // PORT-NEW channels (docs/17 §5) — not part of the original contract
   for (const [ch, h] of Object.entries(portHandlers)) ipc.handle(ch, (_e: unknown, ...args: unknown[]) => h!(...args));
-  for (const ch of SEND_CHANNELS) ipc.on(ch, (_e: unknown, ...args: unknown[]) => log(`[fake-backend] send ${ch} ${JSON.stringify(args)}`));
+  for (const ch of SEND_CHANNELS) ipc.on(ch, (_e: unknown, ...args: unknown[]) => { const h = sendHandlers[ch]; if (h) { try { h(...args); } catch (e) { log(`[port] send ${ch} failed: ${String(e)}`); } } else log(`[fake-backend] send ${ch} ${JSON.stringify(args).slice(0, 200)}`); });
   log(`[port] registered ${INVOKE_CHANNELS.length} handle + ${SEND_CHANNELS.length} on; fake-implemented: ${backend.implemented().length}`);
+  return real;
 }
 
 function createWindow() {
-  const rendererEntry = process.env.ELECTRON_RENDERER_URL ?? pathToFileURL(join(__dirname, "../renderer/index.html")).toString();
+  const entry = resolveRendererEntry({ env: process.env, packaged: app.isPackaged, appPath: app.getAppPath(), resourcesPath: process.resourcesPath ?? "", mainDir: __dirname, exists: existsSync });
+  log(`[port] renderer: ${entry.kind} ${entry.url}${entry.note ? ` (${entry.note})` : ""}`);
+  const rendererEntry = entry.url;
   const created = new BrowserWindow({
     width: 1280,
     height: 840,
@@ -57,7 +68,39 @@ function createWindow() {
   });
   win = created;
   created.on("closed", () => { if (win === created) win = null; });
-  if (SMOKE) {
+  const originalMode = process.env.VIDEOCLAW_PORT_SMOKE_HOME === "1" ? "home" : process.env.VIDEOCLAW_PORT_SMOKE_S1 ? "s1" : process.env.VIDEOCLAW_PORT_SMOKE_RELOAD === "1" ? "reload" : undefined;
+  if (SMOKE && originalMode) {
+    const errors: string[] = [];
+    created.webContents.on("console-message", (...a: any[]) => { const ev = a[0]; const level = ev?.level ?? a[1]; const msg = ev?.message ?? a[2]; if (level === "error" || level === 3) errors.push(String(msg).slice(0, 300)); });
+    created.webContents.on("render-process-gone", (_e, d) => errors.push(`render-process-gone ${d.reason}`));
+    created.webContents.once("did-finish-load", async () => {
+      try {
+        const shot = process.env.VIDEOCLAW_PORT_SMOKE_SCREENSHOT;
+        const home = await created.webContents.executeJavaScript(homeSmokeScript({ timeoutMs: 30_000 }));
+        home.rendererConsoleErrors = [...errors];
+        log(`[smoke] HOME ${JSON.stringify(home).slice(0, 3000)}`);
+        if (shot) { try { writeFileSync(shot, (await created.webContents.capturePage()).toPNG()); log(`[smoke] screenshot ${shot}`); } catch (e) { log(`[smoke] screenshot failed ${String(e)}`); } }
+        let ok = home.ok;
+        if (originalMode === "s1") {
+          const brief = readFileSync(process.env.VIDEOCLAW_PORT_SMOKE_S1!, "utf8").trim();
+          const r = await created.webContents.executeJavaScript(s1SmokeScript({ brief, timeoutMs: Number(process.env.VIDEOCLAW_PORT_SMOKE_S1_TIMEOUT_MS ?? 25 * 60_000), permission: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION === "deny" ? "deny" : "allow", permissionMode: process.env.VIDEOCLAW_PORT_SMOKE_PERMISSION_MODE, llmRoute: process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE }));
+          const out = process.env.VIDEOCLAW_PORT_SMOKE_S1_OUT;
+          if (out) writeFileSync(out, redactText(JSON.stringify(r, null, 2)));
+          log(`[smoke] S1 ok=${r.ok} session=${JSON.stringify(r.session)} final=${JSON.stringify(r.final)} events=${r.events.length}`);
+          ok = ok && r.ok;
+        } else if (originalMode === "reload") {
+          const r = await created.webContents.executeJavaScript(reloadSmokeScript());
+          log(`[smoke] RELOAD ${JSON.stringify(r).slice(0, 2000)}`);
+          ok = ok && r.ok;
+        }
+        log(`[smoke] DONE failed=${JSON.stringify(ok ? [] : [originalMode])}`);
+        setTimeout(() => { app.quit(); setTimeout(() => app.exit(0), 5000); }, 600); // will-quit flushes the registry
+      } catch (e) {
+        log(`[smoke] ERROR ${String(e)}`);
+        app.exit(1);
+      }
+    });
+  } else if (SMOKE) {
     created.webContents.once("did-finish-load", async () => {
       try {
         const results = await created.webContents.executeJavaScript(smokeScript({
@@ -85,8 +128,12 @@ function createWindow() {
   void created.loadURL(rendererEntry);
 }
 
-app.whenReady().then(() => {
-  registerIpc();
+app.whenReady().then(async () => {
+  const real = registerIpc();
+  // PORT-NEW smoke: preselect + acknowledge an LLM route (what the user does once in the first-launch
+  // route picker / port Settings page) so the original home opens on that route.
+  const route = SMOKE && (process.env.VIDEOCLAW_PORT_SMOKE_HOME || process.env.VIDEOCLAW_PORT_SMOKE_S1 || process.env.VIDEOCLAW_PORT_SMOKE_RELOAD) ? process.env.VIDEOCLAW_PORT_SMOKE_LLM_ROUTE : undefined;
+  if (route && real["settings:set"]) { try { await real["settings:set"]({ llmRoute: route, llmRouteAcknowledgedAt: Date.now() }); log(`[smoke] llmRoute preset ${route}`); } catch (e) { log(`[smoke] llmRoute preset failed ${String(e)}`); } }
   createWindow();
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });

@@ -24,6 +24,7 @@ export const PLATFORMS = {
 };
 export const SDK_PACKAGE = "@anthropic-ai/claude-agent-sdk";
 export const SDK_RESOURCE_DIR = "claude-agent-sdk";
+export const ORIGINAL_RENDERER_RESOURCE_DIR = "renderer-original";
 
 /** Native-binary package name for a node platform/arch (what install-agent-sdk.mjs pulls in). */
 export const nativeSdkPackage = (os, arch) => `${SDK_PACKAGE}-${os}-${arch}`;
@@ -45,13 +46,16 @@ export function sdkResourceFilter(os, arch) {
  * @param {{ platform: "linux"|"win"|"mac", arch: "x64"|"arm64", sdkDir?: string|null, version: string, outDir?: string }} o
  *   sdkDir = an install-agent-sdk.mjs directory (contains node_modules/@anthropic-ai/claude-agent-sdk),
  *   null = package WITHOUT the SDK (agent path then needs VIDEOCLAW_CLAUDE_AGENT_SDK / ~/.videoclaw).
+ *   originalRendererDir (docs/21 M1) = the shipped, unmodified app/out/renderer → resources/renderer-original
+ *   (the window's default page, see src/main/renderer-entry.ts).
  */
 export function builderConfig(o) {
   const p = PLATFORMS[o.platform];
   if (!p) throw new Error(`unknown platform ${o.platform}`);
-  const extraResources = o.sdkDir
-    ? [{ from: `${o.sdkDir}/node_modules`, to: `${SDK_RESOURCE_DIR}/node_modules`, filter: sdkResourceFilter(p.os, o.arch) }]
-    : [];
+  const extraResources = [
+    ...(o.sdkDir ? [{ from: `${o.sdkDir}/node_modules`, to: `${SDK_RESOURCE_DIR}/node_modules`, filter: sdkResourceFilter(p.os, o.arch) }] : []),
+    ...(o.originalRendererDir ? [{ from: o.originalRendererDir, to: ORIGINAL_RENDERER_RESOURCE_DIR, filter: ["**/*", "!**/*.map"] }] : []),
+  ];
   return {
     appId: "com.videoclaw.port",
     // distinct from the original "Videoclaw" → separate userData dir (~/.config/Videoclaw Port),
