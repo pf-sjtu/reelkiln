@@ -399,3 +399,39 @@ test("attachment:pasteImage / preview (L62269/L62253): a clipboard PNG is writte
     await assert.rejects(a.voiceNote(m.sessionId, "not-an-id", new ArrayBuffer(4)), /Invalid recording/);
   } finally { await h.cleanup(); }
 });
+
+test("docs/26: handler wiring of the M9 channels the UI run could not reach — voice:approve/remove (account-less branch), library:scan (tenant guard + engine error), characters:retry, input:respond, media:discardVoice", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vc-lc26b-"));
+  try {
+    const registry = new SessionRegistry(join(root, "sessions.json")); registry.load();
+    const calls: string[] = [];
+    let scanFails = false;
+    const lib = {
+      stats: async () => ({}), scan: async (cwd: string, tenant: string) => { if (scanFails) throw new Error("engine exited 1"); calls.push(`scan ${tenant} ${cwd}`); return { scanned: 3 }; },
+      addSource: async () => ({}), removeSource: async () => ({}), preview: async () => "",
+      errorMessage: () => "Library work did not finish. Try again, or report the problem if it continues.", key: (t: string, c: string) => `${t}\0${c}`, gate: (_k: string, _kind: string, fn: () => Promise<unknown>) => fn(), previewCacheDir: root,
+    };
+    const host: any = { respondInput: (id: string, r: unknown) => calls.push(`respond ${id} ${JSON.stringify(r)}`), discardVoice: (s: string, r: string) => calls.push(`discard ${s} ${r}`) };
+    const unavailable = { ok: false as const, message: "Project memory is unavailable until this account and project are verified." };
+    const h = localChannels26({
+      host, registry, saveRegistry: () => {}, absCwd: (c: string) => `/abs/${c}`, media: { grant: () => true, resolve: () => ({ state: "missing", path: "" }) }, pathToVcmedia: (p: string) => p,
+      writeProjectPack, library: lib, pickDirectory: async () => null,
+      characterStore: { retry: (cwd: string, slug: string) => (calls.push(`retry ${cwd} ${slug}`), { slug, state: "pending", secret: 1 }) },
+      exposeCharacter: (c: any) => ({ slug: c.slug, state: c.state }), sheetStates: () => [], characterVoiceUnavailable: () => unavailable,
+    } as any);
+    assert.deepEqual(await h["characters:voice:approve"]({ id: "v1" }), unavailable);
+    assert.deepEqual(await h["characters:voice:remove"]({ id: "v1" }), unavailable);
+    // (an unknown project has no tenant; "personal" may carry one from another test: DEFAULT_CLIENTS is shallow-copied, as in the original L35666)
+    assert.deepEqual(await h["library:scan"]("no-such-project", root), { error: "no-tenant" });
+    h["library:setTenant"]("personal", "brand");
+    assert.deepEqual(await h["library:scan"]("personal", "ws"), { scanned: 3 });
+    scanFails = true;
+    assert.deepEqual(await h["library:scan"]("personal", "ws"), { error: "engine", message: lib.errorMessage() });
+    assert.deepEqual(h["characters:retry"]("ws", "me"), { slug: "me", state: "pending" }, "exposeCharacter shapes the store row");
+    h["input:respond"]("req-1", { answer: "yes" });
+    assert.equal(h["media:discardVoice"]("s1", "rec-1"), undefined);
+    assert.deepEqual(calls, ["scan brand ws", "retry /abs/ws me", 'respond req-1 {"answer":"yes"}', "discard s1 rec-1"]);
+    const noHost = localChannels26({ registry, saveRegistry: () => {}, absCwd: (c: string) => c, media: { grant: () => true, resolve: () => ({ state: "missing", path: "" }) }, pathToVcmedia: (p: string) => p, writeProjectPack, library: lib, pickDirectory: async () => null, characterStore: { retry: () => null }, exposeCharacter: (c: any) => c, sheetStates: () => [], characterVoiceUnavailable: () => unavailable } as any);
+    assert.throws(() => noHost["input:respond"]("r", {}), /Videos are not available/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
