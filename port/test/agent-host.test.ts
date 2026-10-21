@@ -443,6 +443,23 @@ test("docs/30 spend: a gate-proxied route (provider / Codex) is priced from the 
     assert.ok(Math.abs(results[1].totalCostUsd - (300 * 0.15 + 30 * 0.6) / 1e6) < 1e-12, "cumulative runtime total, delta-added once");
   } finally { await h.host.dispose(); h.cleanup(); }
 });
+test("docs/30 spend: gateway route — the job's ledger (same models.dev price) trues up the displayed gateway reasoning to max(metered, ledger), idempotently", async () => {
+  const h = harness({ route: "gateway", price: () => FLASH, script: usageTurn({}) });
+  try {
+    const { sessionId } = h.host.createSession({});
+    const s: any = (h.host as any).sessions.get(sessionId);
+    s.meta.jobId = "job-1"; s.meta.totalCostUsd = 0.04;
+    (h.host as any).llmJobChargeTotals.set(sessionId, { jobId: "job-1", totalUsd: 0.04 });
+    let r = h.host.trueUpGatewayReasoning(s, "job-1", 0.1);
+    assert.equal(r.trueUpUsd, 0.06); assert.ok(Math.abs(s.meta.totalCostUsd - 0.1) < 1e-12, "raised to the ledger");
+    r = h.host.trueUpGatewayReasoning(s, "job-1", 0.1);
+    assert.ok(Math.abs(s.meta.totalCostUsd - 0.1) < 1e-12, "same ledger → no double count");
+    (h.host as any).llmJobChargeTotals.get(sessionId).totalUsd = 0.12; s.meta.totalCostUsd += 0.08; // metered caught up past the ledger
+    r = h.host.trueUpGatewayReasoning(s, "job-1", 0.1);
+    assert.equal(r.trueUpUsd, 0); assert.ok(Math.abs(s.meta.totalCostUsd - 0.12) < 1e-12, "the earlier true-up is withdrawn when metered usage exceeds the ledger");
+    assert.deepEqual(h.host.trueUpGatewayReasoning(s, "other-job", 5), {}, "another job's ledger never moves this session");
+  } finally { await h.host.dispose(); h.cleanup(); }
+});
 test("docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels", async () => {
   const h = harness();
   try {

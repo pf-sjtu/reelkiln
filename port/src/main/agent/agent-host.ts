@@ -927,7 +927,8 @@ export class AgentHost {
     // session context are computed BEFORE the runtime starts, so a broken engine fails fast.
     const engineSpawn = this.d.engine ? prepareEngineSpawn(this.d.engine, s.meta as any, s.contextEpoch, this.projectMemoryContext(s.meta.clientId)) : undefined;
     if (engineSpawn?.contextEpoch && engineSpawn.contextEpoch !== s.contextEpoch) { s.contextEpoch = engineSpawn.contextEpoch; this.saveRegistry(); }
-    const handle = await this.d.service.sessionAgentRuntime(meta);
+    // spawnLocal L39461: the gateway branch's X-VideoClaw-Client-Job header carries the bound job (docs/30 spend reconcile)
+    const handle = await this.d.service.sessionAgentRuntime(s.meta.jobId ? { ...meta, jobId: s.meta.jobId } : meta);
     if (s.epoch !== epoch) { await handle.close().catch(() => {}); throw new Error("The session was reset before the agent started."); }
     for (const k of ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY"]) registerSecret(handle.env[k]);
     const rt: Runtime = { query: undefined as unknown as AgentQuery, handle, llmRoute: handle.llmRoute, queue: [], wake: null, inputClosed: false, dead: false, launched: false, consumed: Promise.resolve() };
@@ -2055,7 +2056,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   // ── docs/30 spend: L50739-50777 with the cost read from metered usage priced by THE price table ──────────
   /** runtimeCostTotals (keyed by costEpoch = the runtime here) and llmJobChargeTotals (L50755). */
   private readonly runtimeCostTotals = new WeakMap<Runtime, number>();
-  private readonly llmJobChargeTotals = new Map<string, { jobId: string; totalUsd: number }>();
+  private readonly llmJobChargeTotals = new Map<string, { jobId: string; totalUsd: number; ledgerTrueUpUsd?: number }>();
   private readonly unsavedLlmSpend = new Map<string, number>();
   /** The model whose models.dev row prices a usage key: MiniMax ids price as themselves; a Claude alias (the SDK
    *  reports the id it asked for) prices as the model the route really serves. */
@@ -2126,6 +2127,25 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       || body.client_job !== jobId) throw new Error("Invalid gateway spending response");
     return body;
   }
+  /** PORT-NEW (docs/30 §3.4): on the gateway route the shim's per-job ledger (MiniMax-reported usage × the SAME
+   *  models.dev price) is authoritative. The SDK result's cumulative modelUsage can under-count (an interrupted turn
+   *  ends without the calls already billed upstream), so the displayed "Videoclaw gateway reasoning"
+   *  (meta.totalCostUsd) is raised to max(metered, ledger) for this session's job. Idempotent: only the difference to
+   *  the previous true-up is applied, so a later catching-up modelUsage never double counts. */
+  trueUpGatewayReasoning(s: Session, jobId: string, ledgerSpentUsd: number): { meteredJobUsd?: number; trueUpUsd?: number; displayedUsd?: number } {
+    const charge = this.llmJobChargeTotals.get(s.meta.sessionId);
+    if (!charge || charge.jobId !== jobId || !Number.isFinite(ledgerSpentUsd)) return {};
+    const target = Math.max(charge.totalUsd, ledgerSpentUsd);
+    const nextTrueUp = Math.round((target - charge.totalUsd) * 1e9) / 1e9;
+    const delta = nextTrueUp - (charge.ledgerTrueUpUsd ?? 0);
+    charge.ledgerTrueUpUsd = nextTrueUp;
+    if (Math.abs(delta) > 1e-12) {
+      s.meta.totalCostUsd = Math.max(0, s.meta.totalCostUsd + delta);
+      this.saveRegistry();
+      try { this.d.emit.sessionsChanged(this.listSessions()); } catch {}
+    }
+    return { meteredJobUsd: Math.round(charge.totalUsd * 1e9) / 1e9, trueUpUsd: nextTrueUp, displayedUsd: Math.round(s.meta.totalCostUsd * 1e9) / 1e9 };
+  }
   /** applyGatewaySpend (L48047) + reconcileGatewaySpend (L48078). */
   async reconcileGatewaySpend(s: Session): Promise<void> {
     const queriedJobId = s.meta.jobId;
@@ -2139,7 +2159,8 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       const settleRestored = body.client_job === s.meta.jobId && body.mode === "capped" && body.ceiling_usd === snapshot2.ceilingUsd && body.reserved_usd === 0
         && (body.state === "ready" || body.state === "exhausted") && Array.isArray(body.in_flight) && body.in_flight.length === 0 && !s.runtime;
       this.spendBudgets.reconcileGatewayLedger(s.meta.sessionId, body.spent_usd, body.reserved_usd, s.meta.jobId, token, settleRestored);
-      this.log.info("agent.spend.gateway_reconciled", { sessionId: s.meta.sessionId, jobId: queriedJobId, ledgerSpentUsd: body.spent_usd });
+      const trueUp = this.trueUpGatewayReasoning(s, queriedJobId, body.spent_usd);
+      this.log.info("agent.spend.gateway_reconciled", { sessionId: s.meta.sessionId, jobId: queriedJobId, ledgerSpentUsd: body.spent_usd, ...trueUp });
     } catch (e) { this.log.debug("agent.spend.gateway_reconcile_failed", { sessionId: s.meta.sessionId, error: e }); }
   }
 
