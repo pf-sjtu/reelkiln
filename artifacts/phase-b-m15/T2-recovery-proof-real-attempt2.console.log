@@ -1,0 +1,79 @@
+[m15-proof 21:37:31Z] engine-kill: killed _model_call.py at {"phase":"sent","status":"running"} → {"killed":true,"signal":"SIGKILL","stderr":""}
+[m15-proof 21:37:34Z] engine-kill: collector passes=1 left=0
+[m15-proof 21:37:34Z] engine-kill: PASS
+{
+ "mode": "real",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "scenarios": {
+  "engine-kill": {
+   "phaseAtKill": {
+    "phase": "sent",
+    "status": "running"
+   },
+   "engineExit": "killed (SIGKILL)",
+   "shimOperation": {
+    "status": "succeeded",
+    "costUsd": 0.003615
+   },
+   "collectorPasses": 1,
+   "rowsLeft": [],
+   "completedModelResults": [
+    {
+     "operation_id": "c6509ea5-9be8-4678-9575-dfef4b8ef330",
+     "status": "succeeded",
+     "saved": [
+      "incoming/model-1483ed7966c3a23cbeece91a2a10ccd9.mp3"
+     ],
+     "cost_usd": 0.003615
+    }
+   ],
+   "incoming": [
+    {
+     "file": "model-1483ed7966c3a23cbeece91a2a10ccd9.mp3",
+     "bytes": 197556,
+     "sha256": "f6a542e680a663c6"
+    }
+   ],
+   "paidEntriesAdded": 1,
+   "paidUsd": [
+    0.003615
+   ],
+   "minimaxTtsRequests": "n/a (real: one request; ledger shows the single charge)",
+   "pass": true
+  }
+ },
+ "ledger": {
+  "paidTool": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "usd": 0.003615,
+    "clientJob": "m15-ek-mvimuyxq",
+    "operationId": "c6509ea5-9be8-4678-9575-dfef4b8ef330"
+   }
+  ],
+  "unsettledExposure": [],
+  "totalPaidUsd": 0.003615
+ },
+ "hostEvents": [
+  {
+   "event": "agent.paid.spend_decision"
+  },
+  {
+   "event": "agent.paid.operation_remembered",
+   "operationId": "c6509ea5-9be8-4678-9575-dfef4b8ef330"
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  },
+  {
+   "event": "agent.paid.operation_collected",
+   "operationId": "c6509ea5-9be8-4678-9575-dfef4b8ef330",
+   "status": "succeeded",
+   "complete": true,
+   "cancelRequested": false
+  },
+  {
+   "event": "agent.spend.gateway_reconciled"
+  }
+ ]
+}

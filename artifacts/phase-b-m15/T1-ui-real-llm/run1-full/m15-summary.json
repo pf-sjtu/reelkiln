@@ -1,0 +1,410 @@
+{
+ "phase": "m15",
+ "llmUpstream": "REAL MiniMax",
+ "started": "2026-10-21T21:25:35.138Z",
+ "steps": {
+  "ask_each_mode": {
+   "ok": true,
+   "before": "unlimited_for_video",
+   "dialog": true,
+   "toBypass": "[\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"bypassPermissions\",{\"confirmSpendLimitRemoval\":true}]",
+   "toAuto": "[\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"auto\",null]",
+   "policy": "ask_each",
+   "installed": [
+    "{\"ts\":\"2026-10-21T21:25:52.472Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"jobId\":\"ok-vcncytd-20261021-b8c462\",\"policy\":\"unlimited_for_video\"}",
+    "{\"ts\":\"2026-10-21T21:25:54.147Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"jobId\":\"ok-vcncytd-20261021-b8c462\",\"policy\":\"ask_each\"}"
+   ]
+  },
+  "ask_each_deny": {
+   "ok": true,
+   "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$4.98 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.000956,
+     "allowed": false,
+     "reason": "Paid work was denied by the user."
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "operation",
+     "maximumUsd": 0.000956
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "deny"
+    }
+   ],
+   "settled": [
+    {
+     "family": "money",
+     "outcome": "denied",
+     "title": "Paid operation",
+     "summary": "Not approved"
+    }
+   ],
+   "paidEntries": 0,
+   "files": [],
+   "policy": "ask_each",
+   "reply": "这次付费配音调用被拒绝了（授权被用户否决，未生成文件）——VCNCYTD"
+  },
+  "ask_each_allow_once": {
+   "ok": true,
+   "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$4.97 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.000956,
+     "allowed": false,
+     "reason": "Paid work was denied by the user."
+    },
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.000956,
+     "allowed": true,
+     "once": true
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "operation",
+     "maximumUsd": 0.000956
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "once"
+    }
+   ],
+   "settled": [
+    {
+     "family": "money",
+     "outcome": "approved",
+     "title": "Paid operation",
+     "summary": "Approved"
+    }
+   ],
+   "paid": [
+    {
+     "model": "minimax/speech-2.8-turbo",
+     "usd": 0.000896,
+     "units": {
+      "billed_characters": 30
+     },
+     "maximumUsd": 0.000956,
+     "pricing": "minimax-cn official pay-as-you-go list (CNY) × models.dev minimax-cn USD/CNY 0.1494"
+    }
+   ],
+   "permits": [
+    {
+     "used": true
+    }
+   ],
+   "files": [
+    {
+     "f": "model-e086885d02e97d977c7be7dfe34c43b2.mp3",
+     "bytes": 53556
+    }
+   ],
+   "policy": "ask_each",
+   "reply": "配音生成成功，文件保存在 `jobs/ok-vcncytd-20261021-b8c462/incoming/model-e086885d02e97d977c7be7dfe34c43b2.mp3` —— VCNCYTD"
+  },
+  "files_card": {
+   "ok": true,
+   "card": "Files requested\n请提供一张参考图（PNG）\nAccepts: .png\nDrop files here, or click to browse\nSend files\nDecline",
+   "listed": "m15-ref.png",
+   "copied": [
+    "m15-ref.png"
+   ],
+   "tools": [
+    "mcp__studio__call_model",
+    "mcp__studio__call_model",
+    "mcp__studio__request_files"
+   ],
+   "settled": [
+    {
+     "family": "files",
+     "outcome": "answered",
+     "title": "Files needed",
+     "summary": "1 file added"
+    }
+   ],
+   "reply": "保存了 1 个文件 —— VCNCYTD"
+  },
+  "raise_deny": {
+   "ok": true,
+   "cap": {
+    "usedCentsBefore": 1,
+    "ceilingCents": 3,
+    "opener": "Change video budget"
+   },
+   "card": "Raise spending limit?\nRunning a model: raise budget to $0.04?\nThis would go past the approved $0.03 total.\nRaise limit by $0.01\nDeny",
+   "decisions": [
+    {
+     "tool": "model_call",
+     "maximumUsd": 0.020378,
+     "allowed": false,
+     "reason": "The spending-limit increase was not approved."
+    }
+   ],
+   "approvals": [
+    {
+     "phase": "requested",
+     "purpose": "raise",
+     "maximumUsd": 0.020378
+    },
+    {
+     "phase": "shown"
+    },
+    {
+     "phase": "resolved",
+     "decision": "deny"
+    }
+   ],
+   "settled": [
+    {
+     "family": "budget",
+     "outcome": "denied",
+     "title": "Raise spending limit?",
+     "summary": "Not approved"
+    }
+   ],
+   "paidEntries": 0,
+   "ceilingCentsAfter": 3,
+   "reply": "被拒绝：这次语音生成没有获批（需要先批准提高本次视频的花费上限），因此没有生成文件。VCNCYTD"
+  },
+  "raise_allow": {
+   "ok": false,
+   "error": "timeout waiting for raise card"
+  }
+ },
+ "code": "VCNCYTD",
+ "landing": "home",
+ "sessionA": "b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3",
+ "llmRouteA": "gateway",
+ "jobA": "ok-vcncytd-20261021-b8c462",
+ "mode": {
+  "before": "unlimited_for_video",
+  "dialog": true,
+  "toBypass": "[\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"bypassPermissions\",{\"confirmSpendLimitRemoval\":true}]",
+  "toAuto": "[\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"auto\",null]",
+  "policy": "ask_each",
+  "installed": [
+   "{\"ts\":\"2026-10-21T21:25:52.472Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"jobId\":\"ok-vcncytd-20261021-b8c462\",\"policy\":\"unlimited_for_video\"}",
+   "{\"ts\":\"2026-10-21T21:25:54.147Z\",\"level\":\"info\",\"event\":\"agent.spend.policy_installed\",\"component\":\"agent-host\",\"sessionId\":\"b8c4628a-8ef7-4c7e-ae12-e3bdce9699c3\",\"jobId\":\"ok-vcncytd-20261021-b8c462\",\"policy\":\"ask_each\"}"
+  ]
+ },
+ "askDeny": {
+  "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$4.98 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.000956,
+    "allowed": false,
+    "reason": "Paid work was denied by the user."
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "operation",
+    "maximumUsd": 0.000956
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "deny"
+   }
+  ],
+  "settled": [
+   {
+    "family": "money",
+    "outcome": "denied",
+    "title": "Paid operation",
+    "summary": "Not approved"
+   }
+  ],
+  "paidEntries": 0,
+  "files": [],
+  "policy": "ask_each",
+  "reply": "这次付费配音调用被拒绝了（授权被用户否决，未生成文件）——VCNCYTD"
+ },
+ "askAllow": {
+  "card": "Paid operation\nRunning a model: up to $0.000956.\n\n$4.97 of generation credit is available. Top up in Account if this generation may cost more.\n\nAllow once\nDeny\nAlways allow paid work for this video",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.000956,
+    "allowed": false,
+    "reason": "Paid work was denied by the user."
+   },
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.000956,
+    "allowed": true,
+    "once": true
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "operation",
+    "maximumUsd": 0.000956
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "once"
+   }
+  ],
+  "settled": [
+   {
+    "family": "money",
+    "outcome": "approved",
+    "title": "Paid operation",
+    "summary": "Approved"
+   }
+  ],
+  "paid": [
+   {
+    "model": "minimax/speech-2.8-turbo",
+    "usd": 0.000896,
+    "units": {
+     "billed_characters": 30
+    },
+    "maximumUsd": 0.000956,
+    "pricing": "minimax-cn official pay-as-you-go list (CNY) × models.dev minimax-cn USD/CNY 0.1494"
+   }
+  ],
+  "permits": [
+   {
+    "used": true
+   }
+  ],
+  "files": [
+   {
+    "f": "model-e086885d02e97d977c7be7dfe34c43b2.mp3",
+    "bytes": 53556
+   }
+  ],
+  "policy": "ask_each",
+  "reply": "配音生成成功，文件保存在 `jobs/ok-vcncytd-20261021-b8c462/incoming/model-e086885d02e97d977c7be7dfe34c43b2.mp3` —— VCNCYTD"
+ },
+ "files": {
+  "card": "Files requested\n请提供一张参考图（PNG）\nAccepts: .png\nDrop files here, or click to browse\nSend files\nDecline",
+  "listed": "m15-ref.png",
+  "copied": [
+   "m15-ref.png"
+  ],
+  "tools": [
+   "mcp__studio__call_model",
+   "mcp__studio__call_model",
+   "mcp__studio__request_files"
+  ],
+  "settled": [
+   {
+    "family": "files",
+    "outcome": "answered",
+    "title": "Files needed",
+    "summary": "1 file added"
+   }
+  ],
+  "reply": "保存了 1 个文件 —— VCNCYTD"
+ },
+ "sessionB": "ccacce6f-e780-40d6-a92c-fb2482f855ff",
+ "llmRouteB": "gateway",
+ "jobB": "ok-vcncytd-20261021-ccacce",
+ "raiseDeny": {
+  "cap": {
+   "usedCentsBefore": 1,
+   "ceilingCents": 3,
+   "opener": "Change video budget"
+  },
+  "card": "Raise spending limit?\nRunning a model: raise budget to $0.04?\nThis would go past the approved $0.03 total.\nRaise limit by $0.01\nDeny",
+  "decisions": [
+   {
+    "tool": "model_call",
+    "maximumUsd": 0.020378,
+    "allowed": false,
+    "reason": "The spending-limit increase was not approved."
+   }
+  ],
+  "approvals": [
+   {
+    "phase": "requested",
+    "purpose": "raise",
+    "maximumUsd": 0.020378
+   },
+   {
+    "phase": "shown"
+   },
+   {
+    "phase": "resolved",
+    "decision": "deny"
+   }
+  ],
+  "settled": [
+   {
+    "family": "budget",
+    "outcome": "denied",
+    "title": "Raise spending limit?",
+    "summary": "Not approved"
+   }
+  ],
+  "paidEntries": 0,
+  "ceilingCentsAfter": 3,
+  "reply": "被拒绝：这次语音生成没有获批（需要先批准提高本次视频的花费上限），因此没有生成文件。VCNCYTD"
+ },
+ "ledgerAtEnd": {
+  "entries": 21,
+  "usd": 0.04547162799999999,
+  "paidToolUsd": 0.000896,
+  "llmUsd": 0.04457562799999999
+ },
+ "consoleErrorCount": 0,
+ "consoleErrors": [],
+ "ipcChannels": [
+  "account:snapshot",
+  "app:update:get",
+  "attachment:list",
+  "attachment:preview",
+  "attachment:stage",
+  "bootstrap:status",
+  "client:list",
+  "engine:llmRouteReadiness",
+  "engine:pendingToast",
+  "gateway:meter",
+  "hfPreview:available",
+  "input:respond",
+  "interaction:replayPending",
+  "job:get",
+  "job:historicalSnapshot",
+  "materials:preview",
+  "memory:read",
+  "quickstart:catalog",
+  "session:create",
+  "session:history",
+  "session:list",
+  "session:send",
+  "session:setPermissionMode",
+  "sessionPlan:read",
+  "settings:get",
+  "spend:get",
+  "spend:setCeiling",
+  "workflowSubmit:eligibility"
+ ],
+ "allPass": false,
+ "finished": "2026-10-21T21:34:53.587Z"
+}

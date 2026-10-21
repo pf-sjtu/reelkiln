@@ -1,0 +1,29 @@
+{
+ "schema": "videoclaw-port.local-gateway-ledger/v1",
+ "account": {
+  "id": "acct_local_b995d7086a82",
+  "name": "Local studio (self-hosted)",
+  "createdAt": 1792618683826
+ },
+ "keys": [
+  {
+   "id": "4d7177cf0343275107bc864961efc09a01c43e66a2289638106a9482ffdc7238",
+   "hint": "vc_1561…dd09",
+   "createdAt": 1792618683827
+  }
+ ],
+ "limits": {
+  "monthUsd": 5,
+  "totalUsd": null
+ },
+ "topupBalanceUsd": 0,
+ "topups": [],
+ "entries": [],
+ "refusals": [],
+ "spendAuthorities": {},
+ "budgets": {},
+ "quotes": [],
+ "pricing": {
+  "table": "port-per-model/v2"
+ }
+}

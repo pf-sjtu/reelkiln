@@ -2,6 +2,7 @@
 
 > 时间：2026-10-22 00:50–02:00（UTC+8）。本轮**真实 MiniMax 花费 $0**。
 > **阻塞说明**：MiniMax Token Plan 的 general 窗口（文本/图像/音频）从 01:15 左右起剩余 **0%**（错误码 **2067**），05:00（UTC+8）才重置，见 `T0-minimax-token-plan-remains.json`（`current_interval_remaining_percent: 0`，`end_time 1792616400000` = 05:00）。这个 key 和 PF 的其他流水线共用，所以 01:20 以后本轮没有再发任何真实的文本、图像或音频调用。凡是需要真实 LLM 或真实 TTS 的项目，都列在 §7「05:00 后待办」里。
+> **更新（05:25–05:41 UTC+8）**：§8 的三项待办已用真实 MiniMax 补测，**全部 PASS**，结果见 §10。本次补测真实花费约 **$0.104**。
 
 ## 0. 引擎 venv 修复（Task 0）
 - **根因**：`engine-0.1.57-rc7-15f8f2d/.venv/bin/python` 原本指向 `/workspace/videoclaw/m13-run/.local/share/uv/python/cpython-3.14.6…`。这是 M13 harness 用 `HOME=<run>` 运行时，uv 装在单次运行 scratch 目录里的 Python。目录被清理后，引擎报 “installed engine cannot start a session”。
@@ -114,3 +115,92 @@
 6. `app:update:download/install`、macOS 语音听写、AlphaConsentCoordinator、`materializeGatewaySpendPolicy` 的完整语义。
 7. Codex 路由的干净 UI PASS。
 8. cancel 和恢复的真实中断证明；collector 的 busy/late-result/collectorOwned 部分。
+
+## 10. 05:00 后真实调用补测（2026-10-22 05:25–05:41 UTC+8）
+> 并发 1，按顺序执行，每项开始前都用 remains API 复查配额（免费接口），快照为 `T*-remains-*.json`。所有运行都显式 `unset MINIMAX_BASE_URL`，即**真实 MiniMax**，没有用本地桩。没有使用 Claude 官方订阅凭据。全程没有遇到 429/529/2067。
+
+### 10.1 配额读数（general 窗口 current_interval_remaining_percent）
+| 时间（UTC+8） | 时机 | general | video | 快照 |
+|---|---|---|---|---|
+| 05:25 | 第 1 项之前 | 100% | 100% | `T1-remains-before-item1.json` |
+| 05:35 | 第 1 项 B 段重跑之前 | 99% | 100% | `T1-remains-before-item1-retryB.json` |
+| 05:37 | 第 2 项之前 | 99% | 100% | `T2-remains-before-item2.json` |
+| 05:38 | 第 3 项（Codex 尝试 2）之前 | 99% | 100% | `T3-remains-before-item3-attempt2.json` |
+| 05:40 | 全部结束后 | 99% | 100% | `T9-remains-after-all.json` |
+
+停止阈值为 general < 30%，全程没有触发。
+
+### 10.2 第 1 项：真实 LLM 授权卡片 — **PASS**（全量运行 1 次 + B 段重跑 1 次）
+- **运行 1**（`--run /tmp/m15ui/real1`，05:25–05:34，`llmUpstream: REAL MiniMax`）结果 5/6：
+  - ask_each_mode：PASS。
+  - ask_each_deny：PASS。“Paid operation / Running a model: up to $0.000956.” → Deny，paid 条目 0。
+  - ask_each_allow_once：PASS。ledger 记 1 条 paid_tool `minimax/speech-2.8-turbo` $0.000896（30 字符），mp3 时长 3.24s。
+  - files_card：PASS。拖入 `m15-ref.png` → Send files，回复 “保存了 1 个文件”。
+  - raise_deny：PASS。上限仍为 3¢，paid 条目 0。
+  - raise_allow：**FAIL**（`timeout waiting for raise card`）。
+- **raise_allow 失败根因**（真实模型行为，不是卡片或 shim 的问题）：在 deny 之后的那一轮，真实模型调用 `call_model` 时把参数名写成了 `input_id`（应为 `model_id`）。工具因参数校验失败而拒绝，没有产生 quote，所以 raise 卡片不会出现。模型随后回复 “模型 ID 不被接受…”。这正是 §7 风险里预计到的“真实模型可能改写参数”。证据：`T1-ui-real-llm/run1-full/`（`err-raise_allow.png`、`main.log`）。
+- **运行 2**（`--only B`，`--run /tmp/m15ui/real1b`，05:35–05:37）：harness 和 app **都没有改动**，只重跑了 raise 段。
+  - raise_deny：PASS。卡片文案为 “Raise spending limit? / raise budget to $0.04? / This would go past the approved $0.03 total.”，Deny 后上限仍为 3¢，paid 条目 0。
+  - raise_allow：PASS。上限 4¢ → 卡片 “raise budget to $0.05?” → **Raise limit by $0.01** → 上限变为 5¢。ledger 记 1 条 paid_tool $0.019601（656 计费字符，quote 上限 $0.020378）。mp3 为 1,164,084 字节，ffprobe 时长 72.6s。chip 显示 `$0.04 / $0.05`。
+- **结论**：ask_each deny/allow、raise deny/allow 和 file 卡，都已在**真实 LLM** 驱动下，通过原版 UI 和真实 CDP 点击跑通。raise_allow 的通过证据来自运行 2；运行 1 的那次失败如实保留。
+- **观察**：
+  - LLM 推理 token 也计入视频预算。bind 轮之后，used 已经是 1–2¢，所以 harness 的 “used+2¢” 上限取法在真实 LLM 下仍然成立。
+  - 计价来源：LLM 按 `models.dev:minimax-cn/MiniMax-M3.1-Flash`（输入 $0.1494/MTok，输出 $0.5976/MTok），TTS 按 minimax-cn 牌价 × models.dev 汇率。SDK 估算（如 $0.1139）只记录，不用于计费。
+- 证据目录 `T1-ui-real-llm/run1-full/`、`run2-onlyB/`，内容包括：
+  - `m15-summary.json`
+  - `cdp-log.jsonl`
+  - `ipc-spend.jsonl`
+  - `main-spend-events.log`
+  - `shim-ledger.json`
+  - `shots/*.png`
+  - `console.log`
+
+### 10.3 第 2 项：真实恢复尝试（单次 TTS）— **PASS**
+- 命令：`npx tsx tools/m15-recovery-proof.ts /tmp/m15proof-real --engine ENGINE --mode real`，05:37，耗时约 6s。
+- engine-kill 场景：
+  - 引擎的 `_model_call.py` 在 `{"phase":"sent","status":"running"}` 时被 **SIGKILL**。
+  - shim 端的 operation 仍为 succeeded（$0.003615）。
+  - AgentHost collector 只跑 1 轮，`rowsLeft=[]`，取回 `incoming/model-1483ed79….mp3`（197,556 字节）。
+  - **paidEntriesAdded=1**（只收一次费），`unsettledExposure=[]`。
+  - 事件依次为 operation_remembered → operation_collected（succeeded, complete）→ gateway_reconciled。
+- 证据：`T2-recovery-proof-real-attempt2.json`、`.console.log`。尝试 1（2067）见 §2，结论保持 FAIL 不变。
+
+### 10.4 第 3 项：Codex 路由干净 PASS — **PASS（尝试 2，一次通过，没有用到尝试 3）**
+- 命令：`node tools/ui-e2e-m14-routes.mjs --phase codex --run /tmp/m15ui/codex3 --engine ENGINE`，05:38–05:40。
+- studio_tool_on_route：PASS。`agentHarness=codex-app-server`，`codexProvider=chatgpt`，即 gate proxy → OpenAI 表面 → MiniMax。
+  - `provider_dynamic "Use project memory"` 成功。
+  - UI 出现 “Remembered something / 片尾统一使用白色字幕”。
+  - MEMORY.md 已落盘（onDisk=true）。
+  - turn 结果 isError=false，耗时 72.7s。
+- usage_display：PASS。proxy 计量 $0.015111（`models.dev:minimax-cn/MiniMax-M3.1-Flash`），chip 显示 `$0.02 spent`，Videoclaw gateway reasoning 行为 $0.02，与期望一致。
+- main.log 中没有 429、retry limit 或 high demand。
+- **观察（风险）**：真实模型在 Codex 下除了调用 studio 工具，还自行执行了几条 `provider_command`（`ls`、`printenv | grep videoclaw|session`、`printenv | sort`）。
+  - 命令输出没有进入日志。
+  - 按设计，`codexChildEnv` 只下发 per-runtime 的 `vcgp_` gate token，不下发 MINIMAX_API_KEY；在证据里 grep key 全文和前缀，均为 0 命中。
+  - 这属于原版 Codex harness 的固有行为（模型可执行 shell），不在本轮修复范围。
+- 证据：`T3-codex-attempt2/`，内容包括：
+  - `m14r-summary.json`
+  - `cdp-log.jsonl`
+  - `main.log`（已去掉 dbus 噪声）
+  - `shots/`
+  - `console.log`
+
+### 10.5 花费（models.dev 计价，shim ledger / proxy 计量）
+| 项目 | 花费 |
+|---|---|
+| 第 1 项运行 1（21 条：20 条 LLM + 1 条 TTS $0.000896） | $0.045472 |
+| 第 1 项运行 2，`--only B`（9 条：8 条 LLM + 1 条 TTS $0.019601） | $0.039693 |
+| 第 2 项真实恢复（1 次 TTS） | $0.003615 |
+| 第 3 项 Codex 尝试 2（proxy 计量） | $0.015111 |
+| **合计** | **≈ $0.1039**（上限 $0.5） |
+
+### 10.6 更新后的状态
+- §7「未验证」中的 3 项（真实 LLM 授权卡片、真实 TTS 恢复、Codex 干净 PASS）已转为**已验证**。
+- §9 第 3、7 项和第 8 项的“真实中断证明”部分已完成。
+- 仍未验证：
+  - voice 卡（没有麦克风）；
+  - 用真实排队中的视频任务做上游取消；
+  - collector 的 busy / late-result / collectorOwned 部分；
+  - §9 的其余项。
+- 新增风险：真实模型偶尔会写错工具参数名（本轮出现 1 次 `input_id`），所以 UI e2e 用真实 LLM 时会有偶发失败。对此只在 harness 层重跑，不往 app 里加非原版提示。
+

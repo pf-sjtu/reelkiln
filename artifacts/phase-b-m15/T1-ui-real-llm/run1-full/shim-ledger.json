@@ -1,0 +1,540 @@
+{
+ "schema": "videoclaw-port.local-gateway-ledger/v1",
+ "account": {
+  "id": "acct_local_8a7572a92d4b",
+  "name": "Local studio (self-hosted)",
+  "createdAt": 1792617934940
+ },
+ "keys": [
+  {
+   "id": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "hint": "vc_3e83…3160",
+   "createdAt": 1792617934941
+  }
+ ],
+ "limits": {
+  "monthUsd": 5,
+  "totalUsd": null
+ },
+ "topupBalanceUsd": 0,
+ "topups": [],
+ "entries": [
+  {
+   "id": "spend_9f6ae9c2df3a",
+   "at": 1792617944868,
+   "usd": 0.000403237,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 2107,
+   "outputTokens": 143,
+   "cacheReadTokens": 201,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_601f2c52881c",
+   "at": 1792617948324,
+   "usd": 0.005375526,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 35940,
+   "outputTokens": 7,
+   "cacheReadTokens": 128,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_227089be5eef",
+   "at": 1792617962021,
+   "usd": 0.000977251,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 1622,
+   "outputTokens": 333,
+   "cacheReadTokens": 35968,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_b00e017a63ce",
+   "at": 1792617974257,
+   "usd": 0.005629369,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 33828,
+   "outputTokens": 958,
+   "cacheReadTokens": 199,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_d444d89a3e67",
+   "at": 1792617987634,
+   "usd": 0.00552706,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 33799,
+   "outputTokens": 794,
+   "cacheReadTokens": 201,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_c813e322a7ba",
+   "at": 1792617990558,
+   "usd": 0.000603525,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 173,
+   "outputTokens": 22,
+   "cacheReadTokens": 37888,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_9f1024a3a865",
+   "at": 1792617995755,
+   "usd": 0.000851344,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 1583,
+   "outputTokens": 81,
+   "cacheReadTokens": 38016,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_e9a79991607f",
+   "at": 1792618010141,
+   "usd": 0.005707344,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 35453,
+   "outputTokens": 684,
+   "cacheReadTokens": 128,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_9752872cc815",
+   "at": 1792618023133,
+   "usd": 0.005761618,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 35353,
+   "outputTokens": 798,
+   "cacheReadTokens": 201,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_b5ebc1b95c8e",
+   "at": 1792618026450,
+   "kind": "paid_tool",
+   "tool": "model_call",
+   "usd": 0.000896,
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "minimax/speech-2.8-turbo",
+   "upstreamModel": "speech-2.8-turbo",
+   "units": {
+    "billed_characters": 30
+   },
+   "pricing": {
+    "source": "minimax-cn official pay-as-you-go list (CNY) × models.dev minimax-cn USD/CNY 0.1494",
+    "maximumUsd": 0.000956
+   },
+   "operationId": "e06eb89b-b8be-4a96-a250-240d0d93aab6",
+   "clientJob": "ok-vcncytd-20261021-b8c462",
+   "status": 200
+  },
+  {
+   "id": "spend_cfdb390f5de2",
+   "at": 1792618029883,
+   "usd": 0.000692112,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 468,
+   "outputTokens": 55,
+   "cacheReadTokens": 39552,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_52e77ad67c34",
+   "at": 1792618034871,
+   "usd": 0.000868413,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 1481,
+   "outputTokens": 84,
+   "cacheReadTokens": 40064,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_031231812401",
+   "at": 1792618036545,
+   "usd": 0.000644192,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 111,
+   "outputTokens": 13,
+   "cacheReadTokens": 41600,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-b8c462"
+  },
+  {
+   "id": "spend_73fbd9112be2",
+   "at": 1792618043619,
+   "usd": 0.000371909,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 2123,
+   "outputTokens": 87,
+   "cacheReadTokens": 184,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_e10938df6cf5",
+   "at": 1792618047076,
+   "usd": 0.005365409,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 35865,
+   "outputTokens": 7,
+   "cacheReadTokens": 201,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_747731ca3925",
+   "at": 1792618118250,
+   "usd": 0.001126766,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 1729,
+   "outputTokens": 554,
+   "cacheReadTokens": 36066,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_8badce3ca256",
+   "at": 1792618122557,
+   "usd": 0.000961155,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 2442,
+   "outputTokens": 200,
+   "cacheReadTokens": 32000,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_7f92809ab35b",
+   "at": 1792618129626,
+   "usd": 0.000863589,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 695,
+   "outputTokens": 329,
+   "cacheReadTokens": 37795,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_13dbd3511a81",
+   "at": 1792618137725,
+   "usd": 0.001052776,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 2052,
+   "outputTokens": 289,
+   "cacheReadTokens": 38490,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_cd1709eecaec",
+   "at": 1792618144291,
+   "usd": 0.001118291,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 2108,
+   "outputTokens": 489,
+   "cacheReadTokens": 34304,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  },
+  {
+   "id": "spend_20afe2eb22f4",
+   "at": 1792618145937,
+   "usd": 0.000674742,
+   "pricing": {
+    "inputPerMTokUsd": 0.1494,
+    "outputPerMTokUsd": 0.5976,
+    "cacheReadPerMTokUsd": 0.0149,
+    "source": "models.dev:minimax-cn/MiniMax-M3.1-Flash"
+   },
+   "kind": "model_call",
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "model": "claude-sonnet-5-5",
+   "upstreamModel": "MiniMax-M3.1-Flash",
+   "inputTokens": 357,
+   "outputTokens": 29,
+   "cacheReadTokens": 40542,
+   "status": 200,
+   "clientJob": "ok-vcncytd-20261021-ccacce"
+  }
+ ],
+ "refusals": [],
+ "spendAuthorities": {
+  "ok-vcncytd-20261021-b8c462": {
+   "mode": "per_operation",
+   "ceilingUsd": null,
+   "updatedAt": 1792617954146
+  },
+  "ok-vcncytd-20261021-ccacce": {
+   "mode": "capped",
+   "ceilingUsd": 0.03,
+   "updatedAt": 1792618132406
+  }
+ },
+ "budgets": {},
+ "quotes": [],
+ "pricing": {
+  "table": "port-per-model/v2"
+ },
+ "spendQuotes": [
+  {
+   "quoteId": "vsq_3._TP9ONUD1pem_f7sGgkwY78E",
+   "sha256": "73e37b2bf6a4996959082346577a36d2d84678fcaa567e7454c5010f8164cf64",
+   "jobId": "ok-vcncytd-20261021-b8c462",
+   "tool": "model_call",
+   "model": "minimax/speech-2.8-turbo",
+   "estimateUsd": 0.000956,
+   "maximumUsd": 0.000956,
+   "at": 1792617987854
+  },
+  {
+   "quoteId": "vsq_3.EnKxJMYV_M9vb1jzaoAP3-ZZ",
+   "sha256": "73e37b2bf6a4996959082346577a36d2d84678fcaa567e7454c5010f8164cf64",
+   "jobId": "ok-vcncytd-20261021-b8c462",
+   "tool": "model_call",
+   "model": "minimax/speech-2.8-turbo",
+   "estimateUsd": 0.000956,
+   "maximumUsd": 0.000956,
+   "at": 1792618023306
+  },
+  {
+   "quoteId": "vsq_3.NV5mdGrA1igW_4YEztikBZzI",
+   "sha256": "e0b0d796375e461832a398af3a2540c2a9d7c3d3ee9591dba13314581579d650",
+   "jobId": "ok-vcncytd-20261021-ccacce",
+   "tool": "model_call",
+   "model": "minimax/speech-2.8-turbo",
+   "estimateUsd": 0.020378,
+   "maximumUsd": 0.020378,
+   "at": 1792618122721
+  }
+ ],
+ "permits": [
+  {
+   "permit": "vsp_fbx95Dd7SWsYE6Z9eojMAnVC",
+   "quoteId": "vsq_3.EnKxJMYV_M9vb1jzaoAP3-ZZ",
+   "sha256": "73e37b2bf6a4996959082346577a36d2d84678fcaa567e7454c5010f8164cf64",
+   "jobId": "ok-vcncytd-20261021-b8c462",
+   "maximumApprovedUsd": 0.000956,
+   "at": 1792618024856,
+   "used": true
+  }
+ ],
+ "operations": {
+  "e06eb89b-b8be-4a96-a250-240d0d93aab6": {
+   "id": "e06eb89b-b8be-4a96-a250-240d0d93aab6",
+   "jobId": "mc_813bad7cc8794d85dacee54f",
+   "projectId": "personal",
+   "clientJob": "ok-vcncytd-20261021-b8c462",
+   "sha256": "73e37b2bf6a4996959082346577a36d2d84678fcaa567e7454c5010f8164cf64",
+   "model": "minimax/speech-2.8-turbo",
+   "quoteId": "vsq_3.EnKxJMYV_M9vb1jzaoAP3-ZZ",
+   "maximumUsd": 0.000956,
+   "status": "succeeded",
+   "createdAt": 1792618025321,
+   "assets": [
+    {
+     "asset_id": "e086885d02e97d977c7be7dfe34c43b2",
+     "content_type": "audio/mpeg"
+    }
+   ],
+   "keyId": "ade0a7fca287709f9fce66ddf00ecdaf6df8a82c94401abec5b9b1b2bd4d5deb",
+   "phase": "sent",
+   "costUsd": 0.000896,
+   "upstream": {
+    "trace_id": "07286129155015d752c5640f9fbd8107",
+    "audio_length_ms": 3240,
+    "usage_characters": 30
+   },
+   "finishedAt": 1792618026450
+  }
+ },
+ "assets": {
+  "e086885d02e97d977c7be7dfe34c43b2": {
+   "file": "/tmp/m15ui/real1/.config/videoclaw-port/local-gateway/sinks/assets/e086885d02e97d977c7be7dfe34c43b2.mp3",
+   "contentType": "audio/mpeg",
+   "operationId": "e06eb89b-b8be-4a96-a250-240d0d93aab6"
+  }
+ }
+}
