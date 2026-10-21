@@ -21,12 +21,12 @@ chans = json.loads((R / "artifacts/manifests/ipc-channels.json").read_text())
 src = lambda p: (R / "port/src/main" / p).read_text()
 key_re = re.compile(r'"([a-zA-Z]+:[a-zA-Z:]+)"\s*:')
 assign_re = re.compile(r'(?:handlers|sendHandlers)\["([a-zA-Z]+:[a-zA-Z:]+)"\]\s*=')
-real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts")))
+real = set(key_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("llm-runtime.ts"))) | set(key_re.findall(src("agent/agent-ipc.ts"))) | set(key_re.findall(src("media/media-ipc.ts"))) | set(assign_re.findall(src("real-backend.ts"))) | set(key_re.findall(src("local-channels.ts"))) | set(key_re.findall(src("quickstart/quickstart-ipc.ts"))) | set(key_re.findall(src("local-channels-26.ts"))) | set(key_re.findall(src("codex/codex-channels.ts")))
 real_env = {"bootstrap:run"}
 # docs/24 → docs/25: session:history now replays the display transcript + SDK transcript (real).
 # docs/25 real-partial: original handler shape, some original branches not ported (reason given).
 PARTIAL = {
-    "session:setPermissionMode": "no spend-policy / codex-containment branches (port has no spend ledger, no Codex harness)",
+    "session:setPermissionMode": "no spend-policy branch (port has no paid-spend ledger); codex containment is enforced in the codex runtime (docs/27)",
     # docs/26 real-partial: the handler runs the original body, but the branch that does real work needs (b)/(c)
     "characters:voices:list": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",
     "characters:voice:approve": "(b) memoryBinding needs a verified Videoclaw account → the original's unavailable answer only",
@@ -35,6 +35,10 @@ PARTIAL = {
     "media:discardVoice": "(c) voiceDictations only fill through transcribeVoice (macOS on-device helper)",
     "attachment:voiceNote": "(c) the background on-device transcript (macOS voice-dictation helper) is not available",
     "feedback:capture": "(b) no gateway key → blockedRoute: no screenshot, consentRequired (the original's key-less branch)",
+    # docs/27: the Codex route runs on MiniMax (gate proxy, surface openai) — there is no ChatGPT login to drive
+    "engine:codexConnectChatGpt": "PORT substitute (docs/27): no OpenAI device login — returns the MiniMax-backed codexStatus (authenticated, mode external)",
+    "engine:codexConnectCancel": "PORT substitute (docs/27): nothing to cancel (no login flow) — original {ok:true} shape",
+    "engine:codexDisconnectChatGpt": "PORT substitute (docs/27): retires live Codex runtimes, then ok:false — the MiniMax credential is MINIMAX_API_KEY (env), not an app login",
     "session:retry": "spend gate / Claude-terms recovery / restoreFailedTurn after an app restart not ported",
 }
 fixture = set(key_re.findall(src("fake-backend.ts")))

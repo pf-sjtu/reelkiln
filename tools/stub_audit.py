@@ -106,20 +106,20 @@ AUDIT = {
  "engine:claudeCodeConnectCancel": (B, 61605, "Claude Code login"),
  "engine:claudeCodeSignOutImpact": (B, 61606, "Claude Code login"),
  "engine:claudeCodeSignOut": (B, 61607, "Claude Code login"),
- "engine:codexStatus": (B, 61609, "Codex / ChatGPT login"),
- "engine:codexConnectChatGpt": (B, 61610, "Codex / ChatGPT login"),
- "engine:codexConnectCancel": (B, 61619, "Codex / ChatGPT login"),
- "engine:codexDisconnectImpact": (B, 61620, "Codex / ChatGPT login"),
- "engine:codexDisconnectChatGpt": (B, 61621, "Codex / ChatGPT login"),
- "engine:codexModels": (B, 61622, "Codex model catalog (ChatGPT account)"),
+ "engine:codexStatus": (B, 61609, "done-M10 (docs/27): host.codexStatus L51256 on the MiniMax-backed codex app-server (account/read → external)"),
+ "engine:codexConnectChatGpt": (B, 61610, "done-M10 (docs/27, real-partial PORT substitute): no OpenAI login; returns the MiniMax-backed status"),
+ "engine:codexConnectCancel": (B, 61619, "done-M10 (docs/27, real-partial PORT substitute): no login flow to cancel"),
+ "engine:codexDisconnectImpact": (B, 61620, "done-M10 (docs/27): codexDisconnectImpact L52416 (running Codex videos)"),
+ "engine:codexDisconnectChatGpt": (B, 61621, "done-M10 (docs/27, real-partial PORT substitute): retires runtimes; credential is MINIMAX_API_KEY"),
+ "engine:codexModels": (B, 61622, "done-M10 (docs/27): codexModels L51305 / discoverCodexModels L52291 ← MiniMax GET /v1/models through the gate"),
  "engine:claudeModels": (B, 61659, "Claude Code model catalog (Claude account)"),
  "engine:continueOnCodex": (B, 61661, "route handoff to Codex"),
  "engine:creditHandoffOffer": (B, 61655, "Videoclaw credits route"),
  "engine:continueOnCredits": (B, 61656, "Videoclaw credits route"),
- "engine:agentProviderKeyStatus": (B, 61664, "agent-provider key for Codex harness"),
+ "engine:agentProviderKeyStatus": (B, 61664, "done-M10 (docs/27): key presence only (openaiApi/openrouter not configured; MiniMax key is env)"),
  "engine:saveAgentProviderKey": (B, 61665, "agent-provider key for Codex harness"),
- "session:setModel": (B, 61784, "host.setSessionModel: model list comes from the Claude/Codex account catalog"),
- "session:setReasoningEffort": (B, 61787, "host.setSessionReasoningEffort: Claude/Codex route capability"),
+ "session:setModel": (B, 61784, "done-M10 (docs/27): host.setSessionModel L40895, Codex branch (catalog = MiniMax models); Claude branch still needs claudeModels"),
+ "session:setReasoningEffort": (B, 61787, "done-M10 (docs/27): host.setSessionReasoningEffort L51735, Codex branch (low/medium/high)"),
  "library:sync": (B, 62092, "guardedAppLibrary → acquireLibraryGatewayLease"),
  "library:search": (B, 62115, "guardedAppLibrary → gateway lease"),
  "feedback:submit": (B, 62346, "feedback upload (gateway outbox)"),
@@ -141,12 +141,13 @@ def stubs_now():
 def main():
     now = set(stubs_now())
     missing = sorted(now - set(AUDIT))
-    stale = sorted(c for c, (cat, _, why) in AUDIT.items() if c in now and why.startswith(("done-M8", "done-M9")))
+    stale = sorted(c for c, (cat, _, why) in AUDIT.items() if c in now and why.startswith(("done-M8", "done-M9", "done-M10")))
     done_not_real = stale
-    counts = {"a": 0, "a_done": 0, "a_todo": 0, "b": 0, "c": 0}
+    counts = {"a": 0, "a_done": 0, "a_todo": 0, "b": 0, "b_done": 0, "b_stub": 0, "c": 0}
     for c, (cat, _, why) in AUDIT.items():
         counts[cat] += 1
-        if cat == A: counts["a_done" if why.startswith(("done-M8", "done-M9")) else "a_todo"] += 1
+        if cat == A: counts["a_done" if why.startswith(("done-M8", "done-M9", "done-M10")) else "a_todo"] += 1
+        if cat == B: counts["b_done" if why.startswith("done-M10") else ("b_stub" if c in now else "b_partial_other")] = counts.get("b_done" if why.startswith("done-M10") else ("b_stub" if c in now else "b_partial_other"), 0) + 1
     if "--json" in sys.argv:
         print(json.dumps({"total": len(AUDIT), "counts": counts, "stubNow": len(now), "unclassified": missing, "doneButStillStub": done_not_real,
                           "channels": [{"channel": c, "category": v[0], "line": v[1], "evidence": v[2]} for c, v in AUDIT.items()]}, ensure_ascii=False, indent=1))
