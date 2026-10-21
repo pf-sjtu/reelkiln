@@ -32,6 +32,7 @@ import { validateEngineSessionContext } from "./engine/session-context.generated
 import { assertInstalledEngineProductionContract, inspectInstalledEngineProductionContract } from "./engine/production-contract.generated";
 import { bootstrapTool, killTree, resolveBootstrapToolRoots } from "./platform";
 import { createLlmRuntime } from "./llm-runtime";
+import { PORT_IPC, type PortInvokeChannel } from "../shared/port-ipc";
 
 /** PORT-NEW env var (not in the original bundle). */
 export const PORT_REAL_BOOTSTRAP_ENV = "VIDEOCLAW_PORT_REAL_BOOTSTRAP";
@@ -53,6 +54,12 @@ function forkEditorRenderWorker(): RenderWorker { // original L60654-60670
     kill: () => { child.kill(); },
   };
 }
+
+/** PORT-NEW channels (shared/port-ipc.ts) filled by createRealHandlers; index.ts registers them. */
+export const portHandlers: Partial<Record<PortInvokeChannel, Handler>> = {
+  // fallback when the LLM runtime is not running (fake settings): an honest "nothing to choose"
+  [PORT_IPC.llmRoutes]: () => ({ current: "claude-code", routes: [], configError: "LLM runtime not running (fake settings backend)" }),
+};
 
 export function createRealHandlers(push: (channel: string, ...a: unknown[]) => boolean, log: (m: string) => void): Partial<Record<InvokeChannel, Handler>> {
   const roots = resolveBootstrapToolRoots({ resourcesPath: process.resourcesPath ?? "", appPath: app.getAppPath(), packaged: app.isPackaged });
@@ -118,6 +125,7 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         onLlmRouteChanged: () => log("[port] llmRoute changed — AgentHost.onLlmRouteChanged (runtime teardown) NOT PORTED"),
       });
       Object.assign(handlers, llm.handlers);
+      Object.assign(portHandlers, llm.portHandlers);
       app.on("will-quit", () => llm.dispose());
     } catch (e) {
       // graceful degradation: the fake settings fixtures stay in place

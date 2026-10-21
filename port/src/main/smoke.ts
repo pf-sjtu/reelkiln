@@ -13,6 +13,9 @@ export function smokeScript(o: { runBootstrap: boolean; session?: string; job?: 
     await rec("settings:get", () => api.getSettings());
     ${o.llmRoute ? `await rec("settings:set(llmRoute)", () => api.setSettings({ llmRoute: ${JSON.stringify(o.llmRoute)} }));` : ""}
     await rec("engine:llmRouteReadiness", () => api.llmRouteReadiness(undefined));
+    await rec("port:llm:routes", () => window.videoclawPort ? window.videoclawPort.llmRoutes() : Promise.reject(new Error("window.videoclawPort missing")));
+    await new Promise((r) => setTimeout(r, 300));
+    await rec("renderer:llmRoute selector", () => { const s = document.getElementById("llmRoute"); return s ? { options: [...s.options].map((o) => o.value + (o.disabled ? "(disabled)" : "")), selected: s.value } : null; });
     ${o.runBootstrap ? `await rec("bootstrap:run", () => api.bootstrapRun());` : ""}
     ${o.session && o.job ? `
     const events = [];

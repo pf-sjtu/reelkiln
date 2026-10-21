@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 import { INVOKE_CHANNELS, SEND_CHANNELS, type InvokeChannel } from "../shared/ipc-contract";
 import { trackIpcRequests, createRendererEmitter } from "./ipc-tracking";
 import { createFakeBackend } from "./fake-backend";
-import { createRealHandlers } from "./real-backend";
+import { createRealHandlers, portHandlers } from "./real-backend";
 import { smokeScript } from "./smoke";
 
 const SMOKE = process.env.VIDEOCLAW_PORT_SMOKE === "1"; // PORT-NEW
@@ -29,6 +29,8 @@ function registerIpc() {
     ipc.handle(ch, (_e: unknown, ...args: unknown[]) => (h ? h(...args) : backend.invoke(ch as InvokeChannel, args)));
   }
   log(`[port] real (ported) handlers: ${Object.keys(real).join(", ")}`);
+  // PORT-NEW channels (docs/17 §5) — not part of the original contract
+  for (const [ch, h] of Object.entries(portHandlers)) ipc.handle(ch, (_e: unknown, ...args: unknown[]) => h!(...args));
   for (const ch of SEND_CHANNELS) ipc.on(ch, (_e: unknown, ...args: unknown[]) => log(`[fake-backend] send ${ch} ${JSON.stringify(args)}`));
   log(`[port] registered ${INVOKE_CHANNELS.length} handle + ${SEND_CHANNELS.length} on; fake-implemented: ${backend.implemented().length}`);
 }

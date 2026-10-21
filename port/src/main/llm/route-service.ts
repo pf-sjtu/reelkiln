@@ -18,6 +18,7 @@
 //   (resume, hooks, studio MCP, session store, permission UI), AgentHost session lifecycle/teardown, CredentialStore (gateway key vault),
 //   the claude-code presence probe. The env/options this service builds are exactly what
 //   createLocalRuntime hands to query(); a future AgentHost port passes them through unchanged.
+import type { LlmRouteOption, LlmRoutesView } from "../../shared/port-ipc";
 import type { LlmRouteId } from "../../shared/llm-types";
 import { LlmProviderError } from "./errors";
 import { getLogger, type Logger } from "./logger";
@@ -182,6 +183,26 @@ export class LlmRouteService {
     if (!p?.agentCompat?.gateProxy) return { ...rc, close: async () => {} };
     const proxy = await startAgentGateProxy(p, { logger: this.log, ...o.proxy });
     return { ...rc, env: proxiedAgentEnv(rc.env, proxy, p), proxy: { url: proxy.url, stats: proxy.stats }, close: () => proxy.close() };
+  }
+
+  /** PORT-NEW docs/17 §5: every selectable route for a settings UI (no secrets: key presence only). */
+  listRoutes(): LlmRoutesView {
+    const reg = this.registry();
+    const env = this.env();
+    const routes: LlmRouteOption[] = [
+      { id: "claude-code", kind: "builtin", label: "Claude Code (local sign-in)" },
+      { id: "gateway", kind: "builtin", label: "Videoclaw gateway" },
+    ];
+    for (const s of reg.summaries(env)) {
+      const cfg = reg.get(s.name)!;
+      const agentCapable = s.configured && s.protocol === "anthropic-messages";
+      routes.push({
+        id: s.name, kind: "provider", label: s.displayName ?? s.name, protocol: s.protocol, model: s.model, keyEnv: s.apiKeyEnv,
+        keyPresent: s.configured, agentCapable, helperCapable: s.configured, structuredOutput: cfg.structuredOutput, preset: s.builtin,
+        ...(!s.configured ? { problem: "key-missing" as const } : !agentCapable ? { problem: "protocol-not-agent-capable" as const } : {}),
+      });
+    }
+    return { current: this.resolvedRoute(), routes, ...(reg.configError ? { configError: reg.configError } : {}) };
   }
 
   /** setSettings hook (L61682-61686): fire when the EFFECTIVE global route changes. */

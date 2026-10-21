@@ -267,3 +267,31 @@ test("createLlmRuntime: IPC handlers settings:get/set + engine:llmRouteReadiness
     assert.equal(cfg.env.CLAUDE_CONFIG_DIR, join(dir, "engine-profile"));
   } finally { rt.dispose(); setProviderRegistry(undefined); setLoggerForTests(undefined); rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---- docs/17 §5: provider-selection surface (PORT-NEW port:llm:routes + original settings:set) ----
+import { PORT_IPC } from "../src/shared/port-ipc";
+
+test("port:llm:routes lists built-ins + providers (key presence, agent/helper capability, structured mode, no secrets); selection via settings:set round-trips", async () => {
+  silent();
+  const dir = tmp();
+  const pfile = join(dir, "providers.json");
+  writeFileSync(pfile, JSON.stringify({ providers: [acme(), { name: "oai", displayName: "OpenAI-ish", protocol: "openai-chat-completions", baseUrl: "https://o.test/v1", apiKeyEnv: "OAI_KEY", model: "gpt-x" }, { name: "nokey", protocol: "anthropic-messages", baseUrl: "https://n.test", apiKeyEnv: "NOKEY_KEY", model: "n" }] }));
+  const env = { [PROVIDERS_FILE_ENV]: pfile, ACME_API_KEY: KEY, MINIMAX_API_KEY: MM, OAI_KEY: "oai-test-key-0000000000" };
+  setProviderRegistry(loadProviderRegistry({ env }));
+  const rt = createLlmRuntime({ userData: dir, env, watch: false, sighup: false, defaultGatewayUrl: "https://gw" });
+  try {
+    const list = rt.portHandlers[PORT_IPC.llmRoutes]!;
+    let view = await list() as any;
+    assert.equal(view.current, "claude-code");
+    const byId = Object.fromEntries(view.routes.map((r: any) => [r.id, r]));
+    assert.deepEqual(view.routes.map((r: any) => r.id), ["claude-code", "gateway", "minimax", "acme", "oai", "nokey"]);
+    assert.deepEqual(byId.minimax, { id: "minimax", kind: "provider", label: "MiniMax (Anthropic-compatible)", protocol: "anthropic-messages", model: "MiniMax-M3.1-Flash", keyEnv: "MINIMAX_API_KEY", keyPresent: true, agentCapable: true, helperCapable: true, structuredOutput: "tool", preset: true });
+    assert.equal(byId.oai.problem, "protocol-not-agent-capable");
+    assert.equal(byId.oai.helperCapable, true);
+    assert.equal(byId.nokey.problem, "key-missing");
+    assert.ok(!JSON.stringify(view).includes(KEY) && !JSON.stringify(view).includes(MM), "never exposes a key");
+    await (rt.handlers as any)["settings:set"]({ llmRoute: "acme" });
+    view = await list();
+    assert.equal(view.current, "acme");
+  } finally { rt.dispose(); rmSync(dir, { recursive: true, force: true }); setProviderRegistry(undefined as any); setLoggerForTests(undefined); }
+});

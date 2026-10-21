@@ -9,6 +9,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { InvokeChannel } from "../shared/ipc-contract";
+import { PORT_IPC, type PortInvokeChannel } from "../shared/port-ipc";
 import { getLogger, type Logger } from "./llm/logger";
 import { reloadProviderRegistry, watchProvidersFile, type ProvidersFileWatcher } from "./llm/provider-registry";
 import { bindRegistryReloads, LlmRouteService, type SessionMetaLike } from "./llm/route-service";
@@ -32,6 +33,8 @@ export interface LlmRuntime {
   settings: SettingsStore;
   service: LlmRouteService;
   handlers: Partial<Record<InvokeChannel, (...a: any[]) => unknown>>;
+  /** PORT-NEW channels (shared/port-ipc.ts), registered next to the original ones. */
+  portHandlers: Partial<Record<PortInvokeChannel, (...a: any[]) => unknown>>;
   watcher: ProvidersFileWatcher | null;
   dispose(): void;
 }
@@ -68,8 +71,11 @@ export function createLlmRuntime(d: LlmRuntimeDeps): LlmRuntime {
     },
     "engine:llmRouteReadiness": async (sessionId: unknown) => service.llmRouteReadiness(typeof sessionId === "string" && sessionId ? d.sessionMeta?.(sessionId) : undefined),
   };
+  const portHandlers: LlmRuntime["portHandlers"] = {
+    [PORT_IPC.llmRoutes]: async () => service.listRoutes(),
+  };
   return {
-    settings, service, handlers, watcher,
+    settings, service, handlers, portHandlers, watcher,
     dispose: () => { unbind(); offRoute(); watcher?.close(); if (hup) process.off("SIGHUP", onHup); },
   };
 }
