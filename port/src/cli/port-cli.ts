@@ -12,6 +12,10 @@
 //   node dist/cli/port-cli.cjs run-bash "<command>"
 //   node dist/cli/port-cli.cjs llm-providers           (offline; registered providers, keys only as configured:true/false)
 //   VIDEOCLAW_LLM_LIVE=1 node dist/cli/port-cli.cjs llm-ping <provider> [prompt]   (ONE real request via the generic helper path)
+//   node dist/cli/port-cli.cjs models-sync [--db P] [--force]   (models.dev → SQLite; see docs/15)
+//   node dist/cli/port-cli.cjs models-list [--provider ID] [--search Q] [--limit N]
+//   node dist/cli/port-cli.cjs models-show <provider/model | model> [--raw]
+//   node dist/cli/port-cli.cjs llm-model-info <provider>  (provider config → models.dev metadata)
 //   node dist/cli/port-cli.cjs minimax-config          (docs/14 alias; = the "minimax" preset)
 //   VIDEOCLAW_MINIMAX_LIVE=1 node dist/cli/port-cli.cjs minimax-ping   (docs/14 alias of llm-ping minimax)
 // Every subcommand prints one JSON line `{ok, step, ...}` so results can be pasted back.
@@ -30,6 +34,7 @@ import { bootstrapTool } from "../main/platform";
 import { describeMiniMaxConfig, minimaxConfig } from "../main/llm/minimax";
 import { anthropicMessages, helperCredsForProvider } from "../main/llm/llm-route";
 import { describeProvider, getProviderRegistry } from "../main/llm/provider-registry";
+import { MODELS_COMMANDS, runModelsCommand } from "./models-cli";
 
 const [, , cmd, a1, a2, a3] = process.argv;
 const out = (o: Record<string, unknown>) => console.log(JSON.stringify(o));
@@ -58,6 +63,12 @@ function core(o: { roots: string[]; userData?: string; workspace?: string }) {
 async function main() {
   const t0 = Date.now();
   try {
+    if ((MODELS_COMMANDS as readonly string[]).includes(cmd)) {
+      const r = await runModelsCommand(cmd, process.argv.slice(3));
+      out(r);
+      if (r.ok === false) process.exitCode = 1;
+      return;
+    }
     switch (cmd) {
       case "install-engine": {
         const c = core({ roots: [a1], userData: a2 });

@@ -21,3 +21,8 @@ __pycache__/
 
 # Python venvs (engine uv sync)
 .venv/
+
+# models.dev local catalog DB (docs/15) — never commit
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
