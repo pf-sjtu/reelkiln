@@ -7,23 +7,33 @@
 //      Settings page selects minimax via its radio and restores the previous route.
 //   2. Node-mode SDK check: ELECTRON_RUN_AS_NODE=1 <exe> resources/app.asar/dist/cli/port-cli.cjs agent-sdk-check
 //   3. --live only: ONE real agent turn through the bundled SDK + native claude (MiniMax route).
+// docs/34 M17: also Windows (windows-latest CI) — win-unpacked/ or the NSIS installer (silent /S /D= install into a
+// temp dir, then the installed copy); the GUI smoke runs the .exe directly (no xvfb-run).
 // Isolation: temp HOME + --user-data-dir, VIDEOCLAW_CLAUDE_AGENT_SDK unset → only the bundled SDK can be found.
 // Never prints keys (CLI output is scrubbed; we only print parsed fields).
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, rmSync, statSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, delimiter, join, resolve } from "node:path";
 
 const args = process.argv.slice(2);
 const live = args.includes("--live");
 const targets = args.filter((a) => !a.startsWith("--")).map((a) => resolve(a));
 if (!targets.length) { console.error("usage: packaged-smoke.mjs <AppImage|deb|linux-unpacked> … [--live]"); process.exit(2); }
 
-const onPath = (bin) => (process.env.PATH ?? "").split(":").map((d) => join(d, bin)).find((f) => existsSync(f));
-const findExe = (dir) => { const e = join(dir, "videoclaw-port"); if (!existsSync(e)) throw new Error(`no videoclaw-port executable in ${dir}`); return e; };
+const WIN = process.platform === "win32";
+const onPath = (bin) => (process.env.PATH ?? "").split(delimiter).map((d) => join(d, bin)).find((f) => existsSync(f));
+const findExe = (dir) => { const e = join(dir, WIN ? "videoclaw-port.exe" : "videoclaw-port"); if (!existsSync(e)) throw new Error(`no videoclaw-port executable in ${dir}`); return e; };
 function prepare(t) {
   const work = mkdtempSync(join(tmpdir(), "vc-pkg-smoke-"));
   if (statSync(t).isDirectory()) return { kind: "unpacked", exe: findExe(t), appDir: t, work };
+  if (WIN && t.toLowerCase().endsWith(".exe")) {
+    // NSIS (oneClick:false, per-user): silent install into a temp dir; /D= must be the last argument, unquoted
+    const appDir = join(work, "installed");
+    const r = spawnSync(t, ["/S", `/D=${appDir}`], { stdio: "ignore", timeout: 300_000 });
+    if (r.status !== 0) throw new Error(`NSIS silent install exited ${r.status}`);
+    return { kind: "nsis", exe: findExe(appDir), appDir, work, install: { exit: r.status, files: readdirSync(appDir).length } };
+  }
   if (t.endsWith(".deb")) {
     const info = execFileSync("dpkg-deb", ["-f", t, "Package", "Version", "Architecture", "Depends", "Installed-Size"], { encoding: "utf8" });
     execFileSync("dpkg-deb", ["-x", t, join(work, "root")]);
@@ -42,7 +52,7 @@ function prepare(t) {
 }
 
 function baseEnv(home) {
-  const env = { ...process.env, HOME: home, UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python", XDG_CONFIG_HOME: join(home, ".config") };
+  const env = { ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, ".config"), ...(WIN ? { USERPROFILE: home, APPDATA: join(home, "AppData", "Roaming"), LOCALAPPDATA: join(home, "AppData", "Local") } : { UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python" }) };
   delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_CLAUDE_CODE_EXECUTABLE; delete env.ELECTRON_RUN_AS_NODE;
   return env;
 }
@@ -58,7 +68,8 @@ function guiSmoke(p, mode) {
     symlinkSync(onPath("fusermount3"), join(shim, "fusermount"));
     env.PATH = `${shim}:${env.PATH}`;
   }
-  const r = spawnSync("xvfb-run", ["-a", p.exe, "--no-sandbox", `--user-data-dir=${join(home, "ud")}`], { env, encoding: "utf8", timeout: 120_000 });
+  const r = WIN ? spawnSync(p.exe, [`--user-data-dir=${join(home, "ud")}`], { env, encoding: "utf8", timeout: 180_000 })
+    : spawnSync("xvfb-run", ["-a", p.exe, "--no-sandbox", `--user-data-dir=${join(home, "ud")}`], { env, encoding: "utf8", timeout: 120_000 });
   const lines = (r.stdout + r.stderr).split("\n").filter((l) => l.startsWith("[smoke] {") || l.startsWith("[smoke] DONE"));
   const rec = (name) => { const l = lines.find((x) => x.includes(`"name":"${name}"`)); try { return l ? JSON.parse(l.slice(8)) : undefined; } catch { return { ok: false, error: "truncated log line" }; } };
   const diag = rec("port:diagnostics")?.value;
@@ -89,7 +100,7 @@ function nodeCli(p, cliArgs, extraEnv = {}, timeout = 60_000) {
 const report = [];
 for (const t of targets) {
   const p = prepare(t);
-  const entry = { artifact: t, bytes: statSync(t).isFile() ? statSync(t).size : undefined, kind: p.kind, control: p.control };
+  const entry = { artifact: t, bytes: statSync(t).isFile() ? statSync(t).size : undefined, kind: p.kind, control: p.control, install: p.install };
   try {
     entry.gui = guiSmoke(p, "direct");
     if (!entry.gui.ok && p.kind === "AppImage") entry.guiFallback = guiSmoke(p, "extract-and-run");

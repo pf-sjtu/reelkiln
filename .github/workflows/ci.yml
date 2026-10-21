@@ -142,8 +142,83 @@ jobs:
           # the real binaries, not chocolatey shims (shims resolve their target relative to themselves)
           export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
           bash tools/windows_runbook.sh "$RUNNER_TEMP/vc"
+      # docs/34 M17: S1 level L0 (E1–E15, tools/accept_check.py) on the engine the runbook just installed
+      - name: "L0 engine chain E1–E15 (tools/accept_engine_chain.sh, Git Bash)"
+        env:
+          OUT: ${{ runner.temp }}\windows-run
+        run: |
+          export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
+          ENG="$(cat "$(cygpath -u "$OUT")/engine-path.txt")"
+          bash tools/accept_engine_chain.sh "$ENG" "$RUNNER_TEMP/l0" 2>&1 | tee "$(cygpath -u "$OUT")/l0.log"
+          cp "$RUNNER_TEMP/l0/accept.json" "$(cygpath -u "$OUT")/accept-L0.json"
+          sha256sum "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$(cygpath -u "$OUT")/l0-final.sha256"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$(cygpath -u "$OUT")/l0-final.ffprobe.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: windows-run
           path: ${{ runner.temp }}\windows-run
+
+  windows-package:
+    # docs/34 M17 task 2: electron-builder nsis + portable on a real Windows runner, then the packaged smoke
+    # (win-unpacked + NSIS silent install). No credentials: the smoke never calls a model.
+    name: "Windows package (nsis + portable) + packaged smoke"
+    runs-on: windows-latest
+    continue-on-error: true
+    defaults:
+      run:
+        shell: bash
+        working-directory: port
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - run: npm ci
+      - name: npm run package:win (nsis + portable)
+        run: npm run package:win | tee "$RUNNER_TEMP/package-win.json"
+      - name: packaged smoke (win-unpacked + NSIS silent install)
+        run: |
+          ls -la release
+          sha256sum release/*.exe | tee "$RUNNER_TEMP/win-artifacts.sha256"
+          node tools/packaged-smoke.mjs release/win-unpacked release/*-setup.exe | tee "$RUNNER_TEMP/packaged-smoke-win.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-package
+          path: |
+            ${{ runner.temp }}/package-win.json
+            ${{ runner.temp }}/win-artifacts.sha256
+            ${{ runner.temp }}/packaged-smoke-win.json
+            port/release/*.exe
+          if-no-files-found: warn
+
+  macos-package:
+    # docs/34 M17: the cheap macOS leg — unsigned dmg (identity: null) + packaged-smoke is Linux/Windows only,
+    # so this records the build and the bundle layout only.
+    name: "macOS package (dmg, unsigned)"
+    runs-on: macos-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: port
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - run: npm ci
+      - run: npm run package:mac | tee "$RUNNER_TEMP/package-mac.json"
+      - run: ls -la release; shasum -a 256 release/*.dmg | tee "$RUNNER_TEMP/mac-artifacts.sha256"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-package
+          path: |
+            ${{ runner.temp }}/package-mac.json
+            ${{ runner.temp }}/mac-artifacts.sha256
+          if-no-files-found: warn

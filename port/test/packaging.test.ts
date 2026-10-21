@@ -31,9 +31,10 @@ test("builderConfig (linux): asar app = dist + package.json only; SDK as extraRe
   assert.throws(() => builderConfig({ platform: "beos" as any, arch: "x64", version: "1" }));
 });
 
-test("builderConfig (win/mac): nsis / dmg targets configured but marked unverified on the box", () => {
+test("builderConfig (win/mac): nsis + portable / dmg targets configured but marked unverified on the box", () => {
   const w = builderConfig({ platform: "win", arch: "x64", sdkDir: "/s", version: "1" });
-  assert.deepEqual(w.win.target, [{ target: "nsis", arch: ["x64"] }]);
+  assert.deepEqual(w.win.target, [{ target: "nsis", arch: ["x64"] }, { target: "portable", arch: ["x64"] }]);
+  assert.notEqual(w.nsis.artifactName, w.portable.artifactName, "installer and portable .exe must not overwrite each other");
   assert.equal(w.linux.target, undefined);
   const m = builderConfig({ platform: "mac", arch: "arm64", sdkDir: "/s", version: "1" });
   assert.deepEqual(m.mac.target, [{ target: "dmg", arch: ["arm64"] }]);

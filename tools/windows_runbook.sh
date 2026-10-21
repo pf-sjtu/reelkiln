@@ -33,6 +33,7 @@ step() { local r; r="$(node "$CLI" "$@" | tail -1)"; echo "$r" | tee -a "$OUT/po
 ENG_LINE="$(node "$CLI" install-engine "$(W "$B")" "$(W "$ROOT/ud")" | tail -1)"; echo "$ENG_LINE" | tee -a "$OUT/port-cli.jsonl"
 ENGW="$(echo "$ENG_LINE" | python -c 'import json,sys;print(json.load(sys.stdin)["path"])')"
 ENG="$(cygpath -u "$ENGW")"
+printf '%s' "$ENG" > "$OUT/engine-path.txt"   # docs/34: the L0 chain step reuses this engine
 ls "$ENG/bin" | tee "$OUT/engine-bin.txt"
 # S5
 step shims "$ENGW"

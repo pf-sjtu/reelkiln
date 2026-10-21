@@ -19,7 +19,7 @@
 /** electron-builder platform keys → node process.platform values. */
 export const PLATFORMS = {
   linux: { os: "linux", targets: ["AppImage", "deb"], exe: "claude", verifiedOnBox: true },
-  win: { os: "win32", targets: ["nsis"], exe: "claude.exe", verifiedOnBox: false },
+  win: { os: "win32", targets: ["nsis", "portable"], exe: "claude.exe", verifiedOnBox: false },
   mac: { os: "darwin", targets: ["dmg"], exe: "claude", verifiedOnBox: false },
 };
 export const SDK_PACKAGE = "@anthropic-ai/claude-agent-sdk";
@@ -92,7 +92,9 @@ export function builderConfig(o) {
     deb: { depends: ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"] },
     // UNVERIFIED on the box (no wine / macOS): config only, see docs/18 §6
     win: { target: p.os === "win32" ? p.targets.map((t) => ({ target: t, arch: [o.arch] })) : undefined },
-    nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true },
+    nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, artifactName: "Videoclaw-Port-${version}-win-${arch}-setup.${ext}" },
+    // docs/34 M17: a portable single-file .exe next to the installer (distinct name — both would be .exe)
+    portable: { artifactName: "Videoclaw-Port-${version}-win-${arch}-portable.${ext}" },
     mac: { target: p.os === "darwin" ? p.targets.map((t) => ({ target: t, arch: [o.arch] })) : undefined, category: "public.app-category.video", hardenedRuntime: true, identity: null },
     dmg: { artifactName: "Videoclaw-Port-${version}-${arch}.dmg" },
   };
