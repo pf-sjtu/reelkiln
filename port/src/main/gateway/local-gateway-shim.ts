@@ -55,7 +55,7 @@ import { providerGate } from "../llm/retry";
 import { withMiniMaxRetry } from "../llm/minimax";
 import { registerSecret } from "../llm/logger";
 import { createHmac } from "node:crypto";
-import { catalog, ModelInputError, operationSha256, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, type PricedCall } from "./minimax-media";
+import { catalog, ModelInputError, operationSha256, pollMiniMaxVideo, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, type PricedCall } from "./minimax-media";
 
 export const LOCAL_GATEWAY_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY";
 export const LOCAL_GATEWAY_PORT_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY_PORT";
@@ -80,7 +80,15 @@ export const DEFAULT_TOOL_QUOTE_CENTS = 5;
 export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number; status: number; pricing: ModelPrice; /** docs/30: X-VideoClaw-Client-Job of the call (route-service anthropicClientJobCustomHeaders, chunk L149) */ clientJob?: string }
 /** docs/31: one paid model call charged at MiniMax's list price (minimax-media.ts) */
 export interface PaidToolEntry { id: string; at: number; kind: "paid_tool"; tool: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; units: Record<string, number>; pricing: { source: string; maximumUsd: number }; operationId: string; clientJob: string; status: number }
-export interface OperationRow { id: string; jobId: string; projectId: string; clientJob: string; sha256: string; model: string; quoteId: string; maximumUsd: number; status: "running" | "succeeded" | "failed" | "canceled" | "timeout"; createdAt: number; finishedAt?: number; costUsd?: number; assets: Array<{ asset_id: string; content_type: string }>; error?: string; upstream?: Record<string, unknown>; keyId: string }
+export interface OperationRow { id: string; jobId: string; projectId: string; clientJob: string; sha256: string; model: string; quoteId: string; maximumUsd: number; status: "running" | "succeeded" | "failed" | "canceled" | "timeout"; createdAt: number; finishedAt?: number; costUsd?: number; assets: Array<{ asset_id: string; content_type: string }>; error?: string; upstream?: Record<string, unknown>; keyId: string;
+  /** docs/32: the validated params of a video call (needed to resume polling after a restart; images are inlined by MiniMax already) */
+  request?: string;
+  /** docs/32 M15: where the call is — "queued" behind the media gate (nothing sent to MiniMax yet) or "sent". */
+  phase?: "queued" | "sent";
+  /** docs/32: a cancel request (POST /v1/operations/{id}/cancel) and what MiniMax answered to it. */
+  cancel?: { requestedAt: number; outcome: "canceled_before_send" | "upstream_cancelled" | "upstream_refused" | "not_cancellable_sync" | "too_late"; detail?: string };
+  /** docs/32: the gateway restarted while this operation was in flight. */
+  recovery?: { at: number; outcome: "resumed_polling" | "never_sent" | "sync_outcome_unknown" }; }
 export interface Ledger {
   schema: typeof LEDGER_SCHEMA;
   account: { id: string; name: string; createdAt: number };
@@ -99,6 +107,8 @@ export interface Ledger {
   sinks?: Record<string, number>;
   /** docs/31: exact spend quotes (by operation digest), permits, durable model operations, uploads, model assets */
   spendQuotes?: Array<{ quoteId: string; sha256: string; jobId: string; tool: string; model: string; estimateUsd: number; maximumUsd: number; at: number }>;
+  /** docs/32: synchronous calls interrupted by a gateway restart after they were sent (MiniMax may have billed them) */
+  unsettledExposure?: Array<{ at: number; operationId: string; clientJob: string; model: string; maximumUsd: number; reason: string }>;
   permits?: Array<{ permit: string; quoteId: string; sha256: string; jobId: string; maximumApprovedUsd: number; at: number; used?: boolean }>;
   operations?: Record<string, OperationRow>;
   uploads?: Record<string, { file: string; contentType: string; at: number }>;
@@ -271,6 +281,7 @@ export class LocalGatewayShim {
     await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(this.o.port ?? 0, "127.0.0.1", () => { server.off("error", reject); resolve(); }); });
     this.server = server;
     this.url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    try { this.recoverInterruptedOperations(); } catch (e) { this.o.log?.(`[local-gateway] operation recovery failed: ${e instanceof Error ? e.message : String(e)}`); }
     return this.url;
   }
   close(): Promise<void> { return new Promise((r) => { if (!this.server) return r(); this.server.closeAllConnections?.(); this.server.close(() => r()); }); }
@@ -376,7 +387,7 @@ export class LocalGatewayShim {
       req.resume();
       const op = this.ledger.operations?.[m[1]];
       if (!op || url.searchParams.get("client_job") !== op.clientJob) return this.json(res, 404, { detail: "unknown operation" });
-      // MiniMax offers no cancel for a synchronous call or a submitted video task: a cancel reads the result back
+      if (m[2]) await this.cancelOperation(op);
       return this.json(res, 200, this.operationView(op));
     }
     if (method === "GET" && (m = /^\/v1\/jobs\/([A-Za-z0-9._-]+)$/.exec(path))) {
@@ -566,6 +577,90 @@ export class LocalGatewayShim {
     this.write();
     return this.json(res, 200, { permit });
   }
+  /** docs/32 M15 — POST /v1/operations/{id}/cancel (engine collect_operation(cancel=True) after an app Stop).
+   *  MiniMax's contract decides what a cancel can do:
+   *   - still queued behind this gateway's media gate → canceled here, nothing was sent, $0;
+   *   - a submitted video task → DELETE /v2/video_generation/{task_id}: MiniMax cancels a task that is still
+   *     QUEUED (no charge) and refuses one that is already running (it then finishes and is charged once);
+   *   - a synchronous TTS / image call already sent → MiniMax has no cancel; it finishes and is charged once.
+   *  The ledger never charges a canceled operation and never hides a call MiniMax went on to bill. */
+  async cancelOperation(op: OperationRow): Promise<void> {
+    if (op.status !== "running") { if (!op.cancel) { op.cancel = { requestedAt: this.now(), outcome: "too_late" }; this.write(); } return; }
+    if (op.cancel && op.cancel.outcome !== "upstream_refused") return;
+    const requestedAt = this.now();
+    if (op.phase === "queued") {
+      op.status = "canceled"; op.costUsd = 0; op.finishedAt = requestedAt;
+      op.cancel = { requestedAt, outcome: "canceled_before_send" };
+      this.write();
+      this.o.log?.(`[local-gateway] model_call ${op.model} canceled before it was sent (nothing charged)`);
+      return;
+    }
+    const taskId = typeof op.upstream?.task_id === "string" ? op.upstream.task_id : undefined;
+    if (!taskId) { op.cancel = { requestedAt, outcome: "not_cancellable_sync" }; this.write(); return; }
+    const p = this.o.provider();
+    if (!p) { op.cancel = { requestedAt, outcome: "upstream_refused", detail: "no MiniMax key configured" }; this.write(); return; }
+    registerSecret(p.key);
+    let detail = "";
+    try {
+      const r = await (this.o.mediaFetch ?? this.o.fetchImpl ?? fetch)(`${new URL(p.baseUrl).origin}/v2/video_generation/${encodeURIComponent(taskId)}`, { method: "DELETE", headers: { authorization: `Bearer ${p.key}` }, signal: AbortSignal.timeout(20_000) });
+      const text = await r.text();
+      let j: any; try { j = JSON.parse(text); } catch {}
+      if (r.ok && (j?.action === "cancelled" || j?.status === "cancelled")) {
+        this.upstreamCancelled.add(op.id);
+        if (op.status === "running") { op.status = "canceled"; op.costUsd = 0; op.finishedAt = this.now(); }
+        op.cancel = { requestedAt, outcome: "upstream_cancelled" };
+        this.write();
+        this.o.log?.(`[local-gateway] model_call ${op.model} video task cancelled by MiniMax while queued (nothing charged)`);
+        return;
+      }
+      detail = `HTTP ${r.status} ${String(j?.error?.message ?? j?.base_resp?.status_msg ?? "").replaceAll(p.key, "[redacted]").slice(0, 160)}`.trim();
+    } catch (e) { detail = (e instanceof Error ? e.message : String(e)).replaceAll(p.key, "[redacted]").slice(0, 160); }
+    op.cancel = { requestedAt, outcome: "upstream_refused", detail };
+    this.write();
+    this.o.log?.(`[local-gateway] model_call ${op.model} cancel refused upstream (${detail}); it finishes and is charged once`);
+  }
+  /** docs/32 M15 — durable resume after the gateway process died with operations in flight (called by start()).
+   *  A video task MiniMax accepted is resumed by POLLING its task id (never re-submitted → never a second purchase);
+   *  a call still queued was never sent ($0); a synchronous call that was already sent has an unknowable outcome:
+   *  it is settled failed with $0 and the possible upstream bill is recorded in `unsettledExposure` — it is never
+   *  repeated. */
+  recoverInterruptedOperations(): Array<{ id: string; outcome: string }> {
+    const out: Array<{ id: string; outcome: string }> = [];
+    for (const op of Object.values(this.ledger.operations ?? {})) {
+      if (op.status !== "running") continue;
+      const at = this.now();
+      const taskId = typeof op.upstream?.task_id === "string" ? op.upstream.task_id : undefined;
+      if (taskId) {
+        const p = this.o.provider();
+        let priced: PricedCall | undefined;
+        try { priced = this.pricedFor(op); } catch {}
+        if (!p || !priced) continue; // no key / catalog change: stays running until a gateway that can poll it starts
+        op.recovery = { at, outcome: "resumed_polling" };
+        this.write();
+        const run = this.runOperation(op, priced, p, taskId);
+        this.inflight.add(run); void run.finally(() => this.inflight.delete(run));
+        out.push({ id: op.id, outcome: "resumed_polling" });
+        continue;
+      }
+      op.costUsd = 0; op.finishedAt = at;
+      if (op.phase === "queued") {
+        op.status = "failed"; op.recovery = { at, outcome: "never_sent" };
+        op.error = "The self-hosted gateway restarted before this call was sent to MiniMax. Nothing was charged.";
+      } else {
+        op.status = "failed"; op.recovery = { at, outcome: "sync_outcome_unknown" };
+        op.error = "The self-hosted gateway restarted while MiniMax was answering this call. It was not repeated; its result is unavailable.";
+        (this.ledger.unsettledExposure ??= []).push({ at, operationId: op.id, clientJob: op.clientJob, model: op.model, maximumUsd: op.maximumUsd, reason: "sync_call_interrupted" });
+      }
+      this.write();
+      out.push({ id: op.id, outcome: op.recovery!.outcome });
+    }
+    if (out.length) this.o.log?.(`[local-gateway] recovered ${out.length} interrupted operation(s): ${out.map((o) => o.outcome).join(", ")}`);
+    return out;
+  }
+  private pricedFor(op: OperationRow): PricedCall {
+    const body = op.request ? JSON.parse(op.request) : undefined;
+    return priceCall(op.model, body?.params);
+  }
   private operationView(op: OperationRow): Record<string, unknown> {
     const terminal = op.status !== "running";
     return {
@@ -616,7 +711,7 @@ export class LocalGatewayShim {
     let priced: PricedCall;
     try { priced = priceCall(body.model, body.params); } catch (e) { return this.refuse(res, 422, "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
     registerSecret(p.key);
-    const op: OperationRow = { id: operationId, jobId: `mc_${randomBytes(12).toString("hex")}`, projectId, clientJob, sha256, model: priced.model.model_slug, quoteId: quote.quoteId, maximumUsd: quote.maximumUsd, status: "running", createdAt: this.now(), assets: [], keyId };
+    const op: OperationRow = { id: operationId, jobId: `mc_${randomBytes(12).toString("hex")}`, projectId, clientJob, sha256, model: priced.model.model_slug, quoteId: quote.quoteId, maximumUsd: quote.maximumUsd, status: "running", createdAt: this.now(), assets: [], keyId, ...(priced.model.output_type === "video" ? { request: JSON.stringify({ params: body.params }) } : {}) };
     ops[operationId] = op;
     this.write();
     const run = this.runOperation(op, priced, p);
@@ -629,13 +724,24 @@ export class LocalGatewayShim {
     return this.json(res, 200, this.operationView(op));
   }
   readonly inflight = new Set<Promise<void>>();
-  private async runOperation(op: OperationRow, priced: PricedCall, p: ResolvedProvider): Promise<void> {
+  /** operations whose upstream video task MiniMax confirmed cancelled: the poll loop stops at its next tick */
+  private readonly upstreamCancelled = new Set<string>();
+  private async runOperation(op: OperationRow, priced: PricedCall, p: ResolvedProvider, resumeTaskId?: string): Promise<void> {
     const origin = new URL(p.baseUrl).origin;
+    const deps = {
+      origin, key: p.key, fetchImpl: this.o.mediaFetch ?? this.o.fetchImpl, readOwnUpload: (u: string) => this.readOwnUpload(u), sleep: this.o.sleep,
+      onTask: (taskId: string) => { op.upstream = { task_id: taskId }; this.write(); },
+      stopped: () => this.upstreamCancelled.has(op.id),
+    };
     try {
-      const out = await providerGate(`${p.gateKey ?? p.name}:media`, 1).run(() => runMiniMaxCall(priced, {
-        origin, key: p.key, fetchImpl: this.o.mediaFetch ?? this.o.fetchImpl, readOwnUpload: (u) => this.readOwnUpload(u), sleep: this.o.sleep,
-        onTask: (taskId) => { op.upstream = { task_id: taskId }; this.write(); },
-      }));
+      if (!resumeTaskId) { op.phase = "queued"; this.write(); }
+      const out = await providerGate(`${p.gateKey ?? p.name}:media`, 1).run(async () => {
+        // docs/32: a cancel that arrives while the call is still queued wins — nothing is ever sent to MiniMax
+        if (op.status !== "running") { const e: any = new Error("canceled before it was sent"); e.terminal = "canceled"; throw e; }
+        if (!resumeTaskId) { op.phase = "sent"; this.write(); }
+        return resumeTaskId ? pollMiniMaxVideo(priced, deps, resumeTaskId) : runMiniMaxCall(priced, deps);
+      });
+      if (op.status !== "running") return; // settled meanwhile (a confirmed upstream cancel): never charged
       for (const o of out.outputs) {
         const assetId = randomBytes(16).toString("hex");
         const ext = o.contentType === "audio/mpeg" ? ".mp3" : o.contentType === "image/jpeg" ? ".jpg" : o.contentType === "video/mp4" ? ".mp4" : ".bin";
@@ -650,7 +756,8 @@ export class LocalGatewayShim {
       this.write();
       this.o.log?.(`[local-gateway] model_call ${op.model} succeeded: $${out.costUsd} (max $${op.maximumUsd})`);
     } catch (e: any) {
-      op.status = e?.terminal === "timeout" ? "timeout" : "failed"; op.costUsd = 0; op.finishedAt = this.now();
+      if (op.status !== "running") return; // already canceled (before send / upstream cancelled): keep that settlement
+      op.status = e?.terminal === "timeout" ? "timeout" : e?.terminal === "canceled" ? "canceled" : "failed"; op.costUsd = 0; op.finishedAt = this.now();
       op.error = (e instanceof Error ? e.message : String(e)).replaceAll(p.key, "[redacted]").slice(0, 400);
       this.write();
       this.o.log?.(`[local-gateway] model_call ${op.model} ${op.status}: ${op.error}`);

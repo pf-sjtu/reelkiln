@@ -4,10 +4,9 @@
 //
 //   session:rename          L61731 → host.renameSession (L38915)
 //   session:reorder         L61698 → host.reorderSessions (L38482)
-//   session:setPermissionMode L61781 → host.setPermissionMode (L43987; spend-policy branch not ported)
+//   session:setPermissionMode L61781 → host.setPermissionMode (L43987; docs/32: spend-policy branch ported)
 //   client:rename / client:remove / client:reorder  L61819-61826 → registry (L36332-36423)
-//   permission:shown (send) L61803 → host.noteSpendApprovalShown (L46776): no spend approvals exist in the
-//                            port, so every requestId takes the original's `if (!pending) return` branch
+//   permission:shown (send) L61803 → host.noteSpendApprovalShown (L46776) (docs/32: raise / ask_each cards)
 //   quit:rendererState (send) L61804 → rendererQuitState (verbatim normalisation)
 //   file:openExternal       L61979 → shell.openExternal for http(s) only
 //   media:requestMic        L61904 → non-darwin: true; darwin: systemPreferences
@@ -30,6 +29,7 @@ export interface LocalChannelDeps {
     setPermissionMode(id: string, mode: string, options?: unknown): Promise<void>;
     listSessions(): Array<{ sessionId: string; clientId: string; status: string; quickstart?: any; jobId?: string }>;
     removeSession(id: string): boolean;
+    noteSpendApprovalShown?(requestId: string): void;
   };
   registry: {
     listClients(): Array<{ clientId: string; name: string; tenant?: string }>;
@@ -105,8 +105,8 @@ export function localChannelHandlers(d: LocalChannelDeps): { invoke: Record<stri
     "characters:delete": (cwd: unknown, slug: unknown) => d.characterStore.delete(d.absCwd(String(cwd)), String(slug)),
   };
   const send: Record<string, Handler> = {
-    // L61803 → noteSpendApprovalShown (L46776): pendingSpendOperations is always empty in the port
-    "permission:shown": (requestId: unknown) => { d.log?.(`[port] permission:shown ${String(requestId).slice(0, 64)} (no spend approval pending — original no-op branch)`); },
+    // L61803 → noteSpendApprovalShown (L46776)
+    "permission:shown": (requestId: unknown) => { if (typeof requestId === "string") d.host?.noteSpendApprovalShown?.(requestId); },
     // L61804-61816 verbatim
     "quit:rendererState": (state: any) => {
       rendererQuitState = {

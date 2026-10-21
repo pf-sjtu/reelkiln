@@ -587,7 +587,26 @@ export const SPECS = [
       slice("main", /^function isLegacySpendPlanApproval\(value\) \{/, /^}$/, /^class SessionSpendBudgets \{/),
     ],
     subs: [],
-    exports: ["SpendBudgetAuthorityMismatchError", "spendBudgetAuthority", "DEFAULT_AUTHORITY", "validatePersistedState", "toCents", "fromCents", "SessionSpendBudgets"],
+    exports: ["SpendBudgetAuthorityMismatchError", "spendBudgetAuthority", "DEFAULT_AUTHORITY", "validatePersistedState", "toCents", "fromCents", "requiredSpendCeilingUsd", "SessionSpendBudgets"],
+  },
+  {
+    // docs/32 M15: the ORIGINAL spend-approval cards — the settled-ask projection settledAskFromPermission and its
+    // copy helpers (L1666-1797: NOT_ANSWERED, settledChoice, questionSummary, approvedSummary, MONEY_ASK_TITLE,
+    // formatExactUsd, quotedSpendDescription, raiseBudgetDescription, budgetBlockLine, permissionTitle), the wb-chunk
+    // quotedOperationLine (the card's operation line), the refusals PLAN_FIRST_REFUSAL / UNKNOWN_COST_BUDGET_REFUSAL
+    // (L34586-34591) and spendPolicyForMaterialChange (L34057, the Bypass → ask_each transition).
+    out: "src/main/spend/spend-approval.generated.ts",
+    imports: ['import { engineFamilyLine } from "../agent/history.generated";'],
+    slices: () => [
+      slice("main", /^const NOT_ANSWERED = \{$/, /^}$/, /^function fileName\(path\)/),
+      sliceUntil("main", /^function settledChoice\(selection, answer, options\) \{$/, /^function settledAskFromInput\(/),
+      slice("wb", /^const SYNTH_VOICE_MODE_LINES = \{$/, /^};$/),
+      slice("wb", /^const QUOTED_TOOL_ENGINE = \{$/, /^}$/, /^function quotedOperationLine\(/),
+      slice("main", /^const PLAN_DECLINED_INSTRUCTION =$/, /;$/, /^const PLAN_FIRST_REFUSAL =$/),
+      slice("main", /^function spendPolicyForMaterialChange\(change\) \{$/, /^}$/),
+    ],
+    subs: [],
+    exports: ["NOT_ANSWERED", "settledAskFromPermission", "approvedSummary", "MONEY_ASK_TITLE", "formatExactUsd", "quotedSpendDescription", "raiseBudgetDescription", "budgetBlockLine", "permissionTitle", "unknownCostHoldDescription", "quotedOperationLine", "PLAN_DECLINED_INSTRUCTION", "UNKNOWN_COST_BUDGET_REFUSAL", "PLAN_FIRST_REFUSAL", "spendPolicyForMaterialChange"],
   },
   {
     // quickstart:start (L61294) → the ORIGINAL QuickstartStartCoordinator (L33623-33974).

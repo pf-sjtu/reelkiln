@@ -1176,4 +1176,4 @@ class SessionSpendBudgets {
   }
 }
 
-export { SpendBudgetAuthorityMismatchError, spendBudgetAuthority, DEFAULT_AUTHORITY, validatePersistedState, toCents, fromCents, SessionSpendBudgets };
+export { SpendBudgetAuthorityMismatchError, spendBudgetAuthority, DEFAULT_AUTHORITY, validatePersistedState, toCents, fromCents, requiredSpendCeilingUsd, SessionSpendBudgets };

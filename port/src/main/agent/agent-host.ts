@@ -42,7 +42,10 @@ import { modelAccountLimit, modelAccountLimitPresentation } from "./account-limi
 import { deletionBlockMessage, moveProjectToTrash, planProjectTrash, PROJECT_TRASH_RETENTION_MS } from "../jobs/project-trash.generated";
 import { assembleOriginalVideoContext, readPromiseBrief } from "../jobs/original-context.generated";
 import { MaterialsLedger } from "../materials/materials-ledger.generated";
-import { SessionSpendBudgets, spendBudgetAuthority } from "../spend/spend-budgets.generated";
+import { SessionSpendBudgets, requiredSpendCeilingUsd, spendBudgetAuthority } from "../spend/spend-budgets.generated";
+import { PLAN_FIRST_REFUSAL, UNKNOWN_COST_BUDGET_REFUSAL, quotedOperationLine, quotedSpendDescription, raiseBudgetDescription, settledAskFromPermission as settledAskFromPermissionGenerated, spendPolicyForMaterialChange } from "../spend/spend-approval.generated";
+/** the generated slice is untyped JS: its trailing parameters are optional in the original */
+const settledAskFromPermission = settledAskFromPermissionGenerated as (request: any, outcome: string, answers?: unknown, selections?: unknown, savedBudgetUsd?: number) => any;
 import { costUsd, type ModelPrice } from "../gateway/pricing";
 import { normalizeSpendCeilingUsd } from "../spend/spend-wb.generated";
 import { resolveJobDir } from "../engine/job-boundary";
@@ -54,7 +57,7 @@ import { getLogger, redact, redactText, registerSecret, type Logger } from "../l
 import type { SessionMetaLike } from "../llm/route-service";
 import { isClientJobId } from "../engine/session";
 import type { AgentGatewayProxy, GatewaySessionPolicy } from "../gateway/agent-gateway-proxy";
-import { isAnthropicPassthroughPath, isUnknownCostQuote } from "../gateway/agent-gateway-proxy";
+import { isAnthropicPassthroughPath, isUnknownCostQuote, SPEND_POLICY_CONFLICT_MESSAGE } from "../gateway/agent-gateway-proxy";
 import { sanitizedAgentEnv } from "../llm/llm-route";
 import { execFile } from "node:child_process";
 import {
@@ -195,6 +198,8 @@ export interface AgentHostDeps {
   agentGatewayProxy?: () => AgentGatewayProxy | undefined;
   /** docs/31: currentEngine()?.version for the proxy's diagnostic headers (agentGatewayPolicy L39708). */
   engineVersion?: () => string | undefined;
+  /** docs/32: IDLE_ENGINE_CHILD_SWEEP_MS (L34782) for the accepted-operation collector sweep; 0 disables (tests). */
+  operationSweepMs?: number;
   /** docs/30: THE price table (gateway/pricing.ts priceTable: env → models.dev → MiniMax fallback) — the same resolver
    *  the local gateway ledger charges with. Every route's displayed spend is priced with it from metered token usage;
    *  the SDK's Claude-priced total_cost_usd is never shown. Absent → no LLM spend is shown (tests / chat mode). */
@@ -311,6 +316,13 @@ export const PORT_PAID_REFUSAL = "Paid generation needs a Videoclaw account, whi
 export class AgentHost {
   private readonly sessions = new Map<string, Session>();
   private readonly pendingPermissions = new Map<string, PendingPermission>();
+  /** docs/32 M15: spend-approval cards (pendingSpendOperations L34930, retiredSpendApprovals, budgetApprovalSaves,
+   *  spendPolicyChangeGenerations, raiseRepricesScheduled). */
+  private readonly pendingSpendOperations = new Map<string, any>();
+  private readonly retiredSpendApprovals = new Map<string, { sessionId: string; reason: string }>();
+  private readonly budgetApprovalSaves = new Set<string>();
+  private readonly spendPolicyChangeGenerations = new Map<string, number>();
+  private readonly raiseRepricesScheduled = new Set<string>();
   /** docs/30: studio input requests (pendingInputs L34985, rememberInput L38545). */
   private readonly pendingInputs = new Map<string, { request: any; sessionId: string; runtime?: Runtime; order: number; resolve: (r: any) => void; resolveOnRetire: boolean }>();
   /** docs/30: the session-plan lifecycle (studio/session-plan-host.ts) and the project-memory host it binds through. */
@@ -385,11 +397,152 @@ export class AgentHost {
     // spendBudgetAuthority(gatewayUrl, undefined) authority; persisted to spend-budgets.json (L34826).
     this.spendBudgetFile = d.stateDir ? join(d.stateDir, "spend-budgets.json") : undefined;
     this.spendBudgets = new SessionSpendBudgets(
-      (sessionId: string, snapshot: unknown) => { try { this.d.emit.spendSnapshot?.(sessionId, snapshot); } catch {} },
+      (sessionId: string, snapshot: unknown) => { try { this.d.emit.spendSnapshot?.(sessionId, snapshot); } catch {} this.scheduleRaiseReprice(sessionId); },
       (state: unknown) => this.writeSpendBudgets(state),
       spendBudgetAuthority("http://localhost", undefined),
     );
     this.loadSpendBudgets();
+    // L34905-34913: the idle sweep collects accepted operations (collectAcceptedOperations L39793)
+    const sweepMs = d.operationSweepMs ?? 15e3;
+    if (d.engine && d.agentGatewayProxy && sweepMs > 0) {
+      this.operationSweep = setInterval(() => this.collectAcceptedOperations(), sweepMs);
+      this.operationSweep.unref?.();
+    }
+  }
+  private operationSweep?: ReturnType<typeof setInterval>;
+  /** operationCollectors (L39795) keyed JSON.stringify([sessionId, owner, id]) */
+  private readonly operationCollectors = new Map<string, AbortController>();
+  private operationCollectorCursor = 0;
+  /** interrupt L43868-43893 — Stop marks this video's accepted operations cancelRequested (due now) and aborts
+   *  their running collectors, so the next collection passes --cancel. */
+  private requestOperationCancellation(s: Session): Error | undefined {
+    try {
+      const rows: any[] = Array.isArray((s.meta as any).acceptedOperations) ? (s.meta as any).acceptedOperations : [];
+      const pending = rows.map((row) =>
+        (!row.cancelRequested || (row.nextRecoveryAt ?? 0) > Date.now()) && row.owner?.client_job === s.meta.jobId && row.cwd === s.meta.cwd
+          ? { ...row, cancelRequested: true, nextRecoveryAt: 0 } : row);
+      if (pending.some((row, index) => row !== rows[index])) {
+        (s.meta as any).acceptedOperations = pending;
+        if (!this.flushRegistry()) {
+          (s.meta as any).acceptedOperations = rows;
+          throw new Error("The app could not save media cancellation. Your accepted media is still being recovered; try Stop again.");
+        }
+        for (const row of pending) if (row.cancelRequested) this.operationCollectors.get(JSON.stringify([s.meta.sessionId, row.owner, row.id]))?.abort();
+        this.log.info("agent.paid.cancel_requested", { sessionId: s.meta.sessionId, operations: pending.filter((r) => r.cancelRequested).map((r) => r.id) });
+      }
+      return undefined;
+    } catch (error) {
+      this.log.warn("agent.paid.cancel_request_failed", { sessionId: s.meta.sessionId, error });
+      return error instanceof Error ? error : new Error("Media cancellation could not be saved.");
+    }
+  }
+  /** collectAcceptedOperations (L39793) — the /v1/model_call slice (the only durable path the port's tools
+   *  create). Runs engine tools/_operations.py with a recovery-only proxy capability (auxiliaryCredentials with
+   *  recoveryOnly + cancelOperationId on a Stop): a completed operation leaves acceptedOperations, its completion
+   *  joins completedModelResults, the job watcher picks up incoming/, and spend reconciles; a failed collection
+   *  backs off 15s·2^n (≤1h). NOT PORTED: busy-collector lock wrapper, late-result lines/reports, materials
+   *  reconcile for media pulls, collectorOwned journal marks (docs/32). Returns the collections it started. */
+  collectAcceptedOperations(): Promise<void>[] {
+    const proxy = this.d.agentGatewayProxy?.();
+    const started: Promise<void>[] = [];
+    if (!proxy || this.operationCollectors.size >= 2) return started;
+    const engine = this.d.engine?.currentEngine()?.path;
+    if (!engine) return started;
+    const python = join(engine, ".venv", "bin", "python");
+    const script = join(engine, "tools", "_operations.py");
+    if (!existsSync(python) || !existsSync(script)) return started;
+    const gatewayUrl = (this.d.gatewaySettings?.().gatewayUrl ?? "").replace(/\/+$/, "");
+    const pending: Array<{ s: Session; operation: any }> = [];
+    for (const s of this.sessions.values()) {
+      if (s.interrupting || this.deletingSessions.has(s.meta.sessionId)) continue;
+      const rows: any[] = Array.isArray((s.meta as any).acceptedOperations) ? (s.meta as any).acceptedOperations : [];
+      for (const operation of rows) {
+        if (operation?.path !== "/v1/model_call" || typeof operation.id !== "string" || !/^[A-Za-z0-9._-]{1,128}$/.test(operation.id)) continue;
+        // collectionDue (L40429)
+        if (operation.owner?.gateway_url !== gatewayUrl || (operation.nextRecoveryAt ?? 0) > Date.now() || operation.recoveryParked?.engine === engine) continue;
+        pending.push({ s, operation });
+      }
+    }
+    for (let checked = 0; checked < pending.length && this.operationCollectors.size < 2; checked++) {
+      const { s, operation } = pending[this.operationCollectorCursor++ % pending.length];
+      const sessionId = s.meta.sessionId;
+      const key = JSON.stringify([sessionId, operation.owner, operation.id]);
+      if (this.operationCollectors.has(key)) continue;
+      const controller = new AbortController();
+      const activeJobId = s.meta.jobId;
+      const current = () => !controller.signal.aborted && this.sessions.get(sessionId) === s && s.meta.jobId === activeJobId;
+      const boundJob: any = resolveJobDir({ sessionId, jobId: operation.owner.client_job }, () => ({ ...s.meta, cwd: operation.cwd, jobId: operation.owner.client_job }) as any);
+      let refused: string | undefined;
+      let notFound = false;
+      let credentials2: { gatewayKey: string; gatewayUrl: string };
+      try {
+        credentials2 = proxy.auxiliaryCredentials(sessionId, {
+          projectId: () => operation.owner.project_id,
+          jobId: () => operation.owner.client_job,
+          recoveryOnly: true,
+          noteCapabilityRefusal: (method: string, path: string) => { refused ??= `${method} ${path}`; },
+          noteOperationNotFound: (operationId: string) => { if (operationId === operation.id) notFound = true; },
+          ...(operation.cancelRequested ? { cancelOperationId: operation.id } : {}),
+        } as any) as any;
+      } catch { continue; }
+      this.operationCollectors.set(key, controller);
+      const collectorArgs = boundJob.ok ? ["--job", boundJob.jobPath, "--operation-id", operation.id, "--owner-json", JSON.stringify(operation.owner), "--request-sha256", operation.sha256, ...(operation.cancelRequested ? ["--cancel"] : [])] : [];
+      const collect = boundJob.ok
+        ? new Promise<string>((resolve2, reject) => {
+          execFile(python, [script, ...collectorArgs], {
+            cwd: dirname(boundJob.jobsDir), timeout: 3e5, signal: controller.signal, maxBuffer: 16 * 1024 * 1024,
+            env: {
+              ...sanitizedAgentEnv(process.env), PATH: (() => { try { return this.d.engine!.engineSessionEnv().PATH ?? process.env.PATH ?? ""; } catch { return process.env.PATH ?? ""; } })(), UV_PYTHON_PREFERENCE: "only-managed",
+              VIDEOCLAW_ENGINE: engine, VIDEOCLAW_WORKSPACE: dirname(boundJob.jobsDir), VIDEOCLAW_JOBS_DIR: boundJob.jobsDir, PYTHON_DOTENV_DISABLED: "1",
+              VIDEOCLAW_COLLECTOR_DELIVERY: "v1", VIDEOCLAW_API_KEY: credentials2.gatewayKey, VIDEOCLAW_GATEWAY_URL: credentials2.gatewayUrl,
+            },
+          }, (error, out) => { if (error) { (error as any).stdout = String(out ?? ""); reject(error); } else resolve2(String(out)); });
+        })
+        : Promise.reject(new Error("The original video directory is unavailable for recovery."));
+      const run = collect.then(async (output) => {
+        if (!current()) return;
+        const last = output.trimEnd().split("\n").at(-1)?.trim();
+        let result: any; try { result = last?.startsWith("{") ? JSON.parse(last) : undefined; } catch {}
+        if (!result || result.operation_id !== operation.id || typeof result.complete !== "boolean") throw new Error("Collector returned an invalid operation result.");
+        const rows: any[] = Array.isArray((s.meta as any).acceptedOperations) ? (s.meta as any).acceptedOperations : [];
+        if (!rows.includes(operation)) return;
+        this.log.info("agent.paid.operation_collected", { sessionId, operationId: operation.id, status: result.status, complete: result.complete, cancelRequested: operation.cancelRequested === true });
+        if (!result.complete) {
+          if (operation.recoveryFailures || operation.gatewayNotFound) { operation.recoveryFailures = 0; delete operation.nextRecoveryAt; delete operation.gatewayNotFound; this.saveRegistry(); }
+          return;
+        }
+        const previousCompletions = (s.meta as any).completedModelResults;
+        if (result.completion !== undefined && boundJob.ok) {
+          const completion = result.completion;
+          if (completion?.operation_id !== operation.id || completion.status !== result.status || (Array.isArray(completion.saved) && completion.saved.some((path: string) => !isAbsolute(path) || !/^incoming\/model-[A-Za-z0-9._-]+$/.test(relative(boundJob.jobPath, path))))) {
+            throw new Error("Collector returned an invalid model completion.");
+          }
+          (s.meta as any).completedModelResults = [...(previousCompletions ?? []).filter((row: any) => row?.result?.operation_id !== operation.id),
+            { projectId: operation.owner.project_id, jobId: operation.owner.client_job, cwd: operation.cwd, requestSha256: operation.sha256, result: completion }].slice(-32);
+        }
+        (s.meta as any).acceptedOperations = rows.filter((row) => row !== operation);
+        if (!this.flushRegistry()) {
+          (s.meta as any).acceptedOperations = rows;
+          (s.meta as any).completedModelResults = previousCompletions;
+          throw new Error("The collected result could not be saved yet.");
+        }
+        if (result.status === "succeeded") { try { this.ensureWatcher(s, true); } catch {} }
+        await this.reconcileGatewaySpend(s);
+      }).catch((error) => {
+        if (controller.signal.aborted || this.sessions.get(sessionId) !== s) return;
+        const rows: any[] = Array.isArray((s.meta as any).acceptedOperations) ? (s.meta as any).acceptedOperations : [];
+        if (!rows.includes(operation)) return;
+        const failures = Math.min((operation.recoveryFailures ?? 0) + 1, 10);
+        if (notFound && (!operation.recoveryFailures || operation.gatewayNotFound)) operation.gatewayNotFound = true; else delete operation.gatewayNotFound;
+        operation.recoveryFailures = failures;
+        operation.nextRecoveryAt = Date.now() + Math.min(15e3 * 2 ** failures, 36e5);
+        if (refused !== undefined) { operation.recoveryParked = { engine }; delete operation.nextRecoveryAt; } else delete operation.recoveryParked;
+        this.saveRegistry();
+        this.log.warn("agent.paid.operation_collect_failed", { sessionId, operationId: operation.id, failures, refused, error: redactText(error instanceof Error ? error.message : String(error)).slice(0, 400) });
+      }).finally(() => { if (this.operationCollectors.get(key) === controller) this.operationCollectors.delete(key); });
+      started.push(run);
+    }
+    return started;
   }
 
   listSessions(): AgentSessionMeta[] {
@@ -444,9 +597,12 @@ export class AgentHost {
   /** setPermissionMode (L43987) + deferPermissionMode (L44025) + applyPermissionMode slice — session:setPermissionMode.
    *  NOT PORTED: spend policy (no spend ledger → never "capped"), codex containment, credit handoffs,
    *  applyPendingPermissionMode at turn end (a deferred pick applies on the next send). */
-  async setPermissionMode(sessionId: string, mode: string, _options?: { confirmSpendLimitRemoval?: boolean }): Promise<void> {
+  async setPermissionMode(sessionId: string, mode: string, options?: { confirmSpendLimitRemoval?: boolean }): Promise<void> {
     const s = this.mustGet(sessionId);
     if (typeof mode !== "string" || !["default", "acceptEdits", "auto", "plan", "bypassPermissions"].includes(mode)) throw new Error("Invalid permission mode.");
+    // L43996-44003 (docs/32): Bypass removes a hard limit only with explicit consent
+    const spend = this.spendBudgets.snapshot(sessionId);
+    if (mode === "bypassPermissions" && spend.policy === "capped" && options?.confirmSpendLimitRemoval !== true) throw new Error("Bypass requires explicit confirmation to remove the hard spending limit.");
     delete s.meta.permissionModeSwitchFailed;
     if (s.meta.status === "running" || s.meta.status === "awaiting_permission" || this.preparing.has(sessionId)) {
       if (mode === s.meta.permissionMode) delete s.meta.pendingPermissionMode;
@@ -456,13 +612,26 @@ export class AgentHost {
       return;
     }
     delete s.meta.pendingPermissionMode;
-    const runtime = s.runtime && !s.runtime.dead ? s.runtime : undefined;
-    if (runtime) {
-      try { await (runtime.query as any).setPermissionMode?.(mode); } catch { if (s.runtime === runtime) this.teardownRuntime(s, "permission-mode"); }
-    }
-    s.meta.permissionMode = mode;
-    this.saveRegistry();
-    this.d.emit.sessionsChanged(this.listSessions());
+    this.beginSettingsSpendPolicyChange(sessionId, "settings"); // L44011
+    await this.enqueueSpendPolicyUpdate(sessionId, async () => {
+      const priorMode = s.meta.permissionMode;
+      const runtime = s.runtime && !s.runtime.dead ? s.runtime : undefined;
+      let runtimeSwitched = false;
+      if (runtime) {
+        try { await (runtime.query as any).setPermissionMode?.(mode); runtimeSwitched = true; } catch { if (s.runtime === runtime) this.teardownRuntime(s, "permission-mode"); }
+      }
+      // applyPermissionMode L44128: Bypass ⇒ unlimited_for_video; leaving Bypass ⇒ ask_each (spendPolicyForMaterialChange L34057)
+      try {
+        const modePolicy = spendPolicyForMaterialChange({ priorMode, mode }) as any;
+        if (modePolicy) await this.installSpendPolicy(sessionId, modePolicy);
+      } catch (error) {
+        if (runtimeSwitched && s.runtime === runtime) await (runtime!.query as any).setPermissionMode?.(priorMode).catch(() => { if (s.runtime === runtime) this.teardownRuntime(s, "permission-mode"); });
+        throw new Error(`Videoclaw couldn't switch this video to ${mode}.`);
+      }
+      s.meta.permissionMode = mode;
+      this.saveRegistry();
+      this.d.emit.sessionsChanged(this.listSessions());
+    });
   }
   /** removeSession (L39046) slice for client:remove — sidebar record only; files stay on disk. */
   removeSession(sessionId: string): boolean {
@@ -1268,9 +1437,20 @@ export class AgentHost {
     });
   }
   /** respondPermission (L44432) for ordinary permission / question cards. */
-  respondPermission(requestId: string, response: { behavior?: string; message?: string; updatedInput?: Record<string, unknown>; answers?: unknown; selections?: unknown } | undefined): void {
+  respondPermission(requestId: string, response: { behavior?: string; message?: string; updatedInput?: Record<string, unknown>; answers?: unknown; selections?: unknown; spendDecision?: string; spendCeilingUsd?: number; shownBudgetUsd?: number } | undefined): void {
+    if (response?.behavior === "allow" && this.budgetApprovalSaves.has(String(requestId))) return; // L44433
+    if (this.respondSpendOperation(String(requestId), response)) return; // docs/32: the spend-operation branch (L44434-44575)
     const pending = this.pendingPermissions.get(String(requestId));
-    if (!pending) return;
+    if (!pending) {
+      // L44577-44589: a late click on a withdrawn spend card is answered honestly
+      const retired = this.retiredSpendApprovals.get(String(requestId));
+      if (retired) {
+        this.retiredSpendApprovals.delete(String(requestId));
+        const rs = this.sessions.get(retired.sessionId);
+        if (rs) this.send(rs, { kind: "error", message: retired.reason, canRetry: Boolean(rs.failedInputs?.length) } as any);
+      }
+      return;
+    }
     this.pendingPermissions.delete(String(requestId));
     const s = this.sessions.get(pending.sessionId);
     if (s) this.send(s, { kind: "permission_resolved", requestId: pending.request.requestId });
@@ -1280,7 +1460,7 @@ export class AgentHost {
     // L40098) → allow with { ...input, answers }; "allow" → allow with the request's own input; anything
     // else → deny ("Denied by user" when no message). docs/23: found by the M5 UI-e2e (the card's answer
     // was being turned into a deny).
-    const input = pending.request.input as Record<string, unknown>;
+    const input = ((pending as any).input ?? pending.request.input) as Record<string, unknown>;
     let decision: CanUseToolResult;
     if (response?.behavior === "answers") decision = { behavior: "allow", updatedInput: { ...input, answers: response.answers } };
     else if (response?.behavior === "allow") decision = { behavior: "allow", updatedInput: input };
@@ -1304,6 +1484,7 @@ export class AgentHost {
   listPendingInteractions(): Array<{ kind: "permission" | "input"; request: any; order: number }> {
     return [
       ...[...this.pendingPermissions.values()].map((p) => ({ kind: "permission" as const, request: p.request, order: p.order })),
+      ...[...this.pendingSpendOperations.values()].map((p) => ({ kind: "permission" as const, request: p.request, order: p.order })),
       ...[...this.pendingInputs.values()].map((p) => ({ kind: "input" as const, request: p.request, order: p.order })),
     ].sort((a, b) => a.order - b.order);
   }
@@ -1332,6 +1513,9 @@ export class AgentHost {
     if (reason !== "stop" && reason !== "steer") throw new Error("Invalid interruption reason.");
     if (s.interrupting) { await s.interrupting; return; }
     const wasRunning = s.meta.status === "running" || s.meta.status === "awaiting_permission";
+    if (reason === "stop") this.beginSettingsSpendPolicyChange(sessionId, "turn_ended"); // L43866
+    const cancellationError = reason === "stop" ? this.requestOperationCancellation(s) : undefined; // L43868-43893
+    if (cancellationError) this.log.warn("agent.paid.cancel_not_saved", { sessionId, error: cancellationError.message });
     this.cancelPendingPermissions(s);
     this.closeOpenTools(s, "cancelled");
     const rt = s.runtime;
@@ -1361,6 +1545,13 @@ export class AgentHost {
   /** teardownRuntime (L42932) slice: retire the runtime, close the child, then the gate proxy. */
   teardownRuntime(s: Session, reason: string): void {
     s.epoch++;
+    // L42935: a retired runtime retires this video's spend cards (the operation it was asked for is gone)
+    for (const [requestId, pending] of [...this.pendingSpendOperations]) {
+      if (pending.sessionId !== s.meta.sessionId) continue;
+      this.takePendingSpendOperation(requestId, "retired");
+      this.send(s, { kind: "permission_resolved", requestId } as any);
+      pending.resolve("deny");
+    }
     const rt = s.runtime;
     if (!rt) return;
     rt.dead = true;
@@ -1397,6 +1588,8 @@ export class AgentHost {
 
   /** App quit: retire everything. */
   async dispose(): Promise<void> {
+    if (this.operationSweep) clearInterval(this.operationSweep);
+    for (const c of this.operationCollectors.values()) c.abort();
     for (const sessionId of [...this.watchers.keys()]) this.retireWatcher(sessionId); // L45572
     const closing: Promise<void>[] = [];
     for (const s of this.sessions.values()) { const rt = s.runtime; if (rt) { this.teardownRuntime(s, "dispose"); if (rt.closed) closing.push(rt.closed); } }
@@ -1852,19 +2045,24 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     if (current.meta.permissionMode === "bypassPermissions" && options?.confirmDisableBypass !== true) throw new Error("Turn off Bypass before setting a hard spending limit.");
     const requestedUsd = normalizeSpendCeilingUsd(usd as number);
     if (requestedUsd === null || requestedUsd <= 0) throw new Error("Spend budget must be a positive finite amount.");
-    if (options?.approvalRequestId !== undefined) throw new Error("That spending approval is no longer waiting."); // setApprovalSpendCeiling: no pending spend approvals exist
-    const disablingBypass = current.meta.permissionMode === "bypassPermissions";
-    if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
-    this.spendBudgets.setCeiling(sessionId, requestedUsd);
-    if (disablingBypass) {
-      current.meta.permissionMode = "auto";
-      this.saveRegistry();
-      this.d.emit.sessionsChanged(this.listSessions());
-      try { if (current.runtime && !current.runtime.dead) await (current.runtime.query as any).setPermissionMode?.("auto"); } catch { this.teardownRuntime(current, "permission-mode"); }
-    }
-    const snapshot = this.spendBudgets.snapshot(sessionId);
-    const usedUsd = (snapshot.spentUsd ?? 0) + snapshot.reservedUsd;
-    return { snapshot, ...(usedUsd > requestedUsd ? { warning: `You've already used $${usedUsd.toFixed(2)}. New paid work will wait until you raise the budget.` } : {}) };
+    if (options?.approvalRequestId !== undefined) return this.setApprovalSpendCeiling(sessionId, requestedUsd, String(options.approvalRequestId)); // L47173
+    this.beginSettingsSpendPolicyChange(sessionId, "settings");
+    return this.enqueueSpendPolicyUpdate(sessionId, async () => {
+      const session2 = this.mustGet(sessionId);
+      const disablingBypass = session2.meta.permissionMode === "bypassPermissions";
+      if (disablingBypass && options?.confirmDisableBypass !== true) throw new Error("Turn off Bypass before setting a hard spending limit.");
+      if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
+      await this.installSpendPolicy(sessionId, { kind: "capped", ceilingUsd: requestedUsd });
+      if (disablingBypass) {
+        session2.meta.permissionMode = "auto";
+        this.saveRegistry();
+        this.d.emit.sessionsChanged(this.listSessions());
+        try { if (session2.runtime && !session2.runtime.dead) await (session2.runtime.query as any).setPermissionMode?.("auto"); } catch { this.teardownRuntime(session2, "permission-mode"); }
+      }
+      const snapshot = this.spendBudgets.snapshot(sessionId);
+      const usedUsd = (snapshot.spentUsd ?? 0) + snapshot.reservedUsd;
+      return { snapshot, ...(usedUsd > requestedUsd ? { warning: `You've already used $${usedUsd.toFixed(2)}. New paid work will wait until you raise the budget.` } : {}) };
+    });
   }
   /** loadSpendBudgets (L36570) slice: restore spend-budgets.json; NOT PORTED: the storage-block marker. */
   private loadSpendBudgets(): void {
@@ -1938,6 +2136,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     if (!s || s.meta.status !== "awaiting_permission") return;
     for (const p of this.pendingPermissions.values()) if (p.sessionId === sessionId) return;
     for (const p of this.pendingInputs.values()) if (p.sessionId === sessionId) return;
+    for (const p of this.pendingSpendOperations.values()) if (p.sessionId === sessionId) return; // sessionHasPendingInteraction L45540
     const live = s.runtime && !s.runtime.dead ? s.runtime : undefined;
     if (live && runtime !== undefined && live !== runtime) return;
     if (live && s.turnStartedAtMs !== undefined) { this.setStatus(s, "running"); return; }
@@ -2282,7 +2481,8 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       diagnostic: { appVersion: this.d.codex?.appVersion, engineVersion: this.d.engineVersion?.() },
       prepareSpend: (jobId, signal) => this.enqueueSpendPolicyUpdate(sessionId, async () => {
         if (signal.aborted || this.sessions.get(sessionId) !== s || s.meta.jobId !== jobId) throw new Error("This paid operation is no longer current.");
-        await this.materializeGatewaySpendPolicy(s);
+        // L39731: an ask_each video keeps the gateway's per_operation authority (installed by installSpendPolicy)
+        if (this.spendBudgets.snapshot(sessionId).policy !== "ask_each") await this.materializeGatewaySpendPolicy(s);
       }),
       authorizeSpend: (request2, signal) => this.authorizeGatewaySpend(s, request2, signal),
       finishSpend: (reservationId) => {
@@ -2292,44 +2492,19 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       noteOperationStatus: (operationId, status) => this.log.info("agent.paid.operation_status", { sessionId, operationId, status }),
     };
   }
-  /** authorizeGatewaySpend (L45755) → authorizeGatewaySpendAtHead (L45860), queued per video. PORTED branches: the
-   *  plan fence (spendAdmissionFence L45795: creative tools need an accepted plan unless none/bypass), a zero-price
-   *  quote, capped reserve+commit (with the original refusal copy), unlimited_for_video reserve+commit.
-   *  NOT PORTED (docs/31 §1.4): the raise-the-cap card (requestExactSpendChoice) and the per-operation exact-spend
-   *  card for ask_each — both refuse BEFORE any submission with a port message naming the missing budget. */
+  /** authorizeGatewaySpend (L45755) → authorizeGatewaySpendAtHead (L45860), queued per video (enqueueSpendPolicyUpdate)
+   *  and fenced by the video's spend-policy generation (spendAdmissionFence L45795). docs/32 M15: the raise card
+   *  (requestExactSpendChoice "raise", a capped video whose remaining budget cannot cover the exact quote) and the
+   *  per-operation card (ask_each → GET the gateway's spend authority, per_operation → "Allow this paid operation?")
+   *  are now the original flows. NOT PORTED (unreachable here): unknown-cost holds (the shim advertises no
+   *  unknown-cost policy → the proxy refuses such quotes first), the Anthropic-passthrough held-turn approvals
+   *  (the gateway route's reasoning reaches the shim directly, not through this proxy), the advisory-budget
+   *  recommendation (plan_paid_operations is not registered — advisoryBudgetEligible is always false). */
   async authorizeGatewaySpend(s: Session, request2: { jobId: string; method: "POST"; path: string; body: Buffer; quote: any }, signal?: AbortSignal): Promise<any> {
     const sessionId = s.meta.sessionId;
-    const decide = async (): Promise<any> => {
-      const quote = request2.quote;
-      const creative = new Set(["mint_image", "mint_video", "cast_avatar", "perform_avatar", "synth_voice", "lipsync", "music", "model_call"]);
-      const planRefusal = () => (creative.has(quote.tool) ? this.plans?.sessionPlanProductionRefusal(sessionId) : undefined);
-      const current = () => !signal?.aborted && !planRefusal() && s.meta.jobId === request2.jobId && this.sessions.get(sessionId) === s;
-      { const refusal2 = planRefusal(); if (refusal2) return { allowed: false, reason: refusal2 }; }
-      if (!current()) return { allowed: false, reason: "This paid operation no longer belongs to this video." };
-      if (isUnknownCostQuote(quote)) return { allowed: false, reason: "This operation does not have a reliable maximum price." };
-      if (quote.maximumUsd === 0) return { allowed: true, isCurrent: current };
-      let snapshot2 = this.spendBudgets.snapshot(sessionId);
-      if (snapshot2.policy === "capped") {
-        const reservation2 = this.spendBudgets.reserve(sessionId, quote.maximumUsd, { gatewayJobId: request2.jobId });
-        if (reservation2.allowed) { this.spendBudgets.commit(sessionId, reservation2.reservationId); return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current }; }
-        snapshot2 = reservation2.snapshot;
-        if (reservation2.reason !== "over_ceiling") {
-          return { allowed: false, reason: reservation2.reason === "unknown_spend" ? "An earlier paid operation still needs spend reconciliation." : reservation2.reason === "unpriced" ? "This operation does not have a reliable maximum price." : "This video no longer has an active spending limit." };
-        }
-        if ((snapshot2.remainingUsd ?? 0) <= 0) return { allowed: false, reason: "This video’s budget is exhausted. Change the budget before starting more paid work. Nothing was sent." };
-        // PORT-NEW copy: requestExactSpendChoice("raise") card not ported
-        return { allowed: false, reason: `This operation's maximum ($${Number(quote.maximumUsd).toFixed(4)}) is above this video's remaining budget ($${Number(snapshot2.remainingUsd ?? 0).toFixed(4)}). Raise the video budget, then retry. Nothing was sent.` };
-      }
-      if (snapshot2.policy === "unlimited_for_video") {
-        const reservation2 = this.spendBudgets.reserve(sessionId, quote.maximumUsd, { gatewayJobId: request2.jobId });
-        if (!reservation2.allowed) return { allowed: false, reason: "Spend accounting could not safely reserve this operation." };
-        this.spendBudgets.commit(sessionId, reservation2.reservationId);
-        return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current };
-      }
-      // PORT-NEW copy: the per-operation (ask_each) exact-spend card is not ported
-      return { allowed: false, reason: "This video asks before each paid operation, and per-operation approval is not available in this build. Set a video budget, then retry. Nothing was sent." };
-    };
-    const observed = this.enqueueSpendPolicyUpdate(sessionId, decide).then((d) => { this.log.info("agent.paid.spend_decision", { sessionId, tool: request2.quote?.tool, maximumUsd: request2.quote?.maximumUsd, allowed: d.allowed, reason: d.allowed ? undefined : d.reason }); return d; });
+    const generation = this.spendPolicyChangeGenerations.get(sessionId) ?? 0;
+    const observed = this.enqueueSpendPolicyUpdate(sessionId, () => this.authorizeGatewaySpendAtHead(s, request2, generation, signal))
+      .then((d) => { this.log.info("agent.paid.spend_decision", { sessionId, tool: request2.quote?.tool, maximumUsd: request2.quote?.maximumUsd, allowed: d.allowed, once: d.once ? true : undefined, reason: d.allowed ? undefined : d.reason }); return d; });
     if (!signal) return observed;
     if (signal.aborted) return { allowed: false, reason: "This paid operation was cancelled." };
     return new Promise((resolve2, reject) => {
@@ -2337,6 +2512,407 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
       signal.addEventListener("abort", onAbort, { once: true });
       void observed.then(resolve2, reject).finally(() => signal.removeEventListener("abort", onAbort));
     });
+  }
+  /** spendAdmissionFence (L45795) slice: the plan gate + the liveness check re-run after every await. */
+  private spendAdmissionFence(s: Session, request2: { jobId: string; quote: any }, generation: number, signal?: AbortSignal): { refusal: any } | { current: () => boolean } {
+    const sessionId = s.meta.sessionId;
+    const creative = new Set(["mint_image", "mint_video", "cast_avatar", "perform_avatar", "synth_voice", "lipsync", "music", "model_call"]);
+    const voiceDiscovery = request2.quote.tool === "synth_voice" && request2.quote.routeMode === "list_voices" && request2.quote.maximumUsd === 0;
+    const transcription = request2.quote.tool === "synth_voice" && request2.quote.routeMode === "transcribe";
+    const needsPlan = creative.has(request2.quote.tool) && !voiceDiscovery && !transcription;
+    const planRefusal = () => (needsPlan ? this.plans?.sessionPlanProductionRefusal(sessionId) : undefined);
+    { const refusal2 = planRefusal(); if (refusal2) return { refusal: { allowed: false, reason: refusal2 } }; }
+    const current = () => !signal?.aborted && !planRefusal() && s.meta.jobId === request2.jobId && this.sessions.get(sessionId) === s
+      && (this.spendPolicyChangeGenerations.get(sessionId) ?? 0) === generation;
+    if ((this.spendPolicyChangeGenerations.get(sessionId) ?? 0) !== generation) return { refusal: { allowed: false, reason: "This paid operation is no longer current." } };
+    if (!current()) return { refusal: { allowed: false, reason: "This paid operation no longer belongs to this video." } };
+    return { current };
+  }
+  /** authorizeGatewaySpendAtHead (L45860) — runs only while this video's spend-policy queue is held. */
+  private async authorizeGatewaySpendAtHead(s: Session, request2: { jobId: string; method: "POST"; path: string; body: Buffer; quote: any }, generation: number, signal?: AbortSignal): Promise<any> {
+    const fence = this.spendAdmissionFence(s, request2, generation, signal);
+    if ("refusal" in fence) return fence.refusal;
+    const { current } = fence;
+    // authorizeUnknownCostAtHead (L46265) is unreachable: the shim advertises no unknown-cost policy
+    if (isUnknownCostQuote(request2.quote)) return { allowed: false, reason: "This operation does not have a reliable maximum price." };
+    const sessionId = s.meta.sessionId;
+    let snapshot2 = this.spendBudgets.snapshot(sessionId);
+    if (request2.quote.maximumUsd === 0) return { allowed: true, isCurrent: current };
+    if (snapshot2.policy === "capped") {
+      const reservation2 = this.spendBudgets.reserve(sessionId, request2.quote.maximumUsd, { gatewayJobId: request2.jobId });
+      if (reservation2.allowed) {
+        this.spendBudgets.commit(sessionId, reservation2.reservationId);
+        return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current };
+      }
+      snapshot2 = reservation2.snapshot;
+      if (reservation2.reason !== "over_ceiling") {
+        const reason = reservation2.reason === "unknown_spend" ? "An earlier paid operation still needs spend reconciliation." : reservation2.reason === "unpriced" ? "This operation does not have a reliable maximum price." : "This video no longer has an active spending limit.";
+        return { allowed: false, reason };
+      }
+      if ((snapshot2.remainingUsd ?? 0) <= 0) return { allowed: false, reason: "This video’s budget is exhausted. Change the budget before starting more paid work. Nothing was sent." };
+      const requiredCeilingUsd = requiredSpendCeilingUsd(snapshot2, request2.quote.maximumUsd);
+      const currentCeilingUsd = snapshot2.ceilingUsd ?? 0;
+      if (requiredCeilingUsd === null || requiredCeilingUsd <= currentCeilingUsd) {
+        return { allowed: false, reason: "Spend accounting changed while this operation was being checked. Retry once under the current displayed budget." };
+      }
+      // isAnthropicPassthroughPath → requireHostedReasoningAuthority: unreachable (reasoning does not pass this proxy)
+      const { choice: choice2, permissionRequest: permissionRequest2 } = await this.requestExactSpendChoice(sessionId, request2, "raise", requiredCeilingUsd, signal);
+      if (typeof choice2 !== "string") {
+        try { await choice2.applyVideoBudget(current); } catch (error) { return { allowed: false, reason: error instanceof Error ? error.message : "The budget could not be saved." }; }
+        return this.authorizeGatewaySpendAtHead(s, request2, generation, signal);
+      }
+      if (choice2 === "repriced") return this.authorizeGatewaySpendAtHead(s, request2, generation, signal);
+      if (choice2 === "policy_changed") return { allowed: false, status: 409, code: "SPEND_POLICY_CHANGED", reason: "Spending settings were edited. This operation was not submitted. Retry under the current settings." };
+      if (choice2 !== "once") return { allowed: false, reason: "The spending-limit increase was not approved." };
+      if (!current()) return { allowed: false, reason: "This paid operation no longer belongs to this video." };
+      snapshot2 = this.spendBudgets.snapshot(sessionId);
+      if (snapshot2.policy === "capped") {
+        if (snapshot2.unknownSpend) return { allowed: false, reason: "An earlier paid operation still needs spend reconciliation." };
+        const neededCeilingUsd = requiredSpendCeilingUsd(snapshot2, request2.quote.maximumUsd);
+        if (neededCeilingUsd === null) return { allowed: false, reason: "Spending is still being reconciled. Try again shortly." };
+        if (neededCeilingUsd > (permissionRequest2.budgetUsd ?? 0)) return this.authorizeGatewaySpendAtHead(s, request2, generation, signal);
+        if (neededCeilingUsd > (snapshot2.ceilingUsd ?? 0)) {
+          try {
+            await this.installSpendPolicy(sessionId, { kind: "capped", ceilingUsd: Math.max(neededCeilingUsd, snapshot2.ceilingUsd ?? 0) });
+          } catch (error) {
+            this.recordSettledAsk(sessionId, () => settledAskFromPermission(permissionRequest2, "failed"));
+            throw error;
+          }
+        }
+      } else if (snapshot2.policy !== "unlimited_for_video") {
+        return { allowed: false, reason: "This video no longer has an active spending limit." };
+      }
+      if (!current()) return { allowed: false, reason: "This paid operation no longer belongs to this video." };
+      const afterRaise = this.spendBudgets.reserve(sessionId, request2.quote.maximumUsd, { gatewayJobId: request2.jobId });
+      if (!afterRaise.allowed) return { allowed: false, reason: "The new spending limit still cannot cover this operation." };
+      this.spendBudgets.commit(sessionId, afterRaise.reservationId);
+      return { allowed: true, reservationId: afterRaise.reservationId, isCurrent: current };
+    }
+    if (snapshot2.policy === "unlimited_for_video") {
+      const reservation2 = this.spendBudgets.reserve(sessionId, request2.quote.maximumUsd, { gatewayJobId: request2.jobId });
+      if (!reservation2.allowed) return { allowed: false, reason: "Spend accounting could not safely reserve this operation." };
+      this.spendBudgets.commit(sessionId, reservation2.reservationId);
+      return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current };
+    }
+    if (this.advisoryBudgetEligible(sessionId)) return { allowed: false, reason: PLAN_FIRST_REFUSAL };
+    let authority: any = null;
+    try {
+      const cfg = this.d.gatewaySettings?.() ?? {};
+      const response = await fetch(`${String(cfg.gatewayUrl ?? "").replace(/\/+$/, "")}/v1/spend-authorities/${encodeURIComponent(request2.jobId)}`, {
+        headers: { authorization: `Bearer ${cfg.gatewayKey}` },
+        signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(5e3)]),
+      });
+      const body = await response.json();
+      if (response.ok && body && typeof body === "object" && !Array.isArray(body)) authority = body;
+    } catch {}
+    if (!current()) return { allowed: false, reason: "This paid operation is no longer current." };
+    if (authority?.client_job !== request2.jobId || typeof authority?.revision !== "number" || !Number.isSafeInteger(authority.revision) || authority.revision < 0
+      || typeof authority?.mode !== "string" || !["per_operation", "capped", "unlimited"].includes(authority.mode)) {
+      return { allowed: false, reason: "Saved spending settings could not be verified. Paid work is paused; no spending limit was changed." };
+    }
+    if (authority.mode !== "per_operation") return { allowed: false, status: 409, reason: SPEND_POLICY_CONFLICT_MESSAGE };
+    // approvalKey (spendApprovalKey) exists only for the Anthropic passthrough — never on this path
+    const { choice, permissionRequest } = await this.requestExactSpendChoice(sessionId, request2, "operation", undefined, signal);
+    if (typeof choice !== "string") {
+      try { await choice.applyVideoBudget(current); } catch (error) { return { allowed: false, reason: error instanceof Error ? error.message : "The budget could not be saved." }; }
+      return this.authorizeGatewaySpendAtHead(s, request2, generation, signal);
+    }
+    if (choice === "repriced") return this.authorizeGatewaySpendAtHead(s, request2, generation, signal);
+    if (choice === "policy_changed") return { allowed: false, status: 409, code: "SPEND_POLICY_CHANGED", reason: "Spending settings were edited. This operation was not submitted. Retry under the current settings." };
+    if (choice === "deny") return { allowed: false, reason: "Paid work was denied by the user." };
+    if (!current()) return { allowed: false, reason: "This paid operation is no longer current." };
+    if (choice === "always") {
+      try {
+        await this.installSpendPolicy(sessionId, { kind: "unlimited_for_video" });
+      } catch (error) {
+        this.recordSettledAsk(sessionId, () => settledAskFromPermission(permissionRequest, "failed"));
+        throw error;
+      }
+      if (!current()) return { allowed: false, reason: "This paid operation no longer belongs to this video." };
+      const reservation2 = this.spendBudgets.reserve(sessionId, request2.quote.maximumUsd, { gatewayJobId: request2.jobId });
+      if (!reservation2.allowed) return { allowed: false, reason: "Spend accounting could not safely reserve this operation." };
+      this.spendBudgets.commit(sessionId, reservation2.reservationId);
+      return { allowed: true, reservationId: reservation2.reservationId, isCurrent: current };
+    }
+    const reservation = this.spendBudgets.reserveExplicit(sessionId, request2.quote.maximumUsd, request2.jobId);
+    this.spendBudgets.commit(sessionId, reservation.reservationId);
+    return { allowed: true, isCurrent: current, reservationId: reservation.reservationId, once: { idempotencyKey: randomUUID(), maximumApprovedUsd: request2.quote.maximumUsd } };
+  }
+  /** advisoryBudgetEligible (L44224): needs plan_paid_operations' advisory estimator (recommendVideoBudget L44263),
+   *  which the port does not register (docs/31 §1.2) — so no video is ever eligible and ask_each goes straight to
+   *  the ordinary per-operation card, exactly the original's branch for an engine without advisoryEstimate. */
+  private advisoryBudgetEligible(_sessionId: string): boolean { return false; }
+
+  // ── docs/32 M15: the spend-approval cards (L38557-38700, L46640-47370) ──
+  /** rememberSpendOperation (L38557). */
+  private rememberSpendOperation(request2: any, pending: any): void {
+    const s = pending.sessionId ? this.sessions.get(pending.sessionId) : undefined;
+    this.pendingSpendOperations.set(request2.requestId, { ...pending, turnAtRequestMs: s?.turnStartedAtMs, request: request2, order: ++this.permissionOrder });
+  }
+  /** recordSettledAsk (L38607): the durable settled-ask card on the display transcript + the live event. */
+  private recordSettledAsk(sessionId: string, project: () => any): void {
+    try {
+      const record2 = project();
+      if (this.d.stateDir) appendDisplayAsk(displayTranscriptPath(this.d.stateDir, sessionId), record2, this.sessions.get(sessionId)?.lastAssistantMessageId);
+      const s = this.sessions.get(sessionId);
+      if (s) this.send(s, { kind: "ask_settled", record: record2 } as any);
+    } catch (e) { this.log.warn("agent.ask.settle_record_failed", { sessionId, error: e }); }
+  }
+  /** takePendingSpendOperation (L38659). */
+  private takePendingSpendOperation(requestId: string, outcome: string, decision2: string = "deny"): any {
+    const pending = this.pendingSpendOperations.get(requestId);
+    if (!pending) return undefined;
+    this.pendingSpendOperations.delete(requestId);
+    if (outcome !== "approved" && outcome !== "denied") {
+      this.rememberRetiredSpendApproval(requestId, pending.sessionId, "That spending approval had already been withdrawn, so nothing was sent. Send your message again to continue.");
+      this.noteSpendApprovalPhase(pending.sessionId, requestId, "aborted", { outcome });
+    }
+    this.recordSettledAsk(pending.sessionId, () => settledAskFromPermission(pending.request, outcome, undefined, undefined, pending.savedBudgetUsd));
+    for (const join2 of pending.joined ?? []) join2(decision2);
+    pending.joined = undefined;
+    return pending;
+  }
+  /** withdrawSpendCard (L38687). */
+  private withdrawSpendCard(requestId: string): void {
+    const pending = this.pendingSpendOperations.get(requestId);
+    if (!this.takePendingSpendOperation(requestId, "aborted")) return;
+    const s = this.sessions.get(pending.sessionId);
+    if (s) this.send(s, { kind: "permission_resolved", requestId } as any);
+    pending.resolve("deny");
+  }
+  /** rememberRetiredSpendApproval (L38695). */
+  private rememberRetiredSpendApproval(requestId: string, sessionId: string, reason: string): void {
+    if (this.retiredSpendApprovals.has(requestId)) return;
+    this.retiredSpendApprovals.set(requestId, { sessionId, reason });
+    if (this.retiredSpendApprovals.size > 64) {
+      const oldest = this.retiredSpendApprovals.keys().next().value;
+      if (oldest !== undefined) this.retiredSpendApprovals.delete(oldest);
+    }
+  }
+  /** noteSpendApprovalPhase (L46766): the original's spend-approval beacon → the structured log (no outbox). */
+  private noteSpendApprovalPhase(sessionId: string, requestId: string, phase: string, extra: Record<string, unknown> = {}): void {
+    this.log.info("agent.spend.approval", { sessionId, jobId: this.sessions.get(sessionId)?.meta.jobId, requestId, phase, ...Object.fromEntries(Object.entries(extra).filter(([, v]) => v !== undefined)) });
+  }
+  /** noteSpendApprovalShown (L46776) — permission:shown. */
+  noteSpendApprovalShown(requestId: string): void {
+    const pending = this.pendingSpendOperations.get(String(requestId));
+    if (!pending) return;
+    this.noteSpendApprovalPhase(pending.sessionId, String(requestId), "shown", { waitedMs: Date.now() - (pending.requestedAtMs ?? Date.now()) });
+  }
+  /** spendPermissionRequest (L46816). */
+  private spendPermissionRequest(sessionId: string, request2: any, purpose: string, requiredCeilingUsd?: number): any {
+    const operation = quotedOperationLine(request2.quote.tool, request2.quote.routeMode);
+    return {
+      requestId: randomUUID(),
+      sessionId,
+      kind: purpose === "raise" ? "budget" : "money",
+      toolName: request2.quote.tool,
+      input: { operation: request2.quote.tool, mode: request2.quote.routeMode },
+      title: purpose === "raise" ? "Raise spending limit?" : "Allow this paid operation?",
+      description: purpose === "raise"
+        ? raiseBudgetDescription(operation, requiredCeilingUsd)
+        : quotedSpendDescription(operation, { estimateUsd: request2.quote.estimateUsd, maximumUsd: request2.quote.maximumUsd, estimated: request2.quote.settlementPolicy === "estimated_actual_v1" }),
+      estimateUsd: request2.quote.settlementPolicy ? request2.quote.estimateUsd : request2.quote.maximumUsd,
+      ...(request2.quote.settlementPolicy ? { settlementPolicy: request2.quote.settlementPolicy, reservationUsd: request2.quote.maximumUsd } : {}),
+      ...(purpose === "raise"
+        ? {
+            budgetUsd: requiredCeilingUsd,
+            budgetCeilingUsd: this.spendBudgets.snapshot(sessionId).ceilingUsd,
+            budgetRaiseUsd: (requiredCeilingUsd as number) - (this.spendBudgets.snapshot(sessionId).ceilingUsd ?? 0),
+            budgetBlockReason: "over_ceiling",
+          }
+        : {}),
+    };
+  }
+  /** requestExactSpendChoice (L46853) — no approvalKey (the passthrough-only card join) on this proxy's paths. */
+  private requestExactSpendChoice(sessionId: string, request2: any, purpose: string, requiredCeilingUsd: number | undefined, signal?: AbortSignal): Promise<{ choice: any; permissionRequest: any }> {
+    const runtime = this.sessions.get(sessionId)?.runtime;
+    const turnAtRequestMs = this.sessions.get(sessionId)?.turnStartedAtMs;
+    const quote = request2.quote;
+    const permissionRequest = this.spendPermissionRequest(sessionId, { ...request2, quote }, purpose, requiredCeilingUsd);
+    const requestId = permissionRequest.requestId;
+    let cancel: (() => void) | undefined;
+    let pending: any;
+    return new Promise<any>((resolve2) => {
+      cancel = () => { this.withdrawSpendCard(requestId); resolve2("deny"); };
+      if (signal?.aborted) { resolve2("deny"); return; }
+      this.rememberSpendOperation(permissionRequest, {
+        sessionId, maximumUsd: quote.maximumUsd, requestedAtMs: Date.now(), resolve: resolve2,
+        ...(purpose === "raise" ? { raiseRequest: { ...request2, quote } } : {}),
+      });
+      pending = this.pendingSpendOperations.get(requestId);
+      const s = this.sessions.get(sessionId);
+      if (s) this.setStatus(s, "awaiting_permission");
+      try { this.d.emit.permissionRequest?.(permissionRequest); } catch (e) { this.log.warn("agent.emit_failed", { error: e }); }
+      this.noteSpendApprovalPhase(sessionId, requestId, "requested", { tool: quote.tool, maximumUsd: quote.maximumUsd, purpose, held: false });
+      signal?.addEventListener("abort", cancel, { once: true });
+    })
+      .finally(() => { if (cancel) signal?.removeEventListener("abort", cancel); this.resumeAfterInteraction(sessionId, runtime, turnAtRequestMs); })
+      .then((choice) => ({ choice, permissionRequest: pending?.request ?? permissionRequest }));
+  }
+  /** scheduleRaiseReprice (L46947) — the spend observer re-derives open raise cards once per microtask. */
+  private scheduleRaiseReprice(sessionId: string): void {
+    if (this.raiseRepricesScheduled.has(sessionId)) return;
+    this.raiseRepricesScheduled.add(sessionId);
+    queueMicrotask(() => { this.raiseRepricesScheduled.delete(sessionId); this.repriceRaiseCards(sessionId); });
+  }
+  /** repriceRaiseCards (L46963). */
+  private repriceRaiseCards(sessionId: string): void {
+    const snapshot2 = this.spendBudgets.snapshot(sessionId);
+    if (snapshot2.policy !== "capped" || snapshot2.unknownSpend) return;
+    for (const [requestId, pending] of [...this.pendingSpendOperations]) {
+      if (pending.sessionId !== sessionId || !pending.raiseRequest) continue;
+      if (this.budgetApprovalSaves.has(requestId)) continue;
+      if (pending.maximumUsd === null) continue;
+      const requiredCeilingUsd = requiredSpendCeilingUsd(snapshot2, pending.maximumUsd);
+      if (requiredCeilingUsd === null) continue;
+      if (requiredCeilingUsd <= (snapshot2.ceilingUsd ?? 0)) {
+        this.rememberRetiredSpendApproval(requestId, sessionId, "That raise was no longer needed: the operation fit under the current limit and continued.");
+        this.takePendingSpendOperation(requestId, "retired", "repriced");
+        const s = this.sessions.get(sessionId);
+        if (s) this.send(s, { kind: "permission_resolved", requestId } as any);
+        pending.resolve("repriced");
+        continue;
+      }
+      if (requiredCeilingUsd === pending.request.budgetUsd && snapshot2.ceilingUsd === pending.request.budgetCeilingUsd) continue;
+      pending.request = { ...this.spendPermissionRequest(sessionId, pending.raiseRequest, "raise", requiredCeilingUsd), requestId };
+      try { this.d.emit.permissionRequest?.(pending.request); } catch {}
+    }
+  }
+  /** respondPermission (L44432), the spend-operation branch. The held-turn (#736) and per-message approval-grant
+   *  parts belong to the Anthropic passthrough, which never reaches this proxy in the port. */
+  private respondSpendOperation(requestId: string, response: any): boolean {
+    const spendOperation = this.pendingSpendOperations.get(requestId);
+    if (!spendOperation) return false;
+    const decision2 = response?.behavior === "allow" ? (response.spendDecision === "always" ? "always" : "once") : "deny";
+    const shownBudgetUsd = response?.behavior === "allow" ? response.shownBudgetUsd : undefined;
+    if (decision2 === "once" && spendOperation.raiseRequest && typeof shownBudgetUsd === "number" && Number.isFinite(shownBudgetUsd) && shownBudgetUsd !== spendOperation.request.budgetUsd) {
+      spendOperation.request = { ...this.spendPermissionRequest(spendOperation.sessionId, spendOperation.raiseRequest, "raise", shownBudgetUsd), requestId };
+    }
+    this.takePendingSpendOperation(requestId, decision2 === "deny" ? "denied" : "approved", decision2);
+    this.noteSpendApprovalPhase(spendOperation.sessionId, requestId, "resolved", { decision: decision2, held: false });
+    const s = this.sessions.get(spendOperation.sessionId);
+    if (s) this.send(s, { kind: "permission_resolved", requestId } as any);
+    spendOperation.resolve(decision2);
+    if (decision2 === "always") {
+      for (const [otherId, other] of [...this.pendingSpendOperations]) {
+        if (other.sessionId !== spendOperation.sessionId) continue;
+        this.takePendingSpendOperation(otherId, "approved", "always");
+        if (s) this.send(s, { kind: "permission_resolved", requestId: otherId } as any);
+        other.resolve("always");
+      }
+    }
+    return true;
+  }
+  /** setApprovalSpendCeiling (L47213): a card answer that sets the video budget keeps its waiting operation. */
+  private async setApprovalSpendCeiling(sessionId: string, usd: number, requestId: string): Promise<unknown> {
+    const operation = this.pendingSpendOperations.get(requestId);
+    const permission: any = this.pendingPermissions.get(requestId);
+    const pending = operation ?? permission;
+    if (!pending || pending.sessionId !== sessionId || !["money", "budget"].includes(pending.request.kind)) throw new Error("That spending approval is no longer waiting.");
+    if (!operation && [...this.pendingSpendOperations.values()].some((entry) => entry.sessionId === sessionId)) throw new Error("Resolve the pending paid-operation card first, then retry this approval.");
+    if (this.budgetApprovalSaves.has(requestId)) throw new Error("This budget is already being saved.");
+    if (operation && operation.maximumUsd === null) throw new Error(UNKNOWN_COST_BUDGET_REFUSAL);
+    const session2 = this.mustGet(sessionId);
+    const runtime = session2.runtime;
+    const turnAtRequestMs = pending.turnAtRequestMs;
+    if (session2.meta.permissionMode === "bypassPermissions") throw new Error("Turn off Bypass before setting a hard spending limit.");
+    const generation = this.spendPolicyChangeGenerations.get(sessionId) ?? 0;
+    const jobId = session2.meta.jobId;
+    const current = () => this.sessions.get(sessionId) === session2 && session2.meta.jobId === jobId && (this.spendPolicyChangeGenerations.get(sessionId) ?? 0) === generation
+      && (operation ? this.pendingSpendOperations.get(requestId) === operation : this.pendingPermissions.get(requestId) === permission);
+    const validate = () => {
+      if (!current()) throw new Error("That spending approval is no longer waiting.");
+      const required = requiredSpendCeilingUsd(this.spendBudgets.snapshot(sessionId), operation?.maximumUsd ?? 0);
+      if (required === null) throw new Error("Spending is still being reconciled. Try again shortly.");
+      if (usd < required) throw new Error(`Set a total video budget of at least $${required.toFixed(2)}.`);
+    };
+    validate();
+    this.budgetApprovalSaves.add(requestId);
+    try {
+      return await new Promise((resolve2, reject) => {
+        const applyVideoBudget = async (operationCurrent: () => boolean) => {
+          try {
+            validate();
+            if (!operationCurrent()) throw new Error("This paid operation is no longer current.");
+            const snapshot2 = await this.installSpendPolicy(sessionId, { kind: "capped", ceilingUsd: usd });
+            if (!current() || !operationCurrent()) throw new Error("The budget was saved, but this operation is no longer waiting.");
+            const savedBudgetUsd = snapshot2.ceilingUsd ?? usd;
+            if (operation) {
+              operation.savedBudgetUsd = savedBudgetUsd;
+              this.takePendingSpendOperation(requestId, "approved");
+              this.send(session2, { kind: "permission_resolved", requestId } as any);
+              this.noteSpendApprovalPhase(sessionId, requestId, "resolved", { decision: "video_budget", held: false });
+            }
+            if (permission) {
+              permission.spendPolicyCeilingUsd = undefined;
+              permission.savedBudgetUsd = savedBudgetUsd;
+              if (permission.request.kind === "budget") permission.input = { ...(permission.input ?? permission.request.input), amount_usd: usd };
+              this.budgetApprovalSaves.delete(requestId);
+              this.respondPermission(requestId, { behavior: "allow" });
+            }
+            resolve2({ snapshot: snapshot2 });
+          } catch (error) {
+            if (operation && this.pendingSpendOperations.get(requestId) === operation) {
+              this.takePendingSpendOperation(requestId, "failed");
+              this.send(session2, { kind: "permission_resolved", requestId } as any);
+              this.send(session2, { kind: "error", message: "The budget could not be saved. No paid operation was submitted; try the request again.", canRetry: false } as any);
+            }
+            reject(error);
+            throw error;
+          }
+        };
+        if (operation) operation.resolve({ applyVideoBudget });
+        else void this.enqueueSpendPolicyUpdate(sessionId, () => applyVideoBudget(current)).catch(() => {});
+      });
+    } finally {
+      this.budgetApprovalSaves.delete(requestId);
+      this.resumeAfterInteraction(sessionId, runtime, turnAtRequestMs);
+    }
+  }
+  /** beginSettingsSpendPolicyChange (L47338): a settings edit or Stop supersedes every queued spend decision. */
+  private beginSettingsSpendPolicyChange(sessionId: string, cause: "settings" | "turn_ended" | "idle"): void {
+    this.spendPolicyChangeGenerations.set(sessionId, (this.spendPolicyChangeGenerations.get(sessionId) ?? 0) + 1);
+    const s = this.sessions.get(sessionId);
+    for (const [requestId, pending] of [...this.pendingPermissions]) {
+      if (pending.sessionId !== sessionId || (pending.request.kind as string) !== "budget") continue;
+      this.pendingPermissions.delete(requestId);
+      if (s) this.send(s, { kind: "permission_resolved", requestId } as any);
+      pending.resolve({ behavior: "deny", message: "Video spending settings changed." });
+    }
+    for (const [requestId, pending] of [...this.pendingSpendOperations]) {
+      if (pending.sessionId !== sessionId) continue;
+      this.takePendingSpendOperation(requestId, "retired", cause === "settings" ? "policy_changed" : "deny");
+      if (s) this.send(s, { kind: "permission_resolved", requestId } as any);
+      pending.resolve(cause === "settings" ? "policy_changed" : "deny");
+    }
+  }
+  /** raiseVideoSpendCeiling (L47004). */
+  private raiseVideoSpendCeiling(sessionId: string, ceilingUsd: number): Promise<void> {
+    return this.enqueueSpendPolicyUpdate(sessionId, async () => {
+      const snapshot2 = this.spendBudgets.snapshot(sessionId);
+      if (snapshot2.policy === "unlimited_for_video") return;
+      await this.installSpendPolicy(sessionId, { kind: "capped", ceilingUsd: Math.max(ceilingUsd, snapshot2.policy === "capped" ? (snapshot2.ceilingUsd ?? 0) : 0) });
+    });
+  }
+  /** installSpendPolicy (L47018) + putGatewaySpendPolicy / writeGatewaySpendPolicy (L47053-47121) via the proxy. */
+  private async installSpendPolicy(sessionId: string, policy: { kind: "capped"; ceilingUsd: number } | { kind: "unlimited_for_video" } | { kind: "ask_each" }): Promise<any> {
+    const session2 = this.mustGet(sessionId);
+    const jobId = session2.meta.jobId;
+    if (jobId) {
+      if (this.spendBudgets.isBlocked()) throw new Error("Budget accounting is unavailable; the draft is safe.");
+      const proxy = this.d.agentGatewayProxy?.();
+      this.materializedSpendPolicies.delete(sessionId);
+      if (proxy) await proxy.setSessionSpendPolicy(jobId, policy as any);
+    }
+    const current = this.sessions.get(sessionId);
+    if (!current || current.meta.jobId !== jobId) throw new Error("This video changed while its spending policy was being updated.");
+    const snapshot2 = policy.kind === "capped" ? this.spendBudgets.setCeiling(sessionId, policy.ceilingUsd).snapshot
+      : policy.kind === "unlimited_for_video" ? this.spendBudgets.setUnlimited(sessionId) : this.spendBudgets.setAskEach(sessionId);
+    if (jobId) this.materializedSpendPolicies.set(sessionId, `${jobId}:${snapshot2.policy}:${snapshot2.ceilingUsd ?? ""}`);
+    else this.materializedSpendPolicies.delete(sessionId);
+    this.log.info("agent.spend.policy_installed", { sessionId, jobId, policy: policy.kind, ceilingUsd: (policy as any).ceilingUsd });
+    return snapshot2;
   }
   /** The studio paid tools' handlers (makeStudioToolset L48247-49297) bound to one session. */
   private paidStudioHost(s0: Session) {

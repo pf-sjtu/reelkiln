@@ -163,6 +163,8 @@ export interface MiniMaxMediaDeps {
   readOwnUpload: (url: string) => { bytes: Buffer; contentType: string } | undefined;
   sleep?: (ms: number) => Promise<void>;
   onTask?: (taskId: string) => void;
+  /** docs/32: true once MiniMax confirmed this video task cancelled — the poll loop stops without downloading */
+  stopped?: () => boolean;
   signal?: AbortSignal;
   env?: NodeJS.ProcessEnv;
 }
@@ -233,6 +235,7 @@ export async function pollMiniMaxVideo(call: PricedCall, d: MiniMaxMediaDeps, ta
   const fx = cnyToUsd(d.env);
   for (let n = 0; n < 180; n++) {
     await sleep(10_000);
+    if (d.stopped?.()) { const e: any = new Error("MiniMax video task was cancelled"); e.terminal = "canceled"; throw e; }
     const q = await minimaxJson(d, "GET", `/v1/query/video_generation?task_id=${encodeURIComponent(taskId)}`);
     if (q?.status === "Fail") { const e: any = new Error("MiniMax video task failed"); e.terminal = "failed"; throw e; }
     if (q?.status !== "Success") continue;
