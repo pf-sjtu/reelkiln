@@ -26,6 +26,12 @@ export function truncate(text: string, max: number): string {
   return text.slice(0, head) + `\n… [truncated — ${text.length - max} characters omitted] …\n` + text.slice(text.length - tail);
 }
 
+/** PORT-WIN docs/36 (W13): without Git Bash the only shell left is cmd.exe, which cannot run the agent's bash-syntax
+ *  engine commands (`uv run … | tail -n N`, `$VIDEOCLAW_ENGINE`, `&&` chains with `cd`) — they would "run but do the
+ *  wrong thing". Fail closed with an actionable message instead of spawning a degraded shell. */
+export const NO_BASH_MESSAGE =
+  "Bash is unavailable: Git for Windows (bash.exe) was not found on PATH or under Program Files. Install Git for Windows (https://git-scm.com/download/win) and restart the app.";
+
 export interface BashInput { command: string; timeout?: number }
 export interface BashEnv {
   cwd: string;
@@ -48,6 +54,7 @@ export function runBash(input: BashInput, env: BashEnv): Promise<BashResult> {
   const shell = env.deps?.shell ?? bashShell({ platform, env: env.env, which: (c) => which(c, { env: env.env, platform, isFile }), exists: existsSync });
   const treeKill = env.deps?.killTree ?? ((pid: number, sig: NodeJS.Signals) => platformKillTree(pid, sig, { platform }));
   const timeout = Math.min(Math.max(1, input.timeout ?? DEFAULT_BASH_TIMEOUT_MS), MAX_BASH_TIMEOUT_MS);
+  if (shell.degraded) return Promise.resolve({ output: NO_BASH_MESSAGE, isError: true });
   return new Promise((resolvePromise) => {
     let settled = false;
     let timer: NodeJS.Timeout | undefined;

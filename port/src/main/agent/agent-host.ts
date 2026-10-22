@@ -83,6 +83,7 @@ import { ensureCodexProfile, startCodexMiniMaxBackend, type CodexMiniMaxBackend 
 import { CodexRouteController, DEFAULT_CODEX_PROVIDER, resolvedAgentHarness, resolvedCodexProvider } from "../codex/codex-host";
 import type { ResolvedProvider } from "../llm/provider-registry";
 import { PORT_PROVIDER_TITLES_ENV, proposeProviderSessionTitle, type HelperComplete } from "./session-title";
+import { venvPython } from "../platform";
 import {
   appendDisplayMaterial, appendDisplayStop, appendDisplayTranscript, displayTranscriptPath, historyToEvents, isDisplayTurnId, isFlattenedClaudeCompactedHistory,
   readDisplayTranscript, rejectedFallbackMessageIds, sdkUserMessageText, visibleInSdkHistory,
@@ -480,7 +481,7 @@ export class AgentHost {
     if (!proxy || this.authenticatedWorkPaused || this.operationCollectors.size >= 2) return started;
     const engine = this.d.engine?.currentEngine()?.path;
     if (!engine) return started;
-    const python = join(engine, ".venv", "bin", "python");
+    const python = venvPython(engine); // PORT-WIN docs/36 (W14): .venv\Scripts\python.exe on Windows
     const script = join(engine, "tools", "_operations.py");
     if (!existsSync(python) || !existsSync(script)) return started;
     const pending: Array<{ session: Session; operation: any; deferPublication: boolean; busy: boolean }> = [];
@@ -3495,7 +3496,7 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
         }
         const engine = engineEnv2.VIDEOCLAW_ENGINE;
         const script = engine && join(engine, "tools", "_model_call.py");
-        const python = engine && join(engine, ".venv", "bin", "python");
+        const python = engine && venvPython(engine); // PORT-WIN docs/36: .venv\Scripts\python.exe on Windows
         const boundJob: any = resolveJobDir({ sessionId, jobId: localJobId }, (id2) => this.sessions.get(id2)?.meta as any);
         if (!boundJob.ok || !script || !python || !existsSync(script) || !existsSync(python)) {
           return { ok: false, retryable: false, reason: "Native model recovery is unavailable. Paid work was not started." };

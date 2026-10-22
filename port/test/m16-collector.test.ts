@@ -13,17 +13,21 @@ import { createLogger, setLoggerForTests } from "../src/main/llm/logger";
 import { readDisplayTranscript, displayTranscriptPath } from "../src/main/agent/history.generated";
 import { busyCollectorArgs, readOperationJournal, lateResultReportNote, savedGatewayOperations } from "../src/main/agent/operation-journal.generated";
 
-const PY = (() => { for (const p of ["/usr/bin/python3", "/usr/local/bin/python3"]) if (existsSync(p)) return p; try { return execFileSync("which", ["python3"]).toString().trim(); } catch { return ""; } })();
-// PORT-WIN docs/34: the fake engine symlinks a POSIX python into .venv/bin; on Windows (no symlink right, .venv\\Scripts\\python.exe
-// layout) these collector runs are NOT exercised — recorded as unverified on Windows in docs/34.
-const SKIP_COLLECTOR: boolean | string = !PY ? true : process.platform === "win32" ? "PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows" : false;
+const WIN = process.platform === "win32";
+const PY = (() => {
+  if (WIN) { try { return execFileSync("python", ["-c", "import sys; print(sys.executable)"]).toString().trim(); } catch { return ""; } }
+  for (const p of ["/usr/bin/python3", "/usr/local/bin/python3"]) if (existsSync(p)) return p; try { return execFileSync("which", ["python3"]).toString().trim(); } catch { return ""; }
+})();
+// PORT-WIN docs/36 (W14): on Windows the fake engine gets a real `python -m venv --without-pip` (.venv\Scripts\python.exe,
+// what venvPython() resolves) instead of a POSIX symlink; the fake job lock skips the directory fd (os.open(dir) is POSIX-only).
+const SKIP_COLLECTOR: boolean | string = !PY ? true : false;
 const GW = "http://127.0.0.1:1";
 const OPS = `import json, os, sys
 from pathlib import Path
 from log import job_lock_at
 def collect_command(argv):
     job = Path(argv[argv.index("--job") + 1]); op = argv[argv.index("--operation-id") + 1]
-    fd = os.open(job, os.O_RDONLY)
+    fd = os.open(job, os.O_RDONLY) if os.name != "nt" else -1
     with job_lock_at(fd):
         return _collect(job, op, argv)
 def _collect(job, op, argv):
@@ -56,8 +60,9 @@ def job_lock_at(job_fd, timeout=None):
 function setup() {
   setLoggerForTests(createLogger({ level: "silent" }));
   const root = mkdtempSync(join(tmpdir(), "vc-m16-col-"));
-  const engine = join(root, "engine"); mkdirSync(join(engine, ".venv", "bin"), { recursive: true }); mkdirSync(join(engine, "tools"));
-  symlinkSync(PY, join(engine, ".venv", "bin", "python"));
+  const engine = join(root, "engine"); mkdirSync(join(engine, "tools"), { recursive: true });
+  if (WIN) execFileSync(PY, ["-m", "venv", "--without-pip", join(engine, ".venv")]);
+  else { mkdirSync(join(engine, ".venv", "bin"), { recursive: true }); symlinkSync(PY, join(engine, ".venv", "bin", "python")); }
   writeFileSync(join(engine, "tools", "_operations.py"), OPS); writeFileSync(join(engine, "tools", "log.py"), LOG);
   process.env.FAKE_LOCK_DIR = root;
   const ws = join(root, "ws"); mkdirSync(join(ws, "jobs"), { recursive: true });
