@@ -595,7 +595,7 @@ export class AgentHost {
         if (announce && operation.path === "/v1/model_call" && result.completion !== undefined && boundJob.ok) {
           const completion = modelCompletionSchema.parse(result.completion);
           if (completion.operation_id !== operation.id || completion.status !== result.status
-            || completion.saved.some((path: string) => !isAbsolute(path) || !/^incoming\/model-[A-Za-z0-9._-]+$/.test(relative(boundJob.jobPath, path)))) {
+            || completion.saved.some((path: string) => !isAbsolute(path) || !/^incoming\/model-[A-Za-z0-9._-]+$/.test(relative(boundJob.jobPath, path).split(sep).join("/")))) {
             throw new Error("Collector returned an invalid model completion.");
           }
           meta.completedModelResults = [...(previousCompletions ?? []).filter((row: any) => row?.result?.operation_id !== operation.id || !isDeepStrictEqual(row.authority, authority)),

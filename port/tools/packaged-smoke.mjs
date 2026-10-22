@@ -22,10 +22,16 @@ const targets = args.filter((a) => !a.startsWith("--")).map((a) => resolve(a));
 if (!targets.length) { console.error("usage: packaged-smoke.mjs <AppImage|deb|linux-unpacked> … [--live]"); process.exit(2); }
 
 const WIN = process.platform === "win32";
+const MAC = process.platform === "darwin";
 const onPath = (bin) => (process.env.PATH ?? "").split(delimiter).map((d) => join(d, bin)).find((f) => existsSync(f));
 const findExe = (dir) => { const e = join(dir, WIN ? "videoclaw-port.exe" : "videoclaw-port"); if (!existsSync(e)) throw new Error(`no videoclaw-port executable in ${dir}`); return e; };
 function prepare(t) {
   const work = mkdtempSync(join(tmpdir(), "vc-pkg-smoke-"));
+  if (MAC && t.endsWith(".app")) {
+    // docs/36 M19: macOS .app bundle (electron-builder's release/mac*/<name>.app next to the dmg)
+    const macos = join(t, "Contents", "MacOS");
+    return { kind: "mac-app", exe: join(macos, readdirSync(macos)[0]), appDir: t, resources: join(t, "Contents", "Resources"), work };
+  }
   if (statSync(t).isDirectory()) return { kind: "unpacked", exe: findExe(t), appDir: t, work };
   if (WIN && t.toLowerCase().endsWith(".exe")) {
     // NSIS (oneClick:false, per-user): silent install into a temp dir; /D= must be the last argument, unquoted
@@ -71,7 +77,7 @@ function guiSmoke(p, mode) {
     symlinkSync(onPath("fusermount3"), join(shim, "fusermount"));
     env.PATH = `${shim}:${env.PATH}`;
   }
-  const r = WIN ? spawnSync(p.exe, [`--user-data-dir=${join(home, "ud")}`], { env, encoding: "utf8", timeout: 180_000 })
+  const r = WIN || MAC ? spawnSync(p.exe, [`--user-data-dir=${join(home, "ud")}`], { env, encoding: "utf8", timeout: 180_000 })
     : spawnSync("xvfb-run", ["-a", p.exe, "--no-sandbox", `--user-data-dir=${join(home, "ud")}`], { env, encoding: "utf8", timeout: 120_000 });
   const lines = (r.stdout + r.stderr).split("\n").filter((l) => l.startsWith("[smoke] {") || l.startsWith("[smoke] DONE"));
   const rec = (name) => { const l = lines.find((x) => x.includes(`"name":"${name}"`)); try { return l ? JSON.parse(l.slice(8)) : undefined; } catch { return { ok: false, error: "truncated log line" }; } };
@@ -94,7 +100,7 @@ function guiSmoke(p, mode) {
 function nodeCli(p, cliArgs, extraEnv = {}, timeout = 60_000) {
   const exe = p.extractedExe ?? p.exe;
   const home = mkdtempSync(join(p.work, "home-"));
-  const r = spawnSync(exe, [join(p.appDir, "resources", "app.asar", "dist", "cli", "port-cli.cjs"), ...cliArgs], { env: { ...baseEnv(home), ELECTRON_RUN_AS_NODE: "1", ...extraEnv }, encoding: "utf8", timeout, cwd: home });
+  const r = spawnSync(exe, [join(p.resources ?? join(p.appDir, "resources"), "app.asar", "dist", "cli", "port-cli.cjs"), ...cliArgs], { env: { ...baseEnv(home), ELECTRON_RUN_AS_NODE: "1", ...extraEnv }, encoding: "utf8", timeout, cwd: home });
   const lastJson = r.stdout.trim().split("\n").reverse().find((l) => l.startsWith("{"));
   let j; try { j = JSON.parse(lastJson ?? r.stdout); } catch { j = { ok: false, error: `unparsable output (exit ${r.status})`, stderr: r.stderr.slice(-500) }; }
   return j;

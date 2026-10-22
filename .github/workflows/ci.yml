@@ -266,9 +266,9 @@ jobs:
           if-no-files-found: warn
 
   macos-package:
-    # docs/34 M17: the cheap macOS leg — unsigned dmg (identity: null) + packaged-smoke is Linux/Windows only,
-    # so this records the build and the bundle layout only.
-    name: "macOS package (dmg, unsigned)"
+    # docs/34 M17: the cheap macOS leg — unsigned dmg (identity: null). docs/36 M19: plus the packaged smoke on the
+    # .app bundle (GUI boot + node-mode SDK/sqlite checks; never calls a model).
+    name: "macOS package (dmg, unsigned) + packaged smoke"
     runs-on: macos-latest
     timeout-minutes: 45
     defaults:
@@ -284,6 +284,12 @@ jobs:
       - run: npm ci
       - run: npm run package:mac | tee "$RUNNER_TEMP/package-mac.json"
       - run: ls -la release; shasum -a 256 release/*.dmg | tee "$RUNNER_TEMP/mac-artifacts.sha256"
+      - name: packaged smoke (.app bundle, docs/36 M19)
+        continue-on-error: true # new in M19: non-blocking until green twice
+        run: |
+          APP="$(ls -d release/mac*/*.app | head -n 1)"
+          echo "smoke target: $APP"
+          node tools/packaged-smoke.mjs "$APP" | tee "$RUNNER_TEMP/packaged-smoke-mac.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -291,4 +297,5 @@ jobs:
           path: |
             ${{ runner.temp }}/package-mac.json
             ${{ runner.temp }}/mac-artifacts.sha256
+            ${{ runner.temp }}/packaged-smoke-mac.json
           if-no-files-found: warn
