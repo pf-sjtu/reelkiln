@@ -15,6 +15,16 @@ evaluated criterion passed and none is pending (use --engine-only to evaluate E*
 import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
+def read_sums(p):
+    """`sha256sum` output -> {name: hash}. Git for Windows' coreutils mark binary mode as `hash *name` (docs/35)."""
+    out = {}
+    for l in p.read_text().splitlines():
+        if l.strip():
+            h, n = l.split(None, 1)
+            out[n.lstrip("*").strip()] = h
+    return out
+
+
 def sh(*a):
     p = subprocess.run(a, capture_output=True, text=True)
     return p.returncode, p.stdout, p.stderr
@@ -75,7 +85,7 @@ def main():
     spend = sum(float(e.get("estimate_usd") or 0) for e in ev)
     put("E14_zero_spend", spend == 0.0, f"sum(estimate_usd)={spend}")
     if a.inputs:
-        sums = dict(reversed(l.split()) for l in (Path(a.inputs) / "SHA256SUMS").read_text().splitlines())
+        sums = read_sums(Path(a.inputs) / "SHA256SUMS")
         ok = all(sha(Path(a.inputs) / n) == h for n, h in sums.items())
         put("E15_inputs_untouched", ok, "originals unchanged")
     if not a.engine_only:
@@ -116,7 +126,7 @@ def main():
     if a.attachments:
         inc = J / "incoming"
         if a.inputs and inc.is_dir():
-            sums = dict(reversed(l.split()) for l in (Path(a.inputs) / "SHA256SUMS").read_text().splitlines())
+            sums = read_sums(Path(a.inputs) / "SHA256SUMS")
             got = {p.name: sha(p) for p in inc.iterdir() if p.is_file()}
             put("L2_attachments_materialized", all(got.get(n) == h for n, h in sums.items()), f"incoming={sorted(got)}")
         else:
