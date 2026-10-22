@@ -87,6 +87,7 @@
 
 ## 6. 离 100% 还差（更新）
 > **M22 更新（docs/39）**：PDF 附件经 osascript + PDFKit 读取已接线（macos-latest 实测）；VoiceDictation 转写链路已移植，helper 编进 `.app/Contents/Resources/bootstrap/voice-dictation`，验证到 Apple 语音资源之前（之后未验证，需要真 Mac）；隐藏 staging Flight 的 accessory 策略已移植并在真 Electron 中验证；`macos-native` 两次全绿后阻断。**完整的剩余清单及每项需要的外部条件见 docs/39 §4**（本节以下条目以那张表为准）。
+> **M23 更新（docs/40）**：`.zip` 解包与工作簿读取已按原版移植并接线（三 OS 测试 + 经原版渲染器的 UI e2e）；Rosetta 分支在 macos-latest 上真机测试（阻断）；macOS 测试挂起的根因是 `closeAll` 未退役 job watcher（已修，`--test-force-exit` 已删）。剩余缺口全部需要外部条件。
 > **M21 更新（docs/38）**：macOS arm64 达到与 Windows 同级：macos-runbook + L0 E1–E15 与打包 `.app` 上的 S1 UI e2e（FAKE-LLM，含 reply_link/play/approve/export/sha）两次全绿后改为阻断；移植 `nativePythonArgs`；RELATIVE_WRITER 在 macOS 上与原版 darwin 分支差分一致。第 6 条：helper 在 runner 上能编译，但 SpeechAnalyzer 报 unavailable，转写仍未移植；新增 mac 缺口：PDF 读取（osascript）未接线、staging 的 accessory 激活策略。
 > **M20 更新（docs/37）**：W11b 已修复（聊天内任务链接，Windows unpacked + NSIS 都 PASS）；S1 也在 NSIS 静默安装后的应用上 allPass；W6、W7、W8(a) 在 windows-latest 上实测通过；W8(b)（控制台窗口可见性）在托管 runner 上无法观察，需要有桌面的 Windows。第 1、2 条只剩 W8(b)。
 > **M19 更新（docs/36）**：Windows S1 UI e2e（FAKE-LLM）在 windows-latest 上 allPass（run 39724411939），途中修掉 CRLF verdict、W11 媒体 URL、W14 collector 路径；W13 改为 fail closed；macOS `.app` packaged smoke 通过。第 1、2 条除 W11b（聊天内相对链接）外完成。

@@ -58,13 +58,14 @@ port：358 项，0 失败（Linux box）。
 | 8 | 生产 update feed（原版只在 packaged + darwin + 可信 https 网关时启用） | darwin 分支在、无 feed | **托管更新源**（上游网关或自建 https 存储）+ macOS 自动更新要求的**签名构建**（见 9） |
 | 9 | 签名 / 公证（macOS）、Authenticode（Windows）；Gatekeeper / dock 行为 | 未签名构建（helper 为 ad-hoc） | **Apple Developer Program 账号 + Developer ID 证书 + notarytool 凭据**；**Windows 代码签名证书**；Gatekeeper 观察需真 Mac |
 | 10 | 非 darwin 平台的更新门槛 | 忠实于原版（仅 darwin） | 无（产品决策，不是移植缺口） |
-| 11 | `.zip` 附件解包（extractArchive，原版用 yauzl） | 一律拒绝（原版拒绝文案） | 无（加依赖 + 移植 chunk L4199） |
-| 12 | 工作簿读取（setWorkbookReader / readWorkbookInWorker 子进程） | 未接线 → 工作簿附件被拒为 too-complex | 无（移植 worker） |
-| 13 | `nativePythonArgs` 的 Rosetta 分支真机路径 | 合成 Mach-O 单测 | 无硬性外部条件：需要 Apple 芯片 + Rosetta + x86_64 python（hosted runner 是否装了 Rosetta 未确认） |
-| 14 | macOS port job 曾挂住的真正原因 | `--test-force-exit` 兜底 | 无 |
+| 11 | `.zip` 附件解包（extractArchive，原版用 yauzl） | **M23 已关闭**（docs/40 §1：逐字移植 + 三 OS 测试 + UI e2e） | — |
+| 12 | 工作簿读取（setWorkbookReader / readWorkbookInWorker 子进程） | **M23 已关闭**（docs/40 §2：原版 workbookWorker + utilityProcess） | — |
+| 13 | `nativePythonArgs` 的 Rosetta 分支真机路径 | **M23 已关闭**（docs/40 §3：macos-latest 上 x86_64 CPython 经 Rosetta，阻断） | — |
+| 14 | macOS port job 曾挂住的真正原因 | **M23 已关闭**（docs/40 §4：`closeAll` 未退役 job watcher → FSEvents 句柄；已修，`--test-force-exit` 已删） | — |
 | 15 | Windows 上的 PDF 读取 / 语音 helper | 原版在非 darwin 本身就是 unavailable，port 一致 | 无（可选的 PORT-NEW 扩展，不是缺口） |
 | 16 | staging 通道本身 | 原版发布版写死 prod，port 一致 | 无（不是缺口） |
-已关闭（本轮）：docs/38 的 PDF 读取未接线、staging accessory 策略、语音 helper 未构建/未随包/转写未移植（除第 6 条的语音资源部分）、mac 标题栏。
+M23 更新：#11–#14 已关闭，剩余缺口全部需要外部条件（#1–#9）或不是缺口（#10、#15、#16）。
+已关闭（M22）：docs/38 的 PDF 读取未接线、staging accessory 策略、语音 helper 未构建/未随包/转写未移植（除第 6 条的语音资源部分）、mac 标题栏。
 
 ## 5. 可存档摘要
 M22 把原版剩下的三条 macOS 原生路径接进 port，并在 macos-latest 上实测：PDF 附件经 `/usr/bin/osascript` + PDFKit 读取（原版代码逐字，非 darwin 行为不变）；VoiceDictation.swift 在打包时编进 `.app/Contents/Resources/bootstrap/voice-dictation`（原版布局），打包应用能找到并执行它，转写链路一直验证到 Apple 语音资源这一步（runner 上 `SpeechTranscriber` 不可用，之后的部分未验证）；隐藏 staging Flight 的 accessory 策略在真 Electron 里让 Dock 图标消失（对照组可见）。顺带修了语音错误表的键名和 mac 标题栏。剩余缺口都需要外部条件（账号、key、证书或真 Mac / 有桌面的 Windows），只有 zip 解包、工作簿读取、Rosetta 分支和测试挂起原因是纯工程。花费 $0。
