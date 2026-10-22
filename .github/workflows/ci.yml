@@ -488,12 +488,14 @@ jobs:
         continue-on-error: true # docs/40 M23: diagnostic
         working-directory: port
         run: |
+          set +e # a failing/killed file must not stop the loop
           OUT="$RUNNER_TEMP/macos-native"; : > "$OUT/hang-files.txt"; : > "$OUT/hang-probe.txt"
           for f in dist-test/*.test.cjs; do
             s=$(date +%s)
             NODE_OPTIONS="--require $PWD/tools/hang-probe.cjs" HANG_PROBE_MS=20000 perl -e 'alarm 90; exec @ARGV' node --test --test-timeout=60000 "$f" > "$RUNNER_TEMP/one.txt" 2>&1; rc=$?
             echo "$f rc=$rc $(( $(date +%s) - s ))s" >> "$OUT/hang-files.txt"
             grep HANG_PROBE "$RUNNER_TEMP/one.txt" >> "$OUT/hang-probe.txt" || true
+            [ "$rc" = 0 ] || { echo "=== $f rc=$rc"; grep -E "^not ok|^# (pass|fail|tests)|Error|HANG_PROBE" "$RUNNER_TEMP/one.txt" | head -n 40; tail -n 30 "$RUNNER_TEMP/one.txt"; } >> "$OUT/hang-fail.txt"
           done
           echo "--- slow or non-zero:"; awk '{ split($3, t, "s"); if ($2 != "rc=0" || t[1] + 0 >= 15) print }' "$OUT/hang-files.txt" | tee "$OUT/hang-summary.txt"
           cut -c1-2000 "$OUT/hang-probe.txt"
