@@ -134,3 +134,15 @@
 
 新增弱于原版之处：
 5. **Windows 引擎钩子**：端口在引擎 venv 的 site-packages 里放了 `.pth` 钩子，改写了 `subprocess.Popen` 对裸 `npx`/`npm` 的处理和 `os.fsync` 的 EBADF 分支。只影响 win32；如果引擎以后自己处理了 Windows，这个钩子应当删掉。
+
+## 增补（M19，docs/36）：Windows S1 UI e2e 与 W11 / W13 / W14
+CI job `windows-s1-ui`（windows-latest，win-unpacked，原版渲染器 + CDP，FAKE-LLM 回放 S1 关键路径）第一次 allPass：[39724411939](https://github.com/pf-sjtu/reelkiln/actions/runs/39724411939)（2026-10-22 12:53 SGT）。
+
+| # | 结果 |
+|---|---|
+| W11 | **已验证并修复**：原版 `mediaUrl()` 对 `D:\…` 生成 `vcmedia://localD%3A%5C…`（预览全部离线，真机截图证实）。win32 preload 在主世界改写为 `vcmedia://local/D%3A/…`；Output 面板播放 2.57 s 推进。聊天内相对链接仍显示 “Link unavailable”（W11b，未修） |
+| W13 | **已处理**：没有 Git Bash 时 runBash fail closed，返回安装 Git for Windows 的提示；win32 上以无 Git 的 PATH 实际验证 |
+| W14 | **已验证并修复**：collector / 原生 model-call 使用 `venvPython()`；saved 路径校验按 `sep` 归一；6 个 collector 测试在 win32 上通过 |
+| 新 | production verdict CRLF：Windows 上每次 agent Bash 都被拒绝，已修（仅 win32 去掉一个结尾 CRLF） |
+
+仍未在真 Windows 上验证：W6、W7、W8、W11b、NSIS 安装版上的 S1、真实模型在 Windows 上的 agent 行为。

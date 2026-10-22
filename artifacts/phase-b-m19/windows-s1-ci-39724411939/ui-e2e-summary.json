@@ -1,0 +1,177 @@
+{
+ "started": "2026-10-22T04:51:16.393Z",
+ "mode": "exe (win32)",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "50721c29-2090-4e6c-a42c-258a1e3fa64a",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  },
+  "brief_send": {
+   "ok": true,
+   "typedMatches": true
+  },
+  "stream": {
+   "ok": true,
+   "turnS": 53,
+   "toolStarts": 6,
+   "textDeltas": 5,
+   "domTextChanges": 10,
+   "numTurns": 7,
+   "isError": false,
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-50721c",
+   "controlsDuringTurn": [
+    {
+     "cls": "send-btn stop",
+     "aria": null,
+     "title": "Stop",
+     "disabled": false
+    }
+   ]
+  },
+  "play": {
+   "ok": true,
+   "advancedS": 2.567,
+   "maxReadyState": 4,
+   "src": "vcmedia://local/D%3A/a/_temp/s1run/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-50721c/versions/v1.mp4?consumer=primary-preview-17&version=79e891fc6eeaa7e0029a99f1d716ca3c7851986d55751e6916adaa2038343029",
+   "duration": 6.5,
+   "size": "720x1280",
+   "controls": true
+  },
+  "approve": {
+   "ok": true,
+   "finalizedAtMs": 1792644737694,
+   "v1Approved": true,
+   "finals": [
+    {
+     "n": 1,
+     "via": "promote",
+     "madeFinalAtMs": 1792644737681
+    }
+   ]
+  },
+  "export": {
+   "ok": true,
+   "sha": {
+    "final": "afd73a7c0fe3fc7baf1cd6c83bbc8ad7cbf967a0cccec192d08b62c7f4b2fb56",
+    "v1": "afd73a7c0fe3fc7baf1cd6c83bbc8ad7cbf967a0cccec192d08b62c7f4b2fb56",
+    "export": "afd73a7c0fe3fc7baf1cd6c83bbc8ad7cbf967a0cccec192d08b62c7f4b2fb56"
+   },
+   "ffprobeRc": 0,
+   "video": "h264 720x1280 30/1",
+   "audio": "aac",
+   "durationS": "6.500000",
+   "saveDialogLog": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)"
+  },
+  {
+   "element": "composer textarea",
+   "how": "click + Input.insertText(brief)"
+  },
+  {
+   "element": "composer Send (button.send-btn)",
+   "how": "click"
+  },
+  {
+   "element": "Output panel player (original <video controls> in .op-preview-stage) native play button",
+   "how": "click at the controls' play button position"
+  },
+  {
+   "element": "'Approve V1' (button.v-approve, Output panel)",
+   "how": "click"
+  },
+  {
+   "element": "Output panel 'Download v1.mp4' (button.op-preview-download)",
+   "how": "click → original file:saveItemAs → save dialog (answered by env preset)"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "questionCards": [],
+ "title": {
+  "title": "S1 vertical cut",
+  "titleOrigin": "automatic",
+  "notNewVideo": true,
+  "inSidebarDom": true,
+  "sequence": [
+   "-:New video",
+   "fallback:我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.…",
+   "automatic:S1 vertical cut"
+  ]
+ },
+ "tasteCapture": {
+  "stopControlVisibleWhileFinalized": false,
+  "started": true,
+  "finished": true,
+  "isError": false,
+  "waitedS": 0,
+  "endedBy": "result"
+ },
+ "sha": {
+  "final": "afd73a7c0fe3fc7baf1cd6c83bbc8ad7cbf967a0cccec192d08b62c7f4b2fb56",
+  "v1": "afd73a7c0fe3fc7baf1cd6c83bbc8ad7cbf967a0cccec192d08b62c7f4b2fb56",
+  "export": "afd73a7c0fe3fc7baf1cd6c83bbc8ad7cbf967a0cccec192d08b62c7f4b2fb56"
+ },
+ "sessionId": "50721c29-2090-4e6c-a42c-258a1e3fa64a",
+ "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-50721c",
+ "consoleErrors": [],
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "attachVia": "drop",
+ "stopAfter": null,
+ "allPass": true,
+ "finished": "2026-10-22T04:52:23.331Z"
+}

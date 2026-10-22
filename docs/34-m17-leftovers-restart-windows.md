@@ -86,6 +86,7 @@
 - 真 Windows CI 停在 2026-10-21，之后新增的 161 个测试在真 Windows 上从未跑过，只在 WINE 下跑过。
 
 ## 6. 离 100% 还差（更新）
+> **M19 更新（docs/36）**：Windows S1 UI e2e（FAKE-LLM）在 windows-latest 上 allPass（run 39724411939），途中修掉 CRLF verdict、W11 媒体 URL、W14 collector 路径；W13 改为 fail closed；macOS `.app` packaged smoke 通过。第 1、2 条除 W11b（聊天内相对链接）外完成。
 > **M18 更新（docs/35）**：第 1 条已基本完成——Actions 已恢复（仓库公开），windows-runbook + L0 E1–E15、windows-package（nsis + portable + 两种 packaged smoke）、macos-package 在真机上全部通过（run 39716976884）；Windows S1 UI e2e 仍未做。第 2 条里 W12 已解决。第 3 条：MiniMax embo-01 经真实探测确认无法提供多模态 embedding。第 4 条：`synth_voice`/tts 与 `mint_image`（纯文本 jpeg）有了可选、带标注的 MiniMax 替代路线（真实证明 $0.0054），其余仍拒绝。第 8 条：`engine:updated` 与 voices push 已有运行时证明。最新清单见 docs/35 §5。
 
 1. **恢复 GitHub Actions**（PF：修复账单 / spending limit，或批准把仓库设为 public），然后跑 windows-runbook + L0、windows-package，修掉实际出现的问题；再加 Windows S1 UI e2e（FAKE-LLM scripted upstream，用 ffprobe/sha 核验）。
