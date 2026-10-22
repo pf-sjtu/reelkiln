@@ -1,0 +1,14 @@
+app: videoclaw-port.app
+total 256
+-rwxr-xr-x  1 runner  staff  85280 Oct 22 06:45 voice-dictation
+release/mac-arm64/videoclaw-port.app/Contents/Resources/bootstrap/voice-dictation: Mach-O 64-bit executable arm64
+arm64
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform 1
+    minos 14.0
+      sdk 26.5
+Identifier=voice-dictation
+CodeDirectory v=20400 size=776 flags=0x20002(adhoc,linker-signed) hashes=21+0 location=embedded
+Signature=adhoc
+TeamIdentifier=not set

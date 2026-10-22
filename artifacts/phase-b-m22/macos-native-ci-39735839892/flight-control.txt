@@ -1,0 +1,1 @@
+FLIGHT_PROBE {"platform":"darwin","hidden":false,"dockVisible":true,"windowVisible":true,"backgroundThrottling":true,"userDataIsFlight":true,"cdpAddress":"127.0.0.1","cdpPort":"0"}
