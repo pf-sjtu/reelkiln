@@ -1,0 +1,1 @@
+dist-test/m16-collector.test.cjs rc=1 60s

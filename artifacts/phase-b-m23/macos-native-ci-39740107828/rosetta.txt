@@ -1,0 +1,5 @@
+rosetta: x86_64
+uv 0.13.5 (46776a95d 2026-10-21 aarch64-apple-darwin)
+ Downloaded cpython-3.12.15-macos-x86_64-none (download)
+Installed Python 3.12.15 in 2.15s
+ + cpython-3.12.15-macos-x86_64-none (python3.12)

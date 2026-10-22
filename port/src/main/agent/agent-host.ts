@@ -3828,11 +3828,17 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   runningVideoCount(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.status === "running" || s.meta.status === "awaiting_permission") n++; return n; }
   /** closeAll (L43010) slice: tear every runtime down (local reset commit). */
   closeAll(): number[] {
-    // L45553-45555
+    // L45549-45576 (the parts that exist in the port host): abort operation collectors (L45551), cancel dictations /
+    // voice-note transcripts (L45553-45555), tear down runtimes, and retire every job watcher (L45572 — docs/40 M23:
+    // without this a recursive fs.watch survives on macOS (FSEvents) and keeps the process alive; it was the real
+    // leaked handle behind the macOS port-test hang), then clear the watcher map (L45577).
+    for (const controller of this.operationCollectors.values()) controller.abort();
     for (const operation of this.voiceDictations.values()) operation.cancel();
     this.voiceDictations.clear();
     this.cancelVoiceNoteTranscripts(() => true);
     for (const s of this.sessions.values()) this.teardownRuntime(s, "local-reset");
+    for (const sessionId of [...this.watchers.keys()]) this.retireWatcher(sessionId);
+    this.watchers.clear();
     return [];
   }
   /** host session meta by id (HyperFrames preview / editor render liveSession L62403). */

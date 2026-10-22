@@ -101,7 +101,7 @@ function setup() {
     const lateRows = () => readDisplayTranscript(displayTranscriptPath(ud, m.sessionId)).ordered.filter((r: any) => r.kind === "late_result").map((r: any) => r.line);
     return { s, sid: m.sessionId, jobPath, addOp, plan, argv, lateRows };
   };
-  return { root, host, events, delivered, video, done: () => rmSync(root, { recursive: true, force: true }) };
+  return { root, host, events, delivered, video, done: () => { const watched = (host as any).watchers.size; host.closeAll(); assert.equal((host as any).watchers.size, 0, `closeAll retired ${watched} job watcher(s)`); rmSync(root, { recursive: true, force: true }); } }; // docs/40 M23: closeAll retires the job watchers (L45572)
 }
 
 test("M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend", { skip: SKIP_COLLECTOR }, async () => {

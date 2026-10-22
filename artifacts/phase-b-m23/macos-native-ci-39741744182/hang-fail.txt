@@ -1,0 +1,37 @@
+=== dist-test/m16-collector.test.cjs rc=1
+HANG_PROBE {"file":"dist-test/m16-collector.test.cjs","pid":6729,"aliveMs":20020,"resources":["PipeWrap","PipeWrap","PipeWrap","ProcessWrap"],"handles":[{"type":"Socket","fd":14,"address":{},"onTimeout":"function() {\n  const handle = this._handle;\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\n  if (lastWriteQueueSize > 0 && handle) {\n    // `lastWriteQ"},{"type":"Socket","fd":16,"address":{},"onTimeout":"function() {\n  const handle = this._handle;\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\n  if (lastWriteQueueSize > 0 && handle) {\n    // `lastWriteQ"},{"type":"Socket","fd":18,"address":{},"onTimeout":"function() {\n  const handle = this._handle;\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\n  if (lastWriteQueueSize > 0 && handle) {\n    // `lastWriteQ"},{"type":"ChildProcess","pid":6731,"spawnfile":"/Users/runner/hostedtoolcache/node/22.23.3/arm64/bin/node","spawnargs":["/Users/runner/hostedtoolcache/node/22.23.3/arm64/bin/node","--test-timeout=60000","dist-test/m16-collector.test.cjs"]}],"requests":[]}
+# HANG_PROBE {"file":"/Users/runner/work/reelkiln/reelkiln/port/dist-test/m16-collector.test.cjs","pid":6731,"aliveMs":20015,"resources":["PipeWrap","PipeWrap","FSEventWrap","FSEventWrap","FSEventWrap"],"handles":[{"type":"Socket","fd":2,"address":{},"onTimeout":"function() {\\n  const handle = this._handle;\\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\\n  if (lastWriteQueueSize > 0 && handle) {\\n    // `lastWriteQ"},{"type":"Socket","fd":1,"address":{},"onTimeout":"function() {\\n  const handle = this._handle;\\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\\n  if (lastWriteQueueSize > 0 && handle) {\\n    // `lastWriteQ"},{"type":"FSWatcher"},{"type":"FSWatcher"},{"type":"FSWatcher"}],"requests":[]}
+not ok 1 - dist-test/m16-collector.test.cjs
+# tests 7
+# pass 6
+# fail 0
+  type: 'test'
+  ...
+# Subtest: M16 verbatim helpers: busyCollectorArgs / readOperationJournal / lateResultReportNote
+ok 6 - M16 verbatim helpers: busyCollectorArgs / readOperationJournal / lateResultReportNote
+  ---
+  duration_ms: 0.884625
+  type: 'test'
+  ...
+
+HANG_PROBE {"file":"dist-test/m16-collector.test.cjs","pid":6729,"aliveMs":20020,"resources":["PipeWrap","PipeWrap","PipeWrap","ProcessWrap"],"handles":[{"type":"Socket","fd":14,"address":{},"onTimeout":"function() {\n  const handle = this._handle;\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\n  if (lastWriteQueueSize > 0 && handle) {\n    // `lastWriteQ"},{"type":"Socket","fd":16,"address":{},"onTimeout":"function() {\n  const handle = this._handle;\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\n  if (lastWriteQueueSize > 0 && handle) {\n    // `lastWriteQ"},{"type":"Socket","fd":18,"address":{},"onTimeout":"function() {\n  const handle = this._handle;\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\n  if (lastWriteQueueSize > 0 && handle) {\n    // `lastWriteQ"},{"type":"ChildProcess","pid":6731,"spawnfile":"/Users/runner/hostedtoolcache/node/22.23.3/arm64/bin/node","spawnargs":["/Users/runner/hostedtoolcache/node/22.23.3/arm64/bin/node","--test-timeout=60000","dist-test/m16-collector.test.cjs"]}],"requests":[]}
+# HANG_PROBE {"file":"/Users/runner/work/reelkiln/reelkiln/port/dist-test/m16-collector.test.cjs","pid":6731,"aliveMs":20015,"resources":["PipeWrap","PipeWrap","FSEventWrap","FSEventWrap","FSEventWrap"],"handles":[{"type":"Socket","fd":2,"address":{},"onTimeout":"function() {\\n  const handle = this._handle;\\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\\n  if (lastWriteQueueSize > 0 && handle) {\\n    // `lastWriteQ"},{"type":"Socket","fd":1,"address":{},"onTimeout":"function() {\\n  const handle = this._handle;\\n  const lastWriteQueueSize = this[kLastWriteQueueSize];\\n  if (lastWriteQueueSize > 0 && handle) {\\n    // `lastWriteQ"},{"type":"FSWatcher"},{"type":"FSWatcher"},{"type":"FSWatcher"}],"requests":[]}
+# Subtest: dist-test/m16-collector.test.cjs
+not ok 1 - dist-test/m16-collector.test.cjs
+  ---
+  duration_ms: 60010.813292
+  type: 'test'
+  location: '/Users/runner/work/reelkiln/reelkiln/port/dist-test/m16-collector.test.cjs:1:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 60000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 0
+# cancelled 1
+# skipped 0
+# todo 0
+# duration_ms 60019.599125

@@ -474,7 +474,7 @@ jobs:
             console.log(JSON.stringify({ ok, hidden: h, control: c })); process.exit(ok ? 0 : 1);' "$OUT/flight-hidden.txt" "$OUT/flight-control.txt" | tee "$OUT/flight-verdict.json"
       - uses: astral-sh/setup-uv@v6
       - name: "Rosetta branch of nativePythonArgs (L7172): x86_64 CPython under Rosetta → forced aarch64 (docs/40 M23)"
-        continue-on-error: true # docs/40 M23: non-blocking until green twice
+        # docs/40 M23: blocking — green twice (39740107828, 39741744182)
         working-directory: port
         run: |
           OUT="$RUNNER_TEMP/macos-native"

@@ -9,7 +9,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "bundle": "node tools/build.mjs",
     "build": "npm run gen && npm run typecheck && npm run bundle",
-    "test": "node tools/build.mjs --tests && node --test --test-timeout=120000 --test-force-exit \"dist-test/*.test.cjs\"",
+    "test": "node tools/build.mjs --tests && node --test --test-timeout=120000 \"dist-test/*.test.cjs\"",
     "start": "electron .",
     "agent-sdk:install": "node tools/install-agent-sdk.mjs",
     "package:linux": "npm run build && node tools/package.mjs --platform linux",

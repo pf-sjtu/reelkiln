@@ -1,0 +1,21 @@
+TAP version 13
+# \# rosetta: {"x86":"/Users/runner/work/_temp/uvpy-x86/cpython-3.12.15-macos-x86_64-none/bin/python3.12","machine":"x86_64","version":"3.12.15","args":["--python","cpython-3.12.15-macos-aarch64"]}
+# Downloading cpython-3.12.15-macos-aarch64-none (download) (23.9MiB)
+#  Downloaded cpython-3.12.15-macos-aarch64-none (download)
+# Installed Python 3.12.15 in 1.23s
+#  + cpython-3.12.15-macos-aarch64-none
+# Subtest: Rosetta: x86_64 venv + x86_64 managed python on arm64 → --python cpython-…-macos-aarch64 → uv resolves an arm64 interpreter
+ok 1 - Rosetta: x86_64 venv + x86_64 managed python on arm64 → --python cpython-…-macos-aarch64 → uv resolves an arm64 interpreter
+  ---
+  duration_ms: 10257.444459
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10643.942625
