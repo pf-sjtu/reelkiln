@@ -136,7 +136,7 @@
 5. **Windows 引擎钩子**：端口在引擎 venv 的 site-packages 里放了 `.pth` 钩子，改写了 `subprocess.Popen` 对裸 `npx`/`npm` 的处理和 `os.fsync` 的 EBADF 分支。只影响 win32；如果引擎以后自己处理了 Windows，这个钩子应当删掉。
 
 ## 增补（M19，docs/36）：Windows S1 UI e2e 与 W11 / W13 / W14
-CI job `windows-s1-ui`（windows-latest，win-unpacked，原版渲染器 + CDP，FAKE-LLM 回放 S1 关键路径）第一次 allPass：[39724411939](https://github.com/pf-sjtu/reelkiln/actions/runs/39724411939)（2026-10-22 12:53 SGT）。
+CI job `windows-s1-ui`（windows-latest，win-unpacked，原版渲染器 + CDP，FAKE-LLM 回放 S1 关键路径）连续两次 allPass：[39724411939](https://github.com/pf-sjtu/reelkiln/actions/runs/39724411939)、[39725415137](https://github.com/pf-sjtu/reelkiln/actions/runs/39725415137)，之后改为阻塞 job。
 
 | # | 结果 |
 |---|---|

@@ -38,7 +38,8 @@
 - `windows-s1-ui` 两次全绿后改为阻塞（见 §3）。
 
 ## 3. 阻塞状态
-`windows-s1-ui` 和 macOS packaged smoke 在连续两次全绿之前是 `continue-on-error`。第二次全绿的 run 和改为阻塞的提交记录在 docs/10 的 M19 增补里。
+`windows-s1-ui` 和 macOS packaged smoke 连续两次全绿：[39724411939](https://github.com/pf-sjtu/reelkiln/actions/runs/39724411939)（ffb244c）和 [39725415137](https://github.com/pf-sjtu/reelkiln/actions/runs/39725415137)（5c479e1，allPass，play 推进 2.56 s，export sha `c6cc8749…` 三者相等；macOS `videoclaw-port.app: OK`）。之后去掉了两处 `continue-on-error`，两者都是阻塞的。
+注意：两次 Windows 运行的导出 sha 不同（`afd73a7c…` / `c6cc8749…`），所以 verdict 只比较同一次运行里 final == v1 == export，不和固定值比较。
 
 ## 4. 仍未验证 / 弱于原版
 - **W11b（新）**：聊天消息里 agent 给出的相对链接（`[Watch](jobs/<id>/final.mp4)`）在 Windows 上显示 “Link unavailable”。原版 `resolveDeliveryUrl()` 用 `file://${cwd}` 作为 base，Windows 的 `cwd` 会进入 URL host。Output 面板不受影响。修法需要改变传给渲染器的 `cwd` 形式，影响面大，本轮没做。
