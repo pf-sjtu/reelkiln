@@ -291,7 +291,9 @@ try {
   // 6. play in the original Output panel player -----------------------------------------------
   await waitFor("V1 in the version strip", () => find("button.v-pill", { text: "^V1" }), { timeoutMs: 120_000 });
   const vSel = ".op-preview-stage video";
-  const vEl = await waitFor("Output panel player", async () => { const r = await find(vSel); if (!r) return null; const rs = await cdp.eval(`document.querySelector(${JSON.stringify(vSel)}).readyState`); return rs >= 1 ? r : null; }, { timeoutMs: 60_000 });
+  const vEl = await waitFor("Output panel player", async () => { const r = await find(vSel); if (!r) return null; const rs = await cdp.eval(`document.querySelector(${JSON.stringify(vSel)}).readyState`); return rs >= 1 ? r : null; }, { timeoutMs: 60_000 }).catch(async (e) => {
+    const diag = await cdp.eval(`[...document.querySelectorAll("video, img")].slice(0, 6).map((v) => ({ tag: v.tagName, src: (v.currentSrc || v.src || "").slice(0, 200), err: v.error && v.error.code, rs: v.readyState }))`).catch(() => null);
+    say(`player diag ${JSON.stringify(diag)}`); throw e; });
   const vInfo = await cdp.eval(`(() => { const v = document.querySelector(${JSON.stringify(vSel)}); return { src: v.currentSrc, controls: v.controls, paused: v.paused, readyState: v.readyState, duration: v.duration, w: v.videoWidth, h: v.videoHeight }; })()`);
   await click("player native play control", vSel, { point: nativePlayButton }); drove("Output panel player (original <video controls> in .op-preview-stage) native play button", "click at the controls' play button position");
   const samples = [];
