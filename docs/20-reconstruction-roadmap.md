@@ -1,12 +1,12 @@
 # 20 · 功能重建路线图（Phase A：盘点 + 差距分析 + 计划）
 
-> 2026-10-21（UTC+8），box（Debian trixie x64）。基线 HEAD `2fabdd2`。北极星：**在 box 上把原版 macOS Videoclaw 0.0.40 的主要用户流程真实跑通并校验产物，最终做到 100% 功能重建**。本轮只做盘点与计划，外加两个**只读/探针级**的可行性实验（§0.2），没有改 `port/src`。
+> 2026-10-21（UTC+8），box（Debian trixie x64）。基线 HEAD `2fabdd2`。北极星：**在 box 上把原版 macOS 应用 0.0.40 的主要用户流程真实跑通并校验产物，最终做到 100% 功能重建**。本轮只做盘点与计划，外加两个**只读/探针级**的可行性实验（§0.2），没有改 `port/src`。
 >
 > 标注约定：**[已验证]** = 本轮或此前在 box 上真实运行过、有证据文件；**[读码]** = 直接读到原版代码（`app/reconstructed/main/index.js` 行号 L…）；**[推断]** = 由命名/上下文推断，未运行；**[未知]** = 目前无法判断。
 
 ## 0. 一页结论
 
-1. **Videoclaw 是什么** [读码+已验证]：一个 Electron 桌面“AI 短视频工作室”。用户在“项目（client）”下新建“视频（session）”，用自然语言描述想要的视频、可附上素材；主进程起一个 **Claude Code（claude-agent-sdk `query()`）或 Codex app-server** agent，agent 按引擎写好的规则（CLAUDE.md、workflows、taste、hooks）在 Bash 里调用 **Python 引擎 CLI**（`uv run … tools/<tool>.py --job <id>`）完成剪辑/生成/合成，产物落在 `~/Videoclaw/jobs/<jobId>/`；主进程监视 job 目录，把 `final.mp4` 存成版本 `versions/vN.mp4`，用户在 UI 里预览、批准（finalize）、导出。付费生成（图像/视频/配音/对口型等）全部经 Videoclaw 云网关计费。
+1. **原版应用是什么** [读码+已验证]：一个 Electron 桌面“AI 短视频工作室”。用户在“项目（client）”下新建“视频（session）”，用自然语言描述想要的视频、可附上素材；主进程起一个 **Claude Code（claude-agent-sdk `query()`）或 Codex app-server** agent，agent 按引擎写好的规则（CLAUDE.md、workflows、taste、hooks）在 Bash 里调用 **Python 引擎 CLI**（`uv run … tools/<tool>.py --job <id>`）完成剪辑/生成/合成，产物落在 `~/Videoclaw/jobs/<jobId>/`；主进程监视 job 目录，把 `final.mp4` 存成版本 `versions/vN.mp4`，用户在 UI 里预览、批准（finalize）、导出。付费生成（图像/视频/配音/对口型等）全部经 上游云网关计费。
 2. **覆盖现状** [已验证，`tools/ipc_coverage.py`]：184 个原版 IPC 通道全部已在 port 注册（契约 100%），但**真实实现只有 10 个**（+1 个需 env 开关），11 个是 QA fixture 假数据，**138 个是返回 `undefined` 的桩**；23 个推送只发出 4 个。即：**通道层面真实覆盖 ≈ 8%（15/184，含 4 个推送）**。
 3. **引擎** [已验证]：原版引擎 tarball 不改一字节即可在 Linux 上安装、doctor（除 gateway）全绿；本轮新增验证 **$0 主链 `assemble → compose_render(Remotion) → verify_output` 产出合格 9:16 mp4**（§3.5，`L0 ACCEPT PASS`）。凡是走网关的生成/审阅工具需要账号 key，box 上做不了真实运行。
 4. **关键新发现** [已验证]：**原版 React 渲染器（`app/out/renderer`，未改一字节）可以直接挂在 port 主进程上启动**，主页完整渲染（截图 `artifacts/phase-a-probe/original-renderer-on-port.png`），首页启动只触发 6 个未实现通道。→ 路线图改为“**用原版 UI + 逐个把通道做真**”，不再自写 UI。
@@ -24,7 +24,7 @@
 | `artifacts/phase-a-probe/` | 证据：`accept-L0.json`、`final.ffprobe.json`、`final.sha256`、`render-manifest.json`、`run.log.jsonl`、`chunk_boundaries.json`、`edl.json`、`compose_render.log`、`inputs.SHA256SUMS`、`ipc-coverage.json`、`original-renderer-on-port.png`、`original-renderer-boot.log` |
 
 ### 0.2 本轮做的两个探针（无代码改动）
-- **P-1 原版渲染器挂 port 主进程**：`ELECTRON_RENDERER_URL=file://…/app/out/renderer/index.html VIDEOCLAW_PORT_FAKE_SETTINGS=1 xvfb-run electron --no-sandbox --remote-debugging-port=… .`（`port/` 目录），用 CDP 取 `document.body.innerText` 与截图。结果：侧栏（New video / Quickstarts / Characters / Projects: Personal, Humeo / Your account · Local studio）、“What are we making today?”、10 个 quickstart 磁贴、新手引导 Step 1 of 3、输入框 “Make me a reel about…” 全部渲染。主进程日志中未实现调用：`account:snapshot`×2、`app:update:get`、`engine:llmRouteReadiness`（因 FAKE_SETTINGS）、`interaction:replayPending`、`quickstart:catalog`、`workflowSubmit:eligibility`。**更深的流程（发消息、看视频）未试** [未知]。
+- **P-1 原版渲染器挂 port 主进程**：`ELECTRON_RENDERER_URL=file://…/app/out/renderer/index.html VIDEOCLAW_PORT_FAKE_SETTINGS=1 xvfb-run electron --no-sandbox --remote-debugging-port=… .`（`port/` 目录），用 CDP 取 `document.body.innerText` 与截图。结果：侧栏（New video / Quickstarts / Characters / Projects: Personal, [Vendor] / Your account · Local studio）、“What are we making today?”、10 个 quickstart 磁贴、新手引导 Step 1 of 3、输入框 “Make me a reel about…” 全部渲染。主进程日志中未实现调用：`account:snapshot`×2、`app:update:get`、`engine:llmRouteReadiness`（因 FAKE_SETTINGS）、`interaction:replayPending`、`quickstart:catalog`、`workflowSubmit:eligibility`。**更深的流程（发消息、看视频）未试** [未知]。
 - **P-2 $0 引擎链**：见 §3.5。
 
 ---

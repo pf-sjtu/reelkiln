@@ -1,6 +1,6 @@
 # 02 · 外部依赖与环境变量（不还原，env/路径配置连接）
 
-> 结论先行（verified）：**Videoclaw 0.0.40 的 JS 层没有任何 `FFMPEG_PATH` / `FFPROBE_PATH` / `UV_PATH` / `NODE_PATH` 一类的"指向可执行文件"的环境变量**（全 bundle grep 无结果）。旧 stub 表中的 `VIDEOCLAW_FFMPEG`、`FFMPEG_PATH`、`VIDEOCLAW_FFPROBE`、`FFPROBE_PATH`、`VIDEOCLAW_NODE`、`VIDEOCLAW_UV`、`CODEX_PATH` **均为 not found in bundle**，已删除。
+> 结论先行（verified）：**原版 macOS 应用 0.0.40 的 JS 层没有任何 `FFMPEG_PATH` / `FFPROBE_PATH` / `UV_PATH` / `NODE_PATH` 一类的"指向可执行文件"的环境变量**（全 bundle grep 无结果）。旧 stub 表中的 `VIDEOCLAW_FFMPEG`、`FFMPEG_PATH`、`VIDEOCLAW_FFPROBE`、`FFPROBE_PATH`、`VIDEOCLAW_NODE`、`VIDEOCLAW_UV`、`CODEX_PATH` **均为 not found in bundle**，已删除。
 > 实际机制是"**固定目录约定 + 少量开发期覆盖变量**"：
 > 1. 二进制随包放在 `<process.resourcesPath>/bootstrap/`；
 > 2. 引擎安装时把 `ffmpeg / ffprobe / uv` **复制**进 `<engine>/bin/`；

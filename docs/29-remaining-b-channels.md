@@ -1,6 +1,6 @@
 # docs/29 — M12：剩余 23 个 (b) 类通道 + 按模型计价的 ledger
 
-> 分支 `master`（pf-sjtu/videoclaw-reverse）。提交：`4580b57`（计价）、`a625f0b`（23 个通道接线）、本文档提交（UI e2e 证据、注入缝、`assertGenerationAllowed` L60842、审计/覆盖率脚本）。
+> 分支 `master`（pf-sjtu/reelkiln）。提交：`4580b57`（计价）、`a625f0b`（23 个通道接线）、本文档提交（UI e2e 证据、注入缝、`assertGenerationAllowed` L60842、审计/覆盖率脚本）。
 > 时间均为 Asia/Singapore（UTC+8）。参考实现 `app/reconstructed/main/index.js` 只读，未改动。
 > 约束：没用任何真实 Claude 订阅，也没用 Codex/OpenAI/网关凭据。所有 LLM 流量都走 MiniMax：通用 provider 框架 → gate proxy → M11 本地网关 shim（`VIDEOCLAW_PORT_LOCAL_GATEWAY=1`）。MiniMax 一律单请求、并发 1。
 
@@ -43,7 +43,7 @@ M11 的 shim ledger 用的是一张平价表 `port-local-table/v1`（输入 0.3 
 - 付费工具都走原版路径：`AgentGatewayProxy.credentialsForBudgetedTools` → shim `PUT /v1/budgets` → 引擎拿到 scoped capability 后调用。
   - shim 对 `mint_image` / `embed` 回 **422 `TOOL_NOT_OFFERED`**，因为 MiniMax 没有等价能力。之后进入原版自己的失败分支。
 - `assertGenerationAllowed` 按 L60842 实现：
-  - `currentUpdateInfo.blocked` → "Update Videoclaw before starting new work."
+  - `currentUpdateInfo.blocked` → "Update [App] before starting new work."
   - `paidWorkBlocked` → `ACCOUNT_BLOCKED_COPY`
 
 ## 3. 逐通道结果（23 个）
@@ -67,7 +67,7 @@ M11 的 shim ledger 用的是一张平价表 `port-local-table/v1`（输入 0.3 
 | engine:continueOnCredits | real-partial | continueOnCredits / finishCreditContinuation L52012 → gateway 路由续接会话 | **原版 UI/CDP + 真实 MiniMax 计费轮次**（见 §4） | 同上 |
 | engine:saveAgentProviderKey | real-partial | 原版校验 L61665 → CredentialStore.setProviderKey，并 registerSecret | node:test | 只保存。按用户指令，Codex/OpenRouter 实际仍跑 MiniMax，从不使用或校验这个 key |
 | workflowSubmit:start | real-partial | WorkflowSubmissionService L59760（顺序：completedAttempt → name → eligibility）→ 原版 not-eligible 分支 | node:test | 没有 account plane 能判定 eligible，collect/归档/PUT 不可达 |
-| app:update:check | **real** | 原版 startUpdateCheck → shim `GET /v1/app/latest` | **原版 UI/CDP**：Profile 菜单 → Check for updates → “Videoclaw is up to date (0.0.40-port.0)” | — |
+| app:update:check | **real** | 原版 startUpdateCheck → shim `GET /v1/app/latest` | **原版 UI/CDP**：Profile 菜单 → Check for updates → “[App] is up to date (0.0.40-port.0)” | — |
 | app:update:preferences | real-partial | 原版 createUpdatePreferences.get | node:test | nightly 不允许（Linux 没有 appUpdater） |
 | app:update:channel | real-partial | createUpdatePreferences.set → canSwitch=false → 原版拒绝 | node:test | 同上 |
 | characters:sheetPlan | real-partial | 原版 CharacterSheetBuilder.plan：真实引擎 `--dry-run --json` + proxy.quoteProject → shim quote | node:test + **真实引擎脚本** `tools/m12-sheet-proof.ts`：plan ok，3 个付费步骤，报价 $0.12 + 预留 $0.03 = $0.15 | 价格是 shim 报价，不是厂商报价 |
@@ -90,7 +90,7 @@ M11 的 shim ledger 用的是一张平价表 `port-local-table/v1`（输入 0.3 
    - 生效时，spawn 让 SDK query 抛出 `Claude AI usage limit reached|…`，Claude CLI 根本不会启动。
    - 单测断言了这个缝在其他情况下都不生效。
    - 后面的步骤全部是真实代码：原版 modelAccountLimit（生成代码）→ failureEvent。
-2. 原版 renderer 显示卡片“Claude usage limit reached.”，带按钮 **Continue this video with VideoClaw credits / Open Claude / Change provider / Retry when ready**（`shots/03-claude-limit-card.png`）。
+2. 原版 renderer 显示卡片“Claude usage limit reached.”，带按钮 **Continue this video with [App] credits / Open Claude / Change provider / Retry when ready**（`shots/03-claude-limit-card.png`）。
 3. 点击按钮后出现原版 spend 确认框 → “Continue with credits”（`04a-confirm.png`）。
    - 结果：续接会话 `eb799223-…`，`llmRoute:"gateway"`，`continuedFromSessionId` 指向原会话，标题“… · continued”（`04b-continuation.png`）。
 4. 在续接会话中发送“只回复：完成 VCE94DO”，回复 **“完成 VCE94DO”**（`05b-answered.png`）。

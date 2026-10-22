@@ -112,7 +112,7 @@ flowchart LR
 - 线协议：每行一个 JSON；请求 `{method, id, params}`，通知 `{method, params}`（**无 `"jsonrpc":"2.0"` 字段**，L23968-23992）；读取 `readline.createInterface(stdout)`。
 - 客户端→服务端：`initialize`（`clientInfo:{name:"videoclaw_desktop",title:"VideoClaw",version}`, `capabilities:{experimentalApi:true, requestAttestation:false}`）→ 通知 `initialized`；`account/read`、`account/login/start`、`account/login/cancel`、`account/logout`、`model/list`、`thread/start` / `thread/resume`、`thread/read`、`turn/start`（支持 `outputSchema`）、`turn/interrupt`。
 - 服务端→客户端通知：`thread/started`、`turn/started`、`turn/completed`、`item/started`、`item/completed`、`item/agentMessage/delta`、`thread/compacted`、`account/login/completed`、`error`、`warning`、`configWarning`、`deprecationNotice`。
-- 服务端→客户端请求：`item/tool/call`（VideoClaw 动态工具 → 主进程执行）、`item/commandExecution/requestApproval`、`item/fileChange/requestApproval`。
+- 服务端→客户端请求：`item/tool/call`（上游动态工具 → 主进程执行）、`item/commandExecution/requestApproval`、`item/fileChange/requestApproval`。
 - 安全设定：`CODEX_CONTAINMENT = {approvalPolicy:"on-request", sandbox:"read-only"}`；config 中 `features.{apps,hooks,multi_agent,remote_plugin,skill_mcp_dependency_install}=false`、`mcp_servers:{}`、`shell_environment_policy:{inherit:"none", set:{PATH, UV_PYTHON_PREFERENCE, VIDEOCLAW_ENGINE, VIDEOCLAW_WORKSPACE, VIDEOCLAW_TENANT}}`（L23497-23525）。
 - provider：`chatgpt`（登录）、`openai-api`（`model_providers.videoclaw_openai`, base `https://api.openai.com/v1`, `env_key=VIDEOCLAW_OPENAI_API_KEY`）、`openrouter`（base `https://openrouter.ai/api/v1`, `env_key=VIDEOCLAW_OPENROUTER_API_KEY`）。
 - 版本握手：`assertCompatibleServer` 要求 userAgent 中版本 == `"0.160.1"`。

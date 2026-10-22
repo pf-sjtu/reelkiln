@@ -94,7 +94,7 @@ CLAUDE_CONFIG_DIR/projects/…jsonl: {"type":"ai-title","aiTitle":"Surfing cats"
 
 ## 4. Claude Agent SDK 开箱即用（`agent-sdk.ts`，`tools/install-agent-sdk.mjs`）
 
-**为什么不直接加到 `dependencies`/`optionalDependencies`**：SDK 会按平台拉原生 `claude`（Linux x64 ≈ 278 MB），每次 `npm ci`（含 CI、只用 helper 的安装）都会下载；SDK 许可证为 “SEE LICENSE IN README.md”（Anthropic 商业条款），随应用分发前需法务确认（原版 Videoclaw 是打进 `app.asar.unpacked` 的）。
+**为什么不直接加到 `dependencies`/`optionalDependencies`**：SDK 会按平台拉原生 `claude`（Linux x64 ≈ 278 MB），每次 `npm ci`（含 CI、只用 helper 的安装）都会下载；SDK 许可证为 “SEE LICENSE IN README.md”（Anthropic 商业条款），随应用分发前需法务确认（原版应用是打进 `app.asar.unpacked` 的）。
 
 **做法**：
 - `package.json`：`config.claudeAgentSdkVersion = "0.3.305"`（与 `agent-sdk.ts` 的 `PINNED_CLAUDE_AGENT_SDK_VERSION` 由测试保证一致）+ 脚本 `npm run agent-sdk:install`：在 `port/vendor/claude-agent-sdk/` 生成独立 package.json 并 `npm install`（只装当前平台的原生二进制；打包其它平台用 `-- --os win32 --cpu x64`）。`port/vendor/` 已加入 `.gitignore`。

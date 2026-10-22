@@ -75,8 +75,8 @@
   - 原版的两处已知 TypeError 计数为 0，console 错误为 0。
 - **花费**：$0.274949（proxy 按 models.dev `minimax-cn/MiniMax-M3.1-Flash` 计量，包含原版的 taste-capture 追问 turn）。
 - **teardown 观察**：
-  - harness 发 Browser.close 时 taste-capture turn 还在运行，于是原版 QuitCoordinator 弹出 “Videoclaw is still working” 对话框（T3 移植的行为，截图 `99-teardown-quit-dialog.png`），卡住了 Browser.close。
-  - 我在 Xvfb 上用 xdotool 手动点了 “Quit Videoclaw”，日志出现 `quit: begin shutdown (quit)`，进程退出码 0。这一步发生在所有判定之后，**不计入 PASS**。
+  - harness 发 Browser.close 时 taste-capture turn 还在运行，于是原版 QuitCoordinator 弹出 “[App] is still working” 对话框（T3 移植的行为，截图 `99-teardown-quit-dialog.png`），卡住了 Browser.close。
+  - 我在 Xvfb 上用 xdotool 手动点了 “Quit [App]”，日志出现 `quit: begin shutdown (quit)`，进程退出码 0。这一步发生在所有判定之后，**不计入 PASS**。
   - harness 已改为 Browser.close 最多等 5 s，之后依次 SIGTERM、SIGKILL。
 - **说明**：这个 AppImage 是在 `7826da1`（app:restart/pendingToast）之前打包的。
 - **证据**：`T5-s1-appimage-real1-*`（summary、accept、cdp-log、events、ffprobe、edl、sha256、versions、sessions、shots），以及 `T5-s1-appimage-real1-NOTE.json`、`T5-remains-*.json`。
@@ -130,7 +130,7 @@
 2. 不适配的付费工具：mint_video/mint_image/synth_voice 的具名模型路由、preview_session_shot、character_voice、plan_paid_operations。
 3. 真实 Claude 订阅分支（creditHandoffOffer），目前只能注入。
 4. macOS 本机语音听写（transcribeVoice/discardVoice/voiceNote 的后台转写），属于平台限制。
-5. 托管登录（videoclaw.com 账号平面）和 nightly 更新通道；生产环境的 update feed 和非 darwin 平台的更新门槛。
+5. 托管登录（上游官网账号平面）和 nightly 更新通道；生产环境的 update feed 和非 darwin 平台的更新门槛。
 6. push-none 的 3 个推送：`characters:voices:changed`（依赖账号）、`engine:updated`（Bootstrap 的 onEngineUpdated 引擎热更新路径）、`window:state`。
 7. readQuitState 的附件计数、authenticatedWorkPaused，以及 `app:restart` 和 `engine:pendingToast` 的运行时证明。
 8. ~~voice 卡 UI 证据~~、~~app:update 下载/安装~~、~~AlphaConsentCoordinator~~、~~materializeGatewaySpendPolicy~~、~~collector busy/late-result/collectorOwned~~：本轮已完成。

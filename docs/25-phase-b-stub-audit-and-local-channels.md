@@ -1,6 +1,6 @@
 # 25 · Phase B M8：116 个 stub 通道审计 + 本地通道真实化 + session:history 回放 + AppImage 复验
 
-日期：2026-10-21（Asia/Singapore）。基线：`246ca12`（docs/24）。本轮不使用任何 Claude / Codex / Videoclaw gateway 凭据；唯一的 LLM 路由仍是 PORT-NEW 的 MiniMax provider 路由（`MINIMAX_API_KEY` 只在 box 环境变量中，串行、单请求；未打印、未写日志、未提交——证据目录命中数 0）。`app/out`、`app/reconstructed` 只作参照，未改动；新代码都在 `port/` 与 `tools/`。
+日期：2026-10-21（Asia/Singapore）。基线：`246ca12`（docs/24）。本轮不使用任何 Claude / Codex / 上游 gateway 凭据；唯一的 LLM 路由仍是 PORT-NEW 的 MiniMax provider 路由（`MINIMAX_API_KEY` 只在 box 环境变量中，串行、单请求；未打印、未写日志、未提交——证据目录命中数 0）。`app/out`、`app/reconstructed` 只作参照，未改动；新代码都在 `port/` 与 `tools/`。
 
 ## 0. 一览
 
@@ -17,7 +17,7 @@
 
 * 来源：`python3 tools/ipc_coverage.py --json` 在 `246ca12` 上的 116 个 `stub`。每个通道给出原版 `app/reconstructed/main/index.js` 中 `ipcMain.handle/on` 注册行；当类别取决于 host 方法或模块时，再给出该方法行（例如 `memoryBinding` L36456、`createAppUpdater` L2223、`voiceTools` L10465、`getSpendSnapshot` L45686）。
 * **a**：原版实现只依赖本机文件/进程/ffmpeg/engine CLI，没有账号或网关前提；Linux 上可以逐字移植。若原版在实现内部顺带向 gateway outbox 发 beacon（`this.outbox?.enqueue`），本地部分算 a，beacon 部分在 port 中是 `outbox` 缺省的 no-op 分支（原版同样写成可选链）。
-* **b**：原版 handler 本身要求已验证的 Videoclaw 账号 / gateway（`memoryBinding` 的 "Project memory is unavailable until this account and project are verified"、`resolveHelperCreds`、`acquireLibraryGatewayLease`、`assertGenerationAllowed` + 付费生成）或 Claude Code / Codex 登录与模型目录。
+* **b**：原版 handler 本身要求已验证的 上游账号 / gateway（`memoryBinding` 的 "Project memory is unavailable until this account and project are verified"、`resolveHelperCreds`、`acquireLibraryGatewayLease`、`assertGenerationAllowed` + 付费生成）或 Claude Code / Codex 登录与模型目录。
 * **c**：原版在 Linux 上本来就禁用或依赖 mac 专有助手：`createAppUpdater` 仅在 `platform === "darwin"` 时启用（L2227-2231，Linux 状态为 `disabled`，消息 "In-app updates require an installed Mac build…"）；`media:transcribeVoice` 依赖 `voice-dictation` 原生助手（mac）且要求登录，故记为 b（兼 c）。`media:requestMic` 的 darwin `systemPreferences` 分支为 c，非 darwin 分支（返回 true）已实现。
 
 ## 2. 116 个通道完整表（a ✅ = 本轮已实现）
@@ -100,12 +100,12 @@
 | 74 | `gateway:verify` | b | L61376 | gateway reachability/auth |
 | 75 | `gateway:meter` | b | L61593 | gateway credit meter |
 | 76 | `gateway:topup` | b | L61596 | gateway billing |
-| 77 | `account:refresh` | b | L61407 | Videoclaw account (gateway) |
-| 78 | `account:signInGoogle` | b | L61408 | Videoclaw account OAuth |
-| 79 | `account:signInEmail` | b | L61431 | Videoclaw account email sign-in |
-| 80 | `account:resendEmail` | b | L61420 | Videoclaw account email sign-in |
-| 81 | `account:cancelSignIn` | b | L61428 | Videoclaw account sign-in flow |
-| 82 | `account:signOut` | b | L61445 | Videoclaw account |
+| 77 | `account:refresh` | b | L61407 | upstream account (gateway) |
+| 78 | `account:signInGoogle` | b | L61408 | upstream account OAuth |
+| 79 | `account:signInEmail` | b | L61431 | upstream account email sign-in |
+| 80 | `account:resendEmail` | b | L61420 | upstream account email sign-in |
+| 81 | `account:cancelSignIn` | b | L61428 | upstream account sign-in flow |
+| 82 | `account:signOut` | b | L61445 | upstream account |
 | 83 | `account:consent` | b | L61498 | account consent record (gateway) |
 | 84 | `account:ensureAccess` | b | L61508 | account access check (gateway) |
 | 85 | `account:mintKey` | b | L61557 | gateway key minting |
@@ -123,8 +123,8 @@
 | 97 | `engine:codexModels` | b | L61622 | Codex model catalog (ChatGPT account) |
 | 98 | `engine:claudeModels` | b | L61659 | Claude Code model catalog (Claude account) |
 | 99 | `engine:continueOnCodex` | b | L61661 | route handoff to Codex |
-| 100 | `engine:creditHandoffOffer` | b | L61655 | Videoclaw credits route |
-| 101 | `engine:continueOnCredits` | b | L61656 | Videoclaw credits route |
+| 100 | `engine:creditHandoffOffer` | b | L61655 | upstream credits route |
+| 101 | `engine:continueOnCredits` | b | L61656 | upstream credits route |
 | 102 | `engine:agentProviderKeyStatus` | b | L61664 | agent-provider key for Codex harness |
 | 103 | `engine:saveAgentProviderKey` | b | L61665 | agent-provider key for Codex harness |
 | 104 | `session:setModel` | b | L61784 | host.setSessionModel: model list comes from the Claude/Codex account catalog |
@@ -231,4 +231,4 @@ ARTIFACTS_PHASE=phase-b-m8 EXTRA_REDACT=<home> tools/collect_m5.sh /workspace/m8
 **风险**
 * 从 `persistSession:false` 改为 SDK 默认持久化 + resume：engine-profile 下会累积 transcript（与原版一致），但若 MiniMax 路由对超长续接上下文不稳定，长会话可能出现与旧行为不同的失败。
 * 37 个 a 类通道仍为 stub（删除/重试/继续/素材预览/HyperFrames 预览/library 本地部分等），UI 中对应按钮仍会得到 stub 结果。
-* 54 个 b 类通道需要 Claude Code / Codex / Videoclaw gateway 凭据，凭据缺失下无法真实实现或验证；2 个 c 类（app:update:download/install）在 Linux 上原版本身即禁用。
+* 54 个 b 类通道需要 Claude Code / Codex / 上游 gateway 凭据，凭据缺失下无法真实实现或验证；2 个 c 类（app:update:download/install）在 Linux 上原版本身即禁用。

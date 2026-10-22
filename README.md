@@ -1,6 +1,10 @@
-# videoclaw-reverse
+# Reelkiln
 
-逆向工程 + Windows 移植工作区：目标应用 **Videoclaw 0.0.40 (macOS arm64)**。
+> Reelkiln is an independent, unofficial reconstruction / cross-platform port of a third-party macOS app (referred to as "the original macOS app" or "the upstream app"). It is not affiliated with or endorsed by the upstream vendor.
+>
+> Naming note: wire-compatibility identifiers of the upstream app (environment variables such as `VIDEOCLAW_*`, the `window.videoclaw` preload bridge, `X-VideoClaw-*` HTTP headers, bundle ids, on-disk paths) are kept verbatim in code and in code spans of the docs because the port must stay byte-compatible with the upstream engine. Quoted upstream UI strings in docs use `[App]` in place of the product name.
+
+逆向工程 + Windows 移植工作区：目标应用为**原版 macOS 应用 0.0.40（arm64）**（下文统称"原版应用"或"上游应用"）。
 
 目标（分阶段）：
 1. **字节级对齐（当前阶段）**：忠实还原现有应用的源码与结构，可复现构建，先不做任何改动。
@@ -8,7 +12,7 @@
 3. 优化与升级。
 
 ## 应用构成（0.0.40）
-Videoclaw 是一个 **Electron + React 桌面应用**，由 AI agent 驱动的视频/媒体创作工具。
+原版应用是一个 **Electron + React 桌面应用**，由 AI agent 驱动的视频/媒体创作工具。
 
 | 层 | 技术 | 本仓库位置 | 还原方式 |
 |---|---|---|---|
@@ -26,10 +30,10 @@ Videoclaw 是一个 **Electron + React 桌面应用**，由 AI agent 驱动的�
 - `docs/` — 架构、原生组件、Windows 移植计划
 
 ## 版本与来源
-- app: `@videoclaw/desktop` v0.0.40
+- app: 原版桌面包 v0.0.40
 - engine: `0.1.57-rc7-15f8f2d`（built 2026-10-06，Python 3.14.6）
 - codex: `0.160.1` (aarch64-apple-darwin)
-- 来源 dmg: `Videoclaw-0.0.40-arm64.dmg`（见 `artifacts/manifests/app.asar.sha256`）
+- 来源 dmg: 原版 0.0.40 arm64 dmg（见 `artifacts/manifests/app.asar.sha256`）
 
 > 未入库的大体积第三方二进制（ffmpeg/ffprobe/uv/node/codex/voice-dictation 编译产物、app.asar、dmg）通过 `artifacts/manifests/*.sha256` 记录指纹，以支持字节级复现校验。
 

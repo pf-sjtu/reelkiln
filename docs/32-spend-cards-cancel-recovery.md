@@ -172,7 +172,7 @@
   - UI 出现 “Remembered something / 片尾统一使用白色字幕”。
   - MEMORY.md 已落盘（onDisk=true）。
   - turn 结果 isError=false，耗时 72.7s。
-- usage_display：PASS。proxy 计量 $0.015111（`models.dev:minimax-cn/MiniMax-M3.1-Flash`），chip 显示 `$0.02 spent`，Videoclaw gateway reasoning 行为 $0.02，与期望一致。
+- usage_display：PASS。proxy 计量 $0.015111（`models.dev:minimax-cn/MiniMax-M3.1-Flash`），chip 显示 `$0.02 spent`，上游 gateway reasoning 行为 $0.02，与期望一致。
 - main.log 中没有 429、retry limit 或 high demand。
 - **观察（风险）**：真实模型在 Codex 下除了调用 studio 工具，还自行执行了几条 `provider_command`（`ls`、`printenv | grep videoclaw|session`、`printenv | sort`）。
   - 命令输出没有进入日志。

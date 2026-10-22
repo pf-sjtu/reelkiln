@@ -79,7 +79,7 @@ models.dev 没有给 M3.1-Flash 提供 cache-write 价格，按公式回落到 i
 - 每次 result 写一条 `agent.spend.metered` 日志：`priceSources` 为同一来源，`sdkEstimateUsd` 只记录、不使用。
 
 ### 3.4 gateway 路由：ledger 为准（本次新增，PORT-NEW）
-在中断执行者的 r4 run 里（85d44c6 + WIP），Build-it turn 被中断，跑了 242 s。SDK result 的累计 `modelUsage` 计量为 $0.0526，同一 job 的 ledger（同一 models.dev 价）却是 $0.109：被中断的 turn 有已经发往上游、已计费的调用没有计进 modelUsage。于是 chip（来自 ledger）显示 $0.11，而 `meta.totalCostUsd`（“Videoclaw gateway reasoning”那一行的数据来源）停在 $0.05。
+在中断执行者的 r4 run 里（85d44c6 + WIP），Build-it turn 被中断，跑了 242 s。SDK result 的累计 `modelUsage` 计量为 $0.0526，同一 job 的 ledger（同一 models.dev 价）却是 $0.109：被中断的 turn 有已经发往上游、已计费的调用没有计进 modelUsage。于是 chip（来自 ledger）显示 $0.11，而 `meta.totalCostUsd`（“[App] gateway reasoning”那一行的数据来源）停在 $0.05。
 
 修复：`AgentHost.trueUpGatewayReasoning`（`agent-host.ts` L2135），在 `reconcileGatewaySpend`（L2150，原版 L48078）之后调用。把本 session 当前 job 的显示值抬到 `max(metered, ledger)`。它是幂等的，只应用与上次 true-up 的差值，所以 modelUsage 之后追上来也不会重复计数。别的 job 的 ledger 不影响本 session。单测见 `agent-host.test.ts`“gateway route — the job's ledger … trues up”。
 
@@ -95,7 +95,7 @@ r6 的详细数据：
 - 4 次 result 时 metered 与 ledger 的对比（`perResult`）：0.006554845 = 0.006554845（完全相等）；0.007548131 vs 0.007547976；0.010595033 vs 0.010595009；0.012075941 vs 0.012075942。差值 ≤ 1.6e-7。
 - chip 和 breakdown 数字不同，是原版自己的显示规则，两个数来自同一个 ledger 值：
   - chip 是 spend 预算的 `spentUsd`：`reconcileGatewayLedger` 把 ledger 的 `spent_usd` 用原版 `toCents` **向上取整到分**，$0.01208 → $0.02。
-  - breakdown 的“Videoclaw gateway reasoning”是 `meta.totalCostUsd.toFixed(2)`，$0.01208 → $0.01。
+  - breakdown 的“[App] gateway reasoning”是 `meta.totalCostUsd.toFixed(2)`，$0.01208 → $0.01。
 - SDK 的 Claude 估算 $0.135 不再出现在任何显示位置。
 
 ## 4. 原版 renderer 上的 UI 证明（CDP，真实鼠标/键盘输入，真实短 MiniMax turn）
@@ -115,7 +115,7 @@ harness：`port/tools/ui-e2e-m13.mjs`。新 userData，gateway 路由（Claude A
    - agent 调用 `request_rights_confirmation` → push `input:request`（kind rights）→ 原版 rights 卡（`03a`）。
    - 真实勾选 checkbox，点击 “Confirm and continue” → `input:respond`（`{kind:"rights", accepted:true}`，real）→ `ask_settled` outcome `answered`。
    - 工具结果回到 agent，回复 “true VCQ9L32”（`03b`）。
-4. **spend**：chip “$0.02 spent” 等于按 ledger 取整到分的预期值。**真实点击 chip** 打开 breakdown，“Videoclaw gateway reasoning $0.01” 等于 ledger `toFixed(2)`（`04-spend-chip.png`、`04b-spend-breakdown.png`）。ledger 10 条，全部 `models.dev:minimax-cn/…`，`untaggedEntries` 0。
+4. **spend**：chip “$0.02 spent” 等于按 ledger 取整到分的预期值。**真实点击 chip** 打开 breakdown，“[App] gateway reasoning $0.01” 等于 ledger `toFixed(2)`（`04-spend-chip.png`、`04b-spend-breakdown.png`）。ledger 10 条，全部 `models.dev:minimax-cn/…`，`untaggedEntries` 0。
 
 ## 5. 覆盖率（`tools/ipc_coverage.py` / `tools/stub_audit.py`，见 `ipc_coverage.txt` / `stub_audit.txt`）
 | 类别 | M12（d2ce307） | M13 |

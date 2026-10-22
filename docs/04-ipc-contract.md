@@ -436,5 +436,5 @@
 
 ### 4.4 生成/付费守卫（verified）
 - `assertGenerationAllowed()`：`session:send`、`session:retry`、`version:approve` 等在转发前调用；被阻止时抛错（账户被封/需要强制更新等）。
-- `permission:respond`：若 `paidWorkBlocked()`，主进程把渲染端的 response **改写**为 `{behavior:"deny", message: 需更新 ? "Update Videoclaw before starting new work." : ACCOUNT_BLOCKED_COPY}`（L61790-61802）。
+- `permission:respond`：若 `paidWorkBlocked()`，主进程把渲染端的 response **改写**为 `{behavior:"deny", message: 需更新 ? "Update [App] before starting new work." : ACCOUNT_BLOCKED_COPY}`（L61790-61802）。
 - `settings:get` 前先 `ensureActiveAlphaConsent()`（L61321）。

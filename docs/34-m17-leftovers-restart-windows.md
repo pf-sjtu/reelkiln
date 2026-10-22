@@ -38,7 +38,7 @@
 
 ## 2. T2 Windows
 ### 2.1 CI（**被账单阻断，没有任何 job 启动**）
-本轮 4 个 run：[39693619800](https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39693619800)、[39694780613](https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39694780613)、[39695184650](https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39695184650)、[39696799047](https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39696799047)。每个 job 的注解都是 “The job was not started because recent account payments have failed or your spending limit needs to be increased”。最后一次 job 真正执行的是 39547313316（2026-10-21 13:03 SGT）：windows-latest 上 port 单测 161/163，2 个失败已在 `4071f42` 修正。需要 PF 修复 GitHub 账单或调高 spending limit。把仓库改为 public 也能免费跑 Actions，但这是对外可见的变更，我没有做。
+本轮 4 个 run：[39693619800](https://github.com/pf-sjtu/reelkiln/actions/runs/39693619800)、[39694780613](https://github.com/pf-sjtu/reelkiln/actions/runs/39694780613)、[39695184650](https://github.com/pf-sjtu/reelkiln/actions/runs/39695184650)、[39696799047](https://github.com/pf-sjtu/reelkiln/actions/runs/39696799047)。每个 job 的注解都是 “The job was not started because recent account payments have failed or your spending limit needs to be increased”。最后一次 job 真正执行的是 39547313316（2026-10-21 13:03 SGT）：windows-latest 上 port 单测 161/163，2 个失败已在 `4071f42` 修正。需要 PF 修复 GitHub 账单或调高 spending limit。把仓库改为 public 也能免费跑 Actions，但这是对外可见的变更，我没有做。
 
 已经写进 `ci.yml`，等账单恢复后会自动跑：
 - `windows-runbook`：原有 S3–S9（引擎安装、POSIX 兼容 shim、uv/CPython 3.14.6、remotion/hyperframes、doctor 除 gateway 外全绿、assemble+verify e2e、codex win32 握手、Git Bash runBash）。之后新增 **L0 E1–E15**：在 runbook 装好的引擎上跑 `accept_engine_chain.sh`，并上传 `accept-L0.json`、final.mp4 的 sha256 和 ffprobe。
@@ -92,5 +92,5 @@
 4. 不适配的付费工具：mint_video/mint_image/synth_voice 的具名模型路由、preview_session_shot、character_voice、plan_paid_operations。
 5. 真实 Claude 订阅分支（creditHandoffOffer），目前只能注入。
 6. macOS 本机语音听写（平台限制）。
-7. 托管登录（videoclaw.com 账号平面）和 nightly 通道；生产环境 update feed；非 darwin 平台的更新门槛。
+7. 托管登录（上游官网账号平面）和 nightly 通道；生产环境 update feed；非 darwin 平台的更新门槛。
 8. ~~push-none 3 项~~、~~readQuitState 附件计数~~、~~authenticatedWorkPaused~~、~~app:restart 和 engine:pendingToast 的运行时证明~~：本轮已完成。`engine:updated` 和 voices push 仍只有单测。

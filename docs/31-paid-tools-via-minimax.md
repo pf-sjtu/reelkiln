@@ -75,14 +75,14 @@ harness：`port/tools/ui-e2e-m14.mjs`。原版 renderer、CDP 真实输入，gat
 
 | 路由 | 尝试 | 结果 | 证据 |
 |---|---|---|---|
-| **provider**（`SMOKE_LLM_ROUTE=minimax`，claude-code harness → gate proxy → MiniMax） | prov1（2026-10-22 00:37 UTC+8） | **PASS（2/2）**：`studio_tool_on_route`：agent 调用 `mcp__studio__project_memory` save “片尾统一使用白色字幕”，UI 出现 “Remembered something”。`usage_display`：最后一次计量 `meter:"proxy"`，价格来源 `models.dev:minimax-cn/MiniMax-M3.1-Flash`，totalUsd 0.008377843。push 的 `totalCostUsd`、result 事件 cost 和计量值三者相等；breakdown 的 “Videoclaw gateway reasoning $0.01” 等于 total.toFixed(2)；chip 显示 “$0.01 spent”。SDK 自报估算 0.2854（按 Anthropic 价目）被 proxy 计量取代 | `U-m14-provider-*` |
+| **provider**（`SMOKE_LLM_ROUTE=minimax`，claude-code harness → gate proxy → MiniMax） | prov1（2026-10-22 00:37 UTC+8） | **PASS（2/2）**：`studio_tool_on_route`：agent 调用 `mcp__studio__project_memory` save “片尾统一使用白色字幕”，UI 出现 “Remembered something”。`usage_display`：最后一次计量 `meter:"proxy"`，价格来源 `models.dev:minimax-cn/MiniMax-M3.1-Flash`，totalUsd 0.008377843。push 的 `totalCostUsd`、result 事件 cost 和计量值三者相等；breakdown 的 “[App] gateway reasoning $0.01” 等于 total.toFixed(2)；chip 显示 “$0.01 spent”。SDK 自报估算 0.2854（按 Anthropic 价目）被 proxy 计量取代 | `U-m14-provider-*` |
 | **Codex**（`agentHarness=codex-app-server`，`codexProvider=chatgpt` → gate proxy openai surface → MiniMax） | attempt1 codex4（00:41） | **FAIL**：前 3 次 `provider_dynamic`（“Use project memory”）里，第 1 次 isError，后 2 次 ok，但 save 没有落盘。turn 以 `exceeded retry limit, last status: 429 Too Many Requests` 结束。proxy 计量 0.006711099（models.dev），chip/breakdown $0.01 | `U-m14-codex-attempt1-*` |
 | | attempt2 codex5（00:51） | **FAIL**：模型没有调用 studio 工具，而是用 `provider_command` 在 shell 里查找 project_memory；最后同样以 429 retry limit 结束。proxy 计量 0.005819742 | `U-m14-codex-attempt2-*` |
 
 **结论：Codex 路由的 studio 工具和用量显示在本轮的正式 harness 下“未验证”，原因是共享 key 429（第 2 次还叠加了模型行为不稳定）。**
-补充佐证（不算 PASS）：本轮更早的 codex1 运行（00:18 UTC+8，当时的 harness 判定还是旧逻辑，判为失败）中，`provider_dynamic {"summary":"Use project memory"}` 成功，UI 出现 notice，MEMORY.md 落盘 “片尾统一使用白色字幕”（`U-m14-codex-early-MEMORY-excerpt.txt`）。同一次运行里，proxy 计量 0.008106128（models.dev），breakdown 显示 “Videoclaw gateway reasoning $0.01”，chip 显示 “$0.01 spent / $0.01 in progress · paid work allowed”（`U-m14-codex-early-*`）。所以链路本身是通的，缺的是一次在当前 harness 下的干净 PASS。
+补充佐证（不算 PASS）：本轮更早的 codex1 运行（00:18 UTC+8，当时的 harness 判定还是旧逻辑，判为失败）中，`provider_dynamic {"summary":"Use project memory"}` 成功，UI 出现 notice，MEMORY.md 落盘 “片尾统一使用白色字幕”（`U-m14-codex-early-MEMORY-excerpt.txt`）。同一次运行里，proxy 计量 0.008106128（models.dev），breakdown 显示 “[App] gateway reasoning $0.01”，chip 显示 “$0.01 spent / $0.01 in progress · paid work allowed”（`U-m14-codex-early-*`）。所以链路本身是通的，缺的是一次在当前 harness 下的干净 PASS。
 
-provider 路由的 breakdown 行在原版里叫 “Videoclaw gateway reasoning”，而 provider 路由的成本来自 gate proxy 计量。这个行名沿用了原版文案，是已知的文案偏差，不影响数值。
+provider 路由的 breakdown 行在原版里叫 “[App] gateway reasoning”，而 provider 路由的成本来自 gate proxy 计量。这个行名沿用了原版文案，是已知的文案偏差，不影响数值。
 
 ## 4. SDK 少计：根因与修复（Task 3）
 ### 4.1 复现（`port/tools/m14-undercount-repro.ts`，真实 SDK 0.3.305 原生 CLI → shim → MiniMax）
@@ -99,7 +99,7 @@ UI 实测的佐证：r2 中 B 视频一次没有中断的 turn，SDK 计量 $0.0
 ### 4.2 根因
 1. **auto 模式分类器调用**：Claude Code 在 auto 权限模式下为工具调用做旁路安全分类，这些调用由上游计费，但 SDK 的 `modelUsage`/`total_cost_usd` 不包含它们。r4 之类长 turn 每次工具调用都可能触发一次，而且 transcript 越长越贵，这是 docs/30 §3.4 里 $0.0526 对 $0.109 大幅少计的主因。
 2. **Stop 时在途的那次调用**：CLI 放弃读取，不计 usage；上游已经生成，按完整调用计费。
-原版同样如此：原版 gateway 路由的 “Videoclaw gateway reasoning” 来自 SDK `total_cost_usd`，chip 来自网关 ledger。两者的偏差是原版固有的，port 的 true-up 属于 PORT-NEW。
+原版同样如此：原版 gateway 路由的 “[App] gateway reasoning” 来自 SDK `total_cost_usd`，chip 来自网关 ledger。两者的偏差是原版固有的，port 的 true-up 属于 PORT-NEW。
 
 ### 4.3 修复
 - **shim**（`local-gateway-shim.ts`）：调用一旦发往上游，即使客户端已离开也读完整个流（只有完整的流才带有让 ledger 精确的 usage），并记录 `drained a call whose client left`。客户端在**排队中**离开的调用不发往 MiniMax，不计费。`GET /v1/spend-authorities/{job}` 新增 `llm_in_flight`（PORT-NEW）。

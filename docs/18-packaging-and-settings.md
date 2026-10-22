@@ -38,7 +38,7 @@ npm run package:smoke -- release/*.AppImage release/*.deb [--live]   # 启动冒
 ```
 
 - `app.asar` 只含 `package.json` + `dist/**`（去掉 `.map`），**没有 node_modules**：esbuild 已把除 `electron` 外的一切打进 bundle；因此 `zod` 从 `dependencies` 挪到 `devDependencies`，`dependencies` 为空（测试保证）。asar 只有 ≈1.9 MB。
-- 身份：`appId com.videoclaw.port`、`productName "Videoclaw Port"`、可执行名 `videoclaw-port` —— **故意与原版 `Videoclaw` 不同**，userData 是 `~/.config/Videoclaw Port`，打包的 port 不会改写真 Videoclaw 的 `settings.json`。
+- 身份：`appId com.videoclaw.port`、`productName "Videoclaw Port"`、可执行名 `videoclaw-port` —— **故意与原版 `Videoclaw` 不同**，userData 是 `~/.config/Videoclaw Port`，打包的 port 不会改写真正的原版应用 的 `settings.json`。
 - `npmRebuild:false`：没有原生 addon（node:sqlite 是 Electron 内置模块）。
 - 未设置图标（用 Electron 默认图标）、未签名、`publish: null`（不做自动更新发布）。
 - 产物与交叉平台 SDK 暂存目录 `port/release/`、`port/build/` 已加入 `.gitignore`（还有原来的 `port/vendor/`）。
@@ -50,7 +50,7 @@ npm run package:smoke -- release/*.AppImage release/*.deb [--live]   # 启动冒
 - 为什么不放进 asar：SDK 要 `spawn` 原生 `claude`，asar 里的文件不能被执行；放在 `resources/` 下是普通文件，可执行位保留（已检查 `-rwxr-xr-x`）。
 - 过滤：只保留目标平台的原生包，其它平台（含同平台 `-musl`）、`.bin`、`.map` 被排除。
 - 体积：SDK 目录 ≈ 326 MB（其中原生 `claude` ≈ 277 MiB）是包体的大头；linux-unpacked 共 ≈ 640 MB。
-- 许可证：SDK 为 “SEE LICENSE IN README.md”（Anthropic 商业条款）。**是否允许随应用再分发需要法务确认**（原版 Videoclaw 也是打包分发的）。
+- 许可证：SDK 为 “SEE LICENSE IN README.md”（Anthropic 商业条款）。**是否允许随应用再分发需要法务确认**（原版应用 也是打包分发的）。
 
 ## 3. 启动冒烟（`port/tools/packaged-smoke.mjs`）
 

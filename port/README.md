@@ -1,4 +1,4 @@
-# port/ — Videoclaw 0.0.40 Windows port scaffold
+# port/ — Windows port scaffold of the original macOS app (0.0.40)
 
 Faithful (not redesigned) cross-platform port of the Electron shell. See
 `../docs/07-windows-port-plan.md` for the full plan (Chinese).

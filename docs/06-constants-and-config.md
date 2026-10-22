@@ -34,7 +34,7 @@
 ## 3. 文案/语气守卫
 
 - `BANNED_USER_FACING_VOCABULARY = ["workflow","molecule","taste pack","tenant","job","pipeline","reading set"]`（S L4129）。
-- `VOICE_GUARD`（S L4138 起，模板字符串，嵌入上面的词表 `join(" · ")`）：追加到 agent 系统提示的"Videoclaw app voice"段落。要点（原文意译）：不得提及其他客户/租户/品牌；不得泄露 key/token/.env/凭据路径/供应商与模型路由；进度叙述以视频为中心；付费或长任务开始前先写一句可见说明（不含时间/价格）；用 `call_model` 自选模型时用 `search_models` 标题（含版本）称呼该模型，且不得说出托管服务/模型 id/自身模型；不得提及 workflow/recipe/laws/specs/chunks/skills/reading set 等内部概念；不得使用 mux/demux/transcode/codec/EDL/stems/chroma/alpha/"w1""b4" 等术语；产出可看资产时给出 markdown 链接路径。**移植时必须逐字复制**（见源文件，含换行）。
+- `VOICE_GUARD`（S L4138 起，模板字符串，嵌入上面的词表 `join(" · ")`）：追加到 agent 系统提示的"[App] app voice"段落。要点（原文意译）：不得提及其他客户/租户/品牌；不得泄露 key/token/.env/凭据路径/供应商与模型路由；进度叙述以视频为中心；付费或长任务开始前先写一句可见说明（不含时间/价格）；用 `call_model` 自选模型时用 `search_models` 标题（含版本）称呼该模型，且不得说出托管服务/模型 id/自身模型；不得提及 workflow/recipe/laws/specs/chunks/skills/reading set 等内部概念；不得使用 mux/demux/transcode/codec/EDL/stems/chroma/alpha/"w1""b4" 等术语；产出可看资产时给出 markdown 链接路径。**移植时必须逐字复制**（见源文件，含换行）。
 - 其它 agent 提示常量：`ENGINE_TOOL_LAUNCHER`（M L840）、`ENGINE_PIPE_RULE`（M L842）、`EXECUTION_CONTRACT_MARKER = "<!-- videoclaw-execution-contract:3 -->"`（M L9573）、`CODEX_VIDEO_INSTRUCTIONS`（M L24690）、`CODEX_TOOL_MAPPING`（M L24740）、`HOUSE_FOOTER_*`（M L31985 起）、`PROJECT_MEMORY_GUIDANCE`（M L845）、`WORKFLOW_INDEX_TOKEN_BUDGET = 2e3`（M L31932）。
 - `ENGINE_LINES` / `SYNTH_VOICE_MODE_LINES`（P L246-302，S 中同名）：引擎工具名 → 用户可见进度文案。
 

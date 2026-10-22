@@ -99,8 +99,8 @@
 | `gateway:topup` | real-partial | `startTopUp` → 503 → 原版文案 | UI（Get more credits → $25 → Continue → “Checkout is unavailable right now. Try again in a moment.”）+ T |
 | `settings:saveGatewayKey` | real | `applyManualKeyWrite` → `CredentialStore.setActiveKey` → `resolveAccount` | T |
 | `settings:switchGateway` | real | `switchGatewayKeys` → `settings.patch` → `verifyKeyAt`（requiresRestart） | T |
-| `account:signInGoogle` / `signInEmail` / `consent` / `mintKey` / `claimKey` | real-partial | 原版 IPC 主体 → pool `unconfigured` 拒绝，文案为 “Account sign-in isn’t set up for this Videoclaw environment in this build. Use “I already have an alpha key” instead.” | T |
-| `account:resendEmail` / `cancelSignIn` / `ensureAccess` / `signOut` | real-partial | 原版分支：没有等待中的邮件 / 无操作 / “Sign in to Videoclaw first.” / clearSession 但保留 vc_ key（仍为 ready） | T |
+| `account:signInGoogle` / `signInEmail` / `consent` / `mintKey` / `claimKey` | real-partial | 原版 IPC 主体 → pool `unconfigured` 拒绝，文案为 “Account sign-in isn’t set up for this [App] environment in this build. Use “I already have an alpha key” instead.” | T |
+| `account:resendEmail` / `cancelSignIn` / `ensureAccess` / `signOut` | real-partial | 原版分支：没有等待中的邮件 / 无操作 / “Sign in to [App] first.” / clearSession 但保留 vc_ key（仍为 ready） | T |
 | `taste:titles` | real | verbatim `TasteTitleStore`：批量 1 次请求 → shim → MiniMax，结果缓存到 `taste-titles.json` | T + **L**（见下）。**原版 renderer 从不调用 `tasteTitles`**（preload 暴露了，但 assets 中 0 处引用），所以无法做 UI 验证 |
 | `engine:claudeCodeStatus` | real-partial | 原版主体；PORT probe 固定为“无 Claude 登录”（USER DIRECTIVE），返回 `{available:false}` | UI（Agent & models 显示 “Click to connect your Claude Code plan”）+ T |
 | `engine:claudeCodeConnect` / `ConnectCancel` / `SignOutImpact` / `SignOut` | real-partial | 原版的 single-flight / abort / `usesMacClaudeLogin` 计数 / “could not find a Claude Code sign-in” 分支；connector 拒绝，不启动 `claude auth login` 子进程 | T |

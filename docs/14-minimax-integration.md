@@ -114,7 +114,7 @@ curl https://api.minimaxi.com/anthropic/v1/messages \
 
 | 位置（`app/reconstructed/main/index.js`） | 作用 |
 | --- | --- |
-| L321 `resolvedLlmRoute` / L319 `DEFAULT_LLM_ROUTE="claude-code"` | Claude 路径的路由：`claude-code`（用户本机 claude.ai 登录）或 `gateway`（VideoClaw 计费网关） |
+| L321 `resolvedLlmRoute` / L319 `DEFAULT_LLM_ROUTE="claude-code"` | Claude 路径的路由：`claude-code`（用户本机 claude.ai 登录）或 `gateway`（上游计费网关） |
 | L5397 settings 校验 | `llmRoute` 只允许 `claude-code` / `gateway`，其他值被删除 |
 | L4531 / L4899 `CredentialStore.providerKeys` / `providerKey()` / `setProviderKey()` | 加密 vault 中的 BYO provider key（目前 `openai-api`、`openrouter`） |
 | L5114 `rendererWritableSettingsPatch` | 禁止渲染进程写 `openaiApiKey` / `openRouterApiKey` / `providerKeys` |

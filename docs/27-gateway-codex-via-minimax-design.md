@@ -1,7 +1,7 @@
 # 27 · Phase B M10：网关 + Codex 合约逆向，以及以 MiniMax 为后端的 Codex 路由
 
 > 状态：2026-10-21（Asia/Singapore，UTC+8）。行号指 `app/reconstructed/main/index.js`（参考代码，只读，未编辑）。
-> 约束：不使用任何真实 Claude 官方订阅，也不使用真实 Codex / OpenAI / VideoClaw 网关凭据；MiniMax 只读取 box 环境变量 `MINIMAX_API_KEY`（并发 1，单次请求，遇到 429/529 退避）。密钥从不打印、不记录、不提交。
+> 约束：不使用任何真实 Claude 官方订阅，也不使用真实 Codex / OpenAI / 上游网关凭据；MiniMax 只读取 box 环境变量 `MINIMAX_API_KEY`（并发 1，单次请求，遇到 429/529 退避）。密钥从不打印、不记录、不提交。
 
 ## 1. 逆向得到的合约
 
@@ -27,7 +27,7 @@
 | classifyCodexFailure | L53824 | 把错误文本归类为 auth / quota / model / network 等 |
 | IPC | L61596-61670、L61784（session:setModel）、L61787（session:setReasoningEffort） | 见第 4 节 |
 
-### 1.2 VideoClaw 网关（`cfg.gatewayUrl`，Bearer = 网关 key）
+### 1.2 上游网关（`cfg.gatewayUrl`，Bearer = 网关 key）
 
 | 合约 | 位置 | 用途 |
 |---|---|---|

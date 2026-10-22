@@ -1,6 +1,6 @@
 # 26 · Phase B M9：a 类本地通道收尾（36/37）+ 原版 UI 真输入验证 + 会话续接（resume）上下文连续性
 
-日期：2026-10-21（Asia/Singapore，UTC+8）。基线：`d7203d9`（M9 通道实现 + node:test）。本轮不使用任何 Claude / Codex / Videoclaw gateway 凭据；唯一 LLM 路由仍是 PORT-NEW 的 MiniMax provider 路由（`MINIMAX_API_KEY` 只在 box 环境变量中，并发 1、单请求；未打印、未写日志、未提交——`artifacts/phase-b-m9/` 命中数 **0**；无 mp4 / sqlite）。`app/out`、`app/reconstructed` 只作参照，未改动。
+日期：2026-10-21（Asia/Singapore，UTC+8）。基线：`d7203d9`（M9 通道实现 + node:test）。本轮不使用任何 Claude / Codex / 上游 gateway 凭据；唯一 LLM 路由仍是 PORT-NEW 的 MiniMax provider 路由（`MINIMAX_API_KEY` 只在 box 环境变量中，并发 1、单请求；未打印、未写日志、未提交——`artifacts/phase-b-m9/` 命中数 **0**；无 mp4 / sqlite）。`app/out`、`app/reconstructed` 只作参照，未改动。
 
 ## 0. 一览
 
@@ -19,7 +19,7 @@
 docs/25 结尾的 37 个 a 待做通道，本轮（`d7203d9`）处理结果：
 
 * **实现为 real（28）**：`quickstart:start`、`session:deletionPlan`、`session:delete`、`session:startContinuation`、`project:seedPack`、`characters:sheetStates`、`characters:retry`、`job:originalContext`、`job:adopt`、`spend:get`、`spend:setCeiling`、`library:stats/scan/addSource/removeSource/preview/setTenant`、`bootstrap:revertEngine`、`attachment:pasteImage/captureMoment/momentPreview/preview`、`materials:preview`、`hfPreview:start/stop/editApply`、`account:localResetPrepare/localResetCommit`。
-* **实现为 real-partial（8）**：`session:retry`（失败输入重放；Claude 条款恢复分支属 b）、`input:respond`（pendingInputs 来自未移植的 studio MCP 请求工具）、`media:discardVoice`、`attachment:voiceNote`、`feedback:capture`（本地取证；提交属 b）、以及 3 个 `characters:voices:list / voice:approve / voice:remove`——原版 `voiceResult → characterVoiceContext → memoryBinding`（L36456）要求已验证的 Videoclaw 账号，port 逐字给出原版的 `ProjectMemoryError` 分支，**审计改判为 b**。
+* **实现为 real-partial（8）**：`session:retry`（失败输入重放；Claude 条款恢复分支属 b）、`input:respond`（pendingInputs 来自未移植的 studio MCP 请求工具）、`media:discardVoice`、`attachment:voiceNote`、`feedback:capture`（本地取证；提交属 b）、以及 3 个 `characters:voices:list / voice:approve / voice:remove`——原版 `voiceResult → characterVoiceContext → memoryBinding`（L36456）要求已验证的 上游账号，port 逐字给出原版的 `ProjectMemoryError` 分支，**审计改判为 b**。
 * **未做（1）：`characters:sheetPlan`**。原版 `plan()` 先做 engine dry-run，**再** `quoteGatewayBudget`（L19290）；没有 `agentGatewayProxy` 时原版自己返回 `status:error "couldn't confirm the price"`，`mint_image` 特性开关也由 gateway 下发。它没有可独立成立的本地部分，**改判 b**，保持 stub。
 
 ## 2. 每个通道的验证方式
@@ -140,7 +140,7 @@ RU（修复前构建）也是同样结论（回答 `蓝色松鼠-4729`，同 id�
 
 剩余 57 个 stub 按 `tools/stub_audit.py` 分类：**a 0、b 55、c 2**（b 共 58，其中 3 个 `characters:voice*` 已是 real-partial）。
 
-* **b（55，需要 Claude Code / Codex / Videoclaw gateway / 账号）**：`sessionPlan:*`、`memory:*`、`taste:titles`、`characters:sheetBuild`、`characters:sheetPlan`、`outbox:authoritySnapshot`、`telemetry:bindReplay`、`settings:saveGatewayKey/switchGateway`、`gateway:verify/meter/topup`、`account:*`（登录/刷新等）、`engine:claudeCode*`、`engine:codex*`、`engine:claudeModels/continueOnCodex/creditHandoffOffer/continueOnCredits/agentProviderKeyStatus/saveAgentProviderKey`、`session:setModel/setReasoningEffort`、`library:sync/search`、`feedback:submit/grantUsageSharing`、`workflowSubmit:start`、`app:update:check/preferences/channel`、`media:transcribeVoice` 等（完整列表：`python3 tools/stub_audit.py --md`）。
+* **b（55，需要 Claude Code / Codex / 上游 gateway / 账号）**：`sessionPlan:*`、`memory:*`、`taste:titles`、`characters:sheetBuild`、`characters:sheetPlan`、`outbox:authoritySnapshot`、`telemetry:bindReplay`、`settings:saveGatewayKey/switchGateway`、`gateway:verify/meter/topup`、`account:*`（登录/刷新等）、`engine:claudeCode*`、`engine:codex*`、`engine:claudeModels/continueOnCodex/creditHandoffOffer/continueOnCredits/agentProviderKeyStatus/saveAgentProviderKey`、`session:setModel/setReasoningEffort`、`library:sync/search`、`feedback:submit/grantUsageSharing`、`workflowSubmit:start`、`app:update:check/preferences/channel`、`media:transcribeVoice` 等（完整列表：`python3 tools/stub_audit.py --md`）。
 * **c（2，仅 macOS/Windows）**：`app:update:download`、`app:update:install`。
 
 ## 6. 本轮代码变更
@@ -177,4 +177,4 @@ RU（修复前构建）也是同样结论（回答 `蓝色松鼠-4729`，同 id�
 
 ## 8. 下一步
 
-a 类本地通道到此基本完成（a_todo 0；20 个只有 node:test 的通道可以继续补 UI 驱动）。剩下的是 **b 类**和 **c 类**（仅 mac/win，Linux 上原版本身禁用）。用户已确认不使用 Claude 官方订阅；下一轮计划改用 MiniMax 提供的 Codex 兼容接口和 gateway/计费类接口去配置 b 类通道（代替真实的 Claude / Codex / Videoclaw gateway 凭据）。本轮没有开始这部分。
+a 类本地通道到此基本完成（a_todo 0；20 个只有 node:test 的通道可以继续补 UI 驱动）。剩下的是 **b 类**和 **c 类**（仅 mac/win，Linux 上原版本身禁用）。用户已确认不使用 Claude 官方订阅；下一轮计划改用 MiniMax 提供的 Codex 兼容接口和 gateway/计费类接口去配置 b 类通道（代替真实的 Claude / Codex / 上游 gateway 凭据）。本轮没有开始这部分。
