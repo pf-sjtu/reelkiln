@@ -1,0 +1,22 @@
+Make a vertical YouTube Short (9:16, 1080x1920, 30 fps) called "Bioluminescent creatures of the deep sea" from the attached files. Everything attached is original AI-generated material I own, so no rights issues.
+
+Sources:
+- narration.mp3 = the finished English voiceover (42.7 s). Use it as-is as the spine; do not re-voice or re-time it.
+- transcript.json = exact word timings of narration.mp3 (from the TTS engine). Use it as the job's transcript for word-timed captions.
+- music.mp3 = instrumental ambient bed (no vocals).
+- 01-anglerfish.mp4, 02-firefly-squid.mp4, 03-jellyfish.mp4, 04-vampire-squid.mp4, 05-glowing-waves.mp4 = the five visual beats (about 6 s each, 1080x1920, silent), plus 06-ending.jpg = still for the closing line.
+
+Edit, in this order, cutting on the narration:
+- 0.0–10.2 s: 01-anglerfish ("This tiny light is a trap… you're dinner."). The first 2 s must hook: start on the glowing lure immediately, no fade-in, no title card.
+- 10.2–17.8 s: 02-firefly-squid ("Every spring off Japan…").
+- 17.8–25.3 s: 03-jellyfish ("Some jellyfish light up…").
+- 25.3–32.3 s: 04-vampire-squid ("The vampire squid doesn't drink blood…").
+- 32.3–37.6 s: 05-glowing-waves ("On some nights…").
+- 37.6 s to the end: 06-ending.jpg with a slow push-in ("Down there, three out of four animals… It's glowing.").
+The clips are shorter than their slots; stretch them with a gentle slow-motion (no freeze frames, no repeats) so motion never stops. Hard cuts are fine; keep it clean, no transitions gimmicks.
+
+Audio: narration clear on top; music under it about 14–18 dB lower than the voice, music starts at 0 s, short fade-out at the very end; overall loudness about -14 LUFS integrated. End about 0.8–1.2 s after the last word, cleanly (music tail fades out, no abrupt cut).
+
+Captions: burned-in English captions driven by transcript.json, word-timed, large bold white text with a dark outline/shadow, 2–4 words at a time, placed in the lower-middle safe area (clear of YouTube's bottom UI), readable on a phone.
+
+No logos, no watermarks, no extra text overlays beyond the captions. Don't use any paid generation tools — everything you need is attached. When it's rendered, check it (frames, captions, loudness) and fix anything off before you present it.

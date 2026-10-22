@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 import { resolveRendererEntry } from "../src/main/renderer-entry";
 import { smokeDialog } from "../src/main/media/media-ipc";
 import { Cdp, mouseClick, dropFiles, pressKey, typeText } from "../tools/ui-e2e/cdp.mjs";
-import { answerDeclined, center, nativePlayButton, playbackVerdict, redactEvidence, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
+import { answerDeclined, attachFileList, attachmentReadyRe, center, nativePlayButton, playbackVerdict, redactEvidence, S1_FIXTURE_FILES, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
 
 const base = { packaged: false, appPath: "/repo/port", resourcesPath: "/res", mainDir: "/repo/port/dist/main", exists: () => true };
 
@@ -110,4 +110,15 @@ test("answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposa
   assert.equal(answerDeclined(["Here the user declined \"No captions or overlays\", \"No paid tools\" as *locked rules*"]), false);
   assert.equal(answerDeclined(["User kept only:\n1. Music-only audio\n## ANTI-COMMITMENTS (declined proposals — do not re-raise)\n- _(none yet)_"]), false);
   assert.equal(answerDeclined(["你选了竖屏 9:16。", "Locked: **music-only audio** and **center-crop to fill 9:16**."]), false);
+});
+
+test("docs/42 --files: attach list defaults to the S1 fixtures, else the given files; ready-regex escapes metachars", () => {
+  assert.deepEqual(attachFileList(undefined, "/in", { join, resolve }), S1_FIXTURE_FILES.map((f: string) => join("/in", f)));
+  assert.deepEqual(attachFileList("/m/a.mp4, /m/b c.jpg,", "/in", { join, resolve }), ["/m/a.mp4", "/m/b c.jpg"]);
+  assert.throws(() => attachFileList(" , ", "/in", { join, resolve }), /empty/);
+  const line = '{"name":"01-angler+fish (1).mp4","size":3,"status":"ready"}';
+  assert.ok(attachmentReadyRe("01-angler+fish (1).mp4").test(line));
+  assert.ok(!attachmentReadyRe("ab+c.mp4").test('{"name":"abbc.mp4","status":"ready"}'), "'+' is literal, not a quantifier");
+  assert.ok(!attachmentReadyRe("a.b.mp4").test('{"name":"aXbXmp4","status":"ready"}'), "every '.' escaped (the old replace only escaped the first)");
+  assert.ok(!attachmentReadyRe("clip_a.mp4").test('{"name":"clip_a.mp4","status":"uploading"}'));
 });

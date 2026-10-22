@@ -1,0 +1,13 @@
+{
+  "width": 1080, "height": 1920,
+  "caption_preset": "tiktok",
+  "caption_style": {
+    "weight": 800,
+    "font_size_ratio": 0.048,
+    "background": "rgba(0,0,0,0)",
+    "outline_width_px": 6,
+    "active_word_color": "#8FF3FF",
+    "vertical_anchor_ratio": 0.68,
+    "switch_ms": 900
+  }
+}

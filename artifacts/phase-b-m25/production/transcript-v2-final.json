@@ -1,0 +1,587 @@
+{
+ "text": "This tiny light is a trap. A real anglerfish, nearly a kilometer down. It waits on the seafloor with a fishing rod on its head. Swim too close, and you're dinner. Every spring off Japan, millions of firefly squid flash electric blue, turning the black water into a starfield. This Atolla jellyfish has a burglar alarm. Attack it, and it flashes a ring of blue light that calls in bigger predators. The vampire squid doesn't drink blood. When it's threatened, it releases a cloud of glowing mucus, and vanishes. On some nights, the glow even reaches the shore. Down there, three out of four animals make their own light. The deep sea isn't dark. It's glowing.",
+ "words": [
+  {
+   "word": "This",
+   "start": 0.039,
+   "end": 0.155
+  },
+  {
+   "word": "tiny",
+   "start": 0.194,
+   "end": 0.388
+  },
+  {
+   "word": "light",
+   "start": 0.427,
+   "end": 0.698
+  },
+  {
+   "word": "is",
+   "start": 0.737,
+   "end": 0.931
+  },
+  {
+   "word": "a",
+   "start": 0.97,
+   "end": 1.047
+  },
+  {
+   "word": "trap.",
+   "start": 1.086,
+   "end": 1.474
+  },
+  {
+   "word": "A",
+   "start": 2.024,
+   "end": 2.14
+  },
+  {
+   "word": "real",
+   "start": 2.179,
+   "end": 2.257
+  },
+  {
+   "word": "anglerfish,",
+   "start": 2.296,
+   "end": 2.916
+  },
+  {
+   "word": "nearly",
+   "start": 2.955,
+   "end": 3.343
+  },
+  {
+   "word": "a",
+   "start": 3.382,
+   "end": 3.653
+  },
+  {
+   "word": "kilometer",
+   "start": 3.692,
+   "end": 4.08
+  },
+  {
+   "word": "down.",
+   "start": 4.119,
+   "end": 4.39
+  },
+  {
+   "word": "It",
+   "start": 4.429,
+   "end": 4.584
+  },
+  {
+   "word": "waits",
+   "start": 4.7,
+   "end": 5.282
+  },
+  {
+   "word": "on",
+   "start": 5.321,
+   "end": 5.399
+  },
+  {
+   "word": "the",
+   "start": 5.437,
+   "end": 5.554
+  },
+  {
+   "word": "seafloor",
+   "start": 5.593,
+   "end": 6.019
+  },
+  {
+   "word": "with",
+   "start": 6.058,
+   "end": 6.252
+  },
+  {
+   "word": "a",
+   "start": 6.291,
+   "end": 6.446
+  },
+  {
+   "word": "fishing",
+   "start": 6.485,
+   "end": 6.679
+  },
+  {
+   "word": "rod",
+   "start": 6.717,
+   "end": 6.873
+  },
+  {
+   "word": "on",
+   "start": 6.911,
+   "end": 6.989
+  },
+  {
+   "word": "its",
+   "start": 7.028,
+   "end": 7.105
+  },
+  {
+   "word": "head.",
+   "start": 7.144,
+   "end": 7.338
+  },
+  {
+   "word": "Swim",
+   "start": 7.377,
+   "end": 7.997
+  },
+  {
+   "word": "too",
+   "start": 8.036,
+   "end": 8.114
+  },
+  {
+   "word": "close,",
+   "start": 8.153,
+   "end": 8.502
+  },
+  {
+   "word": "and",
+   "start": 8.54,
+   "end": 8.773
+  },
+  {
+   "word": "you're",
+   "start": 8.928,
+   "end": 9.239
+  },
+  {
+   "word": "dinner.",
+   "start": 9.277,
+   "end": 9.51
+  },
+  {
+   "word": "Every",
+   "start": 10.2,
+   "end": 10.278
+  },
+  {
+   "word": "spring",
+   "start": 10.317,
+   "end": 10.55
+  },
+  {
+   "word": "off",
+   "start": 10.588,
+   "end": 10.937
+  },
+  {
+   "word": "Japan,",
+   "start": 10.976,
+   "end": 11.519
+  },
+  {
+   "word": "millions",
+   "start": 11.558,
+   "end": 12.14
+  },
+  {
+   "word": "of",
+   "start": 12.179,
+   "end": 12.373
+  },
+  {
+   "word": "firefly",
+   "start": 12.411,
+   "end": 12.916
+  },
+  {
+   "word": "squid",
+   "start": 12.954,
+   "end": 13.342
+  },
+  {
+   "word": "flash",
+   "start": 13.381,
+   "end": 13.963
+  },
+  {
+   "word": "electric",
+   "start": 14.002,
+   "end": 14.234
+  },
+  {
+   "word": "blue,",
+   "start": 14.273,
+   "end": 14.739
+  },
+  {
+   "word": "turning",
+   "start": 14.777,
+   "end": 15.126
+  },
+  {
+   "word": "the",
+   "start": 15.165,
+   "end": 15.32
+  },
+  {
+   "word": "black",
+   "start": 15.359,
+   "end": 15.514
+  },
+  {
+   "word": "water",
+   "start": 15.553,
+   "end": 15.825
+  },
+  {
+   "word": "into",
+   "start": 15.863,
+   "end": 16.213
+  },
+  {
+   "word": "a",
+   "start": 16.484,
+   "end": 16.717
+  },
+  {
+   "word": "starfield.",
+   "start": 16.756,
+   "end": 17.415
+  },
+  {
+   "word": "This",
+   "start": 17.933,
+   "end": 18.01
+  },
+  {
+   "word": "Atolla",
+   "start": 18.049,
+   "end": 18.437
+  },
+  {
+   "word": "jellyfish",
+   "start": 18.476,
+   "end": 18.747
+  },
+  {
+   "word": "has",
+   "start": 18.786,
+   "end": 18.98
+  },
+  {
+   "word": "a",
+   "start": 19.019,
+   "end": 19.135
+  },
+  {
+   "word": "burglar",
+   "start": 19.174,
+   "end": 19.484
+  },
+  {
+   "word": "alarm.",
+   "start": 19.523,
+   "end": 19.872
+  },
+  {
+   "word": "Attack",
+   "start": 19.911,
+   "end": 20.338
+  },
+  {
+   "word": "it,",
+   "start": 20.376,
+   "end": 20.57
+  },
+  {
+   "word": "and",
+   "start": 20.609,
+   "end": 20.725
+  },
+  {
+   "word": "it",
+   "start": 20.997,
+   "end": 21.113
+  },
+  {
+   "word": "flashes",
+   "start": 21.152,
+   "end": 21.462
+  },
+  {
+   "word": "a",
+   "start": 21.501,
+   "end": 21.579
+  },
+  {
+   "word": "ring",
+   "start": 21.618,
+   "end": 21.695
+  },
+  {
+   "word": "of",
+   "start": 21.734,
+   "end": 21.967
+  },
+  {
+   "word": "blue",
+   "start": 22.005,
+   "end": 22.122
+  },
+  {
+   "word": "light",
+   "start": 22.161,
+   "end": 22.354
+  },
+  {
+   "word": "that",
+   "start": 22.393,
+   "end": 22.626
+  },
+  {
+   "word": "calls",
+   "start": 22.781,
+   "end": 22.975
+  },
+  {
+   "word": "in",
+   "start": 23.014,
+   "end": 23.247
+  },
+  {
+   "word": "bigger",
+   "start": 23.285,
+   "end": 23.441
+  },
+  {
+   "word": "predators.",
+   "start": 23.479,
+   "end": 24.1
+  },
+  {
+   "word": "The",
+   "start": 24.803,
+   "end": 24.88
+  },
+  {
+   "word": "vampire",
+   "start": 24.919,
+   "end": 25.23
+  },
+  {
+   "word": "squid",
+   "start": 25.268,
+   "end": 25.54
+  },
+  {
+   "word": "doesn't",
+   "start": 25.579,
+   "end": 26.044
+  },
+  {
+   "word": "drink",
+   "start": 26.083,
+   "end": 26.199
+  },
+  {
+   "word": "blood.",
+   "start": 26.238,
+   "end": 26.587
+  },
+  {
+   "word": "When",
+   "start": 26.626,
+   "end": 26.859
+  },
+  {
+   "word": "it's",
+   "start": 27.169,
+   "end": 27.324
+  },
+  {
+   "word": "threatened,",
+   "start": 27.363,
+   "end": 27.673
+  },
+  {
+   "word": "it",
+   "start": 27.712,
+   "end": 27.906
+  },
+  {
+   "word": "releases",
+   "start": 27.983,
+   "end": 28.41
+  },
+  {
+   "word": "a",
+   "start": 28.449,
+   "end": 28.565
+  },
+  {
+   "word": "cloud",
+   "start": 28.604,
+   "end": 28.914
+  },
+  {
+   "word": "of",
+   "start": 28.953,
+   "end": 29.147
+  },
+  {
+   "word": "glowing",
+   "start": 29.186,
+   "end": 29.457
+  },
+  {
+   "word": "mucus,",
+   "start": 29.496,
+   "end": 29.884
+  },
+  {
+   "word": "and",
+   "start": 29.923,
+   "end": 30.078
+  },
+  {
+   "word": "vanishes.",
+   "start": 30.311,
+   "end": 30.893
+  },
+  {
+   "word": "On",
+   "start": 31.673,
+   "end": 31.789
+  },
+  {
+   "word": "some",
+   "start": 31.828,
+   "end": 31.945
+  },
+  {
+   "word": "nights,",
+   "start": 31.983,
+   "end": 32.332
+  },
+  {
+   "word": "the",
+   "start": 32.371,
+   "end": 32.565
+  },
+  {
+   "word": "glow",
+   "start": 32.682,
+   "end": 32.875
+  },
+  {
+   "word": "even",
+   "start": 32.914,
+   "end": 33.147
+  },
+  {
+   "word": "reaches",
+   "start": 33.341,
+   "end": 33.69
+  },
+  {
+   "word": "the",
+   "start": 33.729,
+   "end": 33.806
+  },
+  {
+   "word": "shore.",
+   "start": 33.845,
+   "end": 34.194
+  },
+  {
+   "word": "Down",
+   "start": 34.808,
+   "end": 34.924
+  },
+  {
+   "word": "there,",
+   "start": 34.963,
+   "end": 35.196
+  },
+  {
+   "word": "three",
+   "start": 35.234,
+   "end": 35.39
+  },
+  {
+   "word": "out",
+   "start": 35.545,
+   "end": 35.894
+  },
+  {
+   "word": "of",
+   "start": 35.933,
+   "end": 36.01
+  },
+  {
+   "word": "four",
+   "start": 36.049,
+   "end": 36.127
+  },
+  {
+   "word": "animals",
+   "start": 36.165,
+   "end": 36.437
+  },
+  {
+   "word": "make",
+   "start": 36.476,
+   "end": 36.708
+  },
+  {
+   "word": "their",
+   "start": 36.747,
+   "end": 37.096
+  },
+  {
+   "word": "own",
+   "start": 37.135,
+   "end": 37.251
+  },
+  {
+   "word": "light.",
+   "start": 37.29,
+   "end": 37.523
+  },
+  {
+   "word": "The",
+   "start": 37.562,
+   "end": 37.872
+  },
+  {
+   "word": "deep",
+   "start": 38.144,
+   "end": 38.26
+  },
+  {
+   "word": "sea",
+   "start": 38.299,
+   "end": 38.454
+  },
+  {
+   "word": "isn't",
+   "start": 38.493,
+   "end": 39.113
+  },
+  {
+   "word": "dark.",
+   "start": 39.152,
+   "end": 39.501
+  },
+  {
+   "word": "It's",
+   "start": 39.54,
+   "end": 40.122
+  },
+  {
+   "word": "glowing.",
+   "start": 40.16,
+   "end": 40.587
+  }
+ ],
+ "language": "en",
+ "source": "MiniMax speech-2.8-hd word timestamps (subtitle_type=word) of narration.mp3"
+}

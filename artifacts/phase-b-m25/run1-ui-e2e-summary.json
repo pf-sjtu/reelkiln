@@ -1,0 +1,100 @@
+{
+ "started": "2026-10-22T13:51:55.586Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "deep-sea-short",
+   "sessionId": "1dcb022f-bddf-434e-b2fe-97ccda035116",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "01-anglerfish.mp4",
+    "02-firefly-squid.mp4",
+    "03-jellyfish.mp4",
+    "04-vampire-squid.mp4",
+    "05-glowing-waves.mp4",
+    "06-ending.jpg",
+    "music.mp3",
+    "narration.mp3",
+    "transcript.json"
+   ],
+   "storeFile": true
+  },
+  "brief_send": {
+   "ok": true,
+   "typedMatches": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in Deep sea short' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (9 real files)"
+  },
+  {
+   "element": "composer textarea",
+   "how": "click + Input.insertText(brief)"
+  },
+  {
+   "element": "composer Send (button.send-btn)",
+   "how": "click"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "questionCards": [],
+ "voiceDictationStatus": {
+  "available": false,
+  "attach": true,
+  "message": "On-device transcription is unavailable on this Mac. You can still type your message."
+ },
+ "error": "Error: turn timeout\n    at file://<REPO>/port/tools/ui-e2e.mjs:312:22",
+ "sessionId": "1dcb022f-bddf-434e-b2fe-97ccda035116",
+ "jobId": null,
+ "consoleErrors": [],
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "attachVia": "drop",
+ "stopAfter": null,
+ "allPass": false,
+ "finished": "2026-10-22T14:37:02.067Z"
+}

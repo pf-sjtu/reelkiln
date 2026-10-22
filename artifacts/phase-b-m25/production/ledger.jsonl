@@ -1,0 +1,20 @@
+{"at":"2026-10-22T13:14:58.834Z","item":"tts speech-2.8-hd English_Insightful_Speaker","chars":739,"cny":0.25865,"usd":0.038642}
+{"at":"2026-10-22T13:15:15.306Z","item":"tts speech-2.8-hd English_Insightful_Speaker","chars":739,"cny":0.25865,"usd":0.038642}
+{"at":"2026-10-22T13:16:12.919Z","item":"image-01 hook","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:16:51.474Z","item":"image-01 angler","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:17:22.793Z","item":"image-01 squid","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:17:53.691Z","item":"image-01 jelly","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:18:25.075Z","item":"image-01 vampire","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:18:57.772Z","item":"image-01 waves","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:19:28.599Z","item":"image-01 ending","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:20:39.076Z","item":"image-01 angler","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:21:11.898Z","item":"image-01 squid","n":2,"cny":0.05,"usd":0.00747}
+{"at":"2026-10-22T13:24:19.064Z","item":"music-3.0 instrumental","cny":1,"usd":0.1494}
+{"at":"2026-10-22T13:24:51.798Z","item":"MiniMax-Hailuo-2.3 I2V 1080P 6s angler","cny":3.5,"usd":0.5229}
+{"at":"2026-10-22T13:34:56.975Z","item":"MiniMax-Hailuo-2.3 I2V 1080P 6s squid","cny":3.5,"usd":0.5229}
+{"at":"2026-10-22T13:38:25.304Z","item":"MiniMax-Hailuo-2.3 I2V 1080P 6s jelly","cny":3.5,"usd":0.5229}
+{"at":"2026-10-22T13:42:36.981Z","item":"MiniMax-Hailuo-2.3 I2V 1080P 6s vampire","cny":3.5,"usd":0.5229}
+{"at":"2026-10-22T13:45:18.764Z","item":"MiniMax-Hailuo-2.3 I2V 1080P 6s waves","cny":3.5,"usd":0.5229}
+{"at":"2026-10-22T14:47:20.112Z","item":"tts speech-2.8-hd English_Insightful_Speaker","chars":780,"cny":0.273,"usd":0.040786}
+{"at":"2026-10-22T14:47:34.748Z","item":"tts speech-2.8-hd English_Insightful_Speaker","chars":712,"cny":0.2492,"usd":0.03723}
+{"at": "2026-10-22T14:50:29.271989Z", "item": "LLM agent turn MiniMax-M3.1-Flash (run1, turn-timeout) priced via models.dev minimax-cn", "tokens": {"in": 1912238, "out": 52416, "cr": 4450293}, "cny": 2.56574, "usd": 0.383322}

@@ -1,0 +1,21 @@
+{
+  "fps": 30, "width": 1080, "height": 1920,
+  "beats": [
+    {"name": "b01_hook_lure_ai", "source": "footage/ai-01-anglerfish-raw.mp4", "in": 0.0, "out": 1.9, "role": "hook"},
+    {"name": "b02_anglerfish_noaa_a", "source": "footage/n1-angler-a.mp4", "in": 0.0, "out": 2.4, "role": "broll"},
+    {"name": "b03_anglerfish_noaa_b", "source": "footage/n2-angler-b.mp4", "in": 0.0, "out": 2.9, "role": "broll"},
+    {"name": "b04_anglerfish_noaa_c", "source": "footage/n3-angler-c.mp4", "in": 0.0, "out": 2.8, "role": "broll"},
+    {"name": "b05_firefly_squid_ai", "source": "footage/02-firefly-squid-slow.mp4", "in": 0.0, "out": 7.5333, "role": "broll"},
+    {"name": "b06_atolla_noaa", "source": "footage/n4-atolla.mp4", "in": 0.0, "out": 3.5667, "role": "broll"},
+    {"name": "b07_jelly_glow_ai", "source": "footage/03-jellyfish-slow.mp4", "in": 0.0, "out": 3.6, "role": "broll"},
+    {"name": "b08_vampire_squid_ai", "source": "footage/04-vampire-squid-slow.mp4", "in": 0.0, "out": 6.85, "role": "broll"},
+    {"name": "b09_glowing_waves_ai", "source": "footage/05-glowing-waves-fast.mp4", "in": 0.0, "out": 3.1, "role": "broll"},
+    {"name": "b10_crossota_noaa", "source": "footage/n5-crossota.mp4", "in": 0.0, "out": 2.8, "role": "broll"},
+    {"name": "b11_ending_ai", "source": "images/06-ending.jpg", "duration": 4.15, "role": "endcard", "motion": "kenburns_in"}
+  ],
+  "audio": {
+    "vo": {"source": "audio/narration.mp3", "gain": 1.0},
+    "bed": {"source": "audio/music_bed.wav", "under_voice_db": 16}
+  },
+  "output": "final_raw.mp4"
+}

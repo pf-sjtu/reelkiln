@@ -50,3 +50,16 @@ export const S1_UI_STEPS = [
  *  file quotes its own heading "ANTI-COMMITMENTS (declined proposals — do not re-raise)". */
 export const DECLINE_RE = /declined this step|denied by user|\b(?:user|you)\s+(?:has\s+|have\s+)?(?:declined|denied|rejected|dismissed|skipped)\s+(?:the|this|my|your)\s+(?:question|step|card|prompt)|\b(?:question|AskUserQuestion|step)\s+was\s+(?:declined|denied|rejected|dismissed)|拒绝了(?:这个|该)?(?:问题|提问)|没有回答|未回答/i;
 export function answerDeclined(texts) { return texts.some((t) => DECLINE_RE.test(String(t))); }
+
+/** docs/42 M25: the files to attach — `--files a,b,c` (resolved against cwd) or the four S1 fixtures in `fixtureDir`. */
+export const S1_FIXTURE_FILES = ["clip_a.mp4", "clip_b.mp4", "clip_c.mp4", "music.mp3"];
+export function attachFileList(filesOpt, fixtureDir, { join, resolve }) {
+  const list = filesOpt ? String(filesOpt).split(",").map((f) => f.trim()).filter(Boolean).map((f) => resolve(f)) : S1_FIXTURE_FILES.map((f) => join(fixtureDir, f));
+  if (!list.length) throw new Error("--files: empty list");
+  return list;
+}
+
+/** docs/42 M25: matches the main-log line that marks attachment `name` ready (every regex metachar in the name escaped). */
+export function attachmentReadyRe(name) {
+  return new RegExp(`"name":"${String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[^\\n]*"status":"ready"`);
+}

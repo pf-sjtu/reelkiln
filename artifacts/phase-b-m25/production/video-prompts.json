@@ -1,0 +1,7 @@
+{
+ "angler": {"img": "media/img/hook-1.jpg", "prompt": "The glowing blue-green lure sways gently in the black water as tiny particles drift past. [拉远] The camera slowly pulls back to reveal a dark deep-sea anglerfish lurking behind the light, its huge jaw of needle-like teeth faintly lit by its own lure. Slow, tense, documentary realism."},
+ "squid": {"img": "media/img/squid-1.jpg", "prompt": "Dozens of firefly squid glide through the dark water, their blue photophores twinkling and pulsing on and off like stars. [推进] Slow camera push in, gentle natural swimming motion, documentary realism."},
+ "jelly": {"img": "media/img/jelly-1.jpg", "prompt": "The deep-sea jellyfish pulses slowly; a ring of brilliant blue bioluminescent light races around its bell in waves, like a flashing alarm, tentacles trailing. [固定] Locked-off camera, black water, documentary realism."},
+ "vampire": {"img": "media/img/vampire-0.jpg", "prompt": "The vampire squid slowly drifts, then releases a swirling cloud of glowing blue particles from its arm tips and fades backward into the darkness. [拉远] Slow pull back, documentary realism."},
+ "waves": {"img": "media/img/waves-1.jpg", "prompt": "Night ocean waves roll in and break on the beach, each wave flashing bright electric blue from bioluminescent plankton as it crashes, foam glowing then fading. [固定] Static camera, realistic long exposure feel."}
+}

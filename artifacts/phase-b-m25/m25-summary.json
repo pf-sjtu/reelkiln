@@ -1,0 +1,21 @@
+{
+  "milestone": "M25 deep-sea vertical Short",
+  "final": {"path": "/workspace/share/reelkiln-deep-sea-short.mp4 (box only, not committed)", "video": "h264 High 1080x1920 30fps yuv420p tv-range", "audio": "aac LC 48 kHz mono", "duration_s": 41.633, "size_bytes": 31704069, "loudness": {"integrated_lufs": -14.2, "lra_lu": 1.8, "true_peak_dbfs": -1.3}, "black_frames": 0, "freezes_over_0_6s": 0},
+  "comparison_ai_only": {"path": "/workspace/share/reelkiln-deep-sea-short-ai.mp4", "duration_s": 43.6, "integrated_lufs": -14.3},
+  "timeline_final": [
+    {"t": [0.0, 1.9], "what": "glowing anglerfish lure (hook)", "kind": "AI", "src": "MiniMax Hailuo-2.3 I2V from image-01 still"},
+    {"t": [1.9, 10.0], "what": "Schaefer's anglerfish, 3 shots", "kind": "REAL", "src": "NOAA Ocean Exploration, 2019 Southeastern U.S. Deep-sea Exploration"},
+    {"t": [10.0, 17.53], "what": "firefly squid", "kind": "AI", "src": "Hailuo-2.3 I2V, slow-mo by the in-app agent (ffmpeg minterpolate)"},
+    {"t": [17.53, 21.1], "what": "Atolla jellyfish", "kind": "REAL", "src": "NOAA Ocean Exploration, Voyage to the Ridge 2022"},
+    {"t": [21.1, 24.7], "what": "glowing burglar-alarm ring", "kind": "AI", "src": "Hailuo-2.3 I2V, agent slow-mo"},
+    {"t": [24.7, 31.55], "what": "vampire squid glowing cloud", "kind": "AI", "src": "Hailuo-2.3 I2V, agent slow-mo"},
+    {"t": [31.55, 34.65], "what": "bioluminescent surf", "kind": "AI", "src": "Hailuo-2.3 I2V, agent re-time"},
+    {"t": [34.65, 37.45], "what": "Crossota jellyfish", "kind": "REAL", "src": "NOAA Ocean Exploration, 2016 Deepwater Exploration of the Marianas"},
+    {"t": [37.45, 41.6], "what": "glowing jellyfield end card + credit", "kind": "AI", "src": "image-01 still, engine kenburns_in"}
+  ],
+  "real_seconds": 14.47, "ai_seconds": 27.13,
+  "agent_run": {"harness": "port/tools/ui-e2e.mjs --files (9 sources) --brief-file", "steps_passed": ["home", "project_video", "attach", "brief_send"], "failed": "stream: turn timeout (app turn limit 44 min, harness 45 min)", "tool_calls": 75, "llm_calls": 106, "tokens": {"input": 1912238, "output": 52416, "cache_read": 4450293}, "usd_models_dev": 0.3833, "rate_limit_hits": 0, "what_it_did": "inspected all media, analysed transcript caption grouping, proposed a plan (2 cards), wrote the 30 fps slow-mo footage for beats 2-5 (beat 1 cut off mid-encode), music bed; it did not reach assemble/render"},
+  "spend_usd": {"media_list_price": 2.9864, "llm_agent_turn": 0.3833, "total": 3.3698, "cap": 5.0, "note": "media at CNY list x 0.1494; Hailuo clips drew on the token-plan video quota (5/day) so the real cash cost is likely lower"},
+  "quota_general_pct": {"m25_start": 72, "before_agent": 56, "resume": 51, "after": 28, "note": "window resets 00:00 SGT; other workloads on the same key also consume it; no LLM calls after it fell below 30%"},
+  "quota_video_remaining": {"m25_start": 5, "after": 0}
+}

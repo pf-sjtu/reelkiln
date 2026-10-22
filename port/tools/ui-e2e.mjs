@@ -21,7 +21,7 @@ import { createHash } from "node:crypto";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Cdp, waitForPageTarget, mouseClick, mouseMove, typeText, dropFiles, screenshot } from "./ui-e2e/cdp.mjs";
-import { answerDeclined, center, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
+import { answerDeclined, attachFileList, attachmentReadyRe, center, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PORT_DIR = resolve(HERE, "..");
@@ -65,7 +65,8 @@ execFileSync("bash", [join(REPO, "tools", "accept_fixtures.sh"), IN], { stdio: "
 const BRIEF_DEFAULT = "我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.5–2.5 s；只用 music.mp3 做音轨（不要素材原声）；不要字幕、不要叠加、不要任何付费工具。渲染成片。";
 // docs/24: --brief-file overrides the S1 brief (e.g. a brief that makes the agent ask an AskUserQuestion first)
 const BRIEF = opt("--brief-file") ? readFileSync(resolve(opt("--brief-file")), "utf8").trim() : BRIEF_DEFAULT;
-const FILES = ["clip_a.mp4", "clip_b.mp4", "clip_c.mp4", "music.mp3"].map((f) => join(IN, f));
+// docs/42 M25: --files a,b,c attaches these (absolute) files instead of the S1 fixtures (e.g. a real production's sources).
+const FILES = attachFileList(opt("--files"), IN, { join, resolve });
 
 const LOG = join(OUT, "cdp-log.jsonl");
 const t0 = Date.now();
@@ -241,13 +242,13 @@ try {
   } else {
     const dropAt = center(ta);
     log({ action: "dropFiles", at: dropAt, files: FILES.map((f) => basename(f)) });
-    await dropFiles(cdp, dropAt.x, dropAt.y, FILES); drove("composer dropzone (original window-level drop handler of the active video; dropped over the composer)", "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)");
+    await dropFiles(cdp, dropAt.x, dropAt.y, FILES); drove("composer dropzone (original window-level drop handler of the active video; dropped over the composer)", `Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (${FILES.length} real files)`);
   }
   const attStore = join(UD, "composer-attachments.json");
-  const atts = await waitFor("4 attachments ready (main store) + tiles in composer", async () => {
+  const atts = await waitFor(`${FILES.length} attachments ready (main store) + tiles in composer`, async () => {
     const txt = await bodyText(); if (!FILES.every((f) => txt.includes(basename(f)))) return null;
-    const ev = readFileSync(mainLog, "utf8"); const ready = FILES.filter((f) => new RegExp(`"name":"${basename(f).replace(".", "\\.")}"[^\\n]*"status":"ready"`).test(ev));
-    return ready.length === 4 ? ready.map((f) => basename(f)) : null;
+    const ev = readFileSync(mainLog, "utf8"); const ready = FILES.filter((f) => attachmentReadyRe(basename(f)).test(ev));
+    return ready.length === FILES.length ? ready.map((f) => basename(f)) : null;
   }, { timeoutMs: 120_000 });
   await sleep(800);
   await shot("03-attachments");

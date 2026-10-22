@@ -1,0 +1,57 @@
+{"t":33,"note":"launch dev electron (UI_E2E mode, CDP :47917)"}
+{"t":2232,"cdp":"Page.enable","params":{}}
+{"t":2302,"cdp":"Runtime.enable","params":{}}
+{"t":2310,"note":"page target file://<REPO>/app/out/renderer/index.html"}
+{"t":3973,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":3973,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":3975,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":3977,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":4570,"screenshot":"01-home.png"}
+{"t":4572,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":4575,"note":"voiceDictationStatus {\"available\":false,\"attach\":true,\"message\":\"On-device transcription is unavailable on this Mac. You can still type your message.\"}"}
+{"t":4577,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":4577,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":4593,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":4595,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":4612,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":4612,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":4626,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":4627,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":4628,"cdp":"Input.insertText","params":{"text":"Deep sea short"}}
+{"t":4630,"action":"insertText","into":"input.new-client-input","text":"Deep sea short"}
+{"t":4632,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":4632,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":4642,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":4643,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":4952,"action":"click","desc":"New video in Deep sea short","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in Deep sea short"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":4952,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":5211,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":5227,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":5229,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":5608,"screenshot":"02-new-video.png"}
+{"t":5608,"note":"STEP project_video: PASS {\"clientId\":\"deep-sea-short\",\"sessionId\":\"1dcb022f-bddf-434e-b2fe-97ccda035116\",\"title\":\"New video\"}"}
+{"t":5610,"action":"dropFiles","at":{"x":766,"y":721},"files":["01-anglerfish.mp4","02-firefly-squid.mp4","03-jellyfish.mp4","04-vampire-squid.mp4","05-glowing-waves.mp4","06-ending.jpg","music.mp3","narration.mp3","transcript.json"]}
+{"t":5610,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<SRC>/01-anglerfish.mp4","<SRC>/02-firefly-squid.mp4","<SRC>/03-jellyfish.mp4","<SRC>/04-vampire-squid.mp4","<SRC>/05-glowing-waves.mp4","<SRC>/06-ending.jpg","<SRC>/music.mp3","<SRC>/narration.mp3","<SRC>/transcript.json"],"dragOperationsMask":19}}}
+{"t":5613,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<SRC>/01-anglerfish.mp4","<SRC>/02-firefly-squid.mp4","<SRC>/03-jellyfish.mp4","<SRC>/04-vampire-squid.mp4","<SRC>/05-glowing-waves.mp4","<SRC>/06-ending.jpg","<SRC>/music.mp3","<SRC>/narration.mp3","<SRC>/transcript.json"],"dragOperationsMask":19}}}
+{"t":5619,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<SRC>/01-anglerfish.mp4","<SRC>/02-firefly-squid.mp4","<SRC>/03-jellyfish.mp4","<SRC>/04-vampire-squid.mp4","<SRC>/05-glowing-waves.mp4","<SRC>/06-ending.jpg","<SRC>/music.mp3","<SRC>/narration.mp3","<SRC>/transcript.json"],"dragOperationsMask":19}}}
+{"t":6811,"screenshot":"03-attachments.png"}
+{"t":6811,"note":"STEP attach: PASS {\"via\":\"drop\",\"ready\":[\"01-anglerfish.mp4\",\"02-firefly-squid.mp4\",\"03-jellyfish.mp4\",\"04-vampire-squid.mp4\",\"05-glowing-waves.mp4\",\"06-ending.jpg\",\"music.mp3\",\"narration.mp3\",\"transcript.json\"],\"storeFile\":true}"}
+{"t":6813,"action":"click","desc":"composer textarea","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"tag":"TEXTAREA","cls":"","label":""},"hit":{"hitTag":"TEXTAREA","hitCls":"","onTarget":true}}
+{"t":6813,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":6826,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":6828,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":6829,"cdp":"Input.insertText","params":{"text":"Make a vertical YouTube Short (9:16, 1080x1920, 30 fps) called \"Bioluminescent creatures of the deep sea\" from the attac…"}}
+{"t":6839,"action":"insertText","into":"textarea","chars":2258}
+{"t":7321,"screenshot":"04-brief-typed.png"}
+{"t":7325,"action":"click","desc":"Send","selector":"button.send-btn","at":{"x":1228,"y":768},"element":{"x":1211,"y":751,"width":34,"height":34,"tag":"BUTTON","cls":"send-btn","label":"Send"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":7325,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1228,"y":768}}
+{"t":7343,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":7344,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":7761,"note":"STEP brief_send: PASS {\"typedMatches\":true}"}
+{"t":35935,"screenshot":"05-turn-streaming.png"}
+{"t":35939,"controlsDuringTurn":[{"cls":"send-btn stop","aria":null,"title":"Stop","disabled":false}]}
+{"t":2708666,"note":"ERROR Error: turn timeout\n    at file://<REPO>/port/tools/ui-e2e.mjs:312:22"}
+{"t":2708791,"screenshot":"99-error.png"}
+{"t":2708815,"cdp":"Browser.close","params":{}}
+{"t":2708989,"note":"app exited 0"}
+{"t":2709231,"note":"DONE allPass=false"}
