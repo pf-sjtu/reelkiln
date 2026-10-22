@@ -1,0 +1,99 @@
+
+> videoclaw-port@0.0.40-port.0 package:win
+> npm run build && node tools/package.mjs --platform win --arch x64 --out release/win-m17
+
+
+> videoclaw-port@0.0.40-port.0 build
+> npm run gen && npm run typecheck && npm run bundle
+
+
+> videoclaw-port@0.0.40-port.0 gen
+> node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs
+
+{"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17}
+studio-paid-tools.generated.ts: 4 descriptions ok
+
+> videoclaw-port@0.0.40-port.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+
+> videoclaw-port@0.0.40-port.0 bundle
+> node tools/build.mjs
+
+
+  dist/main/index.cjs      3.1mb ⚠️
+  dist/main/index.cjs.map  5.7mb
+
+⚡ Done in 176ms
+
+  dist/main/editorRenderWorker.cjs      4.8kb
+  dist/main/editorRenderWorker.cjs.map  8.3kb
+
+⚡ Done in 2ms
+
+  dist/main/hyperframesPolicyWorker.cjs       10.1kb
+  dist/main/hyperframesPreviewWorker.cjs       8.9kb
+  dist/main/hyperframesPreviewWorker.cjs.map  18.2kb
+  dist/main/hyperframesPolicyWorker.cjs.map   16.1kb
+
+⚡ Done in 3ms
+
+  dist/cli/port-cli.cjs      1012.7kb
+  dist/cli/port-cli.cjs.map     2.1mb
+
+⚡ Done in 44ms
+
+  dist/preload/index.cjs       26.9kb
+  dist/preload/index.cjs.map  199.4kb
+
+⚡ Done in 7ms
+
+  dist/renderer/renderer.js      17.5kb
+  dist/renderer/renderer.js.map  36.1kb
+
+⚡ Done in 7ms
+[package] WARNING: win-x64 packaging is config-only/UNVERIFIED in this repo (docs/18 §6)
+[package] bundling Claude Agent SDK from /workspace/videoclaw/repo/port/build/agent-sdk/win32-x64 → resources/claude-agent-sdk
+  • electron-builder  version=26.15.3 os=6.12.94+
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=win32 arch=x64 electron=42.11.9 appOutDir=release/win-m17/win-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=/workspace/videoclaw/repo/port/release/win-m17/win-unpacked
+  • searching for node modules  pm=npm searchDir=/workspace/videoclaw/repo/port
+  • searching for node modules  pm=traversal searchDir=/workspace/videoclaw/repo/port
+  • using manual traversal of node_modules to build dependency tree
+  • no node modules returned while searching directories  searchDirectories=[""]
+  • updating asar integrity executable resource  executablePath=release/win-m17/win-unpacked/videoclaw-port.exe
+  • signing with signtool.exe  path=release/win-m17/win-unpacked/resources/claude-agent-sdk/node_modules/@anthropic-ai/claude-agent-sdk-win32-x64/claude.exe
+  • default Electron icon is used  reason=application icon is not set
+  • signing with signtool.exe  path=release/win-m17/win-unpacked/videoclaw-port.exe
+  • building        target=nsis file=release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe archs=x64 oneClick=false perMachine=false
+  • signing with signtool.exe  path=release/win-m17/win-unpacked/resources/elevate.exe
+  • signing with signtool.exe  path=release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-setup.__uninstaller.exe
+  • signing with signtool.exe  path=release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe
+  • building block map  blockMapFile=release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe.blockmap
+  • building        target=portable file=release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe archs=x64
+  • signing with signtool.exe  path=release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe
+{
+  "ok": true,
+  "platform": "win",
+  "arch": "x64",
+  "sdkBundled": true,
+  "artifacts": [
+    {
+      "file": "/workspace/videoclaw/repo/port/release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe.blockmap",
+      "bytes": 253430
+    },
+    {
+      "file": "/workspace/videoclaw/repo/port/release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe",
+      "bytes": 240458839
+    },
+    {
+      "file": "/workspace/videoclaw/repo/port/release/win-m17/Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe",
+      "bytes": 210789241
+    }
+  ],
+  "unpacked": [
+    "/workspace/videoclaw/repo/port/release/win-m17/win-unpacked"
+  ]
+}

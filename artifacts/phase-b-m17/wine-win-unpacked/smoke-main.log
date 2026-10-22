@@ -1,0 +1,8 @@
+
+[32:1022/075835.900:ERROR:net\base\network_change_notifier_win.cc:200] WSALookupServiceBegin failed with: 8
+{"ts":"2026-10-21T23:58:35.975Z","level":"info","event":"llm.runtime.ready","component":"llm-runtime","route":"claude-code","providers":["minimax"],"watching":null}
+[port] real (ported) handlers: editorRender:start, editorRender:cancel, editorRender:state, session:list, account:snapshot, app:update:get, workflowSubmit:eligibility, bootstrap:status, client:list, client:create, interaction:replayPending, characters:list, quickstart:catalog, quickstart:mark, quickstart:impression, quickstart:previewed, file:openPath, file:revealItem, file:saveItemAs, intake:pick
+[port] registered 157 handle + 3 on; fake-implemented: 13
+[port] renderer: port file:///Z:/workspace/videoclaw/repo/port/release/win-m17/win-unpacked/resources/app.asar/dist/renderer/index.html
+[448:1022/075836.591:ERROR:net\base\network_change_notifier_win.cc:200] WSALookupServiceBegin failed with: 8
+[376:1022/075836.822:ERROR:ui\gl\direct_composition_support.cc:748] DCompositionCreateDevice3 failed: Not implemented. (0x80004001)

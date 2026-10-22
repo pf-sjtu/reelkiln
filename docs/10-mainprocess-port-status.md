@@ -85,3 +85,31 @@
 手写移植：`session.ts`（`engineSessionEnv` L9380 逐行，含差分测试；`SessionRegistry` = `loadRegistry` L35661 的只读子集 + `listSessions` L38348 + `liveSession` L62403）。
 
 已从“未移植协作者”列表中移除：`validateEngineSessionContext`、`assertInstalledEngineProductionContract`、`inspectInstalledEngineProductionContract`、`assertEngineMoneyCompatibility`、`engineSessionEnv`。仍未移植：AgentHost 运行时（createSession、agent turn、registry 写入）、Studio bundle store、gateway 引擎下载、mediaCapabilities 授权。
+
+## 增补（M17，docs/34）：Windows 上到底验证了什么
+
+**结论先说：本轮在真实 Windows 上新验证的内容为零。** GitHub Actions 自 2026-10-21 13:03 SGT（run 39547313316）之后所有 run 都因账单问题未启动（“recent account payments have failed or your spending limit needs to be increased”），本轮 4 个 run 同样如此（`artifacts/phase-b-m17/ci-billing-blocked.txt`）。以下是可以诚实陈述的层级：
+
+| 层级 | 内容 | 状态 |
+|---|---|---|
+| 真 Windows（CI windows-latest，最后一次能跑是 39547313316） | port 单测 161/163，2 个失败均为测试里写死 POSIX 路径 | 两处已在 4071f42 修正；**修正后未在真 Windows 上跑过** |
+| WINE（box 上 wine 10 + 官方 win-x64 Node 22.23.4，`process.platform === "win32"`） | 全部 324 个单测 | 修正前 297/323 通过；修正后 **311 通过 / 6 失败 / 7 跳过**。剩下 6 个失败都是环境限制：wine 没有 System32 `tar.exe`（3 个）和 Git Bash（runBash 3 个，退回到了 cmd）（`artifacts/phase-b-m17/wine-win32-tests/`）。**WINE 不等于 Windows。** |
+| 在 Linux 上交叉构建 | `npm run package:win` → nsis `-setup.exe` + `-portable.exe` + win-unpacked（需要 wine32 跑 NSIS 卸载器 stub） | 能构建（sha 见 `win-cross-build/`）；NSIS 在 wine 下静默安装 `/S /D=` 返回 exit 2，**结论不明** |
+| WINE 下的打包主进程 | `videoclaw-port.exe` 设置 `VIDEOCLAW_PORT_SMOKE=1` | 主进程能启动：注册了 157 个 handle 和 3 个 on，renderer URL 已解析；渲染器 smoke 150 s 内没跑完（wine 的 GPU/DirectComposition），**未验证** |
+
+这轮用 WINE 找到并修掉的真实 Windows 缺陷，都是原版只在 `sep === "/"` 的环境里跑过造成的，修法都是 POSIX 上行为不变的平台层替换：
+- `CharacterStore.assertInside`、`Quickstart contained()`：改成按 `root + sep` 判断是否在目录内（之前所有角色操作和 Quickstart 目录在 Windows 上都会被拒绝）。
+- `attestCandidate`（project trash）：`suffix.split(sep)`。之前在 Windows 上删除视频的计划永远为空。
+- `CharacterVoiceStore`：voices.json 里存 `posixRelative()`。原版 `read()` 会拒绝含 `\` 的路径，导致在 Windows 上保存一次音色之后音色就再也读不出来。
+- `taste` 标题：取 `file.split(sep)` 的倒数第二段作为父目录名。
+- `codex-minimax.resolveCodexExecutable`：按平台选择 `@openai/codex-<os>-<arch>` 和目标三元组，Windows 上用 `codex.exe`。之前只有 linux-musl。
+- `vcmedia://`：main 侧用 `pathToFileURL().pathname` 生成 URL，Windows 上是 `/C:/…`，现在映射回 `C:\…`（`vcmediaFilePath`）。
+
+新增的 Windows 风险条目（接在 W1–W10 后面）：
+
+| # | 改动/现象 | 风险 |
+|---|---|---|
+| W11 | 原版渲染器 `mediaUrl(abs)` 只按 `/` 切分并编码 | 渲染器拿到原生 `C:\…` 路径时，生成的 `vcmedia://localC%3A%5C…` 会把路径并入 host，媒体预览会失效。main 侧只能兜住自己生成的 URL。需要在真 Windows 上看哪些路径会传到渲染器 |
+| W12 | NSIS `oneClick:false, perMachine:false` 的静默安装 | wine 下 exit 2，需要在真 Windows 上验证 `/S /D=` |
+| W13 | 找不到 Git Bash 时 runBash 退回 cmd | wine 下已经实际观察到这种退回（`sleep` 不是内部命令）。引擎命令依赖 bash 语法，没有 Git 的机器会表现为“能跑但结果错” |
+| W14 | M16 collector 的单测在 win32 上跳过 | 假引擎用的是 POSIX python 软链接，Windows 上的 late-result collector 没有覆盖 |

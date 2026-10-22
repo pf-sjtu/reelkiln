@@ -1,0 +1,11 @@
+# GitHub Actions runs of this round (M17). Every job annotation reads:
+# "The job was not started because recent account payments have failed or your spending limit needs to be increased.
+#  Please check the 'Billing & plans' section in your settings"
+# Times converted to Asia/Singapore (UTC+8).
+39693619800  c3b9c08  2026-10-22 07:28 SGT  https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39693619800
+39694780613  4071f42  2026-10-22 07:39 SGT  https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39694780613
+39695184650  37d0ac9  2026-10-22 07:42 SGT  https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39695184650  (first run with windows-package / macos-package / Windows L0 step)
+39696799047  9ac3c01  2026-10-22 07:58 SGT  https://github.com/pf-sjtu/videoclaw-reverse/actions/runs/39696799047
+# Last run whose jobs actually executed: 39547313316 (2026-10-21 13:03 SGT, commit before M16 end):
+#   port·windows-latest 161 pass / 2 fail (llm-agent-sdk.test: SDK discovery + claudeCodeExecutableFor — POSIX-literal
+#   expectations; fixed in 4071f42), Windows runbook job cancelled (concurrency cancel-in-progress by a newer push).
