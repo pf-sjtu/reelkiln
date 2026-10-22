@@ -1,6 +1,6 @@
 """Cross-platform stand-in for the ``fcntl.flock`` subset the engine uses.
 
-PORT ADDITION (videoclaw-reverse Windows port, see docs/09-engine-windows-compat.md).
+PORT ADDITION (Reelkiln Windows port, see docs/09-engine-windows-compat.md).
 
 On POSIX this module re-exports the real ``fcntl.flock`` and ``LOCK_*`` constants
 unchanged, so ``import _compat_lock as fcntl`` is byte-for-byte the same behaviour

@@ -1,6 +1,6 @@
 """Cross-platform process-group helpers.
 
-PORT ADDITION (videoclaw-reverse Windows port, see docs/09-engine-windows-compat.md).
+PORT ADDITION (Reelkiln Windows port, see docs/09-engine-windows-compat.md).
 
 POSIX behaviour is unchanged: callers keep using ``start_new_session=True`` and
 ``os.killpg(pgid, signal.SIGKILL)`` through these helpers.

@@ -1,7 +1,7 @@
 # 08 · Windows x64 本地执行计划（首轮实机验证 Runbook）
 
 > 适用对象：在一台 **Windows 10/11 x64** 机器上首次运行移植版。
-> 基线：仓库 `pf-sjtu/videoclaw-reverse` 分支 `master` 上包含本文档的最新提交（`git log -1 -- docs/08-local-windows-plan.md` 可查）。
+> 基线：仓库 `pf-sjtu/reelkiln` 分支 `master` 上包含本文档的最新提交（`git log -1 -- docs/08-local-windows-plan.md` 可查）。
 > 原则：每一步都是**可独立验证**的小步；每步结束把“回报清单”中的内容原样贴回（JSON 行或截图）。任何一步失败都**停止**，先回报，不要自行修改引擎源码。
 > **参考基线（2026-10-20 更新）：Linux 已实机跑通。** 本 Runbook 的每一步在 box（Debian 13 x86_64）上都有对应的已通过运行，可作为 Windows 结果的对照：引擎安装 / venv / doctor / 端到端出片见 `docs/11-linux-baseline.md` 与 `tools/linux_baseline.sh`；Electron 外壳真实 bootstrap + `editorRender:*` 出片见 `docs/12-linux-shell-run.md` 与 `tools/linux_shell_smoke.sh`；CI 中 `windows-latest` 已真实跑过移植版单元测试与引擎兼容层测试（`docs/13-ci.md`）。Windows 上的结果应与 Linux 基线**逐项一致**；不一致处即为 Windows 特有问题。
 > 记号：**PORT-NEW** = 移植新增（原版 bundle 中不存在）；**原版** = 0.0.40 bundle 中已有的名字/行为。所有原版行号指 `app/reconstructed/main/index.js`。
@@ -69,7 +69,7 @@
 ```bat
 git config --global core.autocrlf false
 git config --global core.longpaths true
-git clone -c core.symlinks=true https://github.com/pf-sjtu/videoclaw-reverse.git C:\vc\repo
+git clone -c core.symlinks=true https://github.com/pf-sjtu/reelkiln.git C:\vc\repo
 cd C:\vc\repo
 git log -1 --format="%H %cI"
 git status --short
