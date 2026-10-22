@@ -86,7 +86,9 @@ mkdir -p "$ROOT/codexpkg" "$B/codex"
 (cd "$ROOT/codexpkg" && npm pack @openai/codex@0.160.1-win32-x64 >/dev/null && tar -xzf openai-codex-0.160.1-win32-x64.tgz)
 cp -r "$ROOT/codexpkg/package/vendor/x86_64-pc-windows-msvc/." "$B/codex/"
 "$B/codex/bin/codex.exe" --version | tee -a "$OUT/tool-versions.txt"
-step codex-handshake "$(W "$B/codex/bin/codex.exe")"
+# docs/35 M18: bounded, no pipe a leftover codex.exe could hold open (the first real-Windows run hung here)
+rc=0; timeout -k 10 180 node "$CLI" codex-handshake "$(W "$B/codex/bin/codex.exe")" > "$ROOT/codex-handshake.out" 2> "$OUT/codex-handshake.stderr.txt" || rc=$?
+echo "codex-handshake exit $rc"; r="$(tail -1 "$ROOT/codex-handshake.out")"; echo "$r" | tee -a "$OUT/port-cli.jsonl"; echo "$r" | grep -q '"ok":true'
 sleep 2; (tasklist //FI "IMAGENAME eq codex.exe" || true) | tee "$OUT/codex-leftover-tasklist.txt"
 # runBash through the ported Windows shell resolver (Git Bash expected)
 node "$CLI" run-bash "echo hi && uname -s && command -v python3" | tail -1 | tee -a "$OUT/port-cli.jsonl"

@@ -808,6 +808,17 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
           app.on("will-quit", () => updateChecker?.stop());
         });
       }
+      // PORT-NEW harness seam (docs/35 M18, UI-e2e only): the engine re-check normally rides the 4 h app-update cadence
+      // (onTick above, first tick at launch, usually while bootstrap:run is still running → skipped). With
+      // VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS=<ms> a UI-e2e run calls the SAME core.checkForEngineUpdate() every <ms>
+      // (guarded and idempotent: it returns early while bootstrap/an update runs) so the background update → flip →
+      // engine:updated path can be observed live in the original renderer.
+      { const kick = Number(process.env.VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS ?? 0);
+        if (kick > 0 && process.env.VIDEOCLAW_PORT_UI_E2E === "1") {
+          log(`[port] HARNESS: engine update re-check every ${kick} ms (VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS)`);
+          const t = setInterval(() => { void core.checkForEngineUpdate().then((st) => { if (st !== "current") log(`[port] HARNESS: engine update state ${st}`); }, (e) => log(`[port] HARNESS: engine update check threw ${String(e).slice(0, 200)}`)); }, kick);
+          app.on("will-quit", () => clearInterval(t));
+        } }
       // L61341-61369
       handlers["app:update:state"] = () => appUpdater?.state() ?? { status: "disabled", version: null, percent: null, message: "Updates are starting." };
       const refreshInstallRelease = async () => {

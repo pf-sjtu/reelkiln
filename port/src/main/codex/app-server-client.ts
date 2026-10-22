@@ -348,7 +348,10 @@ export class CodexAppServerClient {
     this.killRequested = true;
     const pid = this.process.pid;
     const kill = (sig: NodeJS.Signals) => (pid !== undefined && process.platform === "win32" ? (this.opts.killTreeImpl ?? killTree)(pid, sig) : this.process.kill(sig));
-    if (!kill("SIGTERM")) { this.processStopped = true; this.releaseProcessSlot(); return; }
+    // PORT-WIN (docs/35 M18, found on windows-latest CI): a graceful `taskkill /T` (no /F) FAILS for a window-less console
+    // app like codex.exe ("can only be terminated forcefully"), so on win32 a failed SIGTERM escalates to /F at once —
+    // before, the client marked the process stopped and codex.exe kept the parent's event loop alive (the runbook hung).
+    if (!kill("SIGTERM") && !(pid !== undefined && process.platform === "win32" && kill("SIGKILL"))) { this.processStopped = true; this.releaseProcessSlot(); return; }
     if (this.processStopped) return;
     const t = setTimeout(() => { if (!this.processStopped && !kill("SIGKILL")) { this.processStopped = true; this.releaseProcessSlot(); } }, this.opts.terminateGraceMs);
     t.unref?.();

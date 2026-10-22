@@ -59,7 +59,10 @@ function baseEnv(home) {
 
 function guiSmoke(p, mode) {
   const home = mkdtempSync(join(p.work, "home-"));
-  const env = { ...baseEnv(home), VIDEOCLAW_PORT_SMOKE: "1", VIDEOCLAW_PORT_SMOKE_UI_SELECT: "minimax" };
+  // docs/35 M18: the radio for a provider route is only selectable when its key env is present (key-missing →
+  // disabled). The GUI smoke never calls a model, so it always gets a FAKE placeholder key (CI has no key by design;
+  // on the box this also keeps the shared real key out of the smoke).
+  const env = { ...baseEnv(home), VIDEOCLAW_PORT_SMOKE: "1", VIDEOCLAW_PORT_SMOKE_UI_SELECT: "minimax", MINIMAX_API_KEY: "fake-smoke-key-not-real-0000" };
   if (mode === "extract-and-run") env.APPIMAGE_EXTRACT_AND_RUN = "1";
   else if (p.kind === "AppImage" && !onPath("fusermount") && onPath("fusermount3")) {
     // type-2 AppImage runtime execs `fusermount` (FUSE 2 name); fuse3-only hosts ship fusermount3

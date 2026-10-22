@@ -60,3 +60,19 @@ test("request timeout message", async () => {
   await assert.rejects(c.request("thread/read", { threadId: "x", includeTurns: true }), /Codex app server request timed out: thread\/read/);
   c.close();
 });
+
+// docs/35 M18 (found on windows-latest CI: the runbook's codex-handshake never exited). A graceful `taskkill /T` fails
+// for a window-less console child, so close() must escalate to /F immediately on win32. Real child process + real
+// taskkill on Windows; on POSIX the same assertion holds through child.kill(SIGTERM).
+test("close() terminates a window-less console app-server child (win32: failed graceful taskkill escalates to /F)", async () => {
+  const { spawn } = await import("node:child_process");
+  const child = spawn(process.execPath, ["-e", "process.on('SIGTERM',()=>{});setInterval(()=>{},1000)"], { stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
+  const exited = new Promise<{ code: number | null; signal: string | null }>((r) => child.once("exit", (code, signal) => r({ code, signal })));
+  const c = new CodexAppServerClient({ spawnProcess: () => child as any, terminateGraceMs: 500 });
+  await new Promise((r) => setTimeout(r, 300));
+  c.close();
+  const t = setTimeout(() => { try { child.kill("SIGKILL"); } catch {} }, 8000);
+  const res = await Promise.race([exited, new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
+  clearTimeout(t);
+  assert.ok(res, "the app-server child is gone within 6 s of close()");
+});

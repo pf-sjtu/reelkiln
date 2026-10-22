@@ -108,7 +108,11 @@ async function main() {
           await client.initialize();
           const account = await client.request("account/read", { refreshToken: false });
           return out({ ok: true, step: cmd, account, warnings, ms: Date.now() - t0 });
-        } finally { client.close(); }
+        } finally {
+          client.close();
+          // docs/35 M18: never let a leftover app-server child keep this one-shot CLI alive (the runbook pipes it to tail)
+          setTimeout(() => { console.error("[codex-handshake] app server still alive 10 s after close(); exiting"); process.exit(process.exitCode ?? 0); }, 10_000).unref();
+        }
       }
       case "run-bash": {
         const r = await runBash({ command: a1 }, { cwd: process.cwd(), env: process.env });
