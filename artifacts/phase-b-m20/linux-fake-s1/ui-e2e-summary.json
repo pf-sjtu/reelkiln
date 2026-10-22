@@ -1,0 +1,186 @@
+{
+ "started": "2026-10-22T05:18:54.093Z",
+ "mode": "dev",
+ "steps": {
+  "home": {
+   "ok": true,
+   "composer": true
+  },
+  "project_video": {
+   "ok": true,
+   "clientId": "s1-ui-e2e",
+   "sessionId": "7331a147-b3a9-484c-87e6-d4df2e9dca7f",
+   "title": "New video"
+  },
+  "attach": {
+   "ok": true,
+   "via": "drop",
+   "ready": [
+    "clip_a.mp4",
+    "clip_b.mp4",
+    "clip_c.mp4",
+    "music.mp3"
+   ],
+   "storeFile": true
+  },
+  "brief_send": {
+   "ok": true,
+   "typedMatches": true
+  },
+  "stream": {
+   "ok": true,
+   "turnS": 29,
+   "toolStarts": 6,
+   "textDeltas": 5,
+   "domTextChanges": 7,
+   "numTurns": 7,
+   "isError": false,
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-7331a1",
+   "controlsDuringTurn": [
+    {
+     "cls": "send-btn stop",
+     "aria": null,
+     "title": "Stop",
+     "disabled": false
+    }
+   ]
+  },
+  "reply_link": {
+   "ok": true,
+   "inlineVideos": 1,
+   "unavailable": 0,
+   "src": "vcmedia://local<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-7331a1/final.mp4?consumer=inline-video-17&version=da439ebef02c11b9a1e86771bba618b8ec0180c4cdd39c2fb53e9cedb9d51720",
+   "readyState": 4,
+   "duration": 6.507,
+   "openLink": true
+  },
+  "play": {
+   "ok": true,
+   "advancedS": 2.59,
+   "maxReadyState": 4,
+   "src": "vcmedia://local<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-7331a1/versions/v1.mp4?consumer=primary-preview-18&version=c0b83835978d1fe90748f21feab29646b512ccb431ef815ac11ace73cf84b893",
+   "duration": 6.507,
+   "size": "720x1280",
+   "controls": true
+  },
+  "approve": {
+   "ok": true,
+   "finalizedAtMs": 1792646371186,
+   "v1Approved": true,
+   "finals": [
+    {
+     "n": 1,
+     "via": "promote",
+     "madeFinalAtMs": 1792646371175
+    }
+   ]
+  },
+  "export": {
+   "ok": true,
+   "sha": {
+    "final": "1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9",
+    "v1": "1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9",
+    "export": "1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9"
+   },
+   "ffprobeRc": 0,
+   "video": "h264 720x1280 30/1",
+   "audio": "aac",
+   "durationS": "6.507000",
+   "saveDialogLog": true
+  }
+ },
+ "driven": [
+  {
+   "element": "onboarding tour 'Skip tour' (button.tour-skip)",
+   "how": "Input.dispatchMouseEvent click"
+  },
+  {
+   "element": "sidebar 'Create project' + (button.new-client)",
+   "how": "click"
+  },
+  {
+   "element": "Create project dialog name field (input.new-client-input)",
+   "how": "click + Input.insertText"
+  },
+  {
+   "element": "Create project dialog 'Create' (button.pd-save)",
+   "how": "click"
+  },
+  {
+   "element": "sidebar 'New video in S1 UI e2e' (button.client-new-chat)",
+   "how": "hover + click"
+  },
+  {
+   "element": "composer dropzone (original window-level drop handler of the active video; dropped over the composer)",
+   "how": "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)"
+  },
+  {
+   "element": "composer textarea",
+   "how": "click + Input.insertText(brief)"
+  },
+  {
+   "element": "composer Send (button.send-btn)",
+   "how": "click"
+  },
+  {
+   "element": "Output panel player (original <video controls> in .op-preview-stage) native play button",
+   "how": "click at the controls' play button position"
+  },
+  {
+   "element": "'Approve V1' (button.v-approve, Output panel)",
+   "how": "click"
+  },
+  {
+   "element": "Output panel 'Download v1.mp4' (button.op-preview-download)",
+   "how": "click → original file:saveItemAs → save dialog (answered by env preset)"
+  }
+ ],
+ "notDriven": [
+  {
+   "what": "LLM route selection",
+   "why": "the original first-launch picker offers only Codex / Claude Code / credits; the box's only agent route is the PORT-NEW minimax provider route → preset via settings:set before the window opens (VIDEOCLAW_PORT_SMOKE_LLM_ROUTE)"
+  },
+  {
+   "what": "native GTK save dialog of file:saveItemAs",
+   "why": "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real"
+  }
+ ],
+ "fallbacksToIpc": [],
+ "questionCards": [],
+ "title": {
+  "title": "S1 vertical cut",
+  "titleOrigin": "automatic",
+  "notNewVideo": true,
+  "inSidebarDom": true,
+  "sequence": [
+   "-:New video",
+   "fallback:我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.…",
+   "automatic:S1 vertical cut"
+  ]
+ },
+ "tasteCapture": {
+  "stopControlVisibleWhileFinalized": false,
+  "started": true,
+  "finished": true,
+  "isError": false,
+  "waitedS": 0,
+  "endedBy": "result"
+ },
+ "sha": {
+  "final": "1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9",
+  "v1": "1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9",
+  "export": "1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9"
+ },
+ "sessionId": "7331a147-b3a9-484c-87e6-d4df2e9dca7f",
+ "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-7331a1",
+ "consoleErrors": [],
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "attachVia": "drop",
+ "stopAfter": null,
+ "allPass": true,
+ "finished": "2026-10-22T05:19:35.469Z"
+}

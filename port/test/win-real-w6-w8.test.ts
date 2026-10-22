@@ -66,7 +66,7 @@ const CONSOLE_PROBE = [
 function runWorker(cmd: any, o: { cancelAfterMs?: number; graceMs?: number } = {}) {
   return new Promise<{ posts: any[]; out: string }>((resolve) => {
     const posts: any[] = []; let out = "";
-    const tapSpawn = (f: string, a: string[], opts: any) => { const c = spawn(f, a, opts); c.stdout?.on("data", (b) => { out += String(b); }); return c; };
+    const tapSpawn = (f: string, a: string[], opts: any) => { const c = spawn(f, a, opts); c.stdout?.on("data", (b) => { out += String(b); }); c.stderr?.on("data", (b) => { out += String(b); }); return c; };
     const job = startEngineRender({ type: "start", requestId: "w8", ...cmd }, {
       spawn: tapSpawn as any, cancelGraceMs: o.graceMs ?? 1500,
       post: (m) => { posts.push(m); if (m.type === "exit" || m.type === "cancelled") resolve({ posts, out }); },
@@ -76,7 +76,7 @@ function runWorker(cmd: any, o: { cancelAfterMs?: number; graceMs?: number } = {
 }
 
 test("W8 (real win32): the detached render child gets no visible console window (windowsHide)", { skip: SKIP, timeout: 90_000 }, async () => {
-  const r = await runWorker({ executable: "powershell.exe", args: ["-NoProfile", "-NonInteractive", "-Command", CONSOLE_PROBE], cwd: tmpdir(), env: process.env });
+  const r = await runWorker({ executable: "powershell.exe", args: ["-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(CONSOLE_PROBE, "utf16le").toString("base64")], cwd: tmpdir(), env: process.env });
   const m = /W8 hwnd=(\d+) visible=(True|False)/.exec(r.out);
   assert.ok(m, `probe output: ${r.out.slice(0, 300)}`);
   console.log(`# W8 console: hwnd=${m![1]} visible=${m![2]} (exit ${r.posts.at(-1)?.code})`);
