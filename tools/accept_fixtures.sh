@@ -12,5 +12,5 @@ ff -f lavfi -i testsrc2=size=1920x1080:rate=30:duration=4 -f lavfi -i sine=frequ
 ff -f lavfi -i mandelbrot=size=1080x1920:rate=30 -t 3 -c:v libx264 -pix_fmt yuv420p clip_b.mp4
 ff -f lavfi -i life=size=1280x720:rate=25:mold=10:ratio=0.1:seed=7 -f lavfi -i anoisesrc=d=3:c=pink:a=0.1:seed=7 -t 3 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest clip_c.mp4
 ff -f lavfi -i sine=frequency=330:duration=6.5 -af volume=0.5 -c:a libmp3lame music.mp3
-sha256sum clip_a.mp4 clip_b.mp4 clip_c.mp4 music.mp3 > SHA256SUMS
+if command -v sha256sum >/dev/null; then sha256sum clip_a.mp4 clip_b.mp4 clip_c.mp4 music.mp3; else shasum -a 256 clip_a.mp4 clip_b.mp4 clip_c.mp4 music.mp3; fi > SHA256SUMS  # macOS: shasum (docs/38)
 echo "fixtures in $O"

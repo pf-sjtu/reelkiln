@@ -8,6 +8,7 @@
 // versions.json, events JSONL, job dir, export).
 //
 //   node tools/ui-e2e.mjs --run RUN_DIR --engine-home SRC_HOME [--appimage PATH] [--port 9333]
+//   docs/38 M21 macOS:   node tools/ui-e2e.mjs --run RUN_DIR --engine ENGINE --exe release/mac-arm64/videoclaw-port.app
 //   docs/36 M19 Windows: node tools/ui-e2e.mjs --run RUN_DIR --engine ENGINE --exe <win-unpacked or installed>\videoclaw-port.exe
 //   (no Xvfb / dbus / gnome-keyring: the packaged CredentialStore uses Windows DPAPI; HOME and USERPROFILE → RUN)
 //
@@ -75,14 +76,20 @@ const readJson = (p) => { try { return JSON.parse(readFileSync(p, "utf8")); } ca
 const steps = {}; const verdict = (id, ok, detail) => { steps[id] = { ok, ...detail }; say(`STEP ${id}: ${ok ? "PASS" : "FAIL"} ${JSON.stringify(detail).slice(0, 400)}`); };
 
 // ---- launch ----------------------------------------------------------------------------------
-const env = { ...process.env, HOME: RUN, ...(WIN ? { USERPROFILE: RUN } : { UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python" }), ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
+const env = { ...process.env, HOME: RUN, ...(WIN ? { USERPROFILE: RUN } : { UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? join(process.env.HOME ?? "/home/box", ".local", "share", "uv", "python") }), ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
   VIDEOCLAW_PORT_SMOKE_SAVE_AS: EXPORT, VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl"),
   VIDEOCLAW_PORT_TURN_TIMEOUT_MS: String(TURN_TIMEOUT_MS - 60_000) };
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;
-const appArgs = ["--no-sandbox", `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${UD}`];
+// docs/38 M21: macOS — HOME=RUN has no login keychain; Chromium's mock keychain keeps safeStorage off the real one
+const appArgs = ["--no-sandbox", `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${UD}`, ...(process.platform === "darwin" ? ["--use-mock-keychain"] : [])];
 let cmd, args;
 let keyringPids = [];
-if (EXE) { cmd = resolve(EXE); args = appArgs; }
+if (EXE) {
+  cmd = resolve(EXE);
+  // docs/38 M21: a macOS .app bundle → its Contents/MacOS executable
+  if (cmd.endsWith(".app")) { const macos = join(cmd, "Contents", "MacOS"); cmd = join(macos, readdirSync(macos)[0]); }
+  args = appArgs;
+}
 else if (APPIMAGE) {
   env.APPIMAGE_EXTRACT_AND_RUN = "1";
   // docs/33 harness input: a packaged build stores credentials only through the OS keychain (CredentialStore) —

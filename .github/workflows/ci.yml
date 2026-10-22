@@ -281,6 +281,111 @@ jobs:
           path: ${{ runner.temp }}/s1-evidence
           if-no-files-found: warn
 
+  macos-runbook:
+    # docs/38 M21: docs/08 S3–S9 on macos-latest (arm64, the original app's native platform) + L0 E1–E15.
+    name: "macOS runbook (docs/08 S3–S9: engine install, uv sync, doctor, e2e, codex handshake) + L0"
+    runs-on: macos-latest
+    timeout-minutes: 60
+    continue-on-error: true # docs/38 M21: non-blocking until green twice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v6
+      - name: ffmpeg (Homebrew) + managed CPython 3.14.6
+        run: |
+          command -v ffmpeg || brew install ffmpeg
+          uv python install 3.14.6
+      - name: build port
+        working-directory: port
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: npm ci && npm run build
+      - name: tools/macos_runbook.sh
+        env:
+          OUT: ${{ runner.temp }}/macos-run
+        run: bash tools/macos_runbook.sh "$RUNNER_TEMP/vc"
+      - name: "L0 engine chain E1–E15 (tools/accept_engine_chain.sh)"
+        env:
+          OUT: ${{ runner.temp }}/macos-run
+        run: |
+          ENG="$(cat "$OUT/engine-path.txt")"
+          bash tools/accept_engine_chain.sh "$ENG" "$RUNNER_TEMP/l0" 2>&1 | tee "$OUT/l0.log"
+          cp "$RUNNER_TEMP/l0/accept.json" "$OUT/accept-L0.json"
+          shasum -a 256 "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$OUT/l0-final.sha256"
+          ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$OUT/l0-final.ffprobe.json"
+      - name: collect L0 step logs
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/macos-run/l0-steps"
+          cp "$RUNNER_TEMP"/l0/step*.log "$RUNNER_TEMP"/l0/verify.log "$RUNNER_TEMP/macos-run/l0-steps/" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-run
+          path: ${{ runner.temp }}/macos-run
+
+  macos-s1-ui:
+    # docs/38 M21: acceptance S1 through the ORIGINAL renderer in the packaged .app (arm64) over CDP — the same
+    # verdicts as windows-s1-ui (attach → agent edit → reply_link → play via vcmedia:// → Approve → export → sha +
+    # ffprobe). Agent real (packaged Claude Code SDK → Bash/Write → real engine), MODEL = FAKE-LLM replay. No key in CI.
+    name: "macOS S1 UI e2e (packaged .app, original renderer over CDP, FAKE-LLM)"
+    runs-on: macos-latest
+    timeout-minutes: 60
+    continue-on-error: true # docs/38 M21: non-blocking until green twice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v6
+      - name: ffmpeg (Homebrew) + managed CPython 3.14.6
+        run: |
+          command -v ffmpeg || brew install ffmpeg
+          uv python install 3.14.6
+      - name: build + package .app (dir)
+        working-directory: port
+        run: npm ci && npm run build && node tools/package.mjs --platform mac --arch arm64 --targets dir
+      - name: install the engine (tools/macos_runbook.sh)
+        env:
+          OUT: ${{ runner.temp }}/macos-run
+        run: bash tools/macos_runbook.sh "$RUNNER_TEMP/vc"
+      - name: S1 UI e2e (FAKE-LLM upstream)
+        working-directory: port
+        env:
+          OUT: ${{ runner.temp }}/macos-run
+        run: |
+          ENG="$(cat "$OUT/engine-path.txt")"
+          APP="$(ls -d release/mac*/*.app | head -n 1)"; echo "app: $APP"
+          mkdir -p "$RUNNER_TEMP/s1-evidence"
+          FAKE_REQ_LOG="$RUNNER_TEMP/s1-evidence/fake-upstream-requests.jsonl" node tools/s1-fake-upstream.mjs 47999 > "$RUNNER_TEMP/s1-evidence/fake-upstream.out" 2>&1 &
+          sleep 2
+          MINIMAX_API_KEY=fake-s1-ci-key-not-real MINIMAX_BASE_URL=http://127.0.0.1:47999/anthropic \
+            node tools/ui-e2e.mjs --run "$RUNNER_TEMP/s1run" --engine "$ENG" --exe "$APP" --port 9371 --turn-timeout-ms 1500000 --taste-wait-ms 60000
+      - name: collect evidence (no media)
+        if: always()
+        run: |
+          E="$RUNNER_TEMP/s1-evidence"; mkdir -p "$E"
+          cp -R "$RUNNER_TEMP/s1run/out/." "$E/" 2>/dev/null || true
+          find "$E" \( -name '*.mp4' -o -name '*.mp3' -o -name '*.jpg' -o -name '*.sqlite' \) -delete || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-s1-ui
+          path: ${{ runner.temp }}/s1-evidence
+          if-no-files-found: warn
+
   macos-package:
     # docs/34 M17: the cheap macOS leg — unsigned dmg (identity: null). docs/36 M19: plus the packaged smoke on the
     # .app bundle (GUI boot + node-mode SDK/sqlite checks; never calls a model).

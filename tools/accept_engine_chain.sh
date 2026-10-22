@@ -17,7 +17,10 @@ mkdir -p "$J/footage" "$J/audio"
 cp "$W/inputs/clip_a.mp4" "$W/inputs/clip_b.mp4" "$W/inputs/clip_c.mp4" "$J/footage/"; cp "$W/inputs/music.mp3" "$J/audio/"
 cp "$REPO/artifacts/phase-a-probe/edl.json" "$J/edl.json"
 export VIDEOCLAW_ENGINE="$(P "$ENG")" VIDEOCLAW_WORKSPACE="$(P "$W/ws")" VIDEOCLAW_JOBS_DIR="$(P "$W/ws/jobs")" UV_PYTHON_PREFERENCE=only-managed
-if [ "$WIN" = 1 ]; then export PATH="$ENG/bin:$PATH" PYTHONUTF8=1; else export PATH="$ENG/bin:${NODE_PREFIX:-/home/box/.n}/bin:/usr/bin:/bin"; fi
+# docs/38 M21: macOS keeps the runner's PATH too (node/uv/ffmpeg live in the toolcache / Homebrew, not /usr/bin)
+if [ "$WIN" = 1 ]; then export PATH="$ENG/bin:$PATH" PYTHONUTF8=1
+elif [ "$(uname -s)" = Darwin ]; then export PATH="$ENG/bin:$PATH"
+else export PATH="$ENG/bin:${NODE_PREFIX:-/home/box/.n}/bin:/usr/bin:/bin"; fi
 cd "$W/ws"
 L='uv run --project "$VIDEOCLAW_ENGINE" python "$VIDEOCLAW_ENGINE/tools'
 i=0; for c in "$L/assemble.py\" --job $JOB" "$L/compose_render.py\" --job $JOB --mode render --resolution 720p --no-captions --no-overlays"; do
