@@ -320,6 +320,19 @@ jobs:
           cp "$RUNNER_TEMP/l0/accept.json" "$OUT/accept-L0.json"
           shasum -a 256 "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$OUT/l0-final.sha256"
           ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$OUT/l0-final.ffprobe.json"
+      - name: "mac-only probe: build the original VoiceDictation.swift helper, --check, transcribe a `say` clip (docs/38 §3)"
+        continue-on-error: true
+        env:
+          OUT: ${{ runner.temp }}/macos-run
+        run: |
+          set -x
+          swiftc -version 2>&1 | tee "$OUT/voice-swiftc.txt"
+          swiftc -parse-as-library -O app/native/VoiceDictation.swift -o "$RUNNER_TEMP/voice-dictation" 2>&1 | tee -a "$OUT/voice-swiftc.txt"
+          "$RUNNER_TEMP/voice-dictation" --check | tee "$OUT/voice-check.json"; echo
+          say -o "$RUNNER_TEMP/hello.aiff" "Make a vertical video from my three clips"
+          ffmpeg -loglevel error -y -i "$RUNNER_TEMP/hello.aiff" -ar 48000 -ac 1 "$RUNNER_TEMP/hello.wav"
+          (perl -e 'alarm 300; exec @ARGV' "$RUNNER_TEMP/voice-dictation" "$RUNNER_TEMP/hello.wav" || true) | tee "$OUT/voice-transcribe.json"; echo
+          cd port && VIDEOCLAW_TEST_VOICE_HELPER="$RUNNER_TEMP/voice-dictation" node tools/build.mjs --tests >/dev/null && VIDEOCLAW_TEST_VOICE_HELPER="$RUNNER_TEMP/voice-dictation" node --test dist-test/mac-voice-helper.test.cjs 2>&1 | tee "$OUT/voice-port-status.txt"
       - name: collect L0 step logs
         if: always()
         run: |

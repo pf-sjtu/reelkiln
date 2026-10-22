@@ -1,0 +1,10 @@
+{"ok":true,"step":"install-engine","path":"/Users/runner/work/_temp/vc/ud/engines/engine-0.1.57-rc7-15f8f2d","ms":115}
+{"ok":true,"step":"shims"}
+{"ok":true,"step":"venv","detail":"uv sync --frozen: venv ready","ms":2894}
+{"ok":true,"step":"remotion","detail":"npm ci + browser ensure","ms":8500}
+{"ok":true,"step":"hyperframes","detail":"npm ci: HyperFrames renderer/player ready","ms":3181}
+{"ok":true,"step":"engine-contracts","sessionContext":{"operatingRules":"06d4a913c4025cdb36e5a492ddbd3a8b56982fd45fad4cbf9c3e7e814ef2ea57","laws":"b014278d78f18b13b642b6c844df730d6c3fe6acb55164cc266ab46dfed361af","capabilityDigest":"56def7f03fa353456281426658444f6e994f275dcc2d00cbc8af3333d3d50f6a","router":"a0c0beebae2b8910e2d3884816cb4de98347f8320155e63eac530e0a2ca98ebc","preflightHook":"5095ed283f6ba7ba44e2684fbf373fd77f7721d79be38a6d1f48ee55b33502df","preflightBlock":"4306bb336a8ece019944e67a55a1599fe8cf095738d4dea0ec4eae051cf02291","productionGuard":"3330979f7166a4b480ce4cae301f5f09b5f7c039c523737d4b79bd53776dc6eb","engineSettings":"90e191f63fd37e71b6739c9d0975211863e65880e93c715dfa836c61e31d779a","prepareProductionTool":"a6b8a07b533df14cf7f70e5b08dc80f0226ba6e75b83f1ad0eae69ca1e049df6","projectBriefTool":"71020e89b57aabdebf971a4c7830b04377cec38ebc1d9a5c70e65d0bec3b2129","qaGateTool":"00b297236a1fbf607a412a9ccc38560ffbed85d15f95da023318fb5ee32eafff","engineBuildSha256":"22ce5c80dddb272b278d1fd022b969b03d2da538e91aa232ad2102531548f285"},"production":{"compatible":true},"money":{"status":"compatible","capabilities":{"plan":true,"advisoryEstimate":true}}}
+{"ok":true,"step":"stage-workspace","notPorted":["auditWorkspaceChannel","workspace symlink guards"]}
+{"ok":false,"step":"doctor","failing":[{"check":"gateway","detail":"no VIDEOCLAW_API_KEY (env or engine .env)","fix":"enter the key in the app (AccountModal) — bootstrap writes .env"}],"ms":2626}
+{"ok":true,"step":"codex-handshake","account":{"account":null,"requiresOpenaiAuth":true,"workspaceRouting":null},"warnings":[],"ms":121}
+{"ok":true,"step":"run-bash","output":"hi\nDarwin arm64\n/Users/runner/work/_temp/vc/ud/engines/engine-0.1.57-rc7-15f8f2d/bin/python3\n"}

@@ -1,0 +1,10 @@
+Darwin arm64
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+uv 0.13.5 (46776a95d 2026-10-21 aarch64-apple-darwin)
+ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers
+v22.23.3
+Python 3.14.6
+Python 3.14.6
+codex-cli 0.160.1
