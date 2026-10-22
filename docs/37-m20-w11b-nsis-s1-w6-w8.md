@@ -7,7 +7,8 @@
 |---|---|
 | `9904cc4` | W11b 修复 + `reply_link` verdict；`windows-s1-ui` 同时打 NSIS 包，静默安装后再跑一遍 S1；win32 实测 W6 / W7 / W8 的测试 |
 | `e676436` | W8 控制台探针改写；Linux 与 Windows（unpacked + NSIS）证据 |
-| （后续提交） | W8 探针改用 `MainWindowHandle`；本文档、docs/10、docs/34 |
+| `45ae6a1` | W8 探针改用 `MainWindowHandle`（含对照组）；本文档初稿 |
+| （本文档提交） | docs/37 定稿、docs/10、docs/34 |
 
 ## 1. W11b：聊天回复里的任务链接
 **现象**（M19 截图）：agent 最终消息里的 `[Watch the finished cut](jobs/<id>/final.mp4)` 在 Windows 上显示 “Link unavailable”，Linux 上是内联视频。
@@ -34,8 +35,11 @@
 | W8 | editorRenderWorker 的 `detached:true` + `windowsHide:true`：(a) 取消时 `taskkill /T`（宽限期后 `/F`）把子进程**和孙进程**都结束；(b) 子进程没有可见的控制台窗口（用另一个 PowerShell 查 `Process.MainWindowHandle`，并与不带 `windowsHide` 的对照组比较） | (a) ✅；(b) 见 §3.1 |
 
 ### 3.1 W8 控制台窗口
-第一版探针在子进程里用 P/Invoke 调 `GetConsoleWindow`，输出始终为空（detached 子进程内的 PowerShell 没有产出任何 stdout/stderr），无法判断。改为在外部查 `MainWindowHandle`；结果见 docs/10 的 M20 增补。
+第一版探针在子进程里用 P/Invoke 调 `GetConsoleWindow`，输出始终为空（detached 子进程内的 PowerShell 没有产出任何 stdout/stderr），无法判断。第二版在外部查 `Process.MainWindowHandle`（run [39729287256](https://github.com/pf-sjtu/reelkiln/actions/runs/39729287256)）：worker 子进程 = **0**，但**对照组（detached、不带 windowsHide）也是 0**。
+
+结论：**W8(b) 在 GitHub 托管 runner 上无法验证**。runner 以服务会话运行，没有可交互的可见桌面，不带 `windowsHide` 的控制台窗口同样报告为不可见，所以这个探针在 CI 上区分不出两种情况。测试保留（断言成立，并把对照值打印出来），但不算作 W8(b) 的证据。要验证需要一台有登录桌面的 Windows：启动一次 Remotion 编辑器渲染，看是否闪出控制台窗口。W8(a)（取消时连孙进程一起结束）已在真 Windows 上验证。
 
 ## 4. 仍未验证
-- W8(b) 的结论取决于 runner 会话是否有可见桌面；如果对照组也是 0，说明 CI 环境无法观察窗口，只能在有桌面的 Windows 上人工确认。
+- W8(b)：托管 runner 上无法观察控制台窗口（对照组也是 0），需要在有桌面的 Windows 上人工确认。
+- `windows-s1-ui` 加入 NSIS 和 `reply_link` 后连续全绿：39727260551、39728275995、39729287256。
 - 真实模型在 Windows 上的 agent 行为（CI 不放 key）。

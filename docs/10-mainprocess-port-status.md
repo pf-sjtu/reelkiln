@@ -146,3 +146,14 @@ CI job `windows-s1-ui`（windows-latest，win-unpacked，原版渲染器 + CDP�
 | 新 | production verdict CRLF：Windows 上每次 agent Bash 都被拒绝，已修（仅 win32 去掉一个结尾 CRLF） |
 
 仍未在真 Windows 上验证：W6、W7、W8、W11b、NSIS 安装版上的 S1、真实模型在 Windows 上的 agent 行为。
+
+## 增补（M20，docs/37）：W11b、NSIS 版 S1、W6 / W7 / W8
+| # | 结果 |
+|---|---|
+| W11b | **已修复并验证**：win32 preload shim 把原版 `resolveDeliveryUrl()` 的 `file://D%3A%5C…/` base 改写为 `file:///D:/…/`；file IPC 把 `/D:/…` 映射回 `D:\…`。Windows S1 新增 `reply_link` verdict（聊天内联视频 readyState 4），unpacked 与 NSIS 安装版都 PASS；Linux 回归 PASS |
+| NSIS | **S1 在静默安装（`/S /D=`）后的应用上 allPass**（run 39727260551 起） |
+| W6 | **已验证**：子进程环境块里只有一条 PATH，且 extra PATH 能解析命令 |
+| W7 | **已验证**：NTFS 上 bigint `dev:ino` 稳定（读取 / 内容变化 / 重命名），目录被换后不同；`relativeWrite` 返回 0 / 75 / 73 符合协议 |
+| W8 | (a) **已验证**：取消时 `taskkill /T`（宽限后 `/F`）结束子进程和孙进程。(b) 控制台窗口是否可见：**托管 runner 上无法验证**（不带 windowsHide 的对照组同样报告 `MainWindowHandle=0`，服务会话没有可见桌面） |
+
+仍未在真 Windows 上验证：W8(b)（需要有桌面的机器）、真实模型在 Windows 上的 agent 行为。
