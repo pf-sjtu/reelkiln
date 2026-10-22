@@ -451,6 +451,31 @@ jobs:
             const ok = h.hidden && h.dockVisible === false && h.windowVisible === false && h.backgroundThrottling === false && h.userDataIsFlight && h.cdpAddress === "127.0.0.1"
               && !c.hidden && c.dockVisible === true && c.windowVisible === true && c.backgroundThrottling === true && c.userDataIsFlight;
             console.log(JSON.stringify({ ok, hidden: h, control: c })); process.exit(ok ? 0 : 1);' "$OUT/flight-hidden.txt" "$OUT/flight-control.txt" | tee "$OUT/flight-verdict.json"
+      - uses: astral-sh/setup-uv@v6
+      - name: "Rosetta branch of nativePythonArgs (L7172): x86_64 CPython under Rosetta → forced aarch64 (docs/40 M23)"
+        continue-on-error: true # docs/40 M23: non-blocking until green twice
+        working-directory: port
+        run: |
+          OUT="$RUNNER_TEMP/macos-native"
+          if ! arch -x86_64 /usr/bin/true 2>/dev/null; then echo "rosetta missing → installing"; sudo softwareupdate --install-rosetta --agree-to-license; fi
+          { echo "rosetta: $(arch -x86_64 /usr/bin/uname -m)"; uv --version; } | tee "$OUT/rosetta.txt"
+          export UV_PYTHON_INSTALL_DIR="$RUNNER_TEMP/uvpy-x86"
+          uv python install cpython-3.12-macos-x86_64 2>&1 | tail -n 3 | tee -a "$OUT/rosetta.txt"
+          VIDEOCLAW_TEST_ROSETTA=1 VIDEOCLAW_TEST_UV="$(command -v uv)" node --test dist-test/mac-rosetta.test.cjs 2>&1 | tee "$OUT/rosetta-test.txt"
+          grep -q "^# fail 0" "$OUT/rosetta-test.txt" && grep -q "^# pass 1" "$OUT/rosetta-test.txt"
+      - name: "leaked-handle probe: every test file WITHOUT --test-force-exit (docs/40 M23)"
+        continue-on-error: true # docs/40 M23: diagnostic
+        working-directory: port
+        run: |
+          OUT="$RUNNER_TEMP/macos-native"; : > "$OUT/hang-files.txt"; : > "$OUT/hang-probe.txt"
+          for f in dist-test/*.test.cjs; do
+            s=$(date +%s)
+            NODE_OPTIONS="--require $PWD/tools/hang-probe.cjs" HANG_PROBE_MS=20000 perl -e 'alarm 90; exec @ARGV' node --test --test-timeout=60000 "$f" > "$RUNNER_TEMP/one.txt" 2>&1; rc=$?
+            echo "$f rc=$rc $(( $(date +%s) - s ))s" >> "$OUT/hang-files.txt"
+            grep HANG_PROBE "$RUNNER_TEMP/one.txt" >> "$OUT/hang-probe.txt" || true
+          done
+          echo "--- slow or non-zero:"; awk '{ split($3, t, "s"); if ($2 != "rc=0" || t[1] + 0 >= 15) print }' "$OUT/hang-files.txt" | tee "$OUT/hang-summary.txt"
+          cut -c1-2000 "$OUT/hang-probe.txt"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
