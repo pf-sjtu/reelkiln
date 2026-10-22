@@ -5,7 +5,8 @@
 // cmd.exe re-parsing of the JSON `--props=` argument (unsafe: & | % ^ in user text). So, exactly like the port's
 // own npmInvocation (platform/npm.ts), the engine venv gets a startup hook (.pth) that maps a bare "npx"/"npm"
 // argv[0] onto `node.exe <dir of node.exe>/node_modules/npm/bin/<tool>-cli.js` — no shell involved. Engine
-// source is untouched; nothing changes on macOS/Linux (the hook is only written on win32 and is a no-op elsewhere).
+// source is untouched. Second fix in the same hook: os.fsync of a read-only handle (see the module text).
+// Nothing changes on macOS/Linux (the hook is only written on win32 and is a no-op elsewhere).
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -38,6 +39,34 @@ if sys.platform == "win32":
         _videoclaw_port_init(self, args, *a, **kw)
 
     subprocess.Popen.__init__ = _videoclaw_port_popen_init
+
+if sys.platform == "win32":
+    # PORT-NEW (docs/35, real Windows CI run 39713813148): engine _render_completion.publish() fsyncs a handle it
+    # opened READ-ONLY ("rb"). POSIX allows that; Windows' _commit/FlushFileBuffers needs write access -> EBADF,
+    # so every final render failed after Remotion finished. On EBADF, flush the same file through a write handle
+    # (path from GetFinalPathNameByHandleW): the durability the original asks for is kept, nothing is skipped.
+    import ctypes, errno, msvcrt
+    from ctypes import wintypes
+    _videoclaw_port_k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _videoclaw_port_k32.GetFinalPathNameByHandleW.argtypes = [wintypes.HANDLE, wintypes.LPWSTR, wintypes.DWORD, wintypes.DWORD]
+    _videoclaw_port_k32.GetFinalPathNameByHandleW.restype = wintypes.DWORD
+    _videoclaw_port_fsync = os.fsync
+
+    def _videoclaw_port_fsync_rw(fd):
+        try:
+            return _videoclaw_port_fsync(fd)
+        except OSError as e:
+            if e.errno != errno.EBADF:
+                raise
+            n = fd if isinstance(fd, int) else fd.fileno()
+            buf = ctypes.create_unicode_buffer(32768)
+            got = _videoclaw_port_k32.GetFinalPathNameByHandleW(msvcrt.get_osfhandle(n), buf, 32768, 0)
+            if not (0 < got < 32768) or not os.path.isfile(buf.value):
+                raise
+            with open(buf.value, "r+b") as w:
+                _videoclaw_port_fsync(w.fileno())
+
+    os.fsync = _videoclaw_port_fsync_rw
 `;
 
 /** Write the hook into `<engine>/.venv/Lib/site-packages` (Windows venv layout). Idempotent. Returns the dir. */
