@@ -1,0 +1,14 @@
+[ui-e2e +0.0s] launch dev electron (UI_E2E mode, CDP :9371)
+[ui-e2e +1.6s] page target file://$REPO/app/out/renderer/index.html
+[ui-e2e +3.4s] STEP home: PASS {"composer":true}
+[ui-e2e +4.4s] STEP project_video: PASS {"clientId":"s1-ui-e2e","sessionId":"671bea31-32a8-42de-a2b5-d51c9e29350b","title":"New video"}
+[ui-e2e +5.6s] STEP attach: PASS {"via":"drop","ready":["clip_a.mp4","clip_b.mp4","clip_c.mp4","music.mp3"],"storeFile":true}
+[ui-e2e +6.6s] STEP brief_send: PASS {"typedMatches":true}
+[ui-e2e +36.9s] title {"title":"S1 vertical cut","titleOrigin":"automatic","notNewVideo":true,"inSidebarDom":true,"sequence":["-:New video","fallback:我有三段短素材和一段配乐。帮我做一个 6.5 秒的竖屏 9:16 快剪：按 a→b→c 顺序，a 取 0.5–3.0 s，b 取 0–2.0 s，c 取 0.…","automatic:S1 vertical cut"]}
+[ui-e2e +36.9s] STEP stream: PASS {"turnS":31,"toolStarts":6,"textDeltas":5,"domTextChanges":6,"numTurns":7,"isError":false,"jobId":"6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-671bea","controlsDuringTurn":[{"cls":"send-btn stop","aria":null,"title":"Stop","disabled":false}]}
+[ui-e2e +40.0s] STEP play: PASS {"ok":true,"advancedS":2.58,"maxReadyState":4,"src":"vcmedia://local<RUN>/Videoclaw/jobs/6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-671bea/versions/v1.mp4?consumer=primary-preview-14&version=286ea65c79e7f347d15b493feacc07daab99c65d21f0299ba9b8c42b6fba1e4d","duration":6.507,"size":"720x1280","controls":true}
+[ui-e2e +41.9s] STEP approve: PASS {"finalizedAtMs":1792641328038,"v1Approved":true,"finals":[{"n":1,"via":"promote","madeFinalAtMs":1792641328027}]}
+[ui-e2e +44.2s] STEP export: PASS {"sha":{"final":"1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9","v1":"1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9","export":"1ea15d39edd7766914d6e24115329a06d714b9908aa78c3996ebcd1d561c9fe9"},"ffprobeRc":0,"video":"h264 720x1280 30/1","audio":"aac","durationS":"6.507000","saveDialogLog":true}
+[ui-e2e +44.3s] taste-capture {"stopControlVisibleWhileFinalized":false,"started":true,"finished":true,"isError":false,"waitedS":0,"endedBy":"result"}
+[ui-e2e +44.3s] app exited 0
+[ui-e2e +44.6s] DONE allPass=true
