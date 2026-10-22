@@ -1,0 +1,2275 @@
+﻿2026-10-22T02:53:15.5519356Z Current runner version: '2.338.0'
+2026-10-22T02:53:15.5539856Z ##[group]Runner Image Provisioner
+2026-10-22T02:53:15.5540474Z Hosted Compute Agent
+2026-10-22T02:53:15.5540969Z Version: 20261015.610
+2026-10-22T02:53:15.5541436Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+2026-10-22T02:53:15.5541991Z Build Date: 2026-10-14T17:06:54Z
+2026-10-22T02:53:15.5542592Z Worker ID: {3b10e6e7-4b3b-458e-b04c-3e3bdba3e1ef}
+2026-10-22T02:53:15.5543108Z Region: westus
+2026-10-22T02:53:15.5543529Z Cloud: Azure
+2026-10-22T02:53:15.5543939Z ##[endgroup]
+2026-10-22T02:53:15.5544881Z ##[group]Operating System
+2026-10-22T02:53:15.5545398Z Microsoft Windows Server 2025
+2026-10-22T02:53:15.5545847Z 10.0.26100
+2026-10-22T02:53:15.5546233Z Datacenter
+2026-10-22T02:53:15.5546616Z ##[endgroup]
+2026-10-22T02:53:15.5547003Z ##[group]Runner Image
+2026-10-22T02:53:15.5547502Z Image: windows-2025-vs2026
+2026-10-22T02:53:15.5547941Z Version: 20261018.275.1
+2026-10-22T02:53:15.5549089Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261018.275/images/windows/Windows2025-VS2026-Readme.md
+2026-10-22T02:53:15.5550324Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261018.275
+2026-10-22T02:53:15.5551470Z ##[endgroup]
+2026-10-22T02:53:15.5552270Z ##[group]GITHUB_TOKEN Permissions
+2026-10-22T02:53:15.5553759Z Contents: read
+2026-10-22T02:53:15.5554189Z Metadata: read
+2026-10-22T02:53:15.5554608Z ##[endgroup]
+2026-10-22T02:53:15.5556170Z Secret source: Actions
+2026-10-22T02:53:15.5556847Z Cache mode: write
+2026-10-22T02:53:15.5557352Z Prepare workflow directory
+2026-10-22T02:53:15.5866429Z Prepare all required actions
+2026-10-22T02:53:15.5908670Z Getting action download info
+2026-10-22T02:53:15.9320130Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-22T02:53:16.0331715Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-22T02:53:16.2550027Z Complete job name: port (TS typecheck + tests) · windows-latest
+2026-10-22T02:53:16.3839165Z ##[group]Run actions/checkout@v4
+2026-10-22T02:53:16.3840004Z with:
+2026-10-22T02:53:16.3840325Z   repository: pf-sjtu/reelkiln
+2026-10-22T02:53:16.3843615Z   token: ***
+2026-10-22T02:53:16.3843921Z   ssh-strict: true
+2026-10-22T02:53:16.3844228Z   ssh-user: git
+2026-10-22T02:53:16.3844540Z   persist-credentials: true
+2026-10-22T02:53:16.3844882Z   clean: true
+2026-10-22T02:53:16.3845187Z   sparse-checkout-cone-mode: true
+2026-10-22T02:53:16.3845553Z   fetch-depth: 1
+2026-10-22T02:53:16.3845843Z   fetch-tags: false
+2026-10-22T02:53:16.3846147Z   show-progress: true
+2026-10-22T02:53:16.3846455Z   lfs: false
+2026-10-22T02:53:16.3846737Z   submodules: false
+2026-10-22T02:53:16.3847048Z   set-safe-directory: true
+2026-10-22T02:53:16.3847408Z   allow-unsafe-pr-checkout: false
+2026-10-22T02:53:16.3847913Z env:
+2026-10-22T02:53:16.3848199Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T02:53:16.3848563Z ##[endgroup]
+2026-10-22T02:53:16.5034458Z Syncing repository: pf-sjtu/reelkiln
+2026-10-22T02:53:16.5036381Z ##[group]Getting Git version info
+2026-10-22T02:53:16.5037050Z Working directory is 'D:\a\reelkiln\reelkiln'
+2026-10-22T02:53:16.5688991Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-22T02:53:16.8480755Z git version 2.56.0.windows.2
+2026-10-22T02:53:16.8520058Z ##[endgroup]
+2026-10-22T02:53:16.8536287Z Temporarily overriding HOME='D:\a\_temp\37289b47-bddb-460e-8c47-ace3a10866cb' before making global git config changes
+2026-10-22T02:53:16.8537308Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-22T02:53:16.8544781Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\reelkiln\reelkiln
+2026-10-22T02:53:16.9114692Z Deleting the contents of 'D:\a\reelkiln\reelkiln'
+2026-10-22T02:53:16.9119478Z ##[group]Initializing the repository
+2026-10-22T02:53:16.9126754Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\reelkiln\reelkiln
+2026-10-22T02:53:16.9968030Z Initialized empty Git repository in D:/a/reelkiln/reelkiln/.git/
+2026-10-22T02:53:17.0005853Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/pf-sjtu/reelkiln
+2026-10-22T02:53:17.0588644Z ##[endgroup]
+2026-10-22T02:53:17.0589574Z ##[group]Disabling automatic garbage collection
+2026-10-22T02:53:17.0597063Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-22T02:53:17.0885840Z ##[endgroup]
+2026-10-22T02:53:17.0886416Z ##[group]Setting up auth
+2026-10-22T02:53:17.0894952Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-22T02:53:17.1178710Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-22T02:53:18.4389535Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-22T02:53:18.4676493Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-22T02:53:18.9104912Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-22T02:53:18.9391458Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-22T02:53:19.3385242Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-22T02:53:19.3677336Z ##[endgroup]
+2026-10-22T02:53:19.3677843Z ##[group]Fetching the repository
+2026-10-22T02:53:19.3688873Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6f2099b92f94132b22059d309858ef3173060837:refs/remotes/origin/master
+2026-10-22T02:53:21.5974787Z From https://github.com/pf-sjtu/reelkiln
+2026-10-22T02:53:21.5975949Z  * [new ref]         6f2099b92f94132b22059d309858ef3173060837 -> origin/master
+2026-10-22T02:53:21.6009108Z ##[endgroup]
+2026-10-22T02:53:21.6009422Z ##[group]Determining the checkout info
+2026-10-22T02:53:21.6011200Z ##[endgroup]
+2026-10-22T02:53:21.6022783Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-22T02:53:21.6430838Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-22T02:53:21.6730460Z ##[group]Checking out the ref
+2026-10-22T02:53:21.6730950Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B master refs/remotes/origin/master
+2026-10-22T02:53:22.3698920Z Reset branch 'master'
+2026-10-22T02:53:22.3751117Z branch 'master' set up to track 'origin/master'.
+2026-10-22T02:53:22.3855380Z ##[endgroup]
+2026-10-22T02:53:22.4260307Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-22T02:53:22.4521958Z 6f2099b92f94132b22059d309858ef3173060837
+2026-10-22T02:53:22.4879447Z ##[group]Run actions/setup-node@v4
+2026-10-22T02:53:22.4879719Z with:
+2026-10-22T02:53:22.4879870Z   node-version: 22
+2026-10-22T02:53:22.4880032Z   cache: npm
+2026-10-22T02:53:22.4880219Z   cache-dependency-path: port/package-lock.json
+2026-10-22T02:53:22.4880448Z   always-auth: false
+2026-10-22T02:53:22.4880615Z   check-latest: false
+2026-10-22T02:53:22.4882691Z   token: ***
+2026-10-22T02:53:22.4882865Z env:
+2026-10-22T02:53:22.4883012Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T02:53:22.4883204Z ##[endgroup]
+2026-10-22T02:53:22.6325548Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.3\x64
+2026-10-22T02:53:22.6331890Z (node:6836) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:53:22.6333403Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:53:22.6334885Z ##[group]Environment details
+2026-10-22T02:53:27.5682282Z node: v22.23.3
+2026-10-22T02:53:27.5682735Z npm: 10.9.9
+2026-10-22T02:53:27.5682930Z yarn: 1.22.22
+2026-10-22T02:53:27.5684480Z ##[endgroup]
+2026-10-22T02:53:27.6165822Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\hostedtoolcache\windows\node\22.23.3\x64\npm.cmd config get cache"
+2026-10-22T02:53:28.0354845Z C:\npm\cache
+2026-10-22T02:53:28.7070110Z Cache hit for: node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61
+2026-10-22T02:53:28.7166444Z (node:6836) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-22T02:53:29.9554913Z Received 35406339 of 35406339 (100.0%), 35.0 MBs/sec
+2026-10-22T02:53:29.9556434Z Cache Size: ~34 MB (35406339 B)
+2026-10-22T02:53:29.9645498Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/a2e4f9c9-ca05-441e-93af-657f2e228a6d/cache.tzst -P -C D:/a/reelkiln/reelkiln --force-local --use-compress-program "zstd -d"
+2026-10-22T02:53:31.0040894Z Cache restored successfully
+2026-10-22T02:53:31.0074311Z Cache restored from key: node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61
+2026-10-22T02:53:31.0353384Z ##[group]Run npm ci
+2026-10-22T02:53:31.0353668Z npm ci
+2026-10-22T02:53:31.0843459Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-22T02:53:31.0843818Z env:
+2026-10-22T02:53:31.0843988Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T02:53:31.0844204Z ##[endgroup]
+2026-10-22T02:53:36.2407572Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-10-22T02:53:36.2864362Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-10-22T02:53:36.3027404Z npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+2026-10-22T02:53:36.3591540Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-22T02:53:36.6911005Z npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2026-10-22T03:00:35.5602065Z 
+2026-10-22T03:00:35.5603348Z added 293 packages in 7m
+2026-10-22T03:00:35.5603704Z 
+2026-10-22T03:00:35.5603953Z 49 packages are looking for funding
+2026-10-22T03:00:35.5604674Z   run `npm fund` for details
+2026-10-22T03:00:37.3765550Z ##[group]Run npm run gen
+2026-10-22T03:00:37.3765974Z npm run gen
+2026-10-22T03:00:37.3766230Z git diff --exit-code -- src
+2026-10-22T03:00:37.3766835Z sha1=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts src/main/engine/*.generated.ts src/main/engine/voice-guard.ts | sha256sum)
+2026-10-22T03:00:37.3767410Z npm run gen
+2026-10-22T03:00:37.3767922Z sha2=$(cat src/shared/ipc-contract.ts src/preload/bridge.generated.ts src/main/engine/*.generated.ts src/main/engine/voice-guard.ts | sha256sum)
+2026-10-22T03:00:37.3768453Z test "$sha1" = "$sha2"
+2026-10-22T03:00:37.3781982Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T03:00:37.3782366Z env:
+2026-10-22T03:00:37.3782583Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T03:00:37.3782830Z ##[endgroup]
+2026-10-22T03:00:37.9710408Z 
+2026-10-22T03:00:37.9711147Z > videoclaw-port@0.0.40-port.0 gen
+2026-10-22T03:00:37.9712324Z > node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs
+2026-10-22T03:00:37.9713229Z 
+2026-10-22T03:00:38.0319889Z {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17}
+2026-10-22T03:00:38.2934107Z studio-paid-tools.generated.ts: 4 descriptions ok
+2026-10-22T03:00:39.0686151Z 
+2026-10-22T03:00:39.1312020Z > videoclaw-port@0.0.40-port.0 gen
+2026-10-22T03:00:39.1312876Z > node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs
+2026-10-22T03:00:39.1313355Z 
+2026-10-22T03:00:39.1314403Z {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17}
+2026-10-22T03:00:39.3971486Z studio-paid-tools.generated.ts: 4 descriptions ok
+2026-10-22T03:00:39.4644139Z ##[group]Run npm run build
+2026-10-22T03:00:39.4644507Z npm run build
+2026-10-22T03:00:39.4703312Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-22T03:00:39.4703653Z env:
+2026-10-22T03:00:39.4703880Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T03:00:39.4704131Z ##[endgroup]
+2026-10-22T03:00:40.0220559Z 
+2026-10-22T03:00:40.0221147Z > videoclaw-port@0.0.40-port.0 build
+2026-10-22T03:00:40.0221618Z > npm run gen && npm run typecheck && npm run bundle
+2026-10-22T03:00:40.0221843Z 
+2026-10-22T03:00:40.2555690Z 
+2026-10-22T03:00:40.2556523Z > videoclaw-port@0.0.40-port.0 gen
+2026-10-22T03:00:40.2557194Z > node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs
+2026-10-22T03:00:40.2557534Z 
+2026-10-22T03:00:40.3234160Z {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17}
+2026-10-22T03:00:40.5882664Z studio-paid-tools.generated.ts: 4 descriptions ok
+2026-10-22T03:00:40.8219750Z 
+2026-10-22T03:00:40.8220459Z > videoclaw-port@0.0.40-port.0 typecheck
+2026-10-22T03:00:40.8220862Z > tsc -p tsconfig.json --noEmit
+2026-10-22T03:00:40.8221055Z 
+2026-10-22T03:00:46.0282114Z 
+2026-10-22T03:00:46.0282895Z > videoclaw-port@0.0.40-port.0 bundle
+2026-10-22T03:00:46.0283371Z > node tools/build.mjs
+2026-10-22T03:00:46.0283507Z 
+2026-10-22T03:00:46.3237743Z 
+2026-10-22T03:00:46.3239032Z   dist\main\index.cjs      3.1mb
+2026-10-22T03:00:46.3239546Z   dist\main\index.cjs.map  5.7mb
+2026-10-22T03:00:46.3239791Z 
+2026-10-22T03:00:46.3239930Z Done in 210ms
+2026-10-22T03:00:46.3288270Z 
+2026-10-22T03:00:46.3289176Z   dist\main\editorRenderWorker.cjs      4.8kb
+2026-10-22T03:00:46.3289979Z   dist\main\editorRenderWorker.cjs.map  8.3kb
+2026-10-22T03:00:46.3290301Z 
+2026-10-22T03:00:46.3290440Z Done in 3ms
+2026-10-22T03:00:46.3336301Z 
+2026-10-22T03:00:46.3336861Z   dist\main\hyperframesPolicyWorker.cjs       10.1kb
+2026-10-22T03:00:46.3337889Z   dist\main\hyperframesPreviewWorker.cjs       8.9kb
+2026-10-22T03:00:46.3338481Z   dist\main\hyperframesPreviewWorker.cjs.map  18.2kb
+2026-10-22T03:00:46.3338991Z   dist\main\hyperframesPolicyWorker.cjs.map   16.1kb
+2026-10-22T03:00:46.3339300Z 
+2026-10-22T03:00:46.3339415Z Done in 3ms
+2026-10-22T03:00:46.4072278Z 
+2026-10-22T03:00:46.4073508Z   dist\cli\port-cli.cjs      1015.8kb
+2026-10-22T03:00:46.4074074Z   dist\cli\port-cli.cjs.map     2.1mb
+2026-10-22T03:00:46.4074255Z 
+2026-10-22T03:00:46.4074390Z Done in 72ms
+2026-10-22T03:00:46.4161663Z 
+2026-10-22T03:00:46.4162596Z   dist\preload\index.cjs       26.9kb
+2026-10-22T03:00:46.4163158Z   dist\preload\index.cjs.map  199.4kb
+2026-10-22T03:00:46.4164394Z 
+2026-10-22T03:00:46.4164734Z Done in 8ms
+2026-10-22T03:00:46.4243393Z 
+2026-10-22T03:00:46.4244223Z   dist\renderer\renderer.js      17.5kb
+2026-10-22T03:00:46.4244662Z   dist\renderer\renderer.js.map  36.1kb
+2026-10-22T03:00:46.4245092Z 
+2026-10-22T03:00:46.4245188Z Done in 7ms
+2026-10-22T03:00:46.5173320Z ##[group]Run npm test
+2026-10-22T03:00:46.5173662Z npm test
+2026-10-22T03:00:46.5245506Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-22T03:00:46.5246054Z env:
+2026-10-22T03:00:46.5246374Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T03:00:46.5246780Z ##[endgroup]
+2026-10-22T03:00:47.1329686Z 
+2026-10-22T03:00:47.1330349Z > videoclaw-port@0.0.40-port.0 test
+2026-10-22T03:00:47.1330992Z > node tools/build.mjs --tests && node --test --test-timeout=120000 --test-force-exit "dist-test/*.test.cjs"
+2026-10-22T03:00:47.1331324Z 
+2026-10-22T03:00:48.0557360Z 
+2026-10-22T03:00:48.0558219Z   dist-test\m12-channels.test.cjs        2.1mb
+2026-10-22T03:00:48.0558869Z   dist-test\account-gateway.test.cjs     1.8mb
+2026-10-22T03:00:48.0559235Z   dist-test\local-channels-26.test.cjs   1.8mb
+2026-10-22T03:00:48.0559576Z   dist-test\m16-consent-spend.test.cjs   1.8mb
+2026-10-22T03:00:48.0559950Z   dist-test\m15-spend-approval.test.cjs  1.8mb
+2026-10-22T03:00:48.0560358Z   ...and 93 more output files...
+2026-10-22T03:00:48.0560515Z 
+2026-10-22T03:00:48.0560631Z Done in 836ms
+2026-10-22T03:00:48.1438747Z TAP version 13
+2026-10-22T03:00:48.4026236Z # Subtest: local gateway shim: key plane (/v1/me = keyMeterFrom body, id = sha256(key)), refusals, account plane not offered, billing endpoints
+2026-10-22T03:00:48.4046210Z ok 1 - local gateway shim: key plane (/v1/me = keyMeterFrom body, id = sha256(key)), refusals, account plane not offered, billing endpoints
+2026-10-22T03:00:48.4055242Z   ---
+2026-10-22T03:00:48.4099756Z   duration_ms: 129.42
+2026-10-22T03:00:48.4119548Z   type: 'test'
+2026-10-22T03:00:48.4124483Z   ...
+2026-10-22T03:00:48.4507308Z # Subtest: local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mapped, MiniMax key only), metered (JSON + SSE usage), ceiling → 402, top-up restores
+2026-10-22T03:00:48.4512358Z ok 2 - local gateway shim ledger: /anthropic/v1/messages → MiniMax (model mapped, MiniMax key only), metered (JSON + SSE usage), ceiling → 402, top-up restores
+2026-10-22T03:00:48.4514408Z   ---
+2026-10-22T03:00:48.4514926Z   duration_ms: 52.9388
+2026-10-22T03:00:48.4516501Z   type: 'test'
+2026-10-22T03:00:48.4516850Z   ...
+2026-10-22T03:00:48.4893815Z # Subtest: account channels over the shim: snapshot ready (legacy key, storedKeyId = shim id), verify, meter, top-up branch, saveGatewayKey, switchGateway, revoked key
+2026-10-22T03:00:48.4897472Z ok 3 - account channels over the shim: snapshot ready (legacy key, storedKeyId = shim id), verify, meter, top-up branch, saveGatewayKey, switchGateway, revoked key
+2026-10-22T03:00:48.4898441Z   ---
+2026-10-22T03:00:48.4898784Z   duration_ms: 44.1836
+2026-10-22T03:00:48.4899757Z   type: 'test'
+2026-10-22T03:00:48.4899999Z   ...
+2026-10-22T03:00:48.5221491Z # Subtest: account sign-in / consent / access / mint / claim on a self-hosted gateway: the original's unconfigured-pool refusals (no network)
+2026-10-22T03:00:48.5223731Z ok 4 - account sign-in / consent / access / mint / claim on a self-hosted gateway: the original's unconfigured-pool refusals (no network)
+2026-10-22T03:00:48.5224812Z   ---
+2026-10-22T03:00:48.5225058Z   duration_ms: 32.4525
+2026-10-22T03:00:48.5225300Z   type: 'test'
+2026-10-22T03:00:48.5225499Z   ...
+2026-10-22T03:00:48.5513298Z # Subtest: taste:titles: gateway route + key → one batched helper call through the shim (MiniMax, metered), cached; claude-code route → no helper call
+2026-10-22T03:00:48.5515301Z ok 5 - taste:titles: gateway route + key → one batched helper call through the shim (MiniMax, metered), cached; claude-code route → no helper call
+2026-10-22T03:00:48.5516395Z   ---
+2026-10-22T03:00:48.5516822Z   duration_ms: 22.014
+2026-10-22T03:00:48.5518370Z   type: 'test'
+2026-10-22T03:00:48.5518792Z   ...
+2026-10-22T03:00:48.5519827Z # Subtest: Claude Code channels: the original's not-connected branches (no probe, no login child); claudeModels on the MiniMax source
+2026-10-22T03:00:48.5524089Z ok 6 - Claude Code channels: the original's not-connected branches (no probe, no login child); claudeModels on the MiniMax source
+2026-10-22T03:00:48.5525065Z   ---
+2026-10-22T03:00:48.5525640Z   duration_ms: 3.1321
+2026-10-22T03:00:48.5526146Z   type: 'test'
+2026-10-22T03:00:48.5526465Z   ...
+2026-10-22T03:00:48.5527528Z # Subtest: codexHandoffOffer / continueOnCodex: a Claude video continues as a NEW Codex (MiniMax) chat; source untouched; second call returns the same continuation
+2026-10-22T03:00:48.5529222Z ok 7 - codexHandoffOffer / continueOnCodex: a Claude video continues as a NEW Codex (MiniMax) chat; source untouched; second call returns the same continuation
+2026-10-22T03:00:48.5530172Z   ---
+2026-10-22T03:00:48.5530501Z   duration_ms: 8.8603
+2026-10-22T03:00:48.5531125Z   type: 'test'
+2026-10-22T03:00:48.5531468Z   ...
+2026-10-22T03:00:48.5702923Z # Subtest: AgentHost.createSession: pins the current route, per-session cwd, idle, session:changed
+2026-10-22T03:00:48.5704302Z ok 8 - AgentHost.createSession: pins the current route, per-session cwd, idle, session:changed
+2026-10-22T03:00:48.5705103Z   ---
+2026-10-22T03:00:48.5705481Z   duration_ms: 35.454
+2026-10-22T03:00:48.5705903Z   type: 'test'
+2026-10-22T03:00:48.5706246Z   ...
+2026-10-22T03:00:48.5707333Z # Subtest: AgentHost.sendMessage: spawns ONE streaming-input query bound to sessionAgentRuntime, streams original-shaped events, second turn reuses the runtime
+2026-10-22T03:00:48.5718530Z ok 9 - AgentHost.sendMessage: spawns ONE streaming-input query bound to sessionAgentRuntime, streams original-shaped events, second turn reuses the runtime
+2026-10-22T03:00:48.5722184Z   ---
+2026-10-22T03:00:48.5723638Z   duration_ms: 29.15
+2026-10-22T03:00:48.5724006Z   type: 'test'
+2026-10-22T03:00:48.5724341Z   ...
+2026-10-22T03:00:48.5725425Z # Subtest: AgentHost: tool_use → tool_start, tool_result → tool_end; canUseTool confined to the session cwd
+2026-10-22T03:00:48.5728296Z ok 10 - AgentHost: tool_use → tool_start, tool_result → tool_end; canUseTool confined to the session cwd
+2026-10-22T03:00:48.5733450Z   ---
+2026-10-22T03:00:48.5734382Z   duration_ms: 18.257
+2026-10-22T03:00:48.5734801Z   type: 'test'
+2026-10-22T03:00:48.5735077Z   ...
+2026-10-22T03:00:48.5736082Z # Subtest: AgentHost.interrupt('stop'): synthetic stopped result, idle at once, query.interrupt(), no output after Stop, stale result swallowed, next turn works
+2026-10-22T03:00:48.5737686Z ok 11 - AgentHost.interrupt('stop'): synthetic stopped result, idle at once, query.interrupt(), no output after Stop, stale result swallowed, next turn works
+2026-10-22T03:00:48.5738491Z   ---
+2026-10-22T03:00:48.5738767Z   duration_ms: 124.7447
+2026-10-22T03:00:48.5739104Z   type: 'test'
+2026-10-22T03:00:48.5739408Z   ...
+2026-10-22T03:00:48.5740424Z # Subtest: AgentHost.interrupt: no ack within interruptAckTimeoutMs → runtime torn down (query.close + gate proxy close); next send respawns
+2026-10-22T03:00:48.5742041Z ok 12 - AgentHost.interrupt: no ack within interruptAckTimeoutMs → runtime torn down (query.close + gate proxy close); next send respawns
+2026-10-22T03:00:48.5742834Z   ---
+2026-10-22T03:00:48.5743131Z   duration_ms: 78.8249
+2026-10-22T03:00:48.5743457Z   type: 'test'
+2026-10-22T03:00:48.5743713Z   ...
+2026-10-22T03:00:48.6183855Z # Subtest: AgentHost: Stop while the runtime is still spawning → idle, nothing is queued into the new runtime
+2026-10-22T03:00:48.6185444Z ok 13 - AgentHost: Stop while the runtime is still spawning → idle, nothing is queued into the new runtime
+2026-10-22T03:00:48.6186049Z   ---
+2026-10-22T03:00:48.6186266Z   duration_ms: 46.4492
+2026-10-22T03:00:48.6186569Z   type: 'test'
+2026-10-22T03:00:48.6186831Z   ...
+2026-10-22T03:00:48.6951112Z # Subtest: AgentHost.onLlmRouteChanged: active turn → original error card + status error + teardown; idle runtime → teardown; builtin-pinned skipped; next send respawns
+2026-10-22T03:00:48.6954526Z ok 14 - AgentHost.onLlmRouteChanged: active turn → original error card + status error + teardown; idle runtime → teardown; builtin-pinned skipped; next send respawns
+2026-10-22T03:00:48.6955590Z   ---
+2026-10-22T03:00:48.6955876Z   duration_ms: 81.3246
+2026-10-22T03:00:48.6956244Z   type: 'test'
+2026-10-22T03:00:48.6956520Z   ...
+2026-10-22T03:00:48.7212773Z # Subtest: AgentHost.onLlmRouteChanged while spawning: the late runtime is discarded (gate proxy closed), status error
+2026-10-22T03:00:48.7214451Z ok 15 - AgentHost.onLlmRouteChanged while spawning: the late runtime is discarded (gate proxy closed), status error
+2026-10-22T03:00:48.7215365Z   ---
+2026-10-22T03:00:48.7215863Z   duration_ms: 13.6669
+2026-10-22T03:00:48.7216395Z   type: 'test'
+2026-10-22T03:00:48.7216802Z   ...
+2026-10-22T03:00:48.7217876Z # Subtest: AgentHost concurrency: host-wide 1 turn at a time (shared MiniMax key); same-video send while running refused; slot frees after result/stop
+2026-10-22T03:00:48.7241167Z ok 16 - AgentHost concurrency: host-wide 1 turn at a time (shared MiniMax key); same-video send while running refused; slot frees after result/stop
+2026-10-22T03:00:48.7242139Z   ---
+2026-10-22T03:00:48.7242578Z   duration_ms: 4.825
+2026-10-22T03:00:48.7243013Z   type: 'test'
+2026-10-22T03:00:48.7243417Z   ...
+2026-10-22T03:00:48.7271234Z # Subtest: AgentHost: route not ready / SDK missing → error event + status error + rejected send; error result → error card
+2026-10-22T03:00:48.7272619Z ok 17 - AgentHost: route not ready / SDK missing → error event + status error + rejected send; error result → error card
+2026-10-22T03:00:48.7273479Z   ---
+2026-10-22T03:00:48.7273733Z   duration_ms: 12.3986
+2026-10-22T03:00:48.7273997Z   type: 'test'
+2026-10-22T03:00:48.7274227Z   ...
+2026-10-22T03:00:48.7701147Z # Subtest: agent IPC glue: original channel names, {sessionId, event} push payload, session:changed list
+2026-10-22T03:00:48.8197597Z ok 18 - agent IPC glue: original channel names, {sessionId, event} push payload, session:changed list
+2026-10-22T03:00:48.8213423Z   ---
+2026-10-22T03:00:48.8233263Z   duration_ms: 10.2237
+2026-10-22T03:00:48.8319120Z   type: 'test'
+2026-10-22T03:00:48.8334595Z   ...
+2026-10-22T03:00:48.8339623Z # Subtest: renderer chat reducer: deltas stream into one bubble, final text replaces, tools, stop notice, foreign sessions ignored
+2026-10-22T03:00:48.8359522Z ok 19 - renderer chat reducer: deltas stream into one bubble, final text replaces, tools, stop notice, foreign sessions ignored
+2026-10-22T03:00:48.8360610Z   ---
+2026-10-22T03:00:48.8365580Z   duration_ms: 0.8468
+2026-10-22T03:00:48.8378567Z   type: 'test'
+2026-10-22T03:00:48.8378962Z   ...
+2026-10-22T03:00:48.9290945Z # Subtest: AgentHost + real LlmRouteService + gate proxy (local upstream): child env carries only the session token, the upstream sees the real key, proxy closes on teardown
+2026-10-22T03:00:48.9293515Z ok 20 - AgentHost + real LlmRouteService + gate proxy (local upstream): child env carries only the session token, the upstream sees the real key, proxy closes on teardown
+2026-10-22T03:00:48.9294402Z   ---
+2026-10-22T03:00:48.9294667Z   duration_ms: 190.4335
+2026-10-22T03:00:48.9294949Z   type: 'test'
+2026-10-22T03:00:48.9295186Z   ...
+2026-10-22T03:00:48.9471431Z # Subtest: docs/30 spend: the SDK result's modelUsage (a Claude alias priced as the served MiniMax model) → result.totalCostUsd; total_cost_usd is ignored
+2026-10-22T03:00:48.9473193Z ok 21 - docs/30 spend: the SDK result's modelUsage (a Claude alias priced as the served MiniMax model) → result.totalCostUsd; total_cost_usd is ignored
+2026-10-22T03:00:48.9474029Z   ---
+2026-10-22T03:00:48.9474268Z   duration_ms: 18.7576
+2026-10-22T03:00:48.9474525Z   type: 'test'
+2026-10-22T03:00:48.9474741Z   ...
+2026-10-22T03:00:48.9717179Z # Subtest: docs/30 spend: a gate-proxied route (provider / Codex) is priced from the proxy's metered upstream usage, cumulative per runtime
+2026-10-22T03:00:48.9719250Z ok 22 - docs/30 spend: a gate-proxied route (provider / Codex) is priced from the proxy's metered upstream usage, cumulative per runtime
+2026-10-22T03:00:48.9720130Z   ---
+2026-10-22T03:00:48.9720681Z   duration_ms: 21.4131
+2026-10-22T03:00:48.9721069Z   type: 'test'
+2026-10-22T03:00:48.9721409Z   ...
+2026-10-22T03:00:48.9723167Z # Subtest: docs/30 spend: gateway route — the job's ledger (same models.dev price) trues up the displayed gateway reasoning to max(metered, ledger), idempotently
+2026-10-22T03:00:48.9724937Z ok 23 - docs/30 spend: gateway route — the job's ledger (same models.dev price) trues up the displayed gateway reasoning to max(metered, ledger), idempotently
+2026-10-22T03:00:48.9725851Z   ---
+2026-10-22T03:00:48.9726187Z   duration_ms: 2.4267
+2026-10-22T03:00:48.9726551Z   type: 'test'
+2026-10-22T03:00:48.9726879Z   ...
+2026-10-22T03:00:48.9943728Z # Subtest: docs/31 §5 spend: after a Stop the host waits for the drained calls (shim llm_in_flight / proxy inflight), then reconciles / re-meters once
+2026-10-22T03:00:48.9944780Z ok 24 - docs/31 §5 spend: after a Stop the host waits for the drained calls (shim llm_in_flight / proxy inflight), then reconciles / re-meters once
+2026-10-22T03:00:48.9945221Z   ---
+2026-10-22T03:00:48.9945378Z   duration_ms: 23.3832
+2026-10-22T03:00:48.9945561Z   type: 'test'
+2026-10-22T03:00:48.9945709Z   ...
+2026-10-22T03:00:49.0085256Z # Subtest: docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels
+2026-10-22T03:00:49.0087570Z ok 25 - docs/30 inputs: requestInput (L48142) parks a pending input card, respondInput (L44689) answers it and records the settled ask; a dead runtime cancels
+2026-10-22T03:00:49.0088438Z   ---
+2026-10-22T03:00:49.0088674Z   duration_ms: 15.7824
+2026-10-22T03:00:49.0090012Z   type: 'test'
+2026-10-22T03:00:49.0090275Z   ...
+2026-10-22T03:00:49.0259548Z # Subtest: pure helpers match the original source (compareEngineVersions, manifest compat, classify, doctorFailures, scrub regex)
+2026-10-22T03:00:49.0265280Z ok 26 - pure helpers match the original source (compareEngineVersions, manifest compat, classify, doctorFailures, scrub regex)
+2026-10-22T03:00:49.0282850Z   ---
+2026-10-22T03:00:49.0283835Z   duration_ms: 21.1149
+2026-10-22T03:00:49.0296151Z   type: 'test'
+2026-10-22T03:00:49.0313978Z   ...
+2026-10-22T03:00:49.0321357Z # Subtest: argv / env builders match the original call sites
+2026-10-22T03:00:49.0333037Z ok 27 - argv / env builders match the original call sites
+2026-10-22T03:00:49.0333556Z   ---
+2026-10-22T03:00:49.0333887Z   duration_ms: 0.687
+2026-10-22T03:00:49.0334252Z   type: 'test'
+2026-10-22T03:00:49.0334524Z   ...
+2026-10-22T03:00:49.0334873Z # Subtest: platform npm/tar invocations
+2026-10-22T03:00:49.0335389Z ok 28 - platform npm/tar invocations
+2026-10-22T03:00:49.0335802Z   ---
+2026-10-22T03:00:49.0336392Z   duration_ms: 0.5059
+2026-10-22T03:00:49.0336758Z   type: 'test'
+2026-10-22T03:00:49.0337046Z   ...
+2026-10-22T03:00:49.0337521Z # Subtest: scrubEngineGatewaySecrets output identical to original
+2026-10-22T03:00:49.0338226Z ok 29 - scrubEngineGatewaySecrets output identical to original
+2026-10-22T03:00:49.0338698Z   ---
+2026-10-22T03:00:49.0338965Z   duration_ms: 3.3571
+2026-10-22T03:00:49.0339324Z   type: 'test'
+2026-10-22T03:00:49.0339581Z   ...
+2026-10-22T03:00:49.0340236Z # Subtest: BootstrapCore.runAll: full step machine with a recording runner (real tar, fake uv/npm)
+2026-10-22T03:00:49.0341274Z ok 30 - BootstrapCore.runAll: full step machine with a recording runner (real tar, fake uv/npm)
+2026-10-22T03:00:49.0341930Z   ---
+2026-10-22T03:00:49.0342220Z   duration_ms: 179.2699
+2026-10-22T03:00:49.0342531Z   type: 'test'
+2026-10-22T03:00:49.0342809Z   ...
+2026-10-22T03:00:49.0343590Z # Subtest: BootstrapCore: sha mismatch fails the engine step with the original message; unported hooks never pass silently
+2026-10-22T03:00:49.0345122Z ok 31 - BootstrapCore: sha mismatch fails the engine step with the original message; unported hooks never pass silently
+2026-10-22T03:00:49.0345863Z   ---
+2026-10-22T03:00:49.0346162Z   duration_ms: 24.6109
+2026-10-22T03:00:49.0346686Z   type: 'test'
+2026-10-22T03:00:49.0346963Z   ...
+2026-10-22T03:00:49.0347425Z # Subtest: resolveEditorRenderEngine mirrors the original branches
+2026-10-22T03:00:49.0348140Z ok 32 - resolveEditorRenderEngine mirrors the original branches
+2026-10-22T03:00:49.0348678Z   ---
+2026-10-22T03:00:49.0348949Z   duration_ms: 0.6438
+2026-10-22T03:00:49.0349257Z   type: 'test'
+2026-10-22T03:00:49.0349537Z   ...
+2026-10-22T03:00:49.0350084Z # Subtest: claude / codex executable resolution (original order; win32 suffix)
+2026-10-22T03:00:49.0350831Z ok 33 - claude / codex executable resolution (original order; win32 suffix)
+2026-10-22T03:00:49.0351352Z   ---
+2026-10-22T03:00:49.0351611Z   duration_ms: 0.4068
+2026-10-22T03:00:49.0351915Z   type: 'test'
+2026-10-22T03:00:49.0352175Z   ...
+2026-10-22T03:00:49.0353204Z # Subtest: writeWorkspacePartial: dirs, taste packs, CLAUDE.md (verbatim contract) then validateEngineSessionContext refuses an incomplete engine (L9650-9689 order)
+2026-10-22T03:00:49.0354878Z ok 34 - writeWorkspacePartial: dirs, taste packs, CLAUDE.md (verbatim contract) then validateEngineSessionContext refuses an incomplete engine (L9650-9689 order)
+2026-10-22T03:00:49.0356178Z   ---
+2026-10-22T03:00:49.0356427Z   duration_ms: 12.392
+2026-10-22T03:00:49.0356934Z   type: 'test'
+2026-10-22T03:00:49.0357156Z   ...
+2026-10-22T03:00:49.1524470Z # Subtest: initialize handshake: exact params, version gate 0.160.1, then `initialized` notification
+2026-10-22T03:00:49.1525729Z ok 35 - initialize handshake: exact params, version gate 0.160.1, then `initialized` notification
+2026-10-22T03:00:49.1526756Z   ---
+2026-10-22T03:00:49.1527074Z   duration_ms: 228.6787
+2026-10-22T03:00:49.1527479Z   type: 'test'
+2026-10-22T03:00:49.1527755Z   ...
+2026-10-22T03:00:49.1528433Z # Subtest: version mismatch rejects with the original message; errors/unknown ids/server requests handled
+2026-10-22T03:00:49.1529941Z ok 36 - version mismatch rejects with the original message; errors/unknown ids/server requests handled
+2026-10-22T03:00:49.1530644Z   ---
+2026-10-22T03:00:49.1531031Z   duration_ms: 151.2791
+2026-10-22T03:00:49.1531301Z   type: 'test'
+2026-10-22T03:00:49.1531517Z   ...
+2026-10-22T03:00:49.1532016Z # Subtest: request timeout message
+2026-10-22T03:00:49.1532416Z ok 37 - request timeout message
+2026-10-22T03:00:49.1532706Z   ---
+2026-10-22T03:00:49.1532940Z   duration_ms: 154.5233
+2026-10-22T03:00:49.1533204Z   type: 'test'
+2026-10-22T03:00:49.1533433Z   ...
+2026-10-22T03:00:49.5944856Z # Subtest: close() terminates a window-less console app-server child (win32: failed graceful taskkill escalates to /F)
+2026-10-22T03:00:49.5946427Z ok 38 - close() terminates a window-less console app-server child (win32: failed graceful taskkill escalates to /F)
+2026-10-22T03:00:49.5947196Z   ---
+2026-10-22T03:00:49.5947512Z   duration_ms: 448.3431
+2026-10-22T03:00:49.5947860Z   type: 'test'
+2026-10-22T03:00:49.5948174Z   ...
+2026-10-22T03:00:49.6071389Z # Subtest: Responses structured emulation: text.format json_schema → forced function tool; response → message/output_text
+2026-10-22T03:00:49.6116933Z ok 39 - Responses structured emulation: text.format json_schema → forced function tool; response → message/output_text
+2026-10-22T03:00:49.6167970Z   ---
+2026-10-22T03:00:49.6169921Z   duration_ms: 1.6484
+2026-10-22T03:00:49.6260461Z   type: 'test'
+2026-10-22T03:00:49.6268531Z   ...
+2026-10-22T03:00:49.6269623Z # Subtest: Responses SSE rewriter: function_call events of structured_output become output_text events (other calls untouched)
+2026-10-22T03:00:49.6270953Z ok 40 - Responses SSE rewriter: function_call events of structured_output become output_text events (other calls untouched)
+2026-10-22T03:00:49.6273498Z   ---
+2026-10-22T03:00:49.6288057Z   duration_ms: 0.8824
+2026-10-22T03:00:49.6305782Z   type: 'test'
+2026-10-22T03:00:49.6320413Z   ...
+2026-10-22T03:00:49.6353777Z # Subtest: gate proxy surface "openai": token auth (OpenAI error shape), /v1 stripped onto the provider base, key swapped in, gate + emulation
+2026-10-22T03:00:49.6355639Z ok 41 - gate proxy surface "openai": token auth (OpenAI error shape), /v1 stripped onto the provider base, key swapped in, gate + emulation
+2026-10-22T03:00:49.6357052Z   ---
+2026-10-22T03:00:49.6362590Z   duration_ms: 90.56
+2026-10-22T03:00:49.6364183Z   type: 'test'
+2026-10-22T03:00:49.6364597Z   ...
+2026-10-22T03:00:49.6366206Z # Subtest: MiniMax backend: provider resolution, profile, thread config, child env without the key, executable discovery, model catalog
+2026-10-22T03:00:49.6368043Z ok 42 - MiniMax backend: provider resolution, profile, thread config, child env without the key, executable discovery, model catalog
+2026-10-22T03:00:49.6369208Z   ---
+2026-10-22T03:00:49.6449762Z   duration_ms: 14.3167
+2026-10-22T03:00:49.6549287Z   type: 'test'
+2026-10-22T03:00:49.6569978Z   ...
+2026-10-22T03:00:49.6570870Z # Subtest: CodexRouteController: gate, status, catalog partition with the PORT evidence rows, refusals, pins
+2026-10-22T03:00:49.6572157Z ok 43 - CodexRouteController: gate, status, catalog partition with the PORT evidence rows, refusals, pins
+2026-10-22T03:00:49.6572758Z   ---
+2026-10-22T03:00:49.6572987Z   duration_ms: 6.3024
+2026-10-22T03:00:49.6573226Z   type: 'test'
+2026-10-22T03:00:49.6573444Z   ...
+2026-10-22T03:00:49.6574303Z # Subtest: AgentHost + Codex harness: createSession pins the harness, a turn runs (text + tool + declined approval), stream ends, resume on the next send
+2026-10-22T03:00:49.6616952Z ok 44 - AgentHost + Codex harness: createSession pins the harness, a turn runs (text + tool + declined approval), stream ends, resume on the next send
+2026-10-22T03:00:49.6617900Z   ---
+2026-10-22T03:00:49.6618204Z   duration_ms: 68.646
+2026-10-22T03:00:49.6618555Z   type: 'test'
+2026-10-22T03:00:49.6618850Z   ...
+2026-10-22T03:00:49.6619713Z # Subtest: AgentHost + Codex: setModel / setReasoningEffort (channels), effort pin mismatch refused, unavailable without the key
+2026-10-22T03:00:49.6621227Z ok 45 - AgentHost + Codex: setModel / setReasoningEffort (channels), effort pin mismatch refused, unavailable without the key
+2026-10-22T03:00:49.6622345Z   ---
+2026-10-22T03:00:49.6622617Z   duration_ms: 44.4577
+2026-10-22T03:00:49.6622923Z   type: 'test'
+2026-10-22T03:00:49.6623199Z   ...
+2026-10-22T03:00:49.6623728Z # Subtest: POSIX shim scripts are byte-identical to the original source
+2026-10-22T03:00:49.6624507Z ok 46 - POSIX shim scripts are byte-identical to the original source
+2026-10-22T03:00:49.6624998Z   ---
+2026-10-22T03:00:49.6625285Z   duration_ms: 8.6401
+2026-10-22T03:00:49.6625599Z   type: 'test'
+2026-10-22T03:00:49.6626231Z   ...
+2026-10-22T03:00:49.6627036Z # Subtest: win32 shims: sh flavour points at .venv/Scripts/python.exe, .cmd siblings use CRLF + goto
+2026-10-22T03:00:49.6628177Z ok 47 - win32 shims: sh flavour points at .venv/Scripts/python.exe, .cmd siblings use CRLF + goto
+2026-10-22T03:00:49.6628769Z   ---
+2026-10-22T03:00:49.6629043Z   duration_ms: 0.6192
+2026-10-22T03:00:49.6629582Z   type: 'test'
+2026-10-22T03:00:49.6629870Z   ...
+2026-10-22T03:00:49.6630495Z # Subtest: writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 adds .cmd
+2026-10-22T03:00:49.6631448Z ok 48 - writeCommandShims writes 5 POSIX shims (0755) and is idempotent; win32 adds .cmd
+2026-10-22T03:00:49.6632396Z   ---
+2026-10-22T03:00:49.6632680Z   duration_ms: 76.3717
+2026-10-22T03:00:49.6632997Z   type: 'test'
+2026-10-22T03:00:49.6633288Z   ...
+2026-10-22T03:00:49.6633936Z # Subtest: installAppCommandShims prepends bin to PATH (win32: replaces the case-variant key)
+2026-10-22T03:00:49.6634934Z ok 49 - installAppCommandShims prepends bin to PATH (win32: replaces the case-variant key)
+2026-10-22T03:00:49.6635876Z   ---
+2026-10-22T03:00:49.6636173Z   duration_ms: 11.2808
+2026-10-22T03:00:49.6636487Z   type: 'test'
+2026-10-22T03:00:49.6636779Z   ...
+2026-10-22T03:00:49.6637359Z # Subtest: linux git shim forwards to the real git (original xcode probe would block it)
+2026-10-22T03:00:49.6638448Z ok 50 - linux git shim forwards to the real git (original xcode probe would block it)
+2026-10-22T03:00:49.6639018Z   ---
+2026-10-22T03:00:49.6639292Z   duration_ms: 0.412
+2026-10-22T03:00:49.6639595Z   type: 'test'
+2026-10-22T03:00:49.6639878Z   ...
+2026-10-22T03:00:49.6640567Z # Subtest: ported editor-render worker matches the shipped editorRenderWorker.js message-for-message
+2026-10-22T03:00:49.6641744Z ok 51 - ported editor-render worker matches the shipped editorRenderWorker.js message-for-message
+2026-10-22T03:00:49.6642421Z   ---
+2026-10-22T03:00:49.6642708Z   duration_ms: 258.18
+2026-10-22T03:00:49.6643024Z   type: 'test'
+2026-10-22T03:00:49.6643317Z   ...
+2026-10-22T03:00:49.6643960Z # Subtest: EditorRenderController: validation, start message, completion receipt, cancel/reap
+2026-10-22T03:00:49.6644972Z ok 52 - EditorRenderController: validation, start message, completion receipt, cancel/reap
+2026-10-22T03:00:49.6645594Z   ---
+2026-10-22T03:00:49.6645868Z   duration_ms: 54.7481
+2026-10-22T03:00:49.6647006Z   type: 'test'
+2026-10-22T03:00:49.6647307Z   ...
+2026-10-22T03:00:49.6647786Z # Subtest: expandHome: POSIX regex unchanged; win32 also expands ~\\
+2026-10-22T03:00:49.6648828Z ok 53 - expandHome: POSIX regex unchanged; win32 also expands ~\\
+2026-10-22T03:00:49.6649661Z   ---
+2026-10-22T03:00:49.6649964Z   duration_ms: 0.3685
+2026-10-22T03:00:49.6650282Z   type: 'test'
+2026-10-22T03:00:49.6650559Z   ...
+2026-10-22T03:00:49.6651482Z # Subtest: first-message job id (submitPreparedMessage L41559-41600): deterministic, minted once, turn text = session policy + APP-OWNED PRODUCTION ID
+2026-10-22T03:00:49.6653135Z ok 54 - first-message job id (submitPreparedMessage L41559-41600): deterministic, minted once, turn text = session policy + APP-OWNED PRODUCTION ID
+2026-10-22T03:00:49.6653942Z   ---
+2026-10-22T03:00:49.6654163Z   duration_ms: 7.4099
+2026-10-22T03:00:49.6654440Z   type: 'test'
+2026-10-22T03:00:49.6654664Z   ...
+2026-10-22T03:00:49.6655631Z # Subtest: AgentHost ENGINE session: workspace cwd, first message binds + mkdirs the job and persists it, createLocalRuntime-shaped options, policy-prefixed turn
+2026-10-22T03:00:49.6657166Z ok 55 - AgentHost ENGINE session: workspace cwd, first message binds + mkdirs the job and persists it, createLocalRuntime-shaped options, policy-prefixed turn
+2026-10-22T03:00:49.6657991Z   ---
+2026-10-22T03:00:49.6658216Z   duration_ms: 26.3374
+2026-10-22T03:00:49.6658445Z   type: 'test'
+2026-10-22T03:00:49.6658655Z   ...
+2026-10-22T03:00:49.6659595Z # Subtest: AgentHost ENGINE: Hooks deny Task/Agent; Bash app-owned final render is refused by the original appOwnedVideoCommandRefusal; plan-mode tools redirected
+2026-10-22T03:00:49.6661416Z ok 56 - AgentHost ENGINE: Hooks deny Task/Agent; Bash app-owned final render is refused by the original appOwnedVideoCommandRefusal; plan-mode tools redirected
+2026-10-22T03:00:49.6662314Z   ---
+2026-10-22T03:00:49.6662542Z   duration_ms: 15.5241
+2026-10-22T03:00:49.6662777Z   type: 'test'
+2026-10-22T03:00:49.6662990Z   ...
+2026-10-22T03:00:49.6664147Z # Subtest: AgentHost ENGINE: permission card round-trip (canUseTool → permission:request → respondPermission) + replay + abort on Stop
+2026-10-22T03:00:49.6665607Z ok 57 - AgentHost ENGINE: permission card round-trip (canUseTool → permission:request → respondPermission) + replay + abort on Stop
+2026-10-22T03:00:49.6666350Z   ---
+2026-10-22T03:00:49.6666965Z   duration_ms: 11.7414
+2026-10-22T03:00:49.6667240Z   type: 'test'
+2026-10-22T03:00:49.6667463Z   ...
+2026-10-22T03:00:49.6668895Z # Subtest: AgentHost ENGINE: continue-intent first message does not mint; a NEW jobs/<id> named in a tool_use binds (maybeBindJob), a pre-existing one never does
+2026-10-22T03:00:49.6670865Z ok 58 - AgentHost ENGINE: continue-intent first message does not mint; a NEW jobs/<id> named in a tool_use binds (maybeBindJob), a pre-existing one never does
+2026-10-22T03:00:49.6671664Z   ---
+2026-10-22T03:00:49.6671885Z   duration_ms: 35.8957
+2026-10-22T03:00:49.6672160Z   type: 'test'
+2026-10-22T03:00:49.6672580Z   ...
+2026-10-22T03:00:49.6673725Z # Subtest: sessions.json: writeRegistry merge-with-disk (foreign rows + clients carried), load → takeSessions → AgentHost.restoreSessions (status healed idle)
+2026-10-22T03:00:49.6675411Z ok 59 - sessions.json: writeRegistry merge-with-disk (foreign rows + clients carried), load → takeSessions → AgentHost.restoreSessions (status healed idle)
+2026-10-22T03:00:49.6676209Z   ---
+2026-10-22T03:00:49.6676457Z   duration_ms: 28.0642
+2026-10-22T03:00:49.6676724Z   type: 'test'
+2026-10-22T03:00:49.6676949Z   ...
+2026-10-22T03:00:49.6677809Z # Subtest: M1 home boot: account snapshot (local studio default / honest signed-out with the gate on), eligibility, bootstrap status, renderer entry
+2026-10-22T03:00:49.6679286Z ok 60 - M1 home boot: account snapshot (local studio default / honest signed-out with the gate on), eligibility, bootstrap status, renderer entry
+2026-10-22T03:00:49.6680026Z   ---
+2026-10-22T03:00:49.6680240Z   duration_ms: 1.0408
+2026-10-22T03:00:49.6680498Z   type: 'test'
+2026-10-22T03:00:49.6680722Z   ...
+2026-10-22T03:00:49.6681798Z # Subtest: AgentGatewayProxy (verbatim L28672) binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s unknown tokens (loopback only, no upstream)
+2026-10-22T03:00:49.6683115Z ok 61 - AgentGatewayProxy (verbatim L28672) binds 127.0.0.1:<ephemeral>, issues vcs_ tokens, 401s unknown tokens (loopback only, no upstream)
+2026-10-22T03:00:49.6683826Z   ---
+2026-10-22T03:00:49.6684030Z   duration_ms: 34.5877
+2026-10-22T03:00:49.6684274Z   type: 'test'
+2026-10-22T03:00:49.6684498Z   ...
+2026-10-22T03:00:49.6684730Z # Subtest: bearer() parsing
+2026-10-22T03:00:49.6685030Z ok 62 - bearer() parsing
+2026-10-22T03:00:49.6685299Z   ---
+2026-10-22T03:00:49.6685508Z   duration_ms: 0.2404
+2026-10-22T03:00:49.6685747Z   type: 'test'
+2026-10-22T03:00:49.6685954Z   ...
+2026-10-22T03:00:49.6686311Z # Subtest: channel counts match docs/04 (157/3/23/1 = 184)
+2026-10-22T03:00:49.6686833Z ok 63 - channel counts match docs/04 (157/3/23/1 = 184)
+2026-10-22T03:00:49.6687194Z   ---
+2026-10-22T03:00:49.6687417Z   duration_ms: 0.9745
+2026-10-22T03:00:49.6687665Z   type: 'test'
+2026-10-22T03:00:49.6687876Z   ...
+2026-10-22T03:00:49.6688519Z # Subtest: IPC table equals the original `const IPC = {…}` in the shipped bundle
+2026-10-22T03:00:49.6689302Z ok 64 - IPC table equals the original `const IPC = {…}` in the shipped bundle
+2026-10-22T03:00:49.6689740Z   ---
+2026-10-22T03:00:49.6689944Z   duration_ms: 93.2466
+2026-10-22T03:00:49.6690202Z   type: 'test'
+2026-10-22T03:00:49.6690399Z   ...
+2026-10-22T03:00:49.6690773Z # Subtest: every invoke channel maps to a unique bridge method
+2026-10-22T03:00:49.6691343Z ok 65 - every invoke channel maps to a unique bridge method
+2026-10-22T03:00:49.6691722Z   ---
+2026-10-22T03:00:49.6691936Z   duration_ms: 0.2249
+2026-10-22T03:00:49.6692198Z   type: 'test'
+2026-10-22T03:00:49.6692407Z   ...
+2026-10-22T03:00:49.6692843Z # Subtest: every verified shape carries a line citation and a level
+2026-10-22T03:00:49.6693469Z ok 66 - every verified shape carries a line citation and a level
+2026-10-22T03:00:49.6693885Z   ---
+2026-10-22T03:00:49.6694099Z   duration_ms: 0.7305
+2026-10-22T03:00:49.6694350Z   type: 'test'
+2026-10-22T03:00:49.6694571Z   ...
+2026-10-22T03:00:49.6695012Z # Subtest: coverage snapshot (update deliberately when shapes are added)
+2026-10-22T03:00:49.6695680Z ok 67 - coverage snapshot (update deliberately when shapes are added)
+2026-10-22T03:00:49.6696108Z   ---
+2026-10-22T03:00:49.6696317Z   duration_ms: 0.8004
+2026-10-22T03:00:49.6696562Z   type: 'test'
+2026-10-22T03:00:49.6696780Z   ...
+2026-10-22T03:00:49.7380528Z # Subtest: VersionStore (L13344) + scanJob (L14365): a recorded final.mp4 is minted as versions/v1.mp4 (same bytes), approve records a final, registry survives a reload
+2026-10-22T03:00:49.7382995Z ok 68 - VersionStore (L13344) + scanJob (L14365): a recorded final.mp4 is minted as versions/v1.mp4 (same bytes), approve records a final, registry survives a reload
+2026-10-22T03:00:49.7383869Z   ---
+2026-10-22T03:00:49.7384102Z   duration_ms: 62.055
+2026-10-22T03:00:49.7384357Z   type: 'test'
+2026-10-22T03:00:49.7384577Z   ...
+2026-10-22T03:00:50.4587092Z # Subtest: AgentHost job path (getJobSnapshot L45620, ensureWatcher L47956, approveVersion L47488): watcher pushes job:snapshot with v1, approve finalizes + persists finalizedAtMs + sends the taste-capture turn
+2026-10-22T03:00:50.4589467Z ok 69 - AgentHost job path (getJobSnapshot L45620, ensureWatcher L47956, approveVersion L47488): watcher pushes job:snapshot with v1, approve finalizes + persists finalizedAtMs + sends the taste-capture turn
+2026-10-22T03:00:50.4590555Z   ---
+2026-10-22T03:00:50.4590846Z   duration_ms: 730.1533
+2026-10-22T03:00:50.4591116Z   type: 'test'
+2026-10-22T03:00:50.4591340Z   ...
+2026-10-22T03:00:50.4679729Z # Subtest: vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range / HEAD / 416, identity header
+2026-10-22T03:00:50.4681177Z ok 70 - vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range / HEAD / 416, identity header
+2026-10-22T03:00:50.4681562Z   ---
+2026-10-22T03:00:50.4681723Z   duration_ms: 28.8652
+2026-10-22T03:00:50.4681897Z   type: 'test'
+2026-10-22T03:00:50.4682046Z   ...
+2026-10-22T03:00:50.4772776Z # Subtest: file:saveItemAs (L61987) copies to the dialog's path; intake:pickFiles (L62157) checks the scope and grants picked files
+2026-10-22T03:00:50.4774716Z ok 71 - file:saveItemAs (L61987) copies to the dialog's path; intake:pickFiles (L62157) checks the scope and grants picked files
+2026-10-22T03:00:50.4775927Z   ---
+2026-10-22T03:00:50.4776382Z   duration_ms: 5.0132
+2026-10-22T03:00:50.4776860Z   type: 'test'
+2026-10-22T03:00:50.4777203Z   ...
+2026-10-22T03:00:50.5521958Z # Subtest: ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): copy → ready, Send mints the job then materializes into jobs/<id>/incoming/ and lists the files ahead of the turn
+2026-10-22T03:00:50.5524332Z ok 72 - ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): copy → ready, Send mints the job then materializes into jobs/<id>/incoming/ and lists the files ahead of the turn
+2026-10-22T03:00:50.5525457Z   ---
+2026-10-22T03:00:50.5525796Z   duration_ms: 76.9951
+2026-10-22T03:00:50.5526117Z   type: 'test'
+2026-10-22T03:00:50.5526446Z   ...
+2026-10-22T03:00:50.5527109Z # Subtest: smoke driver scripts parse for every S1 option combination (attach/m3/existing session)
+2026-10-22T03:00:50.5528107Z ok 73 - smoke driver scripts parse for every S1 option combination (attach/m3/existing session)
+2026-10-22T03:00:50.5528736Z   ---
+2026-10-22T03:00:50.5528957Z   duration_ms: 2.4673
+2026-10-22T03:00:50.5531269Z   type: 'test'
+2026-10-22T03:00:50.5533475Z   ...
+2026-10-22T03:00:50.5534737Z # Subtest: PORT-WIN docs/34: vcmediaFilePath maps main's pathToFileURL pathnames ("/C:/…") back to native Windows paths; POSIX untouched
+2026-10-22T03:00:50.5536115Z ok 74 - PORT-WIN docs/34: vcmediaFilePath maps main's pathToFileURL pathnames ("/C:/…") back to native Windows paths; POSIX untouched
+2026-10-22T03:00:50.5537017Z   ---
+2026-10-22T03:00:50.5537347Z   duration_ms: 0.2148
+2026-10-22T03:00:50.5537686Z   type: 'test'
+2026-10-22T03:00:50.5537964Z   ...
+2026-10-22T03:00:50.8802178Z # Subtest: minimalAgentOptions: passes sessionRuntimeConfig env/model through unchanged, isolated settings/MCP, executable, turn cap
+2026-10-22T03:00:50.8804318Z ok 75 - minimalAgentOptions: passes sessionRuntimeConfig env/model through unchanged, isolated settings/MCP, executable, turn cap
+2026-10-22T03:00:50.8805357Z   ---
+2026-10-22T03:00:50.8805809Z   duration_ms: 2.1604
+2026-10-22T03:00:50.8806341Z   type: 'test'
+2026-10-22T03:00:50.8807127Z   ...
+2026-10-22T03:00:50.8808268Z # Subtest: runAgentTurn: SDK boundary gets the runtime env/model; init/assistant/tool_use/tool_result/result collected; canUseTool allow-list; key scrubbed
+2026-10-22T03:00:50.8810998Z ok 76 - runAgentTurn: SDK boundary gets the runtime env/model; init/assistant/tool_use/tool_result/result collected; canUseTool allow-list; key scrubbed
+2026-10-22T03:00:50.8812146Z   ---
+2026-10-22T03:00:50.8812609Z   duration_ms: 2.2927
+2026-10-22T03:00:50.8813052Z   type: 'test'
+2026-10-22T03:00:50.8813470Z   ...
+2026-10-22T03:00:50.8814282Z # Subtest: runAgentTurn: error result, SDK throw and timeout become a typed failure (no throw)
+2026-10-22T03:00:50.8815339Z ok 77 - runAgentTurn: error result, SDK throw and timeout become a typed failure (no throw)
+2026-10-22T03:00:50.8818570Z   ---
+2026-10-22T03:00:50.8819063Z   duration_ms: 37.1124
+2026-10-22T03:00:50.8819561Z   type: 'test'
+2026-10-22T03:00:50.8820016Z   ...
+2026-10-22T03:00:50.8822205Z # Subtest: loadClaudeAgentSdk: SDK_UNAVAILABLE when unset/missing/wrong package; loads an ESM package from a node_modules dir
+2026-10-22T03:00:50.8823764Z ok 78 - loadClaudeAgentSdk: SDK_UNAVAILABLE when unset/missing/wrong package; loads an ESM package from a node_modules dir
+2026-10-22T03:00:50.8824851Z   ---
+2026-10-22T03:00:50.8825269Z   duration_ms: 12.6052
+2026-10-22T03:00:50.8825743Z   type: 'test'
+2026-10-22T03:00:50.8826047Z   ...
+2026-10-22T03:00:50.8827360Z # Subtest: SDK discovery (docs/17 §4): env > app node_modules > resources(unpacked) > vendor > ~/.videoclaw; env misconfig is an error, not a fallback
+2026-10-22T03:00:50.8828930Z ok 79 - SDK discovery (docs/17 §4): env > app node_modules > resources(unpacked) > vendor > ~/.videoclaw; env misconfig is an error, not a fallback
+2026-10-22T03:00:50.8829715Z   ---
+2026-10-22T03:00:50.8830018Z   duration_ms: 1.9625
+2026-10-22T03:00:50.8830374Z   type: 'test'
+2026-10-22T03:00:50.8830645Z   ...
+2026-10-22T03:00:50.8831314Z # Subtest: pinned SDK version: agent-sdk.ts constant == package.json config (install script source)
+2026-10-22T03:00:50.8832242Z ok 80 - pinned SDK version: agent-sdk.ts constant == package.json config (install script source)
+2026-10-22T03:00:50.8832783Z   ---
+2026-10-22T03:00:50.8833002Z   duration_ms: 0.4214
+2026-10-22T03:00:50.8833265Z   type: 'test'
+2026-10-22T03:00:50.8833499Z   ...
+2026-10-22T03:00:50.8834300Z # Subtest: claudeCodeExecutableFor: original packaged layout (claude-agent-sdk-<platform>-<arch>/claude), musl, win32 .exe, override
+2026-10-22T03:00:50.8835583Z ok 81 - claudeCodeExecutableFor: original packaged layout (claude-agent-sdk-<platform>-<arch>/claude), musl, win32 .exe, override
+2026-10-22T03:00:50.8836603Z   ---
+2026-10-22T03:00:50.8836818Z   duration_ms: 0.5548
+2026-10-22T03:00:50.8837053Z   type: 'test'
+2026-10-22T03:00:50.8837264Z   ...
+2026-10-22T03:00:50.8838211Z # Subtest: agentCompat: MiniMax preset → verified Claude Code knobs + gate proxy; user file can turn them off; other providers unaffected
+2026-10-22T03:00:50.8839626Z ok 82 - agentCompat: MiniMax preset → verified Claude Code knobs + gate proxy; user file can turn them off; other providers unaffected
+2026-10-22T03:00:50.8840294Z   ---
+2026-10-22T03:00:50.8840495Z   duration_ms: 13.6854
+2026-10-22T03:00:50.8840794Z   type: 'test'
+2026-10-22T03:00:50.8841006Z   ...
+2026-10-22T03:00:50.8841988Z # Subtest: gate proxy: session token required, real auth swapped in upstream, custom headers kept, streamed body passed through, non-/v1 answered locally
+2026-10-22T03:00:50.8843333Z ok 83 - gate proxy: session token required, real auth swapped in upstream, custom headers kept, streamed body passed through, non-/v1 answered locally
+2026-10-22T03:00:50.8844117Z   ---
+2026-10-22T03:00:50.8844339Z   duration_ms: 147.0122
+2026-10-22T03:00:50.8844595Z   type: 'test'
+2026-10-22T03:00:50.8844803Z   ...
+2026-10-22T03:00:50.8845543Z # Subtest: gate proxy: x-api-key / header auth schemes upstream; upstream unreachable → 502 without leaking
+2026-10-22T03:00:50.8846896Z ok 84 - gate proxy: x-api-key / header auth schemes upstream; upstream unreachable → 502 without leaking
+2026-10-22T03:00:50.8847492Z   ---
+2026-10-22T03:00:50.8847697Z   duration_ms: 18.7725
+2026-10-22T03:00:50.8847949Z   type: 'test'
+2026-10-22T03:00:50.8848156Z   ...
+2026-10-22T03:00:50.8849145Z # Subtest: gate proxy: concurrent child requests are serialised by the account gate (shared with helper calls); client abort frees the slot
+2026-10-22T03:00:50.8854374Z ok 85 - gate proxy: concurrent child requests are serialised by the account gate (shared with helper calls); client abort frees the slot
+2026-10-22T03:00:50.8855316Z   ---
+2026-10-22T03:00:50.8855694Z   duration_ms: 945.5974
+2026-10-22T03:00:50.8856087Z   type: 'test'
+2026-10-22T03:00:50.8856673Z   ...
+2026-10-22T03:00:50.8858169Z # Subtest: proxiedAgentEnv: base URL → proxy, only the session token, auth header dropped from ANTHROPIC_CUSTOM_HEADERS
+2026-10-22T03:00:50.8859450Z ok 86 - proxiedAgentEnv: base URL → proxy, only the session token, auth header dropped from ANTHROPIC_CUSTOM_HEADERS
+2026-10-22T03:00:50.8860145Z   ---
+2026-10-22T03:00:50.8860409Z   duration_ms: 0.4031
+2026-10-22T03:00:50.8860670Z   type: 'test'
+2026-10-22T03:00:50.8860897Z   ...
+2026-10-22T03:00:50.8983853Z # Subtest: LlmRouteService.sessionAgentRuntime: gateProxy provider → proxied env (no provider key anywhere); others unchanged; end-to-end through a mock SDK + mock upstream
+2026-10-22T03:00:50.8991304Z ok 87 - LlmRouteService.sessionAgentRuntime: gateProxy provider → proxied env (no provider key anywhere); others unchanged; end-to-end through a mock SDK + mock upstream
+2026-10-22T03:00:50.8992225Z   ---
+2026-10-22T03:00:50.8992454Z   duration_ms: 16.0649
+2026-10-22T03:00:50.8992709Z   type: 'test'
+2026-10-22T03:00:50.8992924Z   ...
+2026-10-22T03:00:50.8994373Z # Subtest: structured emulation: request rewrite only for tool-less output_config.format; effort kept
+2026-10-22T03:00:50.8996053Z ok 88 - structured emulation: request rewrite only for tool-less output_config.format; effort kept
+2026-10-22T03:00:50.8996824Z   ---
+2026-10-22T03:00:50.8997205Z   duration_ms: 0.2707
+2026-10-22T03:00:50.8997584Z   type: 'test'
+2026-10-22T03:00:50.8997944Z   ...
+2026-10-22T03:00:50.8999293Z # Subtest: structured emulation: SSE tool_use → one text block with the JSON (thinking kept, stray text dropped, indices renumbered, stop_reason end_turn); split chunks OK
+2026-10-22T03:00:50.9001578Z ok 89 - structured emulation: SSE tool_use → one text block with the JSON (thinking kept, stray text dropped, indices renumbered, stop_reason end_turn); split chunks OK
+2026-10-22T03:00:50.9002425Z   ---
+2026-10-22T03:00:50.9002648Z   duration_ms: 1.3748
+2026-10-22T03:00:50.9002901Z   type: 'test'
+2026-10-22T03:00:50.9003345Z   ...
+2026-10-22T03:00:50.9003888Z # Subtest: structured emulation: non-streamed reply rewritten; replies without the tool untouched
+2026-10-22T03:00:50.9004442Z ok 90 - structured emulation: non-streamed reply rewritten; replies without the tool untouched
+2026-10-22T03:00:50.9004835Z   ---
+2026-10-22T03:00:50.9005426Z   duration_ms: 0.2272
+2026-10-22T03:00:50.9005600Z   type: 'test'
+2026-10-22T03:00:50.9005754Z   ...
+2026-10-22T03:00:50.9143079Z # Subtest: gate proxy + emulateStructuredOutputs: upstream sees the forced tool, client gets JSON text; other requests and errors untouched; config needs gateProxy
+2026-10-22T03:00:50.9150967Z ok 91 - gate proxy + emulateStructuredOutputs: upstream sees the forced tool, client gets JSON text; other requests and errors untouched; config needs gateProxy
+2026-10-22T03:00:50.9151890Z   ---
+2026-10-22T03:00:50.9152134Z   duration_ms: 15.8363
+2026-10-22T03:00:50.9152402Z   type: 'test'
+2026-10-22T03:00:50.9152638Z   ...
+2026-10-22T03:00:51.1649141Z # Subtest: gate proxy (docs/31 §5): a client that leaves mid-stream — the call is drained and its usage still metered
+2026-10-22T03:00:51.1650507Z ok 92 - gate proxy (docs/31 §5): a client that leaves mid-stream — the call is drained and its usage still metered
+2026-10-22T03:00:51.2053893Z   ---
+2026-10-22T03:00:51.2054152Z   duration_ms: 251.2761
+2026-10-22T03:00:51.2054422Z   type: 'test'
+2026-10-22T03:00:51.2054649Z   ...
+2026-10-22T03:00:51.2055737Z # Subtest: config: baseUrl credentials/query/fragment/insecure http refused; loopback http + allowInsecureHttp ok; CR/LF and control chars refused
+2026-10-22T03:00:51.2057196Z ok 93 - config: baseUrl credentials/query/fragment/insecure http refused; loopback http + allowInsecureHttp ok; CR/LF and control chars refused
+2026-10-22T03:00:51.2058043Z   ---
+2026-10-22T03:00:51.2058280Z   duration_ms: 15.616
+2026-10-22T03:00:51.2058528Z   type: 'test'
+2026-10-22T03:00:51.2058736Z   ...
+2026-10-22T03:00:51.2059836Z # Subtest: env overrides: invalid base URL / model ignored with a warning naming only the env var; malformed key → not configured
+2026-10-22T03:00:51.2061141Z ok 94 - env overrides: invalid base URL / model ignored with a warning naming only the env var; malformed key → not configured
+2026-10-22T03:00:51.2061832Z   ---
+2026-10-22T03:00:51.2062061Z   duration_ms: 3.2183
+2026-10-22T03:00:51.2062306Z   type: 'test'
+2026-10-22T03:00:51.2062533Z   ...
+2026-10-22T03:00:51.2063862Z # Subtest: logger: pattern scrubbing (sk-…, x-api-key:, URL userinfo, ?key=), numeric secret fields, failing sink never throws
+2026-10-22T03:00:51.2065137Z ok 95 - logger: pattern scrubbing (sk-…, x-api-key:, URL userinfo, ?key=), numeric secret fields, failing sink never throws
+2026-10-22T03:00:51.2065759Z   ---
+2026-10-22T03:00:51.2065980Z   duration_ms: 0.5551
+2026-10-22T03:00:51.2066229Z   type: 'test'
+2026-10-22T03:00:51.2066442Z   ...
+2026-10-22T03:00:51.2067279Z # Subtest: provider responses: non-JSON → BAD_RESPONSE without echoing the body; oversized → BAD_RESPONSE; gateway path unchanged
+2026-10-22T03:00:51.2068692Z ok 96 - provider responses: non-JSON → BAD_RESPONSE without echoing the body; oversized → BAD_RESPONSE; gateway path unchanged
+2026-10-22T03:00:51.2069936Z   ---
+2026-10-22T03:00:51.2070556Z   duration_ms: 146.2061
+2026-10-22T03:00:51.2071024Z   type: 'test'
+2026-10-22T03:00:51.2071349Z   ...
+2026-10-22T03:00:51.2072269Z # Subtest: deadlineMs bounds retries+backoff (TIMEOUT); caller AbortSignal cancels; NETWORK reason carries the cause code, never the key
+2026-10-22T03:00:51.2073855Z ok 97 - deadlineMs bounds retries+backoff (TIMEOUT); caller AbortSignal cancels; NETWORK reason carries the cause code, never the key
+2026-10-22T03:00:51.2075132Z   ---
+2026-10-22T03:00:51.2075450Z   duration_ms: 420.3321
+2026-10-22T03:00:51.2075768Z   type: 'test'
+2026-10-22T03:00:51.2076131Z   ...
+2026-10-22T03:00:51.2076926Z # (node:7412) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+2026-10-22T03:00:51.2077861Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-22T03:00:51.2079757Z # Subtest: end-to-end: no key or *** in ANY log line or result across success, 401, 429-exhausted, 500, timeout
+2026-10-22T03:00:51.2081347Z ok 98 - end-to-end: no key or *** in ANY log line or result across success, 401, 429-exhausted, 500, timeout
+2026-10-22T03:00:51.2082930Z   ---
+2026-10-22T03:00:51.2083280Z   duration_ms: 316.5818
+2026-10-22T03:00:51.2083665Z   type: 'test'
+2026-10-22T03:00:51.2084028Z   ...
+2026-10-22T03:00:51.2085353Z # Subtest: models sync: credentials in a custom URL are never returned/stored; non-http URL refused; chunked body over the cap → TOO_LARGE, catalog untouched
+2026-10-22T03:00:51.2101035Z ok 99 - models sync: credentials in a custom URL are never returned/stored; non-http URL refused; chunked body over the cap → TOO_LARGE, catalog untouched
+2026-10-22T03:00:51.2101840Z   ---
+2026-10-22T03:00:51.2102072Z   duration_ms: 4.2527
+2026-10-22T03:00:51.2102344Z   type: 'test'
+2026-10-22T03:00:51.2102556Z   ...
+2026-10-22T03:00:51.2103221Z # Subtest: providers sharing one key env share ONE account-level gate sized by the smallest limit (minimax + minimax-openai)
+2026-10-22T03:00:51.2104332Z ok 100 - providers sharing one key env share ONE account-level gate sized by the smallest limit (minimax + minimax-openai)
+2026-10-22T03:00:51.2105285Z   ---
+2026-10-22T03:00:51.2105498Z   duration_ms: 199.0358
+2026-10-22T03:00:51.2105764Z   type: 'test'
+2026-10-22T03:00:51.2105973Z   ...
+2026-10-22T03:00:51.2106822Z # Subtest: reloadProviderRegistry: add/update/remove providers, listeners + generation, no-op when unchanged
+2026-10-22T03:00:51.2107862Z ok 101 - reloadProviderRegistry: add/update/remove providers, listeners + generation, no-op when unchanged
+2026-10-22T03:00:51.2108495Z   ---
+2026-10-22T03:00:51.2108710Z   duration_ms: 18.457
+2026-10-22T03:00:51.2108951Z   type: 'test'
+2026-10-22T03:00:51.2109163Z   ...
+2026-10-22T03:00:51.2110124Z # Subtest: invalid config on reload → strict CONFIG_INVALID, presets only (minimax kept), error logged without file content; fix restores
+2026-10-22T03:00:51.2111575Z ok 102 - invalid config on reload → strict CONFIG_INVALID, presets only (minimax kept), error logged without file content; fix restores
+2026-10-22T03:00:51.2112570Z   ---
+2026-10-22T03:00:51.2112789Z   duration_ms: 5.7308
+2026-10-22T03:00:51.2113042Z   type: 'test'
+2026-10-22T03:00:51.2113278Z   ...
+2026-10-22T03:00:51.2113949Z # Subtest: watchProvidersFile: in-place write and atomic rename both trigger a reload; close() stops watching
+2026-10-22T03:00:51.2114990Z ok 103 - watchProvidersFile: in-place write and atomic rename both trigger a reload; close() stops watching
+2026-10-22T03:00:51.2115617Z   ---
+2026-10-22T03:00:51.2115829Z   duration_ms: 331.3535
+2026-10-22T03:00:51.2116074Z   type: 'test'
+2026-10-22T03:00:51.2116287Z   ...
+2026-10-22T03:00:51.2116816Z # Subtest: ConcurrencyLimiter.setMax / providerGate resize after a reload changes concurrency
+2026-10-22T03:00:51.2117644Z ok 104 - ConcurrencyLimiter.setMax / providerGate resize after a reload changes concurrency
+2026-10-22T03:00:51.2118197Z   ---
+2026-10-22T03:00:51.2118370Z   duration_ms: 18.4336
+2026-10-22T03:00:51.2118612Z   type: 'test'
+2026-10-22T03:00:51.2118829Z   ...
+2026-10-22T03:00:51.2275456Z # Subtest: SettingsStore: differential vs original Settings (L5291) — load/normalise/get/patch/written bytes/legacy creds
+2026-10-22T03:00:51.2280213Z ok 105 - SettingsStore: differential vs original Settings (L5291) — load/normalise/get/patch/written bytes/legacy creds
+2026-10-22T03:00:51.2281190Z   ---
+2026-10-22T03:00:51.2283221Z   duration_ms: 21.2429
+2026-10-22T03:00:51.2283946Z   type: 'test'
+2026-10-22T03:00:51.2284366Z   ...
+2026-10-22T03:00:51.2285675Z # Subtest: rendererWritableSettingsPatch: differential vs original L5107; PORT-NEW llmRoute filter by registry
+2026-10-22T03:00:51.2287244Z ok 106 - rendererWritableSettingsPatch: differential vs original L5107; PORT-NEW llmRoute filter by registry
+2026-10-22T03:00:51.2288029Z   ---
+2026-10-22T03:00:51.2288530Z   duration_ms: 1.9741
+2026-10-22T03:00:51.2288845Z   type: 'test'
+2026-10-22T03:00:51.2289132Z   ...
+2026-10-22T03:00:51.2290000Z # Subtest: SettingsStore PORT-NEW: provider route kept when registered, parked (hidden but preserved on disk) when not, re-adopted on revalidate
+2026-10-22T03:00:51.2291813Z ok 107 - SettingsStore PORT-NEW: provider route kept when registered, parked (hidden but preserved on disk) when not, re-adopted on revalidate
+2026-10-22T03:00:51.2292634Z   ---
+2026-10-22T03:00:51.2292928Z   duration_ms: 4.3559
+2026-10-22T03:00:51.2293214Z   type: 'test'
+2026-10-22T03:00:51.2293497Z   ...
+2026-10-22T03:00:51.2294401Z # Subtest: LlmRouteService: sessionLlmRoute / sessionHelperKind / sessionModel differential vs original AgentHost (L40822-40872); provider routes
+2026-10-22T03:00:51.2295979Z ok 108 - LlmRouteService: sessionLlmRoute / sessionHelperKind / sessionModel differential vs original AgentHost (L40822-40872); provider routes
+2026-10-22T03:00:51.2296844Z   ---
+2026-10-22T03:00:51.2297110Z   duration_ms: 20.2998
+2026-10-22T03:00:51.2297424Z   type: 'test'
+2026-10-22T03:00:51.2297712Z   ...
+2026-10-22T03:00:51.2298573Z # Subtest: localRuntimeEnv: differential vs original createLocalRuntime env (L23214-23230 + L23282-23321) for claude-code/gateway; provider branch
+2026-10-22T03:00:51.2301368Z ok 109 - localRuntimeEnv: differential vs original createLocalRuntime env (L23214-23230 + L23282-23321) for claude-code/gateway; provider branch
+2026-10-22T03:00:51.2302528Z   ---
+2026-10-22T03:00:51.2302833Z   duration_ms: 21.772
+2026-10-22T03:00:51.2303152Z   type: 'test'
+2026-10-22T03:00:51.2303432Z   ...
+2026-10-22T03:00:51.2304574Z # Subtest: sessionRuntimeConfig → a REAL child process receives base URL, auth token (past sanitizedAgentEnv), aliases, isolated profile; no other secret leaks
+2026-10-22T03:00:51.2306403Z ok 110 - sessionRuntimeConfig → a REAL child process receives base URL, auth token (past sanitizedAgentEnv), aliases, isolated profile; no other secret leaks
+2026-10-22T03:00:51.2309545Z   ---
+2026-10-22T03:00:51.2310641Z   duration_ms: 54.5932
+2026-10-22T03:00:51.2310930Z   type: 'test'
+2026-10-22T03:00:51.2311836Z   ...
+2026-10-22T03:00:51.2312950Z # Subtest: helper creds + readiness per route; helper request for a provider video reaches the provider (mock)
+2026-10-22T03:00:51.2314353Z ok 111 - helper creds + readiness per route; helper request for a provider video reaches the provider (mock)
+2026-10-22T03:00:51.2315104Z   ---
+2026-10-22T03:00:51.2315379Z   duration_ms: 56.1745
+2026-10-22T03:00:51.2315672Z   type: 'test'
+2026-10-22T03:00:51.2315938Z   ...
+2026-10-22T03:00:51.2317508Z # Subtest: createLlmRuntime: IPC handlers settings:get/set + engine:llmRouteReadiness; route-change hook; provider removed by hot reload → fallback + hook, restored → re-adopted
+2026-10-22T03:00:51.2321086Z ok 112 - createLlmRuntime: IPC handlers settings:get/set + engine:llmRouteReadiness; route-change hook; provider removed by hot reload → fallback + hook, restored → re-adopted
+2026-10-22T03:00:51.2323717Z   ---
+2026-10-22T03:00:51.2324034Z   duration_ms: 86.932
+2026-10-22T03:00:51.2324315Z   type: 'test'
+2026-10-22T03:00:51.2324577Z   ...
+2026-10-22T03:00:51.2325450Z # Subtest: port:llm:routes lists built-ins + providers (key presence, agent/helper capability, structured mode, no secrets); selection via settings:set round-trips
+2026-10-22T03:00:51.2326910Z ok 113 - port:llm:routes lists built-ins + providers (key presence, agent/helper capability, structured mode, no secrets); selection via settings:set round-trips
+2026-10-22T03:00:51.2327674Z   ---
+2026-10-22T03:00:51.2327923Z   duration_ms: 4.2235
+2026-10-22T03:00:51.2328216Z   type: 'test'
+2026-10-22T03:00:51.2328503Z   ...
+2026-10-22T03:00:51.2460982Z # Subtest: chat.completions: text+image(base64,url)+pdf → content parts; text-only stays a string; system first
+2026-10-22T03:00:51.2468246Z ok 114 - chat.completions: text+image(base64,url)+pdf → content parts; text-only stays a string; system first
+2026-10-22T03:00:51.2468929Z   ---
+2026-10-22T03:00:51.2469272Z   duration_ms: 2.3686
+2026-10-22T03:00:51.2469582Z   type: 'test'
+2026-10-22T03:00:51.2469864Z   ...
+2026-10-22T03:00:51.2470668Z # Subtest: responses: input_text / input_image(detail auto) / input_file(file_data | file_url); instructions; max_output_tokens
+2026-10-22T03:00:51.2472120Z ok 115 - responses: input_text / input_image(detail auto) / input_file(file_data | file_url); instructions; max_output_tokens
+2026-10-22T03:00:51.2472885Z   ---
+2026-10-22T03:00:51.2473168Z   duration_ms: 0.4595
+2026-10-22T03:00:51.2473497Z   type: 'test'
+2026-10-22T03:00:51.2473785Z   ...
+2026-10-22T03:00:51.2474468Z # Subtest: documents: text / content sources become text; thinking blocks dropped; anthropic passthrough untouched
+2026-10-22T03:00:51.2500456Z ok 116 - documents: text / content sources become text; thinking blocks dropped; anthropic passthrough untouched
+2026-10-22T03:00:51.2502104Z   ---
+2026-10-22T03:00:51.2502903Z   duration_ms: 0.4054
+2026-10-22T03:00:51.2503823Z   type: 'test'
+2026-10-22T03:00:51.2504378Z   ...
+2026-10-22T03:00:51.2505123Z # Subtest: tools: tool_use/tool_result/tools/tool_choice per protocol; images inside tool_result follow as user content
+2026-10-22T03:00:51.2506639Z ok 117 - tools: tool_use/tool_result/tools/tool_choice per protocol; images inside tool_result follow as user content
+2026-10-22T03:00:51.2507335Z   ---
+2026-10-22T03:00:51.2507627Z   duration_ms: 1.6254
+2026-10-22T03:00:51.2508196Z   type: 'test'
+2026-10-22T03:00:51.2508487Z   ...
+2026-10-22T03:00:51.2509250Z # Subtest: unrepresentable content → UNSUPPORTED_CONTENT (never silently dropped)
+2026-10-22T03:00:51.2510181Z ok 118 - unrepresentable content → UNSUPPORTED_CONTENT (never silently dropped)
+2026-10-22T03:00:51.2510711Z   ---
+2026-10-22T03:00:51.2510974Z   duration_ms: 0.985
+2026-10-22T03:00:51.2511500Z   type: 'test'
+2026-10-22T03:00:51.2511832Z   ...
+2026-10-22T03:00:51.2512617Z # Subtest: end-to-end (mock): image reaches an openai-chat provider on the wire; UNSUPPORTED_CONTENT returns {ok:false} without a request
+2026-10-22T03:00:51.2513915Z ok 119 - end-to-end (mock): image reaches an openai-chat provider on the wire; UNSUPPORTED_CONTENT returns {ok:false} without a request
+2026-10-22T03:00:51.2514680Z   ---
+2026-10-22T03:00:51.2514975Z   duration_ms: 68.4791
+2026-10-22T03:00:51.2515305Z   type: 'test'
+2026-10-22T03:00:51.2515578Z   ...
+2026-10-22T03:00:51.3840535Z # Subtest: config: defaults applied, trailing slash trimmed, preset present, strict schema
+2026-10-22T03:00:51.3854983Z ok 120 - config: defaults applied, trailing slash trimmed, preset present, strict schema
+2026-10-22T03:00:51.3855695Z   ---
+2026-10-22T03:00:51.3856001Z   duration_ms: 15.0051
+2026-10-22T03:00:51.3856335Z   type: 'test'
+2026-10-22T03:00:51.3856616Z   ...
+2026-10-22T03:00:51.3857595Z # Subtest: config: validation errors are CONFIG_INVALID with a path; secrets and auth headers are refused
+2026-10-22T03:00:51.3859266Z ok 121 - config: validation errors are CONFIG_INVALID with a path; secrets and auth headers are refused
+2026-10-22T03:00:51.3859968Z   ---
+2026-10-22T03:00:51.3860257Z   duration_ms: 6.4799
+2026-10-22T03:00:51.3860602Z   type: 'test'
+2026-10-22T03:00:51.3860878Z   ...
+2026-10-22T03:00:51.3861529Z # Subtest: config: a user entry named like a preset merges over it (nested one level, auth replaced)
+2026-10-22T03:00:51.3862840Z ok 122 - config: a user entry named like a preset merges over it (nested one level, auth replaced)
+2026-10-22T03:00:51.3863491Z   ---
+2026-10-22T03:00:51.3863804Z   duration_ms: 1.1069
+2026-10-22T03:00:51.3864132Z   type: 'test'
+2026-10-22T03:00:51.3864403Z   ...
+2026-10-22T03:00:51.3865118Z # Subtest: registry: providers file via env var; missing explicit file errors; invalid file degrades to presets
+2026-10-22T03:00:51.3866250Z ok 123 - registry: providers file via env var; missing explicit file errors; invalid file degrades to presets
+2026-10-22T03:00:51.3866959Z   ---
+2026-10-22T03:00:51.3867265Z   duration_ms: 5.2716
+2026-10-22T03:00:51.3867587Z   type: 'test'
+2026-10-22T03:00:51.3867862Z   ...
+2026-10-22T03:00:51.3869012Z # Subtest: resolution: every protocol × auth combo → endpoint URL + headers; env overrides; summaries never expose the key
+2026-10-22T03:00:51.3870452Z ok 124 - resolution: every protocol × auth combo → endpoint URL + headers; env overrides; summaries never expose the key
+2026-10-22T03:00:51.3871193Z   ---
+2026-10-22T03:00:51.3871500Z   duration_ms: 5.5263
+2026-10-22T03:00:51.3871829Z   type: 'test'
+2026-10-22T03:00:51.3872125Z   ...
+2026-10-22T03:00:51.3872850Z # Subtest: routes: any registered provider is a valid llmRoute; unknown ones fall back / are deleted; session model
+2026-10-22T03:00:51.3873915Z ok 125 - routes: any registered provider is a valid llmRoute; unknown ones fall back / are deleted; session model
+2026-10-22T03:00:51.3874593Z   ---
+2026-10-22T03:00:51.3874868Z   duration_ms: 0.4629
+2026-10-22T03:00:51.3875189Z   type: 'test'
+2026-10-22T03:00:51.3881875Z   ...
+2026-10-22T03:00:51.3882706Z # Subtest: child env: key read from UNSANITIZED env and passed explicitly past sanitizedAgentEnv, per auth scheme
+2026-10-22T03:00:51.3890031Z ok 126 - child env: key read from UNSANITIZED env and passed explicitly past sanitizedAgentEnv, per auth scheme
+2026-10-22T03:00:51.3891114Z   ---
+2026-10-22T03:00:51.3891437Z   duration_ms: 1.9076
+2026-10-22T03:00:51.3891773Z   type: 'test'
+2026-10-22T03:00:51.3892083Z   ...
+2026-10-22T03:00:51.3893318Z # Subtest: protocol adapters: Anthropic-shaped helper body → chat / responses bodies; text extraction
+2026-10-22T03:00:51.3894580Z ok 127 - protocol adapters: Anthropic-shaped helper body → chat / responses bodies; text extraction
+2026-10-22T03:00:51.3895277Z   ---
+2026-10-22T03:00:51.3895572Z   duration_ms: 1.5644
+2026-10-22T03:00:51.3895898Z   type: 'test'
+2026-10-22T03:00:51.3896199Z   ...
+2026-10-22T03:00:51.4710392Z # Subtest: helper call end-to-end (mock) for openai-chat-completions with custom header auth + config retry policy
+2026-10-22T03:00:51.4712332Z ok 128 - helper call end-to-end (mock) for openai-chat-completions with custom header auth + config retry policy
+2026-10-22T03:00:51.4713132Z   ---
+2026-10-22T03:00:51.4713420Z   duration_ms: 128.9832
+2026-10-22T03:00:51.4713757Z   type: 'test'
+2026-10-22T03:00:51.4714026Z   ...
+2026-10-22T03:00:51.5375374Z # Subtest: helper call (mock) for openai-responses + bearer; credential body code from config is not retried; 500 passes through
+2026-10-22T03:00:51.5377346Z ok 129 - helper call (mock) for openai-responses + bearer; credential body code from config is not retried; 500 passes through
+2026-10-22T03:00:51.5378448Z   ---
+2026-10-22T03:00:51.5378753Z   duration_ms: 70.3844
+2026-10-22T03:00:51.5379095Z   type: 'test'
+2026-10-22T03:00:51.5379629Z   ...
+2026-10-22T03:00:51.6120918Z # Subtest: per-provider gates: concurrency from config (2), independent across providers; network error → typed NETWORK
+2026-10-22T03:00:51.6121988Z ok 130 - per-provider gates: concurrency from config (2), independent across providers; network error → typed NETWORK
+2026-10-22T03:00:51.6122806Z   ---
+2026-10-22T03:00:51.6122979Z   duration_ms: 80.9755
+2026-10-22T03:00:51.6123186Z   type: 'test'
+2026-10-22T03:00:51.6123335Z   ...
+2026-10-22T03:00:51.6408694Z # Subtest: timeout per attempt → typed TIMEOUT
+2026-10-22T03:00:51.6409144Z ok 131 - timeout per attempt → typed TIMEOUT
+2026-10-22T03:00:51.6409363Z   ---
+2026-10-22T03:00:51.6409549Z   duration_ms: 26.4425
+2026-10-22T03:00:51.6409735Z   type: 'test'
+2026-10-22T03:00:51.6409883Z   ...
+2026-10-22T03:00:51.6410377Z # Subtest: withRetry: retry-after honoured and capped by policy maxDelayMs; exhaustion → RATE_LIMITED; bodyCode path
+2026-10-22T03:00:51.6411823Z ok 132 - withRetry: retry-after honoured and capped by policy maxDelayMs; exhaustion → RATE_LIMITED; bodyCode path
+2026-10-22T03:00:51.6412479Z   ---
+2026-10-22T03:00:51.6412703Z   duration_ms: 0.8925
+2026-10-22T03:00:51.6413375Z   type: 'test'
+2026-10-22T03:00:51.6413564Z   ...
+2026-10-22T03:00:51.6413964Z # Subtest: logger: secret-named fields and registered secret values are redacted everywhere
+2026-10-22T03:00:51.6414798Z ok 133 - logger: secret-named fields and registered secret values are redacted everywhere
+2026-10-22T03:00:51.6415551Z   ---
+2026-10-22T03:00:51.6415721Z   duration_ms: 0.3494
+2026-10-22T03:00:51.6415894Z   type: 'test'
+2026-10-22T03:00:51.6416036Z   ...
+2026-10-22T03:00:51.6416375Z # Subtest: shipped example providers file validates; settings type accepts provider routes
+2026-10-22T03:00:51.6416882Z ok 134 - shipped example providers file validates; settings type accepts provider routes
+2026-10-22T03:00:51.6417193Z   ---
+2026-10-22T03:00:51.6417331Z   duration_ms: 1.1169
+2026-10-22T03:00:51.6417498Z   type: 'test'
+2026-10-22T03:00:51.6417653Z   ...
+2026-10-22T03:00:51.6541849Z # Subtest: takeOutputFormat: three spellings normalise; output_config keeps effort; text = none; two spellings = error
+2026-10-22T03:00:51.6542866Z ok 135 - takeOutputFormat: three spellings normalise; output_config keeps effort; text = none; two spellings = error
+2026-10-22T03:00:51.6543518Z   ---
+2026-10-22T03:00:51.6544100Z   duration_ms: 2.8879
+2026-10-22T03:00:51.6544361Z   type: 'test'
+2026-10-22T03:00:51.6544573Z   ...
+2026-10-22T03:00:51.6545395Z # Subtest: native: openai-chat gets response_format json_schema (passthrough from either spelling) + reasoning_effort from output_config.effort
+2026-10-22T03:00:51.6546987Z ok 136 - native: openai-chat gets response_format json_schema (passthrough from either spelling) + reasoning_effort from output_config.effort
+2026-10-22T03:00:51.6548570Z   ---
+2026-10-22T03:00:51.6548824Z   duration_ms: 1.5282
+2026-10-22T03:00:51.6549101Z   type: 'test'
+2026-10-22T03:00:51.6549329Z   ...
+2026-10-22T03:00:51.6550401Z # Subtest: native: responses gets text.format; anthropic gets output_config.format (also from response_format)
+2026-10-22T03:00:51.6551517Z ok 137 - native: responses gets text.format; anthropic gets output_config.format (also from response_format)
+2026-10-22T03:00:51.6552136Z   ---
+2026-10-22T03:00:51.6552358Z   duration_ms: 0.8042
+2026-10-22T03:00:51.6552623Z   type: 'test'
+2026-10-22T03:00:51.6552826Z   ...
+2026-10-22T03:00:51.6553201Z # Subtest: tool mode: one forced tool per protocol, no native field; caller tools kept
+2026-10-22T03:00:51.6553673Z ok 138 - tool mode: one forced tool per protocol, no native field; caller tools kept
+2026-10-22T03:00:51.6553972Z   ---
+2026-10-22T03:00:51.6554126Z   duration_ms: 0.6401
+2026-10-22T03:00:51.6554303Z   type: 'test'
+2026-10-22T03:00:51.6554448Z   ...
+2026-10-22T03:00:51.6554660Z # Subtest: off mode drops the format and reports it
+2026-10-22T03:00:51.6554961Z ok 139 - off mode drops the format and reports it
+2026-10-22T03:00:51.6555189Z   ---
+2026-10-22T03:00:51.6555343Z   duration_ms: 0.2793
+2026-10-22T03:00:51.6555515Z   type: 'test'
+2026-10-22T03:00:51.6555673Z   ...
+2026-10-22T03:00:51.6556126Z # Subtest: extractText: structured tool call wins (anthropic tool_use / chat tool_calls / responses function_call); JSON normalised
+2026-10-22T03:00:51.6556832Z ok 140 - extractText: structured tool call wins (anthropic tool_use / chat tool_calls / responses function_call); JSON normalised
+2026-10-22T03:00:51.6557237Z   ---
+2026-10-22T03:00:51.6557380Z   duration_ms: 0.4913
+2026-10-22T03:00:51.6557543Z   type: 'test'
+2026-10-22T03:00:51.6557691Z   ...
+2026-10-22T03:00:51.6557960Z # Subtest: MiniMax preset uses tool mode; user file can switch to native
+2026-10-22T03:00:51.6558347Z ok 141 - MiniMax preset uses tool mode; user file can switch to native
+2026-10-22T03:00:51.6558624Z   ---
+2026-10-22T03:00:51.6558763Z   duration_ms: 14.3158
+2026-10-22T03:00:51.6558920Z   type: 'test'
+2026-10-22T03:00:51.6559065Z   ...
+2026-10-22T03:00:51.6559709Z # Subtest: end-to-end (mock): openai-chat provider in tool mode — wire body carries the forced tool, result is the JSON
+2026-10-22T03:00:51.6560441Z ok 142 - end-to-end (mock): openai-chat provider in tool mode — wire body carries the forced tool, result is the JSON
+2026-10-22T03:00:51.6560805Z   ---
+2026-10-22T03:00:51.6560945Z   duration_ms: 73.5762
+2026-10-22T03:00:51.6561181Z   type: 'test'
+2026-10-22T03:00:51.6561392Z   ...
+2026-10-22T03:00:51.7465686Z # Subtest: session:deletionPlan / session:delete (L39205/L39248): plan lists jobs/<id>, a running turn blocks, delete moves the job into .videoclaw-trash and drops the row
+2026-10-22T03:00:51.7467440Z ok 143 - session:deletionPlan / session:delete (L39205/L39248): plan lists jobs/<id>, a running turn blocks, delete moves the job into .videoclaw-trash and drops the row
+2026-10-22T03:00:51.7469100Z   ---
+2026-10-22T03:00:51.7475374Z   duration_ms: 49.4312
+2026-10-22T03:00:51.7517717Z   type: 'test'
+2026-10-22T03:00:51.7521139Z   ...
+2026-10-22T03:00:51.7522505Z # Subtest: session:retry (L42565): an errored turn keeps its input; retry re-delivers the same text into a resumed runtime; nothing to retry → false
+2026-10-22T03:00:51.7524118Z ok 144 - session:retry (L42565): an errored turn keeps its input; retry re-delivers the same text into a resumed runtime; nothing to retry → false
+2026-10-22T03:00:51.7525318Z   ---
+2026-10-22T03:00:51.7525615Z   duration_ms: 58.1582
+2026-10-22T03:00:51.7525940Z   type: 'test'
+2026-10-22T03:00:51.7526228Z   ...
+2026-10-22T03:00:51.7528544Z # Subtest: session:startContinuation + job:adopt (L38972/L47802): the finalized video's job moves into a deterministic continuation chat; idempotent; adopt(null) clears the offer
+2026-10-22T03:00:51.7530506Z ok 145 - session:startContinuation + job:adopt (L38972/L47802): the finalized video's job moves into a deterministic continuation chat; idempotent; adopt(null) clears the offer
+2026-10-22T03:00:51.7531499Z   ---
+2026-10-22T03:00:51.7531781Z   duration_ms: 12.3816
+2026-10-22T03:00:51.7532113Z   type: 'test'
+2026-10-22T03:00:51.7532406Z   ...
+2026-10-22T03:00:51.7533497Z # Subtest: spend:get / spend:setCeiling (L45686/L47158): new videos start unlimited; a ceiling is capped + persisted (spend-budgets.json) + pushed; Bypass refuses without consent
+2026-10-22T03:00:51.7540050Z ok 146 - spend:get / spend:setCeiling (L45686/L47158): new videos start unlimited; a ceiling is capped + persisted (spend-budgets.json) + pushed; Bypass refuses without consent
+2026-10-22T03:00:51.7543914Z   ---
+2026-10-22T03:00:51.7545039Z   duration_ms: 9.7245
+2026-10-22T03:00:51.7559229Z   type: 'test'
+2026-10-22T03:00:51.7559590Z   ...
+2026-10-22T03:00:51.7560678Z # Subtest: materials (L44876/L44932): a journaled arrival is published once (material_arrived + materials:changed + display row) and materialPreview resolves the file
+2026-10-22T03:00:51.7562413Z ok 147 - materials (L44876/L44932): a journaled arrival is published once (material_arrived + materials:changed + display row) and materialPreview resolves the file
+2026-10-22T03:00:51.7563325Z   ---
+2026-10-22T03:00:51.7563626Z   duration_ms: 16.5537
+2026-10-22T03:00:51.7563936Z   type: 'test'
+2026-10-22T03:00:51.7564212Z   ...
+2026-10-22T03:00:51.7565268Z # Subtest: job:originalContext (L45675): reads the bound job's promise.json brief + the first user prompt; unbound → null
+2026-10-22T03:00:51.7566722Z ok 148 - job:originalContext (L45675): reads the bound job's promise.json brief + the first user prompt; unbound → null
+2026-10-22T03:00:51.7567516Z   ---
+2026-10-22T03:00:51.7567803Z   duration_ms: 6.6
+2026-10-22T03:00:51.7568104Z   type: 'test'
+2026-10-22T03:00:51.7568391Z   ...
+2026-10-22T03:00:51.7569907Z # Subtest: quickstart:start (L61294 → QuickstartStartCoordinator L33623): one durable destination with meta.quickstart, the starter prompt delivered once, firstTurn.submittedAt recorded, duplicate converges
+2026-10-22T03:00:51.7572372Z ok 149 - quickstart:start (L61294 → QuickstartStartCoordinator L33623): one durable destination with meta.quickstart, the starter prompt delivered once, firstTurn.submittedAt recorded, duplicate converges
+2026-10-22T03:00:51.7573613Z   ---
+2026-10-22T03:00:51.7574177Z   duration_ms: 19.8279
+2026-10-22T03:00:51.7574502Z   type: 'test'
+2026-10-22T03:00:51.7574803Z   ...
+2026-10-22T03:00:51.7576087Z # Subtest: local-channels-26: library tenant guard + setTenant + seedPack (README with the brief), voices answer the account-less branch, hfPreview/feedback absent fallbacks
+2026-10-22T03:00:51.7583826Z ok 150 - local-channels-26: library tenant guard + setTenant + seedPack (README with the brief), voices answer the account-less branch, hfPreview/feedback absent fallbacks
+2026-10-22T03:00:51.7598152Z   ---
+2026-10-22T03:00:51.7598829Z   duration_ms: 5.0947
+2026-10-22T03:00:51.7599121Z   type: 'test'
+2026-10-22T03:00:51.7599353Z   ...
+2026-10-22T03:00:51.7600772Z # Subtest: LocalResetController (L5826) + runPendingLocalReset (L5960): prepare plans, a stale plan is refused, commit writes the marker + relaunches, the next start archives the workspace and clears userData
+2026-10-22T03:00:51.7602849Z ok 151 - LocalResetController (L5826) + runPendingLocalReset (L5960): prepare plans, a stale plan is refused, commit writes the marker + relaunches, the next start archives the workspace and clears userData
+2026-10-22T03:00:51.7603902Z   ---
+2026-10-22T03:00:51.7604377Z   duration_ms: 132.5414
+2026-10-22T03:00:51.7604648Z   type: 'test'
+2026-10-22T03:00:51.7604866Z   ...
+2026-10-22T03:00:51.7606012Z # Subtest: bootstrap:revertEngine (L10240): one engine → 'No previous engine is available.'; a retained N-1 that passes doctor becomes active and the rest are pruned
+2026-10-22T03:00:51.7607945Z ok 152 - bootstrap:revertEngine (L10240): one engine → 'No previous engine is available.'; a retained N-1 that passes doctor becomes active and the rest are pruned
+2026-10-22T03:00:51.7608785Z   ---
+2026-10-22T03:00:51.7608994Z   duration_ms: 12.0666
+2026-10-22T03:00:51.7609260Z   type: 'test'
+2026-10-22T03:00:51.7609479Z   ...
+2026-10-22T03:00:51.7610543Z # Subtest: feedback:capture / discard (FeedbackService L57172): no gateway key → blockedRoute, no screenshot, consentRequired; discard forgets the capture
+2026-10-22T03:00:51.7612167Z ok 153 - feedback:capture / discard (FeedbackService L57172): no gateway key → blockedRoute, no screenshot, consentRequired; discard forgets the capture
+2026-10-22T03:00:51.7612975Z   ---
+2026-10-22T03:00:51.7613189Z   duration_ms: 1.8755
+2026-10-22T03:00:51.7613444Z   type: 'test'
+2026-10-22T03:00:51.7613670Z   ...
+2026-10-22T03:00:51.7723914Z # Subtest: hfPreview (L56487): availability true only for a job-owned composition with the pinned runtime copy; editApply rewrites the element text atomically
+2026-10-22T03:00:51.7726456Z ok 154 - hfPreview (L56487): availability true only for a job-owned composition with the pinned runtime copy; editApply rewrites the element text atomically
+2026-10-22T03:00:51.7727339Z   ---
+2026-10-22T03:00:51.7727635Z   duration_ms: 30.8029
+2026-10-22T03:00:51.7727964Z   type: 'test'
+2026-10-22T03:00:51.7728252Z   ...
+2026-10-22T03:00:51.7991894Z # Subtest: attachment:pasteImage / preview (L62269/L62253): a clipboard PNG is written to the intake dir and staged as a paste chip; non-PNG bytes are refused
+2026-10-22T03:00:51.7995583Z ok 155 - attachment:pasteImage / preview (L62269/L62253): a clipboard PNG is written to the intake dir and staged as a paste chip; non-PNG bytes are refused
+2026-10-22T03:00:51.7996615Z   ---
+2026-10-22T03:00:51.7996916Z   duration_ms: 31.7058
+2026-10-22T03:00:51.7997254Z   type: 'test'
+2026-10-22T03:00:51.7997545Z   ...
+2026-10-22T03:00:51.7999323Z # Subtest: docs/26: handler wiring of the M9 channels the UI run could not reach — voice:approve/remove (account-less branch), library:scan (tenant guard + engine error), characters:retry, input:respond, media:discardVoice
+2026-10-22T03:00:51.8007301Z ok 156 - docs/26: handler wiring of the M9 channels the UI run could not reach — voice:approve/remove (account-less branch), library:scan (tenant guard + engine error), characters:retry, input:respond, media:discardVoice
+2026-10-22T03:00:51.8008457Z   ---
+2026-10-22T03:00:51.8008631Z   duration_ms: 1.6508
+2026-10-22T03:00:51.8008808Z   type: 'test'
+2026-10-22T03:00:51.8008954Z   ...
+2026-10-22T03:00:51.8009568Z # Subtest: media:voiceDictationStatus (L61910) = voiceDictationStatus(voiceTools()): ffmpeg but no on-device helper → attach-only
+2026-10-22T03:00:51.8010409Z ok 157 - media:voiceDictationStatus (L61910) = voiceDictationStatus(voiceTools()): ffmpeg but no on-device helper → attach-only
+2026-10-22T03:00:51.8010825Z   ---
+2026-10-22T03:00:51.8010970Z   duration_ms: 1.5695
+2026-10-22T03:00:51.8011152Z   type: 'test'
+2026-10-22T03:00:51.8011302Z   ...
+2026-10-22T03:00:51.8194206Z # Subtest: session:history replays the SDK transcript through the ORIGINAL historyToEvents: typed text (display sidecar), assistant text, tool rows; sdkSessionId captured
+2026-10-22T03:00:51.8196405Z ok 158 - session:history replays the SDK transcript through the ORIGINAL historyToEvents: typed text (display sidecar), assistant text, tool rows; sdkSessionId captured # SKIP Claude Agent SDK not installed (npm run agent-sdk:install)
+2026-10-22T03:00:51.8205415Z   ---
+2026-10-22T03:00:51.8235087Z   duration_ms: 1.811
+2026-10-22T03:00:51.8242134Z   type: 'test'
+2026-10-22T03:00:51.8243478Z   ...
+2026-10-22T03:00:51.8248983Z # Subtest: historyToEvents (verbatim): no SDK transcript → display rows only; legacy app preambles stripped; unanswered tool closes as abandoned
+2026-10-22T03:00:51.8250898Z ok 159 - historyToEvents (verbatim): no SDK transcript → display rows only; legacy app preambles stripped; unanswered tool closes as abandoned
+2026-10-22T03:00:51.8251766Z   ---
+2026-10-22T03:00:51.8251979Z   duration_ms: 6.7316
+2026-10-22T03:00:51.8252243Z   type: 'test'
+2026-10-22T03:00:51.8252449Z   ...
+2026-10-22T03:00:51.8253541Z # Subtest: session:rename / session:reorder / session:setPermissionMode / removeSession (AgentHost, original L38915 / L38482 / L43987 / L39046)
+2026-10-22T03:00:51.8254809Z ok 160 - session:rename / session:reorder / session:setPermissionMode / removeSession (AgentHost, original L38915 / L38482 / L43987 / L39046)
+2026-10-22T03:00:51.8255462Z   ---
+2026-10-22T03:00:51.8255683Z   duration_ms: 124.1283
+2026-10-22T03:00:51.8255918Z   type: 'test'
+2026-10-22T03:00:51.8256115Z   ...
+2026-10-22T03:00:51.8256910Z # Subtest: client:rename / client:reorder / client:remove (SessionRegistry L36332-36423): validation, rollback, tombstones survive the whole-file write
+2026-10-22T03:00:51.8258267Z ok 161 - client:rename / client:reorder / client:remove (SessionRegistry L36332-36423): validation, rollback, tombstones survive the whole-file write
+2026-10-22T03:00:51.8258980Z   ---
+2026-10-22T03:00:51.8259176Z   duration_ms: 28.8448
+2026-10-22T03:00:51.8259412Z   type: 'test'
+2026-10-22T03:00:51.8259609Z   ...
+2026-10-22T03:00:51.8260419Z # Subtest: local channels: quit:rendererState / permission:shown / file:openExternal / media:requestMic / analytics / revealSetupLog / stageEtas
+2026-10-22T03:00:51.8261951Z ok 162 - local channels: quit:rendererState / permission:shown / file:openExternal / media:requestMic / analytics / revealSetupLog / stageEtas
+2026-10-22T03:00:51.8262645Z   ---
+2026-10-22T03:00:51.8262854Z   duration_ms: 1.9047
+2026-10-22T03:00:51.8263090Z   type: 'test'
+2026-10-22T03:00:51.8263296Z   ...
+2026-10-22T03:00:51.8264128Z # Subtest: taste:list / taste:commit / taste:decline (verbatim taste module): scopes, COMMITMENTS round-trip, ANTI-COMMITMENTS
+2026-10-22T03:00:51.8265243Z ok 163 - taste:list / taste:commit / taste:decline (verbatim taste module): scopes, COMMITMENTS round-trip, ANTI-COMMITMENTS
+2026-10-22T03:00:51.8265851Z   ---
+2026-10-22T03:00:51.8266052Z   duration_ms: 8.0618
+2026-10-22T03:00:51.8266287Z   type: 'test'
+2026-10-22T03:00:51.8266494Z   ...
+2026-10-22T03:00:51.8267146Z # Subtest: characters:create / approve / discard / delete over the verbatim CharacterStore (+ exposeCharacter grants)
+2026-10-22T03:00:51.8268883Z ok 164 - characters:create / approve / discard / delete over the verbatim CharacterStore (+ exposeCharacter grants)
+2026-10-22T03:00:51.8269468Z   ---
+2026-10-22T03:00:51.8269657Z   duration_ms: 21.265
+2026-10-22T03:00:51.8269890Z   type: 'test'
+2026-10-22T03:00:51.8270090Z   ...
+2026-10-22T03:00:51.8271023Z # Subtest: quickstart:mark / impression / previewed (L61250-61293) over the shipped catalog: validation + local latency ring, no outbox
+2026-10-22T03:00:51.8272693Z ok 165 - quickstart:mark / impression / previewed (L61250-61293) over the shipped catalog: validation + local latency ring, no outbox
+2026-10-22T03:00:51.8273296Z   ---
+2026-10-22T03:00:51.8273473Z   duration_ms: 34.094
+2026-10-22T03:00:51.8273696Z   type: 'test'
+2026-10-22T03:00:51.8273878Z   ...
+2026-10-22T03:00:51.8276226Z # Subtest: docs/26: a composer turn is delivered with uuid composerTurnMessageUuid(clientTurnId) (pushInput L23073) — the ORIGINAL renderer's optimistic row id — so history re-fetches do not duplicate the live user bubble
+2026-10-22T03:00:51.8279395Z ok 166 - docs/26: a composer turn is delivered with uuid composerTurnMessageUuid(clientTurnId) (pushInput L23073) — the ORIGINAL renderer's optimistic row id — so history re-fetches do not duplicate the live user bubble
+2026-10-22T03:00:51.8280488Z   ---
+2026-10-22T03:00:51.8280714Z   duration_ms: 34.3315
+2026-10-22T03:00:51.8281212Z   type: 'test'
+2026-10-22T03:00:51.8281394Z   ...
+2026-10-22T03:00:51.9069597Z # Subtest: memory:read/update/undo/openSource: the verbatim ProjectMemoryStore bound to the verified authority; refusal without one
+2026-10-22T03:00:51.9075051Z ok 167 - memory:read/update/undo/openSource: the verbatim ProjectMemoryStore bound to the verified authority; refusal without one
+2026-10-22T03:00:51.9075961Z   ---
+2026-10-22T03:00:51.9076278Z   duration_ms: 44.086
+2026-10-22T03:00:51.9076603Z   type: 'test'
+2026-10-22T03:00:51.9076878Z   ...
+2026-10-22T03:00:51.9078104Z # Subtest: sessionPlan:read/choose/retry: no plan can exist (propose_session_plan is studio MCP) → null / the original missing-state reply
+2026-10-22T03:00:51.9079696Z ok 168 - sessionPlan:read/choose/retry: no plan can exist (propose_session_plan is studio MCP) → null / the original missing-state reply
+2026-10-22T03:00:51.9080529Z   ---
+2026-10-22T03:00:51.9080819Z   duration_ms: 2.4143
+2026-10-22T03:00:51.9081162Z   type: 'test'
+2026-10-22T03:00:51.9081453Z   ...
+2026-10-22T03:00:51.9082205Z # Subtest: workflowSubmit:start: invalid id / name / eligibility branches of WorkflowSubmissionService.run (L59760)
+2026-10-22T03:00:51.9088701Z ok 169 - workflowSubmit:start: invalid id / name / eligibility branches of WorkflowSubmissionService.run (L59760)
+2026-10-22T03:00:51.9089472Z   ---
+2026-10-22T03:00:51.9089754Z   duration_ms: 0.8941
+2026-10-22T03:00:51.9090076Z   type: 'test'
+2026-10-22T03:00:51.9090362Z   ...
+2026-10-22T03:00:51.9091087Z # Subtest: engine:saveAgentProviderKey: the original validation; stored in the vault, never validated or sent
+2026-10-22T03:00:51.9092228Z ok 170 - engine:saveAgentProviderKey: the original validation; stored in the vault, never validated or sent
+2026-10-22T03:00:51.9093122Z   ---
+2026-10-22T03:00:51.9093440Z   duration_ms: 1.053
+2026-10-22T03:00:51.9093756Z   type: 'test'
+2026-10-22T03:00:51.9094048Z   ...
+2026-10-22T03:00:51.9515534Z # Subtest: app:update:preferences/channel/check: createUpdatePreferences + startUpdateCheck against the shim's release feed
+2026-10-22T03:00:51.9557357Z ok 171 - app:update:preferences/channel/check: createUpdatePreferences + startUpdateCheck against the shim's release feed
+2026-10-22T03:00:51.9558335Z   ---
+2026-10-22T03:00:51.9558601Z   duration_ms: 73.7986
+2026-10-22T03:00:51.9558958Z   type: 'test'
+2026-10-22T03:00:51.9559174Z   ...
+2026-10-22T03:00:52.0188433Z # Subtest: library:search/sync: the scoped lease (credentialsForBudgetedTools → shim PUT /v1/budgets) reaches the engine call; no proxy → paid-work-unavailable
+2026-10-22T03:00:52.0190659Z ok 172 - library:search/sync: the scoped lease (credentialsForBudgetedTools → shim PUT /v1/budgets) reaches the engine call; no proxy → paid-work-unavailable
+2026-10-22T03:00:52.0191647Z   ---
+2026-10-22T03:00:52.0191940Z   duration_ms: 57.022
+2026-10-22T03:00:52.0192233Z   type: 'test'
+2026-10-22T03:00:52.0192577Z   ...
+2026-10-22T03:00:52.0604240Z # Subtest: credits: a Claude usage-limit failure → accountLimit card → creditHandoffOffer available → continueOnCredits = a gateway-route continuation
+2026-10-22T03:00:52.0618854Z ok 173 - credits: a Claude usage-limit failure → accountLimit card → creditHandoffOffer available → continueOnCredits = a gateway-route continuation
+2026-10-22T03:00:52.0649275Z   ---
+2026-10-22T03:00:52.0659150Z   duration_ms: 58.9739
+2026-10-22T03:00:52.0726640Z   type: 'test'
+2026-10-22T03:00:52.0743423Z   ...
+2026-10-22T03:00:52.0790539Z # Subtest: media:transcribeVoice: the original session checks, then VoiceDictation's unavailable branch
+2026-10-22T03:00:52.0796846Z ok 174 - media:transcribeVoice: the original session checks, then VoiceDictation's unavailable branch
+2026-10-22T03:00:52.0809379Z   ---
+2026-10-22T03:00:52.0934906Z   duration_ms: 2.9583
+2026-10-22T03:00:52.0942780Z   type: 'test'
+2026-10-22T03:00:52.0943473Z   ...
+2026-10-22T03:00:52.0944540Z # Subtest: outbox / telemetry / feedback / sheets: authority snapshot, replay binding validation + durable session index, feedback passthrough, sheet plan/build guards
+2026-10-22T03:00:52.0946535Z ok 175 - outbox / telemetry / feedback / sheets: authority snapshot, replay binding validation + durable session index, feedback passthrough, sheet plan/build guards
+2026-10-22T03:00:52.0947610Z   ---
+2026-10-22T03:00:52.0947901Z   duration_ms: 1.6444
+2026-10-22T03:00:52.0948205Z   type: 'test'
+2026-10-22T03:00:52.0948477Z   ...
+2026-10-22T03:00:52.0949313Z # Subtest: M12 credits precondition: modelAccountLimit classifies the Claude usage limit; the e2e injection seam is inert outside UI-e2e
+2026-10-22T03:00:52.0950654Z ok 176 - M12 credits precondition: modelAccountLimit classifies the Claude usage limit; the e2e injection seam is inert outside UI-e2e
+2026-10-22T03:00:52.0951398Z   ---
+2026-10-22T03:00:52.0951655Z   duration_ms: 0.7365
+2026-10-22T03:00:52.0951946Z   type: 'test'
+2026-10-22T03:00:52.0952197Z   ...
+2026-10-22T03:00:52.0952939Z # (node:1048) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+2026-10-22T03:00:52.0953781Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-22T03:00:52.0954832Z # Subtest: pricing: MiniMax-M3.1-Flash fallback is 0.15 / 0.6 / cache-read 0.015 per M tokens; the sample call costs half the old flat table
+2026-10-22T03:00:52.0956374Z ok 177 - pricing: MiniMax-M3.1-Flash fallback is 0.15 / 0.6 / cache-read 0.015 per M tokens; the sample call costs half the old flat table
+2026-10-22T03:00:52.0957127Z   ---
+2026-10-22T03:00:52.0957409Z   duration_ms: 2.4244
+2026-10-22T03:00:52.0957710Z   type: 'test'
+2026-10-22T03:00:52.0957982Z   ...
+2026-10-22T03:00:52.0959006Z # Subtest: pricing: owner override (env JSON) beats models.dev, which beats the MiniMax fallback; bad JSON is ignored
+2026-10-22T03:00:52.0960140Z ok 178 - pricing: owner override (env JSON) beats models.dev, which beats the MiniMax fallback; bad JSON is ignored
+2026-10-22T03:00:52.0961354Z   ---
+2026-10-22T03:00:52.0961799Z   duration_ms: 88.5684
+2026-10-22T03:00:52.0963709Z   type: 'test'
+2026-10-22T03:00:52.0964579Z   ...
+2026-10-22T03:00:52.1333661Z # Subtest: ledger: cache-read tokens reported by MiniMax are recorded and charged at the cache-read price (JSON and SSE)
+2026-10-22T03:00:52.1358905Z ok 179 - ledger: cache-read tokens reported by MiniMax are recorded and charged at the cache-read price (JSON and SSE)
+2026-10-22T03:00:52.1359764Z   ---
+2026-10-22T03:00:52.1360069Z   duration_ms: 101.7886
+2026-10-22T03:00:52.1360601Z   type: 'test'
+2026-10-22T03:00:52.1360906Z   ...
+2026-10-22T03:00:52.2108304Z # Subtest: shim sinks: feedback (+ bound screenshot PUT), blocked feedback without a key, telemetry deliveries, final-video PUT, uploads, release feed, paid-tool refusal
+2026-10-22T03:00:52.2120083Z ok 180 - shim sinks: feedback (+ bound screenshot PUT), blocked feedback without a key, telemetry deliveries, final-video PUT, uploads, release feed, paid-tool refusal
+2026-10-22T03:00:52.2122237Z   ---
+2026-10-22T03:00:52.2122721Z   duration_ms: 86.0755
+2026-10-22T03:00:52.2123071Z   type: 'test'
+2026-10-22T03:00:52.2123372Z   ...
+2026-10-22T03:00:52.2407375Z # Subtest: m14 catalog: official MiniMax input names, proven list-price bounds (CNY list × models.dev 0.1494)
+2026-10-22T03:00:52.2408963Z ok 181 - m14 catalog: official MiniMax input names, proven list-price bounds (CNY list × models.dev 0.1494)
+2026-10-22T03:00:52.2409633Z   ---
+2026-10-22T03:00:52.2410120Z   duration_ms: 3.4409
+2026-10-22T03:00:52.2410453Z   type: 'test'
+2026-10-22T03:00:52.2411132Z   ...
+2026-10-22T03:00:52.2417714Z # Subtest: m14 proxy+shim: search, operation context, local admission, exact quote, durable model_call → signed asset + ledger charge
+2026-10-22T03:00:52.2419239Z ok 182 - m14 proxy+shim: search, operation context, local admission, exact quote, durable model_call → signed asset + ledger charge
+2026-10-22T03:00:52.2419961Z   ---
+2026-10-22T03:00:52.2420238Z   duration_ms: 182.4834
+2026-10-22T03:00:52.2420553Z   type: 'test'
+2026-10-22T03:00:52.2424565Z   ...
+2026-10-22T03:00:52.2448401Z # Subtest: m14 image-to-video: the engine's uploaded first frame is inlined for MiniMax; async task → poll → mp4 asset
+2026-10-22T03:00:52.2450629Z ok 183 - m14 image-to-video: the engine's uploaded first frame is inlined for MiniMax; async task → poll → mp4 asset
+2026-10-22T03:00:52.2451859Z   ---
+2026-10-22T03:00:52.2452204Z   duration_ms: 93.0401
+2026-10-22T03:00:52.2452559Z   type: 'test'
+2026-10-22T03:00:52.2452845Z   ...
+2026-10-22T03:00:52.2613700Z # Subtest: m14 non-fitting paid tools keep the original failure branches: mint_video is not durable here (503 before any quote), and its quote is TOOL_NOT_OFFERED
+2026-10-22T03:00:52.2615508Z ok 184 - m14 non-fitting paid tools keep the original failure branches: mint_video is not durable here (503 before any quote), and its quote is TOOL_NOT_OFFERED
+2026-10-22T03:00:52.2616411Z   ---
+2026-10-22T03:00:52.2616708Z   duration_ms: 24.3786
+2026-10-22T03:00:52.2617027Z   type: 'test'
+2026-10-22T03:00:52.2617338Z   ...
+2026-10-22T03:00:52.2618421Z # Subtest: sanitizedAgentEnv drops an innocuously named variable that embeds a secret value
+2026-10-22T03:00:52.2619495Z ok 185 - sanitizedAgentEnv drops an innocuously named variable that embeds a secret value
+2026-10-22T03:00:52.2620119Z   ---
+2026-10-22T03:00:52.2620395Z   duration_ms: 0.7633
+2026-10-22T03:00:52.2620702Z   type: 'test'
+2026-10-22T03:00:52.2620978Z   ...
+2026-10-22T03:00:52.6746158Z # Subtest: shim (docs/31 §5): a client that leaves mid-stream is drained and charged; llm_in_flight shows it meanwhile; a call whose client left while queued is never sent
+2026-10-22T03:00:52.6748496Z ok 186 - shim (docs/31 §5): a client that leaves mid-stream is drained and charged; llm_in_flight shows it meanwhile; a call whose client left while queued is never sent
+2026-10-22T03:00:52.6749372Z   ---
+2026-10-22T03:00:52.6749619Z   duration_ms: 417.7176
+2026-10-22T03:00:52.6749888Z   type: 'test'
+2026-10-22T03:00:52.6750144Z   ...
+2026-10-22T03:00:52.7050682Z # Subtest: m15 cancel: a call still queued behind the media gate is canceled before it is sent ($0); a sent synchronous call cannot be cancelled and is charged once
+2026-10-22T03:00:52.7052861Z ok 187 - m15 cancel: a call still queued behind the media gate is canceled before it is sent ($0); a sent synchronous call cannot be cancelled and is charged once
+2026-10-22T03:00:52.7054202Z   ---
+2026-10-22T03:00:52.7054540Z   duration_ms: 236.08
+2026-10-22T03:00:52.7197955Z   type: 'test'
+2026-10-22T03:00:52.7201759Z   ...
+2026-10-22T03:00:52.7204842Z # Subtest: m15 cancel: a submitted video task MiniMax still queues is cancelled upstream (DELETE /v2/video_generation/{task_id}) — no download, no charge
+2026-10-22T03:00:52.7217149Z ok 188 - m15 cancel: a submitted video task MiniMax still queues is cancelled upstream (DELETE /v2/video_generation/{task_id}) — no download, no charge
+2026-10-22T03:00:52.7218118Z   ---
+2026-10-22T03:00:52.7218500Z   duration_ms: 249.1212
+2026-10-22T03:00:52.7218902Z   type: 'test'
+2026-10-22T03:00:52.7219231Z   ...
+2026-10-22T03:00:52.7946715Z # Subtest: m15 cancel: MiniMax refuses to cancel a running video task → it finishes and is charged exactly once (never hidden)
+2026-10-22T03:00:52.7962653Z ok 189 - m15 cancel: MiniMax refuses to cancel a running video task → it finishes and is charged exactly once (never hidden)
+2026-10-22T03:00:52.7965256Z   ---
+2026-10-22T03:00:52.7966153Z   duration_ms: 87.2132
+2026-10-22T03:00:52.7966784Z   type: 'test'
+2026-10-22T03:00:52.7967398Z   ...
+2026-10-22T03:00:53.0227878Z # Subtest: m15 durable resume: the gateway dies mid-operation; on restart a video task is resumed by polling (never re-submitted, charged once), a sent sync call settles $0 with recorded exposure, an unsent one settles $0
+2026-10-22T03:00:53.0230723Z ok 190 - m15 durable resume: the gateway dies mid-operation; on restart a video task is resumed by polling (never re-submitted, charged once), a sent sync call settles $0 with recorded exposure, an unsent one settles $0
+2026-10-22T03:00:53.0232608Z   ---
+2026-10-22T03:00:53.0233060Z   duration_ms: 232.0136
+2026-10-22T03:00:53.0233454Z   type: 'test'
+2026-10-22T03:00:53.0233783Z   ...
+2026-10-22T03:00:53.0382811Z # Subtest: m15 ask_each: leaving Bypass makes the video ask before each paid operation (spendPolicyForMaterialChange); deny / allow once (permit) / always (unlimited)
+2026-10-22T03:00:53.0384482Z ok 191 - m15 ask_each: leaving Bypass makes the video ask before each paid operation (spendPolicyForMaterialChange); deny / allow once (permit) / always (unlimited)
+2026-10-22T03:00:53.0385511Z   ---
+2026-10-22T03:00:53.0385966Z   duration_ms: 329.4211
+2026-10-22T03:00:53.0386358Z   type: 'test'
+2026-10-22T03:00:53.0386688Z   ...
+2026-10-22T03:00:53.0387803Z # Subtest: m15 raise: a capped video whose remaining budget cannot cover the exact quote shows 'Raise spending limit?'; deny keeps the cap, allow installs exactly the needed ceiling
+2026-10-22T03:00:53.0389595Z ok 192 - m15 raise: a capped video whose remaining budget cannot cover the exact quote shows 'Raise spending limit?'; deny keeps the cap, allow installs exactly the needed ceiling
+2026-10-22T03:00:53.0390657Z   ---
+2026-10-22T03:00:53.0391003Z   duration_ms: 83.1651
+2026-10-22T03:00:53.0391403Z   type: 'test'
+2026-10-22T03:00:53.0391741Z   ...
+2026-10-22T03:00:53.0392825Z # Subtest: m15 raise card: 'set a budget' on the card (setApprovalSpendCeiling) keeps the waiting operation; a settings edit while a card waits retires it as SPEND_POLICY_CHANGED
+2026-10-22T03:00:53.0398985Z ok 193 - m15 raise card: 'set a budget' on the card (setApprovalSpendCeiling) keeps the waiting operation; a settings edit while a card waits retires it as SPEND_POLICY_CHANGED
+2026-10-22T03:00:53.0420619Z   ---
+2026-10-22T03:00:53.0421906Z   duration_ms: 76.5626
+2026-10-22T03:00:53.0422426Z   type: 'test'
+2026-10-22T03:00:53.0422797Z   ...
+2026-10-22T03:00:53.0424353Z # Subtest: M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend
+2026-10-22T03:00:53.0426513Z ok 194 - M16 idle collection: collectorOwned mark → late 'arrived' line (sidecar + live event) → one report-only turn that refuses spend # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+2026-10-22T03:00:53.0427766Z   ---
+2026-10-22T03:00:53.0428105Z   duration_ms: 0.8846
+2026-10-22T03:00:53.0428455Z   type: 'test'
+2026-10-22T03:00:53.0428799Z   ...
+2026-10-22T03:00:53.0429744Z # Subtest: M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row untouched; an operation the open tool may own gets no late line
+2026-10-22T03:00:53.0431763Z ok 195 - M16 busy collection: BUSY_COLLECTOR wrapper, lock_busy leaves the row untouched; an operation the open tool may own gets no late line # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+2026-10-22T03:00:53.0432915Z   ---
+2026-10-22T03:00:53.0433262Z   duration_ms: 0.1119
+2026-10-22T03:00:53.0433650Z   type: 'test'
+2026-10-22T03:00:53.0433980Z   ...
+2026-10-22T03:00:53.0435023Z # Subtest: M16 busy collection of an operation older than every open tool is late (mayBelongToOpenTool margin)
+2026-10-22T03:00:53.0436783Z ok 196 - M16 busy collection of an operation older than every open tool is late (mayBelongToOpenTool margin) # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+2026-10-22T03:00:53.0437880Z   ---
+2026-10-22T03:00:53.0438277Z   duration_ms: 0.1026
+2026-10-22T03:00:53.0438610Z   type: 'test'
+2026-10-22T03:00:53.0438932Z   ...
+2026-10-22T03:00:53.0439777Z # Subtest: M16 dropCollectorMarks: a tool start drops a mark the journal has not moved past; restore drops backoff + parking
+2026-10-22T03:00:53.0441798Z ok 197 - M16 dropCollectorMarks: a tool start drops a mark the journal has not moved past; restore drops backoff + parking # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+2026-10-22T03:00:53.0443025Z   ---
+2026-10-22T03:00:53.0455353Z   duration_ms: 0.1407
+2026-10-22T03:00:53.0456028Z   type: 'test'
+2026-10-22T03:00:53.0456379Z   ...
+2026-10-22T03:00:53.0457417Z # Subtest: M16 a provider failure the collector learned → late 'failed' line + failure report; three import failures → import_failed
+2026-10-22T03:00:53.0459614Z ok 198 - M16 a provider failure the collector learned → late 'failed' line + failure report; three import failures → import_failed # SKIP PORT-WIN: POSIX fake engine (symlinked python) — unverified on Windows
+2026-10-22T03:00:53.0460784Z   ---
+2026-10-22T03:00:53.0461138Z   duration_ms: 0.1712
+2026-10-22T03:00:53.0461479Z   type: 'test'
+2026-10-22T03:00:53.0461835Z   ...
+2026-10-22T03:00:53.0462597Z # Subtest: M16 verbatim helpers: busyCollectorArgs / readOperationJournal / lateResultReportNote
+2026-10-22T03:00:53.0463649Z ok 199 - M16 verbatim helpers: busyCollectorArgs / readOperationJournal / lateResultReportNote
+2026-10-22T03:00:53.0464280Z   ---
+2026-10-22T03:00:53.0464587Z   duration_ms: 1.823
+2026-10-22T03:00:53.0464954Z   type: 'test'
+2026-10-22T03:00:53.0465263Z   ...
+2026-10-22T03:00:53.0759223Z # Subtest: AlphaConsentCoordinator: a verified active key gets one consent record + one durable alpha-consent beacon; alphaConsentAt only after the beacon is queued
+2026-10-22T03:00:53.0762427Z ok 200 - AlphaConsentCoordinator: a verified active key gets one consent record + one durable alpha-consent beacon; alphaConsentAt only after the beacon is queued
+2026-10-22T03:00:53.0770173Z   ---
+2026-10-22T03:00:53.0770882Z   duration_ms: 3.2051
+2026-10-22T03:00:53.0771296Z   type: 'test'
+2026-10-22T03:00:53.0771657Z   ...
+2026-10-22T03:00:53.0773028Z # Subtest: AlphaConsentCoordinator: telemetry off / another key / another gateway → nothing; a failed beacon keeps the record un-queued and retries
+2026-10-22T03:00:53.0774789Z ok 201 - AlphaConsentCoordinator: telemetry off / another key / another gateway → nothing; a failed beacon keeps the record un-queued and retries
+2026-10-22T03:00:53.0775768Z   ---
+2026-10-22T03:00:53.0776164Z   duration_ms: 0.8707
+2026-10-22T03:00:53.0776553Z   type: 'test'
+2026-10-22T03:00:53.0776908Z   ...
+2026-10-22T03:00:53.1098369Z # Subtest: materializeGatewaySpendPolicy: writes the saved policy once per key (through the real proxy → shim authority), again after a change
+2026-10-22T03:00:53.1140208Z ok 202 - materializeGatewaySpendPolicy: writes the saved policy once per key (through the real proxy → shim authority), again after a change
+2026-10-22T03:00:53.1143076Z   ---
+2026-10-22T03:00:53.1143475Z   duration_ms: 88.7003
+2026-10-22T03:00:53.1143845Z   type: 'test'
+2026-10-22T03:00:53.1144162Z   ...
+2026-10-22T03:00:53.1399517Z # Subtest: adopted job (gatewaySpendPolicyResetJobId): always re-written, mark cleared on success, kept on failure; restore heals stale marks
+2026-10-22T03:00:53.1438466Z ok 203 - adopted job (gatewaySpendPolicyResetJobId): always re-written, mark cleared on success, kept on failure; restore heals stale marks
+2026-10-22T03:00:53.1439788Z   ---
+2026-10-22T03:00:53.1440231Z   duration_ms: 23.8999
+2026-10-22T03:00:53.1440967Z   type: 'test'
+2026-10-22T03:00:53.1441389Z   ...
+2026-10-22T03:00:53.1713864Z # Subtest: putGatewaySpendPolicy: writes for one job are serialized and invalidate that job's materialized keys
+2026-10-22T03:00:53.1717041Z ok 204 - putGatewaySpendPolicy: writes for one job are serialized and invalidate that job's materialized keys
+2026-10-22T03:00:53.1718394Z   ---
+2026-10-22T03:00:53.1718784Z   duration_ms: 39.7334
+2026-10-22T03:00:53.1719184Z   type: 'test'
+2026-10-22T03:00:53.1719531Z   ...
+2026-10-22T03:00:53.2190213Z # Subtest: createAppUpdater: Linux / unpackaged / untrusted gateway → disabled with the original copy, driver untouched
+2026-10-22T03:00:53.2191982Z ok 205 - createAppUpdater: Linux / unpackaged / untrusted gateway → disabled with the original copy, driver untouched
+2026-10-22T03:00:53.2192757Z   ---
+2026-10-22T03:00:53.2193085Z   duration_ms: 2.2069
+2026-10-22T03:00:53.2193435Z   type: 'test'
+2026-10-22T03:00:53.2194054Z   ...
+2026-10-22T03:00:53.2195020Z # Subtest: createAppUpdater: enabled → generic feed per channel; download publishes checking → downloading → progress → downloaded
+2026-10-22T03:00:53.2197084Z ok 206 - createAppUpdater: enabled → generic feed per channel; download publishes checking → downloading → progress → downloaded
+2026-10-22T03:00:53.2197850Z   ---
+2026-10-22T03:00:53.2198078Z   duration_ms: 1.1254
+2026-10-22T03:00:53.2198333Z   type: 'test'
+2026-10-22T03:00:53.2198817Z   ...
+2026-10-22T03:00:53.2199691Z # Subtest: createAppUpdater: refuses non-newer / wrong-channel versions; a changed release is an error; a failed download says so
+2026-10-22T03:00:53.2200992Z ok 207 - createAppUpdater: refuses non-newer / wrong-channel versions; a changed release is an error; a failed download says so
+2026-10-22T03:00:53.2201694Z   ---
+2026-10-22T03:00:53.2202133Z   duration_ms: 0.6062
+2026-10-22T03:00:53.2202493Z   type: 'test'
+2026-10-22T03:00:53.2202723Z   ...
+2026-10-22T03:00:53.2203746Z # Subtest: install → beginQuit → QuitCoordinator(update) with no blockers → beginInstall → finishInstall → driver.quitAndInstall once
+2026-10-22T03:00:53.2205178Z ok 208 - install → beginQuit → QuitCoordinator(update) with no blockers → beginInstall → finishInstall → driver.quitAndInstall once
+2026-10-22T03:00:53.2205955Z   ---
+2026-10-22T03:00:53.2206186Z   duration_ms: 1.3511
+2026-10-22T03:00:53.2206460Z   type: 'test'
+2026-10-22T03:00:53.2206691Z   ...
+2026-10-22T03:00:53.2207329Z # Subtest: Restart to update with blockers asks first (update copy); Cancel keeps the payload, Restart proceeds
+2026-10-22T03:00:53.2208398Z ok 209 - Restart to update with blockers asks first (update copy); Cancel keeps the payload, Restart proceeds
+2026-10-22T03:00:53.2208990Z   ---
+2026-10-22T03:00:53.2209209Z   duration_ms: 14.7776
+2026-10-22T03:00:53.2209467Z   type: 'test'
+2026-10-22T03:00:53.2209696Z   ...
+2026-10-22T03:00:53.2210398Z # Subtest: install guards: stale payload resets; installBlocker surfaces its message; quitAndInstall throwing recovers
+2026-10-22T03:00:53.2211568Z ok 210 - install guards: stale payload resets; installBlocker surfaces its message; quitAndInstall throwing recovers
+2026-10-22T03:00:53.2212239Z   ---
+2026-10-22T03:00:53.2212465Z   duration_ms: 0.7037
+2026-10-22T03:00:53.2212721Z   type: 'test'
+2026-10-22T03:00:53.2212955Z   ...
+2026-10-22T03:00:53.2705301Z # Subtest: M17 stopAuthenticatedWork (L43256): running turn interrupted → idle, runtime retired, proxy revoked; paused stays paused (L43232)
+2026-10-22T03:00:53.2711421Z ok 211 - M17 stopAuthenticatedWork (L43256): running turn interrupted → idle, runtime retired, proxy revoked; paused stays paused (L43232)
+2026-10-22T03:00:53.2733755Z   ---
+2026-10-22T03:00:53.2734234Z   duration_ms: 50.9375
+2026-10-22T03:00:53.2790898Z   type: 'test'
+2026-10-22T03:00:53.2792811Z   ...
+2026-10-22T03:00:53.2794330Z # Subtest: M17 authenticatedWorkPaused gates: send shows the original error card, retry/fence/transcribe/spend writes refuse, no new runtime
+2026-10-22T03:00:53.2796280Z ok 212 - M17 authenticatedWorkPaused gates: send shows the original error card, retry/fence/transcribe/spend writes refuse, no new runtime
+2026-10-22T03:00:53.2797142Z   ---
+2026-10-22T03:00:53.2797431Z   duration_ms: 7.7545
+2026-10-22T03:00:53.2797788Z   type: 'test'
+2026-10-22T03:00:53.2798076Z   ...
+2026-10-22T03:00:53.2798988Z # Subtest: M17 readQuitState (L62681): staged/copying attachment counts come from ComposerAttachmentStore.draftCounts; assessQuit names them
+2026-10-22T03:00:53.2800485Z ok 213 - M17 readQuitState (L62681): staged/copying attachment counts come from ComposerAttachmentStore.draftCounts; assessQuit names them
+2026-10-22T03:00:53.2801306Z   ---
+2026-10-22T03:00:53.2801591Z   duration_ms: 41.6872
+2026-10-22T03:00:53.2801934Z   type: 'test'
+2026-10-22T03:00:53.2802226Z   ...
+2026-10-22T03:00:53.2803180Z # Subtest: M17 window:state (L60574-60580): enter/leave-full-screen and did-finish-load push {fullscreen}; a stale/destroyed window pushes nothing
+2026-10-22T03:00:53.2805030Z ok 214 - M17 window:state (L60574-60580): enter/leave-full-screen and did-finish-load push {fullscreen}; a stale/destroyed window pushes nothing
+2026-10-22T03:00:53.2805866Z   ---
+2026-10-22T03:00:53.2806158Z   duration_ms: 8.3949
+2026-10-22T03:00:53.2806673Z   type: 'test'
+2026-10-22T03:00:53.2806964Z   ...
+2026-10-22T03:00:53.3736436Z # [engine-update] pointer flipped to 9.9.10
+2026-10-22T03:00:53.3963606Z # [engine-update] update to 9.9.11 failed: engine sha mismatch: got e8477645ef36…
+2026-10-22T03:00:53.4227123Z # Subtest: M17 engine:updated: background engine update installs alongside, parks while a video runs, flips when idle → onEngineUpdated (L10304-10430)
+2026-10-22T03:00:53.4229561Z ok 215 - M17 engine:updated: background engine update installs alongside, parks while a video runs, flips when idle → onEngineUpdated (L10304-10430)
+2026-10-22T03:00:53.4230486Z   ---
+2026-10-22T03:00:53.4230796Z   duration_ms: 170.9784
+2026-10-22T03:00:53.4231302Z   type: 'test'
+2026-10-22T03:00:53.4231638Z   ...
+2026-10-22T03:00:53.5825894Z # Subtest: M17 characters:voices:changed (L45041-45063): approve and remove emit the scope; the store is the verbatim CharacterVoiceStore
+2026-10-22T03:00:53.5827352Z ok 216 - M17 characters:voices:changed (L45041-45063): approve and remove emit the scope; the store is the verbatim CharacterVoiceStore
+2026-10-22T03:00:53.5828108Z   ---
+2026-10-22T03:00:53.5828339Z   duration_ms: 172.2821
+2026-10-22T03:00:53.5828610Z   type: 'test'
+2026-10-22T03:00:53.5828836Z   ...
+2026-10-22T03:00:53.5830078Z # Subtest: docs/34: relaunchOptions — inside an AppImage relaunch the AppImage file (not the temporary runtime mount); elsewhere Electron's default
+2026-10-22T03:00:53.5831670Z ok 217 - docs/34: relaunchOptions — inside an AppImage relaunch the AppImage file (not the temporary runtime mount); elsewhere Electron's default
+2026-10-22T03:00:53.5832755Z   ---
+2026-10-22T03:00:53.5832992Z   duration_ms: 0.3773
+2026-10-22T03:00:53.5833272Z   type: 'test'
+2026-10-22T03:00:53.5833482Z   ...
+2026-10-22T03:00:53.5944674Z # Subtest: substitute: off by default — synth_voice stays the original refusal and is not a recovery tool
+2026-10-22T03:00:53.5945909Z ok 218 - substitute: off by default — synth_voice stays the original refusal and is not a recovery tool
+2026-10-22T03:00:53.5946480Z   ---
+2026-10-22T03:00:53.5946702Z   duration_ms: 36.3462
+2026-10-22T03:00:53.5946956Z   type: 'test'
+2026-10-22T03:00:53.5947161Z   ...
+2026-10-22T03:00:53.5947791Z # Subtest: substitute: synth_voice/tts is served by MiniMax speech-2.8-turbo with a SUBSTITUTE label everywhere
+2026-10-22T03:00:53.5948813Z ok 219 - substitute: synth_voice/tts is served by MiniMax speech-2.8-turbo with a SUBSTITUTE label everywhere
+2026-10-22T03:00:53.5949415Z   ---
+2026-10-22T03:00:53.5949654Z   duration_ms: 121.7423
+2026-10-22T03:00:53.5949912Z   type: 'test'
+2026-10-22T03:00:53.5950120Z   ...
+2026-10-22T03:00:53.5950852Z # Subtest: substitute: unmappable synth_voice modes (design/voice_change) and other paid tools are still refused, nothing sent
+2026-10-22T03:00:53.5952057Z ok 220 - substitute: unmappable synth_voice modes (design/voice_change) and other paid tools are still refused, nothing sent
+2026-10-22T03:00:53.5952745Z   ---
+2026-10-22T03:00:53.5952988Z   duration_ms: 58.3131
+2026-10-22T03:00:53.5953226Z   type: 'test'
+2026-10-22T03:00:53.5953430Z   ...
+2026-10-22T03:00:53.6871046Z # Subtest: renderer consumers: L31748 reads charactersList(cwd).find, L39778 reads getHistory(id).length (the two M5 TypeErrors)
+2026-10-22T03:00:53.6872812Z ok 221 - renderer consumers: L31748 reads charactersList(cwd).find, L39778 reads getHistory(id).length (the two M5 TypeErrors)
+2026-10-22T03:00:53.6873704Z   ---
+2026-10-22T03:00:53.6874066Z   duration_ms: 1.2411
+2026-10-22T03:00:53.6874433Z   type: 'test'
+2026-10-22T03:00:53.6874773Z   ...
+2026-10-22T03:00:53.6876098Z # Subtest: characters:list — the ORIGINAL CharacterStore returns an ARRAY (empty workspace → []), approved + pending with sheet/refs
+2026-10-22T03:00:53.6878119Z ok 222 - characters:list — the ORIGINAL CharacterStore returns an ARRAY (empty workspace → []), approved + pending with sheet/refs
+2026-10-22T03:00:53.6878971Z   ---
+2026-10-22T03:00:53.6879317Z   duration_ms: 11.1254
+2026-10-22T03:00:53.6879889Z   type: 'test'
+2026-10-22T03:00:53.6880231Z   ...
+2026-10-22T03:00:53.6881238Z # Subtest: session:history — an ARRAY for a video without an SDK transcript (original !sdkSessionId branch → []); unknown id rejects
+2026-10-22T03:00:53.6882555Z ok 223 - session:history — an ARRAY for a video without an SDK transcript (original !sdkSessionId branch → []); unknown id rejects
+2026-10-22T03:00:53.6883228Z   ---
+2026-10-22T03:00:53.6883444Z   duration_ms: 7.0789
+2026-10-22T03:00:53.6883701Z   type: 'test'
+2026-10-22T03:00:53.6883908Z   ...
+2026-10-22T03:00:53.6884698Z # Subtest: quickstart:catalog — the ORIGINAL store validates + serves the shipped bundled catalog (cold, then warm)
+2026-10-22T03:00:53.6886126Z ok 224 - quickstart:catalog — the ORIGINAL store validates + serves the shipped bundled catalog (cold, then warm)
+2026-10-22T03:00:53.6886724Z   ---
+2026-10-22T03:00:53.6886935Z   duration_ms: 79.9679
+2026-10-22T03:00:53.6887187Z   type: 'test'
+2026-10-22T03:00:53.6887410Z   ...
+2026-10-22T03:00:53.6888290Z # Subtest: quickstart:catalog — no valid root → the original rejects (renderer shows its error card, not a forever 'Loading')
+2026-10-22T03:00:53.6889613Z ok 225 - quickstart:catalog — no valid root → the original rejects (renderer shows its error card, not a forever 'Loading')
+2026-10-22T03:00:53.6890996Z   ---
+2026-10-22T03:00:53.6891245Z   duration_ms: 1.3403
+2026-10-22T03:00:53.6891503Z   type: 'test'
+2026-10-22T03:00:53.6893303Z   ...
+2026-10-22T03:00:53.6894412Z # Subtest: session titles — verbatim helpers + the system prompt is byte-identical to the bundle
+2026-10-22T03:00:53.6895453Z ok 226 - session titles — verbatim helpers + the system prompt is byte-identical to the bundle
+2026-10-22T03:00:53.6896024Z   ---
+2026-10-22T03:00:53.6896233Z   duration_ms: 1.9629
+2026-10-22T03:00:53.6896480Z   type: 'test'
+2026-10-22T03:00:53.6896701Z   ...
+2026-10-22T03:00:53.6897453Z # Subtest: AgentHost names the video on first send (fallback, verbatim) and then takes ONE provider-route proposal (automatic)
+2026-10-22T03:00:53.6898648Z ok 227 - AgentHost names the video on first send (fallback, verbatim) and then takes ONE provider-route proposal (automatic)
+2026-10-22T03:00:53.6899307Z   ---
+2026-10-22T03:00:53.6899530Z   duration_ms: 47.1962
+2026-10-22T03:00:53.6899793Z   type: 'test'
+2026-10-22T03:00:53.6899996Z   ...
+2026-10-22T03:00:53.6901207Z # Subtest: AgentHost titles: claude-code route keeps the fallback (original requests only with a subscription login — NOT PORTED); opt-out; failed proposal keeps fallback
+2026-10-22T03:00:53.6903061Z ok 228 - AgentHost titles: claude-code route keeps the fallback (original requests only with a subscription login — NOT PORTED); opt-out; failed proposal keeps fallback
+2026-10-22T03:00:53.6903942Z   ---
+2026-10-22T03:00:53.6904164Z   duration_ms: 135.6808
+2026-10-22T03:00:53.6904429Z   type: 'test'
+2026-10-22T03:00:53.6904644Z   ...
+2026-10-22T03:00:53.6905192Z # Subtest: proposeProviderSessionTitle: rejected / aborted proposals yield no title
+2026-10-22T03:00:53.6906250Z ok 229 - proposeProviderSessionTitle: rejected / aborted proposals yield no title
+2026-10-22T03:00:53.6906761Z   ---
+2026-10-22T03:00:53.6906991Z   duration_ms: 1.3168
+2026-10-22T03:00:53.6907249Z   type: 'test'
+2026-10-22T03:00:53.6907471Z   ...
+2026-10-22T03:00:53.9549385Z # Subtest: every invoke/send channel registers once; fake backend answers or logs
+2026-10-22T03:00:53.9551703Z ok 230 - every invoke/send channel registers once; fake backend answers or logs
+2026-10-22T03:00:53.9552252Z   ---
+2026-10-22T03:00:53.9552499Z   duration_ms: 505.6028
+2026-10-22T03:00:53.9552772Z   type: 'test'
+2026-10-22T03:00:53.9553003Z   ...
+2026-10-22T03:00:53.9724560Z # Subtest: minimaxConfig: defaults, trimming, trailing slash, concurrency clamp 1..2, null without key
+2026-10-22T03:00:53.9726103Z ok 231 - minimaxConfig: defaults, trimming, trailing slash, concurrency clamp 1..2, null without key
+2026-10-22T03:00:53.9726843Z   ---
+2026-10-22T03:00:53.9727787Z   duration_ms: 12.0967
+2026-10-22T03:00:53.9728875Z   type: 'test'
+2026-10-22T03:00:53.9729612Z   ...
+2026-10-22T03:00:53.9730514Z # Subtest: resolvedLlmRoute / settings validation: differential vs original L320 + L5397 for non-minimax values; minimax accepted
+2026-10-22T03:00:53.9731468Z ok 232 - resolvedLlmRoute / settings validation: differential vs original L320 + L5397 for non-minimax values; minimax accepted
+2026-10-22T03:00:53.9731883Z   ---
+2026-10-22T03:00:53.9732034Z   duration_ms: 2.9637
+2026-10-22T03:00:53.9732209Z   type: 'test'
+2026-10-22T03:00:53.9732357Z   ...
+2026-10-22T03:00:53.9732764Z # Subtest: sanitizedAgentEnv: differential vs original L16026; it strips MINIMAX_API_KEY so the route must inject it
+2026-10-22T03:00:53.9733422Z ok 233 - sanitizedAgentEnv: differential vs original L16026; it strips MINIMAX_API_KEY so the route must inject it
+2026-10-22T03:00:53.9733802Z   ---
+2026-10-22T03:00:53.9733946Z   duration_ms: 2.3025
+2026-10-22T03:00:53.9734119Z   type: 'test'
+2026-10-22T03:00:53.9734266Z   ...
+2026-10-22T03:00:53.9735175Z # Subtest: claudeRouteEnv minimax: base URL, explicit auth token from MINIMAX_API_KEY, all aliases → MiniMax-M3.1-Flash, isolated profile, no gateway headers
+2026-10-22T03:00:53.9736144Z ok 234 - claudeRouteEnv minimax: base URL, explicit auth token from MINIMAX_API_KEY, all aliases → MiniMax-M3.1-Flash, isolated profile, no gateway headers
+2026-10-22T03:00:53.9736622Z   ---
+2026-10-22T03:00:53.9736773Z   duration_ms: 1.1139
+2026-10-22T03:00:53.9736944Z   type: 'test'
+2026-10-22T03:00:53.9737092Z   ...
+2026-10-22T03:00:53.9737989Z # Subtest: resolveHelperCreds: gateway branch differential vs original L22343; minimax → {base}/v1/messages + *** auth; x-api-key also verified in docs/14)
+2026-10-22T03:00:53.9739001Z ok 235 - resolveHelperCreds: gateway branch differential vs original L22343; minimax → {base}/v1/messages + *** auth; x-api-key also verified in docs/14)
+2026-10-22T03:00:53.9739463Z   ---
+2026-10-22T03:00:53.9739611Z   duration_ms: 1.2285
+2026-10-22T03:00:53.9739781Z   type: 'test'
+2026-10-22T03:00:53.9739926Z   ...
+2026-10-22T03:00:53.9740229Z # Subtest: backoff: 2s,4s,8s,16s,32s (jitter 0), capped; retry-after seconds/date honoured
+2026-10-22T03:00:53.9740678Z ok 236 - backoff: 2s,4s,8s,16s,32s (jitter 0), capped; retry-after seconds/date honoured
+2026-10-22T03:00:53.9740958Z   ---
+2026-10-22T03:00:53.9741098Z   duration_ms: 0.7173
+2026-10-22T03:00:53.9741251Z   type: 'test'
+2026-10-22T03:00:53.9741385Z   ...
+2026-10-22T03:00:53.9741815Z # {"ts":"2026-10-22T03:00:53.795Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":1,"delayMs":0,"status":429}
+2026-10-22T03:00:53.9742459Z # {"ts":"2026-10-22T03:00:53.817Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":2,"delayMs":4000,"status":529}
+2026-10-22T03:00:53.9743261Z # {"ts":"2026-10-22T03:00:53.842Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":3,"delayMs":0,"status":429}
+2026-10-22T03:00:53.9743969Z # Subtest: anthropicMessages via minimax creds (mock): URL, headers, model override, 429/529 backoff then success; thinking blocks ignored
+2026-10-22T03:00:53.9744889Z ok 237 - anthropicMessages via minimax creds (mock): URL, headers, model override, 429/529 backoff then success; thinking blocks ignored
+2026-10-22T03:00:53.9745309Z   ---
+2026-10-22T03:00:53.9745454Z   duration_ms: 161.3151
+2026-10-22T03:00:53.9745620Z   type: 'test'
+2026-10-22T03:00:53.9745754Z   ...
+2026-10-22T03:00:53.9746283Z # {"ts":"2026-10-22T03:00:53.906Z","level":"warn","event":"llm.request_failed","provider":"minimax","code":"PROVIDER_CREDENTIAL_MISCONFIGURED","status":401,"ms":27}
+2026-10-22T03:00:53.9747109Z # {"ts":"2026-10-22T03:00:53.937Z","level":"warn","event":"llm.request_failed","provider":"minimax","code":"PROVIDER_CREDENTIAL_MISCONFIGURED","status":400,"ms":31}
+2026-10-22T03:00:53.9748614Z # {"ts":"2026-10-22T03:00:53.969Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":1,"delayMs":2000,"status":429}
+2026-10-22T03:00:53.9901080Z # {"ts":"2026-10-22T03:00:53.989Z","level":"warn","event":"llm.retry","provider":"minimax","attempt":2,"delayMs":4000,"status":429}
+2026-10-22T03:00:54.0198071Z # {"ts":"2026-10-22T03:00:54.018Z","level":"warn","event":"llm.request_failed","provider":"minimax","code":"RATE_LIMITED","status":429,"ms":81}
+2026-10-22T03:00:54.0233489Z # Subtest: minimax: 401 / code 1008 are not retried and map to PROVIDER_CREDENTIAL_MISCONFIGURED without leaking the key; retries exhaust → RATE_LIMITED
+2026-10-22T03:00:54.0234526Z ok 238 - minimax: 401 / code 1008 are not retried and map to PROVIDER_CREDENTIAL_MISCONFIGURED without leaking the key; retries exhaust → RATE_LIMITED
+2026-10-22T03:00:54.0234986Z   ---
+2026-10-22T03:00:54.0235177Z   duration_ms: 143.5848
+2026-10-22T03:00:54.0235353Z   type: 'test'
+2026-10-22T03:00:54.0235509Z   ...
+2026-10-22T03:00:54.1626316Z # Subtest: minimax: process-wide gate keeps concurrency at 1 across parallel helper calls (backoff sleeps hold the slot)
+2026-10-22T03:00:54.1628070Z ok 239 - minimax: process-wide gate keeps concurrency at 1 across parallel helper calls (backoff sleeps hold the slot)
+2026-10-22T03:00:54.1628781Z   ---
+2026-10-22T03:00:54.1629195Z   duration_ms: 140.648
+2026-10-22T03:00:54.1629574Z   type: 'test'
+2026-10-22T03:00:54.1629928Z   ...
+2026-10-22T03:00:54.1922056Z # Subtest: ConcurrencyLimiter(2) never exceeds 2 and releases on throw; withMiniMaxRetry passes non-retryable errors through
+2026-10-22T03:00:54.1923800Z ok 240 - ConcurrencyLimiter(2) never exceeds 2 and releases on throw; withMiniMaxRetry passes non-retryable errors through
+2026-10-22T03:00:54.1924700Z   ---
+2026-10-22T03:00:54.1925061Z   duration_ms: 29.7087
+2026-10-22T03:00:54.1925489Z   type: 'test'
+2026-10-22T03:00:54.1925844Z   ...
+2026-10-22T03:00:54.2089699Z # (node:5376) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+2026-10-22T03:00:54.2093053Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-22T03:00:54.2093993Z # Subtest: fixture is a real models.dev capture with the expected shape
+2026-10-22T03:00:54.2101096Z ok 241 - fixture is a real models.dev capture with the expected shape
+2026-10-22T03:00:54.2101770Z   ---
+2026-10-22T03:00:54.2116169Z   duration_ms: 1.856
+2026-10-22T03:00:54.2128849Z   type: 'test'
+2026-10-22T03:00:54.2129259Z   ...
+2026-10-22T03:00:54.2130896Z # Subtest: parseCatalog: providers/models normalised; malformed entries skipped not fatal; root must be an object
+2026-10-22T03:00:54.2132986Z ok 242 - parseCatalog: providers/models normalised; malformed entries skipped not fatal; root must be an object
+2026-10-22T03:00:54.2134082Z   ---
+2026-10-22T03:00:54.2134440Z   duration_ms: 8.9646
+2026-10-22T03:00:54.2134811Z   type: 'test'
+2026-10-22T03:00:54.2135143Z   ...
+2026-10-22T03:00:54.2135840Z # Subtest: DB: migration creates schema v1 once; reopening is a no-op; newer schema refuses to open
+2026-10-22T03:00:54.2137086Z ok 243 - DB: migration creates schema v1 once; reopening is a no-op; newer schema refuses to open
+2026-10-22T03:00:54.2137760Z   ---
+2026-10-22T03:00:54.2138091Z   duration_ms: 69.0909
+2026-10-22T03:00:54.2138432Z   type: 'test'
+2026-10-22T03:00:54.2138747Z   ...
+2026-10-22T03:00:54.2139377Z # Subtest: DB: replaceCatalog is idempotent and prunes rows missing from the next snapshot
+2026-10-22T03:00:54.2140261Z ok 244 - DB: replaceCatalog is idempotent and prunes rows missing from the next snapshot
+2026-10-22T03:00:54.2140849Z   ---
+2026-10-22T03:00:54.2141166Z   duration_ms: 5.0122
+2026-10-22T03:00:54.2141511Z   type: 'test'
+2026-10-22T03:00:54.2141829Z   ...
+2026-10-22T03:00:54.2142548Z # Subtest: DB: lookup order (exact, provider/model, canonical, model id) and metadata view incl. tiered pricing
+2026-10-22T03:00:54.2145004Z ok 245 - DB: lookup order (exact, provider/model, canonical, model id) and metadata view incl. tiered pricing
+2026-10-22T03:00:54.2145745Z   ---
+2026-10-22T03:00:54.2146058Z   duration_ms: 2.8115
+2026-10-22T03:00:54.2146644Z   type: 'test'
+2026-10-22T03:00:54.2146973Z   ...
+2026-10-22T03:00:54.2148078Z # Subtest: provider framework → models.dev metadata (preset modelsDev key, defaults, explicit override)
+2026-10-22T03:00:54.2151156Z ok 246 - provider framework → models.dev metadata (preset modelsDev key, defaults, explicit override)
+2026-10-22T03:00:54.2151955Z   ---
+2026-10-22T03:00:54.2153958Z   duration_ms: 9.6999
+2026-10-22T03:00:54.2154328Z   type: 'test'
+2026-10-22T03:00:54.2155765Z   ...
+2026-10-22T03:00:54.2156819Z # Subtest: sync: 200 → updated; etag → 304 not-modified; same bytes → unchanged; force rewrites
+2026-10-22T03:00:54.2161473Z ok 247 - sync: 200 → updated; etag → 304 not-modified; same bytes → unchanged; force rewrites
+2026-10-22T03:00:54.2162268Z   ---
+2026-10-22T03:00:54.2162641Z   duration_ms: 25.515
+2026-10-22T03:00:54.2165583Z   type: 'test'
+2026-10-22T03:00:54.2166026Z   ...
+2026-10-22T03:00:54.2168417Z # Subtest: sync is offline-safe: network/timeout/HTTP/JSON/sanity failures keep the last good data and record the error
+2026-10-22T03:00:54.2206278Z ok 248 - sync is offline-safe: network/timeout/HTTP/JSON/sanity failures keep the last good data and record the error
+2026-10-22T03:00:54.2207352Z   ---
+2026-10-22T03:00:54.2207652Z   duration_ms: 37.6711
+2026-10-22T03:00:54.2208002Z   type: 'test'
+2026-10-22T03:00:54.2208322Z   ...
+2026-10-22T03:00:54.2208841Z # Subtest: sync: validators are only sent to the URL they came from
+2026-10-22T03:00:54.2209554Z ok 249 - sync: validators are only sent to the URL they came from
+2026-10-22T03:00:54.2210032Z   ---
+2026-10-22T03:00:54.2210360Z   duration_ms: 3.0775
+2026-10-22T03:00:54.2210710Z   type: 'test'
+2026-10-22T03:00:54.2211026Z   ...
+2026-10-22T03:00:54.2211741Z # Subtest: CLI: models-sync / models-list / models-show / llm-model-info against a temp DB (mock fetch)
+2026-10-22T03:00:54.2212773Z ok 250 - CLI: models-sync / models-list / models-show / llm-model-info against a temp DB (mock fetch)
+2026-10-22T03:00:54.2216413Z   ---
+2026-10-22T03:00:54.2216823Z   duration_ms: 213.3892
+2026-10-22T03:00:54.2217096Z   type: 'test'
+2026-10-22T03:00:54.2217804Z   ...
+2026-10-22T03:00:54.2218404Z # (node:7660) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+2026-10-22T03:00:54.2219227Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-22T03:00:54.2220705Z # Subtest: builderConfig (linux): asar app = dist + package.json only; SDK as extraResources → resources/claude-agent-sdk/node_modules; AppImage+deb; own identity
+2026-10-22T03:00:54.2222336Z ok 251 - builderConfig (linux): asar app = dist + package.json only; SDK as extraResources → resources/claude-agent-sdk/node_modules; AppImage+deb; own identity
+2026-10-22T03:00:54.2223175Z   ---
+2026-10-22T03:00:54.2223402Z   duration_ms: 3.0609
+2026-10-22T03:00:54.2223651Z   type: 'test'
+2026-10-22T03:00:54.2223871Z   ...
+2026-10-22T03:00:54.2224515Z # Subtest: builderConfig (win/mac): nsis + portable / dmg targets configured but marked unverified on the box
+2026-10-22T03:00:54.2225507Z ok 252 - builderConfig (win/mac): nsis + portable / dmg targets configured but marked unverified on the box
+2026-10-22T03:00:54.2226089Z   ---
+2026-10-22T03:00:54.2226303Z   duration_ms: 0.3771
+2026-10-22T03:00:54.2226553Z   type: 'test'
+2026-10-22T03:00:54.2226780Z   ...
+2026-10-22T03:00:54.2227399Z # Subtest: sdkResourceFilter: keeps the target native package, drops every other platform (incl. musl)
+2026-10-22T03:00:54.2228401Z ok 253 - sdkResourceFilter: keeps the target native package, drops every other platform (incl. musl)
+2026-10-22T03:00:54.2229276Z   ---
+2026-10-22T03:00:54.2229521Z   duration_ms: 0.3787
+2026-10-22T03:00:54.2229774Z   type: 'test'
+2026-10-22T03:00:54.2231578Z   ...
+2026-10-22T03:00:54.2232897Z # Subtest: packaged layout ↔ discovery: what extraResources produces is found as source 'resources' with the native binary (no env, no vendor, no ~/.videoclaw)
+2026-10-22T03:00:54.2235524Z ok 254 - packaged layout ↔ discovery: what extraResources produces is found as source 'resources' with the native binary (no env, no vendor, no ~/.videoclaw)
+2026-10-22T03:00:54.2236413Z   ---
+2026-10-22T03:00:54.2236635Z   duration_ms: 20.908
+2026-10-22T03:00:54.2236891Z   type: 'test'
+2026-10-22T03:00:54.2237113Z   ...
+2026-10-22T03:00:54.2237720Z # Subtest: validateSdkStaging: missing / wrong version / missing native binary for the TARGET platform
+2026-10-22T03:00:54.2238687Z ok 255 - validateSdkStaging: missing / wrong version / missing native binary for the TARGET platform
+2026-10-22T03:00:54.2239255Z   ---
+2026-10-22T03:00:54.2239467Z   duration_ms: 6.6374
+2026-10-22T03:00:54.2239715Z   type: 'test'
+2026-10-22T03:00:54.2239952Z   ...
+2026-10-22T03:00:54.2241138Z # Subtest: package.json / repo hygiene for packaging: no runtime deps (all bundled), scripts, electron-builder pinned, outputs gitignored
+2026-10-22T03:00:54.2243954Z ok 256 - package.json / repo hygiene for packaging: no runtime deps (all bundled), scripts, electron-builder pinned, outputs gitignored
+2026-10-22T03:00:54.2244755Z   ---
+2026-10-22T03:00:54.2244939Z   duration_ms: 0.4132
+2026-10-22T03:00:54.2245158Z   type: 'test'
+2026-10-22T03:00:54.2245344Z   ...
+2026-10-22T03:00:54.2245790Z # Subtest: portDiagnostics: app facts + node:sqlite probe + SDK status (no secrets)
+2026-10-22T03:00:54.2246478Z ok 257 - portDiagnostics: app facts + node:sqlite probe + SDK status (no secrets)
+2026-10-22T03:00:54.2246927Z   ---
+2026-10-22T03:00:54.2247140Z   duration_ms: 1.3395
+2026-10-22T03:00:54.2247372Z   type: 'test'
+2026-10-22T03:00:54.2247583Z   ...
+2026-10-22T03:00:54.2248070Z # Subtest: interpretPdfKitOutput identical to original source on all statuses
+2026-10-22T03:00:54.2248806Z ok 258 - interpretPdfKitOutput identical to original source on all statuses
+2026-10-22T03:00:54.2249279Z   ---
+2026-10-22T03:00:54.2249499Z   duration_ms: 5.0251
+2026-10-22T03:00:54.2249750Z   type: 'test'
+2026-10-22T03:00:54.2249951Z   ...
+2026-10-22T03:00:54.2250352Z # Subtest: stub backend reproduces the original non-darwin result
+2026-10-22T03:00:54.2250919Z ok 259 - stub backend reproduces the original non-darwin result
+2026-10-22T03:00:54.2251290Z   ---
+2026-10-22T03:00:54.2251488Z   duration_ms: 2.7325
+2026-10-22T03:00:54.2251731Z   type: 'test'
+2026-10-22T03:00:54.2251930Z   ...
+2026-10-22T03:00:54.2252145Z # Subtest: pathDelimiter
+2026-10-22T03:00:54.2252419Z ok 260 - pathDelimiter
+2026-10-22T03:00:54.2252648Z   ---
+2026-10-22T03:00:54.2252848Z   duration_ms: 2.349
+2026-10-22T03:00:54.2253073Z   type: 'test'
+2026-10-22T03:00:54.2253294Z   ...
+2026-10-22T03:00:54.2253695Z # Subtest: composeEnginePath: POSIX output identical to original enginePath_
+2026-10-22T03:00:54.2254307Z ok 261 - composeEnginePath: POSIX output identical to original enginePath_
+2026-10-22T03:00:54.2254725Z   ---
+2026-10-22T03:00:54.2254910Z   duration_ms: 0.382
+2026-10-22T03:00:54.2255382Z   type: 'test'
+2026-10-22T03:00:54.2255569Z   ...
+2026-10-22T03:00:54.2255987Z # Subtest: composeEnginePath: win32 uses ; and accepts node.exe at node root
+2026-10-22T03:00:54.2256606Z ok 262 - composeEnginePath: win32 uses ; and accepts node.exe at node root
+2026-10-22T03:00:54.2257018Z   ---
+2026-10-22T03:00:54.2257205Z   duration_ms: 0.3816
+2026-10-22T03:00:54.2257428Z   type: 'test'
+2026-10-22T03:00:54.2257626Z   ...
+2026-10-22T03:00:54.2258001Z # Subtest: composeEngineChildPath dedupes (case-insensitive on win32)
+2026-10-22T03:00:54.2258593Z ok 263 - composeEngineChildPath dedupes (case-insensitive on win32)
+2026-10-22T03:00:54.2258990Z   ---
+2026-10-22T03:00:54.2259180Z   duration_ms: 0.2618
+2026-10-22T03:00:54.2259388Z   type: 'test'
+2026-10-22T03:00:54.2259584Z   ...
+2026-10-22T03:00:54.2260825Z # Subtest: pathEnvKey finds Windows 'Path'
+2026-10-22T03:00:54.2261184Z ok 264 - pathEnvKey finds Windows 'Path'
+2026-10-22T03:00:54.2261460Z   ---
+2026-10-22T03:00:54.2261653Z   duration_ms: 0.2019
+2026-10-22T03:00:54.2261858Z   type: 'test'
+2026-10-22T03:00:54.2262043Z   ...
+2026-10-22T03:00:54.2262427Z # Subtest: venvPython
+2026-10-22T03:00:54.2262673Z ok 265 - venvPython
+2026-10-22T03:00:54.2262877Z   ---
+2026-10-22T03:00:54.2263078Z   duration_ms: 0.2164
+2026-10-22T03:00:54.2263307Z   type: 'test'
+2026-10-22T03:00:54.2263512Z   ...
+2026-10-22T03:00:54.2263994Z # Subtest: exeName
+2026-10-22T03:00:54.2264541Z ok 266 - exeName
+2026-10-22T03:00:54.2264901Z   ---
+2026-10-22T03:00:54.2265453Z   duration_ms: 0.3512
+2026-10-22T03:00:54.2265657Z   type: 'test'
+2026-10-22T03:00:54.2265988Z   ...
+2026-10-22T03:00:54.2266326Z # Subtest: extraPaths POSIX matches original EXTRA_PATHS
+2026-10-22T03:00:54.2266832Z ok 267 - extraPaths POSIX matches original EXTRA_PATHS
+2026-10-22T03:00:54.2267189Z   ---
+2026-10-22T03:00:54.2267395Z   duration_ms: 0.9662
+2026-10-22T03:00:54.2267628Z   type: 'test'
+2026-10-22T03:00:54.2267823Z   ...
+2026-10-22T03:00:54.2268052Z # Subtest: which: POSIX
+2026-10-22T03:00:54.2268316Z ok 268 - which: POSIX
+2026-10-22T03:00:54.2268531Z   ---
+2026-10-22T03:00:54.2268730Z   duration_ms: 0.6747
+2026-10-22T03:00:54.2268946Z   type: 'test'
+2026-10-22T03:00:54.2269116Z   ...
+2026-10-22T03:00:54.2270088Z # Subtest: which: win32 PATHEXT + Path key + quoted dirs
+2026-10-22T03:00:54.2271130Z ok 269 - which: win32 PATHEXT + Path key + quoted dirs
+2026-10-22T03:00:54.2271754Z   ---
+2026-10-22T03:00:54.2272090Z   duration_ms: 0.6985
+2026-10-22T03:00:54.2275088Z   type: 'test'
+2026-10-22T03:00:54.2275319Z   ...
+2026-10-22T03:00:54.2275747Z # Subtest: resolveBootstrapToolRoots order + VIDEOCLAW_ENGINE_DIST
+2026-10-22T03:00:54.2276408Z ok 270 - resolveBootstrapToolRoots order + VIDEOCLAW_ENGINE_DIST
+2026-10-22T03:00:54.2276845Z   ---
+2026-10-22T03:00:54.2277066Z   duration_ms: 0.344
+2026-10-22T03:00:54.2277306Z   type: 'test'
+2026-10-22T03:00:54.2277522Z   ...
+2026-10-22T03:00:54.2277865Z # Subtest: bootstrapTool: exe suffix + port-only override
+2026-10-22T03:00:54.2278350Z ok 271 - bootstrapTool: exe suffix + port-only override
+2026-10-22T03:00:54.2278700Z   ---
+2026-10-22T03:00:54.2278906Z   duration_ms: 0.2711
+2026-10-22T03:00:54.2279130Z   type: 'test'
+2026-10-22T03:00:54.2279336Z   ...
+2026-10-22T03:00:54.2280211Z # Subtest: bashShell: POSIX is /bin/bash; win32 prefers Git bash, skips WSL launcher, falls back to cmd (degraded)
+2026-10-22T03:00:54.2281236Z ok 272 - bashShell: POSIX is /bin/bash; win32 prefers Git bash, skips WSL launcher, falls back to cmd (degraded)
+2026-10-22T03:00:54.2281815Z   ---
+2026-10-22T03:00:54.2282284Z   duration_ms: 0.5194
+2026-10-22T03:00:54.2283053Z   type: 'test'
+2026-10-22T03:00:54.2283428Z   ...
+2026-10-22T03:00:54.2283812Z # Subtest: spawnDetachedForGroup mirrors original
+2026-10-22T03:00:54.2284283Z ok 273 - spawnDetachedForGroup mirrors original
+2026-10-22T03:00:54.2284632Z   ---
+2026-10-22T03:00:54.2284853Z   duration_ms: 0.1988
+2026-10-22T03:00:54.2285084Z   type: 'test'
+2026-10-22T03:00:54.2285292Z   ...
+2026-10-22T03:00:54.2285817Z # Subtest: parsePsOutput (original regex)
+2026-10-22T03:00:54.2286684Z ok 274 - parsePsOutput (original regex)
+2026-10-22T03:00:54.2287313Z   ---
+2026-10-22T03:00:54.2288016Z   duration_ms: 0.4253
+2026-10-22T03:00:54.2288621Z   type: 'test'
+2026-10-22T03:00:54.2288825Z   ...
+2026-10-22T03:00:54.2290506Z # Subtest: parseWin32ProcessJson handles single object, array, null CommandLine
+2026-10-22T03:00:54.2291378Z ok 275 - parseWin32ProcessJson handles single object, array, null CommandLine
+2026-10-22T03:00:54.2291967Z   ---
+2026-10-22T03:00:54.2292255Z   duration_ms: 0.269
+2026-10-22T03:00:54.2292565Z   type: 'test'
+2026-10-22T03:00:54.2292841Z   ...
+2026-10-22T03:00:54.2293333Z # Subtest: processCwd on win32 is an explicit unsupported (undefined)
+2026-10-22T03:00:54.2295043Z ok 276 - processCwd on win32 is an explicit unsupported (undefined)
+2026-10-22T03:00:54.2295528Z   ---
+2026-10-22T03:00:54.2295807Z   duration_ms: 0.1837
+2026-10-22T03:00:54.2296105Z   type: 'test'
+2026-10-22T03:00:54.2296372Z   ...
+2026-10-22T03:00:54.2297670Z # Subtest: killTree: POSIX signals the process group (-pid)
+2026-10-22T03:00:54.2298404Z ok 277 - killTree: POSIX signals the process group (-pid)
+2026-10-22T03:00:54.2298850Z   ---
+2026-10-22T03:00:54.2299136Z   duration_ms: 0.3082
+2026-10-22T03:00:54.2299437Z   type: 'test'
+2026-10-22T03:00:54.2299713Z   ...
+2026-10-22T03:00:54.2300414Z # Subtest: killTree: win32 uses taskkill /T (+/F for SIGKILL)
+2026-10-22T03:00:54.2301068Z ok 278 - killTree: win32 uses taskkill /T (+/F for SIGKILL)
+2026-10-22T03:00:54.2301531Z   ---
+2026-10-22T03:00:54.2301824Z   duration_ms: 1.0821
+2026-10-22T03:00:54.2302136Z   type: 'test'
+2026-10-22T03:00:54.2302421Z   ...
+2026-10-22T03:00:54.2302904Z # Subtest: pdfReaderFor: non-darwin = original's unread/unavailable
+2026-10-22T03:00:54.2303607Z ok 279 - pdfReaderFor: non-darwin = original's unread/unavailable
+2026-10-22T03:00:54.2304085Z   ---
+2026-10-22T03:00:54.2304360Z   duration_ms: 0.1777
+2026-10-22T03:00:54.2304668Z   type: 'test'
+2026-10-22T03:00:54.2304959Z   ...
+2026-10-22T03:00:54.2305454Z # Subtest: voiceDictationStatus without helper = original's message
+2026-10-22T03:00:54.2306148Z ok 280 - voiceDictationStatus without helper = original's message
+2026-10-22T03:00:54.2306624Z   ---
+2026-10-22T03:00:54.2306902Z   duration_ms: 0.2123
+2026-10-22T03:00:54.2307218Z   type: 'test'
+2026-10-22T03:00:54.2307488Z   ...
+2026-10-22T03:00:54.2307903Z # Subtest: needsNativePythonProbe only on darwin/arm64
+2026-10-22T03:00:54.2308462Z ok 281 - needsNativePythonProbe only on darwin/arm64
+2026-10-22T03:00:54.2308873Z   ---
+2026-10-22T03:00:54.2309147Z   duration_ms: 0.1213
+2026-10-22T03:00:54.2309448Z   type: 'test'
+2026-10-22T03:00:54.2309710Z   ...
+2026-10-22T03:00:54.2310513Z # Subtest: docs/35 portRealpath: POSIX = realpathSync; win32 = native realpath (8.3 names expanded), no \\\\?\\ prefix, case-folded
+2026-10-22T03:00:54.2311796Z ok 282 - docs/35 portRealpath: POSIX = realpathSync; win32 = native realpath (8.3 names expanded), no \\\\?\\ prefix, case-folded
+2026-10-22T03:00:54.2312981Z   ---
+2026-10-22T03:00:54.2313304Z   duration_ms: 0.3482
+2026-10-22T03:00:54.2313642Z   type: 'test'
+2026-10-22T03:00:54.2313936Z   ...
+2026-10-22T03:00:54.2551274Z # Subtest: exactly one exposeInMainWorld('videoclaw', bridge)
+2026-10-22T03:00:54.2554751Z ok 283 - exactly one exposeInMainWorld('videoclaw', bridge)
+2026-10-22T03:00:54.2555955Z   ---
+2026-10-22T03:00:54.2556463Z   duration_ms: 1.9255
+2026-10-22T03:00:54.2556808Z   type: 'test'
+2026-10-22T03:00:54.2561985Z   ...
+2026-10-22T03:00:54.2563944Z # Subtest: member list identical (order + names)
+2026-10-22T03:00:54.2564450Z ok 284 - member list identical (order + names)
+2026-10-22T03:00:54.2564804Z   ---
+2026-10-22T03:00:54.2565796Z   duration_ms: 0.3747
+2026-10-22T03:00:54.2566571Z   type: 'test'
+2026-10-22T03:00:54.2567229Z   ...
+2026-10-22T03:00:54.2567905Z # Subtest: every IPC key referenced by the original preload has the identical channel in the port
+2026-10-22T03:00:54.2568954Z ok 285 - every IPC key referenced by the original preload has the identical channel in the port
+2026-10-22T03:00:54.2569553Z   ---
+2026-10-22T03:00:54.2569828Z   duration_ms: 1.7041
+2026-10-22T03:00:54.2570116Z   type: 'test'
+2026-10-22T03:00:54.2570383Z   ...
+2026-10-22T03:00:54.2570850Z # Subtest: non-bridge preload residue is not reachable from the bridge
+2026-10-22T03:00:54.2571550Z ok 286 - non-bridge preload residue is not reachable from the bridge
+2026-10-22T03:00:54.2571997Z   ---
+2026-10-22T03:00:54.2572262Z   duration_ms: 0.2737
+2026-10-22T03:00:54.2572823Z   type: 'test'
+2026-10-22T03:00:54.2573105Z   ...
+2026-10-22T03:00:54.2763773Z # Subtest: original preload parsed completely
+2026-10-22T03:00:54.2764497Z ok 287 - original preload parsed completely
+2026-10-22T03:00:54.2777907Z   ---
+2026-10-22T03:00:54.2778232Z   duration_ms: 1.0291
+2026-10-22T03:00:54.2778609Z   type: 'test'
+2026-10-22T03:00:54.2778955Z   ...
+2026-10-22T03:00:54.2779554Z # Subtest: every generated bridge member reproduces the original ipcRenderer call
+2026-10-22T03:00:54.2781004Z ok 288 - every generated bridge member reproduces the original ipcRenderer call
+2026-10-22T03:00:54.2781596Z   ---
+2026-10-22T03:00:54.2781862Z   duration_ms: 5.434
+2026-10-22T03:00:54.2782159Z   type: 'test'
+2026-10-22T03:00:54.2782448Z   ...
+2026-10-22T03:00:54.2782824Z # Subtest: pathForFile stays local (webUtils)
+2026-10-22T03:00:54.2783336Z ok 289 - pathForFile stays local (webUtils)
+2026-10-22T03:00:54.2783753Z   ---
+2026-10-22T03:00:54.2784040Z   duration_ms: 0.1647
+2026-10-22T03:00:54.2784381Z   type: 'test'
+2026-10-22T03:00:54.2784671Z   ...
+2026-10-22T03:00:54.3977092Z # Subtest: writeProjectStream (Node) writes, never overwrites, numbers duplicates, leaves no staging files
+2026-10-22T03:00:54.3984670Z ok 290 - writeProjectStream (Node) writes, never overwrites, numbers duplicates, leaves no staging files
+2026-10-22T03:00:54.3990799Z   ---
+2026-10-22T03:00:54.3991229Z   duration_ms: 69.013
+2026-10-22T03:00:54.3991588Z   type: 'test'
+2026-10-22T03:00:54.3991890Z   ...
+2026-10-22T03:00:54.3992963Z # Subtest: identity change → 73 / original message; stream error → 76 rethrows the stream error
+2026-10-22T03:00:54.3994083Z ok 291 - identity change → 73 / original message; stream error → 76 rethrows the stream error
+2026-10-22T03:00:54.3994704Z   ---
+2026-10-22T03:00:54.3994992Z   duration_ms: 10.6858
+2026-10-22T03:00:54.3995298Z   type: 'test'
+2026-10-22T03:00:54.3995571Z   ...
+2026-10-22T03:00:54.3996260Z # Subtest: differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes)
+2026-10-22T03:00:54.3997707Z ok 292 - differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes) # SKIP the original script's linux branch needs GNU coreutils
+2026-10-22T03:00:54.3999049Z   ---
+2026-10-22T03:00:54.3999436Z   duration_ms: 0.1548
+2026-10-22T03:00:54.3999782Z   type: 'test'
+2026-10-22T03:00:54.4000078Z   ...
+2026-10-22T03:00:54.4700984Z # Subtest: runBash: success / non-zero exit text identical to original strings
+2026-10-22T03:00:54.4702055Z ok 293 - runBash: success / non-zero exit text identical to original strings
+2026-10-22T03:00:54.4703015Z   ---
+2026-10-22T03:00:54.4703379Z   duration_ms: 140.7192
+2026-10-22T03:00:54.4703725Z   type: 'test'
+2026-10-22T03:00:54.4704022Z   ...
+2026-10-22T03:00:54.5680522Z # Subtest: runBash: output-pipeline commands get pipefail (failure is not masked by tail)
+2026-10-22T03:00:54.5681758Z ok 294 - runBash: output-pipeline commands get pipefail (failure is not masked by tail)
+2026-10-22T03:00:54.5683129Z   ---
+2026-10-22T03:00:54.5683445Z   duration_ms: 97.7622
+2026-10-22T03:00:54.5684151Z   type: 'test'
+2026-10-22T03:00:54.5686367Z   ...
+2026-10-22T03:00:54.7431539Z # Subtest: runBash: timeout kills the process group
+2026-10-22T03:00:54.7432549Z ok 295 - runBash: timeout kills the process group
+2026-10-22T03:00:54.7433308Z   ---
+2026-10-22T03:00:54.7433687Z   duration_ms: 176.3336
+2026-10-22T03:00:54.7434056Z   type: 'test'
+2026-10-22T03:00:54.7434402Z   ...
+2026-10-22T03:00:55.1955578Z # Subtest: runBash: abort
+2026-10-22T03:00:55.1955993Z ok 296 - runBash: abort
+2026-10-22T03:00:55.1956250Z   ---
+2026-10-22T03:00:55.1956491Z   duration_ms: 452.8239
+2026-10-22T03:00:55.1956751Z   type: 'test'
+2026-10-22T03:00:55.1956973Z   ...
+2026-10-22T03:00:55.2389128Z # Subtest: runBash on win32 routes through the chosen shell + taskkill (mocked)
+2026-10-22T03:00:55.2390291Z ok 297 - runBash on win32 routes through the chosen shell + taskkill (mocked)
+2026-10-22T03:00:55.2390764Z   ---
+2026-10-22T03:00:55.2391000Z   duration_ms: 46.1321
+2026-10-22T03:00:55.2391187Z   type: 'test'
+2026-10-22T03:00:55.2391338Z   ...
+2026-10-22T03:00:55.2391567Z # Subtest: truncate keeps head+tail like the original
+2026-10-22T03:00:55.2392924Z ok 298 - truncate keeps head+tail like the original
+2026-10-22T03:00:55.2393148Z   ---
+2026-10-22T03:00:55.2393296Z   duration_ms: 0.342
+2026-10-22T03:00:55.2393460Z   type: 'test'
+2026-10-22T03:00:55.2393619Z   ...
+2026-10-22T03:00:55.2459941Z # Subtest: voice-guard constants equal the shipped chunk exports (B, V)
+2026-10-22T03:00:55.2460741Z ok 299 - voice-guard constants equal the shipped chunk exports (B, V)
+2026-10-22T03:00:55.2461209Z   ---
+2026-10-22T03:00:55.2461447Z   duration_ms: 47.4382
+2026-10-22T03:00:55.2461714Z   type: 'test'
+2026-10-22T03:00:55.2461952Z   ...
+2026-10-22T03:00:55.2462639Z # Subtest: verbatim-slice modules are current (tools/gen-verbatim.mjs --check)
+2026-10-22T03:00:55.2463863Z ok 300 - verbatim-slice modules are current (tools/gen-verbatim.mjs --check)
+2026-10-22T03:00:55.2471435Z   ---
+2026-10-22T03:00:55.2471677Z   duration_ms: 244.8383
+2026-10-22T03:00:55.2471949Z   type: 'test'
+2026-10-22T03:00:55.2472201Z   ...
+2026-10-22T03:00:55.2472697Z # Subtest: validateEngineSessionContext accepts the real engine context files
+2026-10-22T03:00:55.2473503Z ok 301 - validateEngineSessionContext accepts the real engine context files
+2026-10-22T03:00:55.2473983Z   ---
+2026-10-22T03:00:55.2474241Z   duration_ms: 101.0191
+2026-10-22T03:00:55.2474491Z   type: 'test'
+2026-10-22T03:00:55.2474708Z   ...
+2026-10-22T03:00:55.2475183Z # Subtest: engineSessionEnv: differential vs original L9380 (epoch excluded)
+2026-10-22T03:00:55.2475922Z ok 302 - engineSessionEnv: differential vs original L9380 (epoch excluded)
+2026-10-22T03:00:55.2476865Z   ---
+2026-10-22T03:00:55.2477099Z   duration_ms: 47.3341
+2026-10-22T03:00:55.2478560Z   type: 'test'
+2026-10-22T03:00:55.2479131Z   ...
+2026-10-22T03:00:55.2479878Z # Subtest: SessionRegistry: loadRegistry healing subset + listSessions ordering
+2026-10-22T03:00:55.2480684Z ok 303 - SessionRegistry: loadRegistry healing subset + listSessions ordering
+2026-10-22T03:00:55.2481348Z   ---
+2026-10-22T03:00:55.2481690Z   duration_ms: 2.9912
+2026-10-22T03:00:55.2482161Z   type: 'test'
+2026-10-22T03:00:55.2482397Z   ...
+2026-10-22T03:00:55.2483131Z # Subtest: money compat: PAID_GEN_TOOLS/unpriced equal the chunk; inspect runs the engine python (stub)
+2026-10-22T03:00:55.2484248Z ok 304 - money compat: PAID_GEN_TOOLS/unpriced equal the chunk; inspect runs the engine python (stub) # SKIP sh stub
+2026-10-22T03:00:55.2485339Z   ---
+2026-10-22T03:00:55.2485564Z   duration_ms: 0.0951
+2026-10-22T03:00:55.2486012Z   type: 'test'
+2026-10-22T03:00:55.2486587Z   ...
+2026-10-22T03:00:55.2487369Z # Subtest: routeRow: status badges (key/agent/helper/structured), selectability, reasons; built-ins
+2026-10-22T03:00:55.2488319Z ok 305 - routeRow: status badges (key/agent/helper/structured), selectability, reasons; built-ins
+2026-10-22T03:00:55.2488868Z   ---
+2026-10-22T03:00:55.2489083Z   duration_ms: 3.2151
+2026-10-22T03:00:55.2490034Z   type: 'test'
+2026-10-22T03:00:55.2491552Z   ...
+2026-10-22T03:00:55.2492911Z # Subtest: controller: load → ready rows; select persists via setLlmRoute and re-queries; no-op for current; key-missing refused without IPC
+2026-10-22T03:00:55.2494813Z ok 306 - controller: load → ready rows; select persists via setLlmRoute and re-queries; no-op for current; key-missing refused without IPC
+2026-10-22T03:00:55.2495543Z   ---
+2026-10-22T03:00:55.2495739Z   duration_ms: 1.4052
+2026-10-22T03:00:55.2495986Z   type: 'test'
+2026-10-22T03:00:55.2496190Z   ...
+2026-10-22T03:00:55.2497061Z # Subtest: controller: main process drops the route (unregistered meanwhile) → error notice, page shows the real current route
+2026-10-22T03:00:55.2498380Z ok 307 - controller: main process drops the route (unregistered meanwhile) → error notice, page shows the real current route
+2026-10-22T03:00:55.2498981Z   ---
+2026-10-22T03:00:55.2499185Z   duration_ms: 1.0636
+2026-10-22T03:00:55.2499421Z   type: 'test'
+2026-10-22T03:00:55.2499626Z   ...
+2026-10-22T03:00:55.2501436Z # Subtest: controller: concurrent select ignored while pending; stale refresh response cannot overwrite a newer one; push applies immediately; load error
+2026-10-22T03:00:55.2503610Z ok 308 - controller: concurrent select ignored while pending; stale refresh response cannot overwrite a newer one; push applies immediately; load error
+2026-10-22T03:00:55.2504640Z   ---
+2026-10-22T03:00:55.2504975Z   duration_ms: 1.7209
+2026-10-22T03:00:55.2505365Z   type: 'test'
+2026-10-22T03:00:55.2506254Z   ...
+2026-10-22T03:00:55.2507939Z # Subtest: main: port:llm:routesChanged pushed on settings:set route change and on providers-file reload (deduped, no secrets)
+2026-10-22T03:00:55.2509294Z ok 309 - main: port:llm:routesChanged pushed on settings:set route change and on providers-file reload (deduped, no secrets)
+2026-10-22T03:00:55.2510639Z   ---
+2026-10-22T03:00:55.2510866Z   duration_ms: 28.2708
+2026-10-22T03:00:55.2511112Z   type: 'test'
+2026-10-22T03:00:55.2511337Z   ...
+2026-10-22T03:00:55.2511881Z # Subtest: withOutputPipefail is identical to the shipped bundle (chunk export a6) on a corpus
+2026-10-22T03:00:55.2512734Z ok 310 - withOutputPipefail is identical to the shipped bundle (chunk export a6) on a corpus
+2026-10-22T03:00:55.2513243Z   ---
+2026-10-22T03:00:55.2513438Z   duration_ms: 22.6186
+2026-10-22T03:00:55.2513700Z   type: 'test'
+2026-10-22T03:00:55.2513941Z   ...
+2026-10-22T03:00:55.2514235Z # Subtest: tokenizer / splitter basics
+2026-10-22T03:00:55.2514604Z ok 311 - tokenizer / splitter basics
+2026-10-22T03:00:55.2514892Z   ---
+2026-10-22T03:00:55.2515074Z   duration_ms: 0.6554
+2026-10-22T03:00:55.2515303Z   type: 'test'
+2026-10-22T03:00:55.2515516Z   ...
+2026-10-22T03:00:55.2516075Z # (node:5220) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+2026-10-22T03:00:55.2516807Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-22T03:00:55.2518303Z # Subtest: pricing: the MiniMax endpoint picks its models.dev provider row (minimaxi.com → minimax-cn first); reseller / $0 plan rows never price a call; the resolved source is logged once per model
+2026-10-22T03:00:55.2520307Z ok 312 - pricing: the MiniMax endpoint picks its models.dev provider row (minimaxi.com → minimax-cn first); reseller / $0 plan rows never price a call; the resolved source is logged once per model
+2026-10-22T03:00:55.2521430Z   ---
+2026-10-22T03:00:55.2521650Z   duration_ms: 90.029
+2026-10-22T03:00:55.2521895Z   type: 'test'
+2026-10-22T03:00:55.2522107Z   ...
+2026-10-22T03:00:55.2522938Z # Subtest: pricing: a catalog synced after startup is picked up (only positive lookups are cached); the startup sync honours freshness and the opt-out
+2026-10-22T03:00:55.2524248Z ok 313 - pricing: a catalog synced after startup is picked up (only positive lookups are cached); the startup sync honours freshness and the opt-out
+2026-10-22T03:00:55.2524953Z   ---
+2026-10-22T03:00:55.2525159Z   duration_ms: 91.7917
+2026-10-22T03:00:55.2525399Z   type: 'test'
+2026-10-22T03:00:55.2525818Z   ...
+2026-10-22T03:00:55.2526674Z # Subtest: shim: calls carrying X-VideoClaw-Client-Job are metered per job; GET /v1/spend-authorities/{job} answers readGatewaySpend's contract (L48020)
+2026-10-22T03:00:55.2528103Z ok 314 - shim: calls carrying X-VideoClaw-Client-Job are metered per job; GET /v1/spend-authorities/{job} answers readGatewaySpend's contract (L48020)
+2026-10-22T03:00:55.2528835Z   ---
+2026-10-22T03:00:55.2529030Z   duration_ms: 94.8014
+2026-10-22T03:00:55.2529262Z   type: 'test'
+2026-10-22T03:00:55.2529465Z   ...
+2026-10-22T03:00:55.2530135Z # Subtest: gate proxy UsageMeter: Anthropic SSE / JSON, OpenAI Responses SSE (cached tokens split out) and Chat Completions JSON
+2026-10-22T03:00:55.2531334Z ok 315 - gate proxy UsageMeter: Anthropic SSE / JSON, OpenAI Responses SSE (cached tokens split out) and Chat Completions JSON
+2026-10-22T03:00:55.2531953Z   ---
+2026-10-22T03:00:55.2532157Z   duration_ms: 1.0548
+2026-10-22T03:00:55.2532410Z   type: 'test'
+2026-10-22T03:00:55.2532816Z   ...
+2026-10-22T03:00:55.2533367Z # (node:5004) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+2026-10-22T03:00:55.2534109Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-22T03:00:55.2535193Z # Subtest: capability probe on this runtime: ok + SQLite version + minimums
+2026-10-22T03:00:55.2535855Z ok 316 - capability probe on this runtime: ok + SQLite version + minimums
+2026-10-22T03:00:55.2536258Z   ---
+2026-10-22T03:00:55.2536538Z   duration_ms: 1.8669
+2026-10-22T03:00:55.2536780Z   type: 'test'
+2026-10-22T03:00:55.2537011Z   ...
+2026-10-22T03:00:55.2537962Z # Subtest: runtime WITHOUT node:sqlite → SqliteUnavailableError (code, runtime, minimum) from ModelsDb and the probe; recovers when restored
+2026-10-22T03:00:55.2539597Z ok 317 - runtime WITHOUT node:sqlite → SqliteUnavailableError (code, runtime, minimum) from ModelsDb and the probe; recovers when restored
+2026-10-22T03:00:55.2540322Z   ---
+2026-10-22T03:00:55.2540542Z   duration_ms: 1.0255
+2026-10-22T03:00:55.2540934Z   type: 'test'
+2026-10-22T03:00:55.2541135Z   ...
+2026-10-22T03:00:55.2541857Z # Subtest: studio toolset: 11 tools registered as the original's dynamic specs + one alwaysLoad SDK MCP server named studio
+2026-10-22T03:00:55.2542983Z ok 318 - studio toolset: 11 tools registered as the original's dynamic specs + one alwaysLoad SDK MCP server named studio
+2026-10-22T03:00:55.2543594Z   ---
+2026-10-22T03:00:55.2543816Z   duration_ms: 15.5002
+2026-10-22T03:00:55.2544053Z   type: 'test'
+2026-10-22T03:00:55.2544245Z   ...
+2026-10-22T03:00:55.2545103Z # Subtest: studio input tools: rights card → receipt; files card copies into the confined dest; Codex dynamic tools route only studio names
+2026-10-22T03:00:55.2546428Z ok 319 - studio input tools: rights card → receipt; files card copies into the confined dest; Codex dynamic tools route only studio names
+2026-10-22T03:00:55.2547085Z   ---
+2026-10-22T03:00:55.2547296Z   duration_ms: 31.2587
+2026-10-22T03:00:55.2547559Z   type: 'test'
+2026-10-22T03:00:55.2547768Z   ...
+2026-10-22T03:00:55.2548817Z # Subtest: session plan: propose (bound to job + account, awaiting decision) → Build it dispatches the original plan turn → accepted; production refusal lifts only then
+2026-10-22T03:00:55.2550436Z ok 320 - session plan: propose (bound to job + account, awaiting decision) → Build it dispatches the original plan turn → accepted; production refusal lifts only then
+2026-10-22T03:00:55.2551232Z   ---
+2026-10-22T03:00:55.2551449Z   duration_ms: 17.9379
+2026-10-22T03:00:55.2551695Z   type: 'test'
+2026-10-22T03:00:55.2551898Z   ...
+2026-10-22T03:00:55.2552897Z # Subtest: session plan: invalid args explain themselves; no job → SESSION_PLAN_JOB_MISSING; failed dispatch persists and Retry re-sends the same choice
+2026-10-22T03:00:55.2554465Z ok 321 - session plan: invalid args explain themselves; no job → SESSION_PLAN_JOB_MISSING; failed dispatch persists and Retry re-sends the same choice
+2026-10-22T03:00:55.2555191Z   ---
+2026-10-22T03:00:55.2555395Z   duration_ms: 9.3419
+2026-10-22T03:00:55.2555628Z   type: 'test'
+2026-10-22T03:00:55.2555831Z   ...
+2026-10-22T03:00:55.2556312Z # Subtest: UI-e2e mode always loads the ORIGINAL renderer, even with VIDEOCLAW_PORT_SMOKE=1
+2026-10-22T03:00:55.2557064Z ok 322 - UI-e2e mode always loads the ORIGINAL renderer, even with VIDEOCLAW_PORT_SMOKE=1
+2026-10-22T03:00:55.2557507Z   ---
+2026-10-22T03:00:55.2557704Z   duration_ms: 1.4602
+2026-10-22T03:00:55.2557933Z   type: 'test'
+2026-10-22T03:00:55.2558130Z   ...
+2026-10-22T03:00:55.2558682Z # Subtest: UI-e2e mode answers the native dialogs from the env presets; otherwise the real dialog is used
+2026-10-22T03:00:55.2559633Z ok 323 - UI-e2e mode answers the native dialogs from the env presets; otherwise the real dialog is used
+2026-10-22T03:00:55.2560209Z   ---
+2026-10-22T03:00:55.2560440Z   duration_ms: 1.094
+2026-10-22T03:00:55.2560669Z   type: 'test'
+2026-10-22T03:00:55.2561084Z   ...
+2026-10-22T03:00:55.2561836Z # Subtest: CDP client: id correlation, errors, events, eval by value, socket close rejects pending
+2026-10-22T03:00:55.2562704Z ok 324 - CDP client: id correlation, errors, events, eval by value, socket close rejects pending
+2026-10-22T03:00:55.2563222Z   ---
+2026-10-22T03:00:55.2563991Z   duration_ms: 2.377
+2026-10-22T03:00:55.2564296Z   type: 'test'
+2026-10-22T03:00:55.2564527Z   ...
+2026-10-22T03:00:55.2565238Z # Subtest: real-input helpers emit Input.* events (mouse press/release, insertText, Enter with \\r, OS drag with files)
+2026-10-22T03:00:55.2566867Z ok 325 - real-input helpers emit Input.* events (mouse press/release, insertText, Enter with \\r, OS drag with files)
+2026-10-22T03:00:55.2567605Z   ---
+2026-10-22T03:00:55.2567857Z   duration_ms: 72.3692
+2026-10-22T03:00:55.2568127Z   type: 'test'
+2026-10-22T03:00:55.2568322Z   ...
+2026-10-22T03:00:55.2568589Z # Subtest: driver geometry + verdict helpers
+2026-10-22T03:00:55.2569020Z ok 326 - driver geometry + verdict helpers
+2026-10-22T03:00:55.2569331Z   ---
+2026-10-22T03:00:55.2569479Z   duration_ms: 1.8888
+2026-10-22T03:00:55.2569646Z   type: 'test'
+2026-10-22T03:00:55.2569801Z   ...
+2026-10-22T03:00:55.2570034Z # Subtest: evidence redaction scrubs secrets and run paths
+2026-10-22T03:00:55.2570364Z ok 327 - evidence redaction scrubs secrets and run paths
+2026-10-22T03:00:55.2570599Z   ---
+2026-10-22T03:00:55.2570739Z   duration_ms: 0.3677
+2026-10-22T03:00:55.2570899Z   type: 'test'
+2026-10-22T03:00:55.2571040Z   ...
+2026-10-22T03:00:55.2571244Z # Subtest: ui-e2e driver parses (node --check)
+2026-10-22T03:00:55.2571648Z ok 328 - ui-e2e driver parses (node --check)
+2026-10-22T03:00:55.2571851Z   ---
+2026-10-22T03:00:55.2572000Z   duration_ms: 44.6891
+2026-10-22T03:00:55.2572162Z   type: 'test'
+2026-10-22T03:00:55.2572296Z   ...
+2026-10-22T03:00:55.2572717Z # Subtest: answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposals' file content (qcardQ1) does not
+2026-10-22T03:00:55.2573368Z ok 329 - answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposals' file content (qcardQ1) does not
+2026-10-22T03:00:55.2573740Z   ---
+2026-10-22T03:00:55.2573880Z   duration_ms: 1.1315
+2026-10-22T03:00:55.2574048Z   type: 'test'
+2026-10-22T03:00:55.2574189Z   ...
+2026-10-22T03:00:55.2574538Z # Subtest: win exec shim: written idempotently into .venv/Lib/site-packages as a .pth import
+2026-10-22T03:00:55.2575048Z ok 330 - win exec shim: written idempotently into .venv/Lib/site-packages as a .pth import
+2026-10-22T03:00:55.2575356Z   ---
+2026-10-22T03:00:55.2575500Z   duration_ms: 6.7691
+2026-10-22T03:00:55.2575665Z   type: 'test'
+2026-10-22T03:00:55.2575801Z   ...
+2026-10-22T03:00:55.2576363Z # Subtest: win exec shim: bare npx → node <node dir>/node_modules/npm/bin/npx-cli.js, args (JSON props) untouched, no shell
+2026-10-22T03:00:55.2577102Z ok 331 - win exec shim: bare npx → node <node dir>/node_modules/npm/bin/npx-cli.js, args (JSON props) untouched, no shell # SKIP
+2026-10-22T03:00:55.2577997Z   ---
+2026-10-22T03:00:55.2578173Z   duration_ms: 0.1542
+2026-10-22T03:00:55.2578567Z   type: 'test'
+2026-10-22T03:00:55.2579226Z   ...
+2026-10-22T03:00:55.2579637Z 1..331
+2026-10-22T03:00:55.2579844Z # tests 331
+2026-10-22T03:00:55.2580291Z # suites 0
+2026-10-22T03:00:55.2580691Z # pass 322
+2026-10-22T03:00:55.2580840Z # fail 0
+2026-10-22T03:00:55.2580977Z # cancelled 0
+2026-10-22T03:00:55.2581134Z # skipped 9
+2026-10-22T03:00:55.2581275Z # todo 0
+2026-10-22T03:00:55.2581423Z # duration_ms 7148.4593
+2026-10-22T03:00:55.3384185Z Post job cleanup.
+2026-10-22T03:00:55.4575338Z (node:1404) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T03:00:55.4575981Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T03:00:55.4578934Z Cache hit occurred on the primary key node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61, not saving cache.
+2026-10-22T03:00:55.4836046Z Post job cleanup.
+2026-10-22T03:00:55.6162602Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-22T03:00:55.6447747Z git version 2.56.0.windows.2
+2026-10-22T03:00:55.6517487Z Temporarily overriding HOME='D:\a\_temp\f955f6c8-dc61-4f86-81ec-ccf27fd2b7a5' before making global git config changes
+2026-10-22T03:00:55.6518536Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-22T03:00:55.6529282Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\reelkiln\reelkiln
+2026-10-22T03:00:55.6959035Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-22T03:00:55.7295215Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-22T03:00:56.1983490Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-22T03:00:56.2257860Z http.https://github.com/.extraheader
+2026-10-22T03:00:56.2299675Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-22T03:00:56.2618016Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-22T03:00:56.7057411Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-22T03:00:56.7363319Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-22T03:00:57.2124851Z Cleaning up orphan processes
+2026-10-22T03:00:57.2626950Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

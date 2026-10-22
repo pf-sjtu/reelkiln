@@ -1,0 +1,483 @@
+﻿2026-10-22T02:53:16.2876551Z Current runner version: '2.338.0'
+2026-10-22T02:53:16.2904485Z ##[group]Runner Image Provisioner
+2026-10-22T02:53:16.2906144Z Hosted Compute Agent
+2026-10-22T02:53:16.2907046Z Version: 20261015.610
+2026-10-22T02:53:16.2908004Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+2026-10-22T02:53:16.2909257Z Build Date: 2026-10-14T17:06:54Z
+2026-10-22T02:53:16.2910385Z Worker ID: {1d54451e-ba9e-44f1-818d-3e212f1b46a2}
+2026-10-22T02:53:16.2911538Z Region: eastus2
+2026-10-22T02:53:16.2912366Z Cloud: Azure
+2026-10-22T02:53:16.2913242Z ##[endgroup]
+2026-10-22T02:53:16.2915670Z ##[group]Operating System
+2026-10-22T02:53:16.2916779Z Microsoft Windows Server 2025
+2026-10-22T02:53:16.2917760Z 10.0.26100
+2026-10-22T02:53:16.2918527Z Datacenter
+2026-10-22T02:53:16.2919285Z ##[endgroup]
+2026-10-22T02:53:16.2920165Z ##[group]Runner Image
+2026-10-22T02:53:16.2921341Z Image: windows-2025-vs2026
+2026-10-22T02:53:16.2922399Z Version: 20261018.275.1
+2026-10-22T02:53:16.2925717Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261018.275/images/windows/Windows2025-VS2026-Readme.md
+2026-10-22T02:53:16.2928592Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261018.275
+2026-10-22T02:53:16.2930277Z ##[endgroup]
+2026-10-22T02:53:16.2932032Z ##[group]GITHUB_TOKEN Permissions
+2026-10-22T02:53:16.2934614Z Contents: read
+2026-10-22T02:53:16.2935518Z Metadata: read
+2026-10-22T02:53:16.2936338Z ##[endgroup]
+2026-10-22T02:53:16.2939224Z Secret source: Actions
+2026-10-22T02:53:16.2940573Z Cache mode: write
+2026-10-22T02:53:16.2941819Z Prepare workflow directory
+2026-10-22T02:53:16.3371121Z Prepare all required actions
+2026-10-22T02:53:16.3422206Z Getting action download info
+2026-10-22T02:53:16.4975129Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-22T02:53:16.6411148Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-22T02:53:16.8118561Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-22T02:53:17.1471706Z Complete job name: Windows package (nsis + portable) + packaged smoke
+2026-10-22T02:53:17.3209429Z ##[group]Run actions/checkout@v4
+2026-10-22T02:53:17.3210510Z with:
+2026-10-22T02:53:17.3210927Z   repository: pf-sjtu/reelkiln
+2026-10-22T02:53:17.3215011Z   token: ***
+2026-10-22T02:53:17.3215420Z   ssh-strict: true
+2026-10-22T02:53:17.3215816Z   ssh-user: git
+2026-10-22T02:53:17.3216225Z   persist-credentials: true
+2026-10-22T02:53:17.3216672Z   clean: true
+2026-10-22T02:53:17.3217072Z   sparse-checkout-cone-mode: true
+2026-10-22T02:53:17.3217551Z   fetch-depth: 1
+2026-10-22T02:53:17.3218564Z   fetch-tags: false
+2026-10-22T02:53:17.3219257Z   show-progress: true
+2026-10-22T02:53:17.3219889Z   lfs: false
+2026-10-22T02:53:17.3220506Z   submodules: false
+2026-10-22T02:53:17.3221221Z   set-safe-directory: true
+2026-10-22T02:53:17.3221992Z   allow-unsafe-pr-checkout: false
+2026-10-22T02:53:17.3223264Z ##[endgroup]
+2026-10-22T02:53:17.4787833Z Syncing repository: pf-sjtu/reelkiln
+2026-10-22T02:53:17.4790111Z ##[group]Getting Git version info
+2026-10-22T02:53:17.4790846Z Working directory is 'D:\a\reelkiln\reelkiln'
+2026-10-22T02:53:17.5826852Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-22T02:53:17.9573805Z git version 2.56.0.windows.2
+2026-10-22T02:53:17.9626935Z ##[endgroup]
+2026-10-22T02:53:17.9644989Z Temporarily overriding HOME='D:\a\_temp\ae490c90-8274-467a-894a-54f6cbd51748' before making global git config changes
+2026-10-22T02:53:17.9646744Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-22T02:53:17.9655209Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\reelkiln\reelkiln
+2026-10-22T02:53:18.0377358Z Deleting the contents of 'D:\a\reelkiln\reelkiln'
+2026-10-22T02:53:18.0383635Z ##[group]Initializing the repository
+2026-10-22T02:53:18.0391910Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\reelkiln\reelkiln
+2026-10-22T02:53:18.1336324Z Initialized empty Git repository in D:/a/reelkiln/reelkiln/.git/
+2026-10-22T02:53:18.1384499Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/pf-sjtu/reelkiln
+2026-10-22T02:53:18.2140400Z ##[endgroup]
+2026-10-22T02:53:18.2141804Z ##[group]Disabling automatic garbage collection
+2026-10-22T02:53:18.2148534Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-22T02:53:18.2516198Z ##[endgroup]
+2026-10-22T02:53:18.2517716Z ##[group]Setting up auth
+2026-10-22T02:53:18.2528915Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-22T02:53:18.2908140Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-22T02:53:19.7775328Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-22T02:53:19.8155433Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-22T02:53:20.3934582Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-22T02:53:20.4322337Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-22T02:53:20.9681094Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-22T02:53:21.0072254Z ##[endgroup]
+2026-10-22T02:53:21.0073224Z ##[group]Fetching the repository
+2026-10-22T02:53:21.0086445Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6f2099b92f94132b22059d309858ef3173060837:refs/remotes/origin/master
+2026-10-22T02:53:23.6751094Z From https://github.com/pf-sjtu/reelkiln
+2026-10-22T02:53:23.6752152Z  * [new ref]         6f2099b92f94132b22059d309858ef3173060837 -> origin/master
+2026-10-22T02:53:23.6800791Z ##[endgroup]
+2026-10-22T02:53:23.6802478Z ##[group]Determining the checkout info
+2026-10-22T02:53:23.6803941Z ##[endgroup]
+2026-10-22T02:53:23.6817733Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-22T02:53:23.7650393Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-22T02:53:23.8224527Z ##[group]Checking out the ref
+2026-10-22T02:53:23.8239670Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B master refs/remotes/origin/master
+2026-10-22T02:53:24.7935356Z Reset branch 'master'
+2026-10-22T02:53:24.8012390Z branch 'master' set up to track 'origin/master'.
+2026-10-22T02:53:24.8152561Z ##[endgroup]
+2026-10-22T02:53:24.8790634Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-22T02:53:24.9139006Z 6f2099b92f94132b22059d309858ef3173060837
+2026-10-22T02:53:24.9665073Z ##[group]Run actions/setup-node@v4
+2026-10-22T02:53:24.9665433Z with:
+2026-10-22T02:53:24.9665623Z   node-version: 22
+2026-10-22T02:53:24.9665826Z   cache: npm
+2026-10-22T02:53:24.9666060Z   cache-dependency-path: port/package-lock.json
+2026-10-22T02:53:24.9666357Z   always-auth: false
+2026-10-22T02:53:24.9666549Z   check-latest: false
+2026-10-22T02:53:24.9669004Z   token: ***
+2026-10-22T02:53:24.9669186Z ##[endgroup]
+2026-10-22T02:53:25.1434288Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.3\x64
+2026-10-22T02:53:25.1444058Z (node:9120) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:53:25.1445335Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:53:25.1447966Z ##[group]Environment details
+2026-10-22T02:53:30.2628179Z node: v22.23.3
+2026-10-22T02:53:30.2628472Z npm: 10.9.9
+2026-10-22T02:53:30.2628648Z yarn: 1.22.22
+2026-10-22T02:53:30.2629593Z ##[endgroup]
+2026-10-22T02:53:30.3447581Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\hostedtoolcache\windows\node\22.23.3\x64\npm.cmd config get cache"
+2026-10-22T02:53:30.8894807Z C:\npm\cache
+2026-10-22T02:53:31.1640654Z Cache hit for: node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61
+2026-10-22T02:53:31.1754137Z (node:9120) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-22T02:53:31.5034930Z Received 35406339 of 35406339 (100.0%), 118.5 MBs/sec
+2026-10-22T02:53:31.5036955Z Cache Size: ~34 MB (35406339 B)
+2026-10-22T02:53:31.5104372Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/d39aedd3-4eb0-4490-a21c-a1f26c29b733/cache.tzst -P -C D:/a/reelkiln/reelkiln --force-local --use-compress-program "zstd -d"
+2026-10-22T02:53:32.9332364Z Cache restored successfully
+2026-10-22T02:53:32.9367397Z Cache restored from key: node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61
+2026-10-22T02:53:32.9778160Z ##[group]Run npm ci
+2026-10-22T02:53:32.9778450Z npm ci
+2026-10-22T02:53:32.9801353Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:53:32.9801764Z ##[endgroup]
+2026-10-22T02:53:37.1298970Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-10-22T02:53:37.1776867Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-10-22T02:53:37.2079122Z npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+2026-10-22T02:53:37.3006039Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-22T02:53:37.7908784Z npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2026-10-22T02:53:41.6509190Z 
+2026-10-22T02:53:41.6510130Z added 293 packages, and audited 294 packages in 8s
+2026-10-22T02:53:41.6510671Z 
+2026-10-22T02:53:41.6511701Z 49 packages are looking for funding
+2026-10-22T02:53:41.6512202Z   run `npm fund` for details
+2026-10-22T02:53:41.6842705Z 
+2026-10-22T02:53:41.6843945Z 8 moderate severity vulnerabilities
+2026-10-22T02:53:41.6844823Z 
+2026-10-22T02:53:41.6854396Z To address issues that do not require attention, run:
+2026-10-22T02:53:41.6866557Z   npm audit fix
+2026-10-22T02:53:41.6866995Z 
+2026-10-22T02:53:41.6867549Z To address all issues (including breaking changes), run:
+2026-10-22T02:53:41.6868730Z   npm audit fix --force
+2026-10-22T02:53:41.6869129Z 
+2026-10-22T02:53:41.6869455Z Run `npm audit` for details.
+2026-10-22T02:53:46.7340871Z ##[group]Run npm run package:win | tee "$RUNNER_TEMP/package-win.json"
+2026-10-22T02:53:46.7341439Z npm run package:win | tee "$RUNNER_TEMP/package-win.json"
+2026-10-22T02:53:46.7357969Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:53:46.7358376Z ##[endgroup]
+2026-10-22T02:53:47.4569024Z 
+2026-10-22T02:53:47.4569829Z > videoclaw-port@0.0.40-port.0 package:win
+2026-10-22T02:53:47.4570683Z > npm run build && node tools/package.mjs --platform win --arch x64
+2026-10-22T02:53:47.4571158Z 
+2026-10-22T02:53:47.7705724Z 
+2026-10-22T02:53:47.7706996Z > videoclaw-port@0.0.40-port.0 build
+2026-10-22T02:53:47.7707614Z > npm run gen && npm run typecheck && npm run bundle
+2026-10-22T02:53:47.7707956Z 
+2026-10-22T02:53:48.0995985Z 
+2026-10-22T02:53:48.0996691Z > videoclaw-port@0.0.40-port.0 gen
+2026-10-22T02:53:48.0997900Z > node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs
+2026-10-22T02:53:48.0998644Z 
+2026-10-22T02:53:48.1787789Z {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17}
+2026-10-22T02:53:48.5405199Z studio-paid-tools.generated.ts: 4 descriptions ok
+2026-10-22T02:53:48.8705950Z 
+2026-10-22T02:53:48.8706633Z > videoclaw-port@0.0.40-port.0 typecheck
+2026-10-22T02:53:48.8707802Z > tsc -p tsconfig.json --noEmit
+2026-10-22T02:53:48.8708117Z 
+2026-10-22T02:53:55.6646545Z 
+2026-10-22T02:53:55.6647261Z > videoclaw-port@0.0.40-port.0 bundle
+2026-10-22T02:53:55.6647800Z > node tools/build.mjs
+2026-10-22T02:53:55.6648037Z 
+2026-10-22T02:53:56.0509655Z 
+2026-10-22T02:53:56.0510546Z   dist\main\index.cjs      3.1mb
+2026-10-22T02:53:56.0511102Z   dist\main\index.cjs.map  5.7mb
+2026-10-22T02:53:56.0511284Z 
+2026-10-22T02:53:56.0511394Z Done in 273ms
+2026-10-22T02:53:56.0564965Z 
+2026-10-22T02:53:56.0565316Z   dist\main\editorRenderWorker.cjs      4.8kb
+2026-10-22T02:53:56.0566049Z   dist\main\editorRenderWorker.cjs.map  8.3kb
+2026-10-22T02:53:56.0566460Z 
+2026-10-22T02:53:56.0566596Z Done in 3ms
+2026-10-22T02:53:56.0617607Z 
+2026-10-22T02:53:56.0618192Z   dist\main\hyperframesPolicyWorker.cjs       10.1kb
+2026-10-22T02:53:56.0619219Z   dist\main\hyperframesPreviewWorker.cjs       8.9kb
+2026-10-22T02:53:56.0619940Z   dist\main\hyperframesPreviewWorker.cjs.map  18.2kb
+2026-10-22T02:53:56.0620429Z   dist\main\hyperframesPolicyWorker.cjs.map   16.1kb
+2026-10-22T02:53:56.0620684Z 
+2026-10-22T02:53:56.0620760Z Done in 4ms
+2026-10-22T02:53:56.1417408Z 
+2026-10-22T02:53:56.1418384Z   dist\cli\port-cli.cjs      1015.8kb
+2026-10-22T02:53:56.1418780Z   dist\cli\port-cli.cjs.map     2.1mb
+2026-10-22T02:53:56.1418972Z 
+2026-10-22T02:53:56.1419053Z Done in 79ms
+2026-10-22T02:53:56.1504600Z 
+2026-10-22T02:53:56.1505323Z   dist\preload\index.cjs       26.9kb
+2026-10-22T02:53:56.1506280Z   dist\preload\index.cjs.map  199.4kb
+2026-10-22T02:53:56.1506611Z 
+2026-10-22T02:53:56.1506745Z Done in 7ms
+2026-10-22T02:53:56.1593348Z 
+2026-10-22T02:53:56.1594212Z   dist\renderer\renderer.js      17.5kb
+2026-10-22T02:53:56.1594852Z   dist\renderer\renderer.js.map  36.1kb
+2026-10-22T02:53:56.1595500Z 
+2026-10-22T02:53:56.1596066Z Done in 8ms
+2026-10-22T02:53:56.2508241Z [package] WARNING: win-x64 packaging is config-only/UNVERIFIED in this repo (docs/18 §6)
+2026-10-22T02:53:56.2512913Z [package] staging Claude Agent SDK 0.3.305 for win32-x64: SDK not installed under D:\a\reelkiln\reelkiln\port\vendor\claude-agent-sdk (run npm run agent-sdk:install)
+2026-10-22T02:53:56.3031813Z installing @anthropic-ai/claude-agent-sdk@0.3.305 into D:\a\reelkiln\reelkiln\port\vendor\claude-agent-sdk …
+2026-10-22T02:54:08.5419057Z 
+2026-10-22T02:54:08.5419858Z added 105 packages in 12s
+2026-10-22T02:54:08.5725898Z [package] bundling Claude Agent SDK from D:\a\reelkiln\reelkiln\port\vendor\claude-agent-sdk → resources/claude-agent-sdk
+2026-10-22T02:54:08.5738846Z {"ok":true,"dir":"D:\\a\\reelkiln\\reelkiln\\port\\vendor\\claude-agent-sdk","version":"0.3.305","nativeBinary":"D:\\a\\reelkiln\\reelkiln\\port\\vendor\\claude-agent-sdk\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe"}
+2026-10-22T02:54:09.2559871Z   • electron-builder  version=26.15.3 os=10.0.26100
+2026-10-22T02:54:10.4140718Z   • skipped dependencies rebuild  reason=npmRebuild is set to false
+2026-10-22T02:54:10.4142011Z   • packaging       platform=win32 arch=x64 electron=42.11.9 appOutDir=release\win-unpacked
+2026-10-22T02:54:10.5549296Z   • downloaded      label=electron progress=100%
+2026-10-22T02:54:16.0243196Z   • downloaded electron zip extracted successfully  output=D:\a\reelkiln\reelkiln\port\release\win-unpacked
+2026-10-22T02:54:16.0398954Z   • searching for node modules  pm=npm searchDir=D:\a\reelkiln\reelkiln\port
+2026-10-22T02:54:19.1767775Z   • searching for node modules  pm=traversal searchDir=D:\a\reelkiln\reelkiln\port
+2026-10-22T02:54:19.1768991Z   • using manual traversal of node_modules to build dependency tree
+2026-10-22T02:54:19.1770088Z   • no node modules returned while searching directories  searchDirectories=[""]
+2026-10-22T02:54:20.1426761Z   • updating asar integrity executable resource  executablePath=release\win-unpacked\videoclaw-port.exe
+2026-10-22T02:54:22.7290369Z   • signing with signtool.exe  path=release\win-unpacked\resources\claude-agent-sdk\node_modules\@anthropic-ai\claude-agent-sdk-win32-x64\claude.exe
+2026-10-22T02:54:22.7447218Z   • default Electron icon is used  reason=application icon is not set
+2026-10-22T02:54:23.0298426Z   • signing with signtool.exe  path=release\win-unpacked\videoclaw-port.exe
+2026-10-22T02:54:23.0457262Z   • building        target=nsis file=release\Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe archs=x64 oneClick=false perMachine=false
+2026-10-22T02:54:23.1566419Z   • downloaded      label=nsis-3.0.4.1.7z progress=100%
+2026-10-22T02:54:23.2675825Z   • downloaded      label=7zip-win-x64.tar.gz progress=100%
+2026-10-22T02:54:24.8822787Z   • signing with signtool.exe  path=release\win-unpacked\resources\elevate.exe
+2026-10-22T02:55:41.5549570Z   • downloaded      label=nsis-resources-3.4.1.7z progress=100%
+2026-10-22T02:55:43.0736303Z   • signing with signtool.exe  path=release\Videoclaw-Port-0.0.40-port.0-win-x64-setup.__uninstaller.exe
+2026-10-22T02:55:46.7641129Z   • signing with signtool.exe  path=release\Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe
+2026-10-22T02:55:46.7642693Z   • building block map  blockMapFile=release\Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe.blockmap
+2026-10-22T02:55:56.1684203Z   • building        target=portable file=release\Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe archs=x64
+2026-10-22T02:55:57.4822018Z   • signing with signtool.exe  path=release\Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe
+2026-10-22T02:55:57.4999906Z {
+2026-10-22T02:55:57.5000568Z   "ok": true,
+2026-10-22T02:55:57.5001050Z   "platform": "win",
+2026-10-22T02:55:57.5001394Z   "arch": "x64",
+2026-10-22T02:55:57.5001702Z   "sdkBundled": true,
+2026-10-22T02:55:57.5002017Z   "artifacts": [
+2026-10-22T02:55:57.5002316Z     {
+2026-10-22T02:55:57.5003149Z       "file": "D:\\a\\reelkiln\\reelkiln\\port\\release\\Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe.blockmap",
+2026-10-22T02:55:57.5007221Z       "bytes": 253533
+2026-10-22T02:55:57.5008491Z     },
+2026-10-22T02:55:57.5009863Z     {
+2026-10-22T02:55:57.5011097Z       "file": "D:\\a\\reelkiln\\reelkiln\\port\\release\\Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe",
+2026-10-22T02:55:57.5011955Z       "bytes": 240461954
+2026-10-22T02:55:57.5012191Z     },
+2026-10-22T02:55:57.5012362Z     {
+2026-10-22T02:55:57.5012840Z       "file": "D:\\a\\reelkiln\\reelkiln\\port\\release\\Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe",
+2026-10-22T02:55:57.5013338Z       "bytes": 210793326
+2026-10-22T02:55:57.5013551Z     }
+2026-10-22T02:55:57.5014585Z   ],
+2026-10-22T02:55:57.5014801Z   "unpacked": [
+2026-10-22T02:55:57.5015114Z     "D:\\a\\reelkiln\\reelkiln\\port\\release\\win-unpacked"
+2026-10-22T02:55:57.5015424Z   ]
+2026-10-22T02:55:57.5015580Z }
+2026-10-22T02:55:57.5500915Z ##[group]Run ls -la release
+2026-10-22T02:55:57.5501267Z ls -la release
+2026-10-22T02:55:57.5501620Z sha256sum release/*.exe | tee "$RUNNER_TEMP/win-artifacts.sha256"
+2026-10-22T02:55:57.5502333Z node tools/packaged-smoke.mjs release/win-unpacked release/*-setup.exe | tee "$RUNNER_TEMP/packaged-smoke-win.json"
+2026-10-22T02:55:57.5518498Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:55:57.5519622Z ##[endgroup]
+2026-10-22T02:55:57.6339587Z total 440953
+2026-10-22T02:55:57.6340236Z drwxr-xr-x 1 runneradmin 197121         0 Oct 22 02:55 .
+2026-10-22T02:55:57.6341073Z drwxr-xr-x 1 runneradmin 197121         0 Oct 22 02:54 ..
+2026-10-22T02:55:57.6342257Z -rwxr-xr-x 1 runneradmin 197121 210793326 Oct 22 02:55 Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe
+2026-10-22T02:55:57.6343964Z -rwxr-xr-x 1 runneradmin 197121 240461954 Oct 22 02:55 Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe
+2026-10-22T02:55:57.6345812Z -rw-r--r-- 1 runneradmin 197121    253533 Oct 22 02:55 Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe.blockmap
+2026-10-22T02:55:57.6347136Z -rw-r--r-- 1 runneradmin 197121      6329 Oct 22 02:55 builder-debug.yml
+2026-10-22T02:55:57.6348153Z -rw-r--r-- 1 runneradmin 197121       397 Oct 22 02:55 port.yml
+2026-10-22T02:55:57.6349103Z drwxr-xr-x 1 runneradmin 197121         0 Oct 22 02:54 win-unpacked
+2026-10-22T02:55:58.5020259Z ee7dfc45393c1506df25e9055df607f1956dac41bd671ea60cb42a54cb69f350 *release/Videoclaw-Port-0.0.40-port.0-win-x64-portable.exe
+2026-10-22T02:55:59.4488954Z b1cc0bb4e0a3b9a2760d0873212466781db26ef257b7d1e89302ac809c6d3220 *release/Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe
+2026-10-22T02:56:01.6363288Z [packaged-smoke] win-unpacked: OK
+2026-10-22T02:57:10.3177807Z [packaged-smoke] Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe: OK
+2026-10-22T02:57:10.3335701Z [
+2026-10-22T02:57:10.3336887Z   {
+2026-10-22T02:57:10.3337735Z     "artifact": "D:\\a\\reelkiln\\reelkiln\\port\\release\\win-unpacked",
+2026-10-22T02:57:10.3339051Z     "kind": "unpacked",
+2026-10-22T02:57:10.3339464Z     "gui": {
+2026-10-22T02:57:10.3339877Z       "exit": 0,
+2026-10-22T02:57:10.3340249Z       "mode": "direct",
+2026-10-22T02:57:10.3340763Z       "done": "[smoke] DONE failed=[]",
+2026-10-22T02:57:10.3341567Z       "preloadMethods": 184,
+2026-10-22T02:57:10.3342046Z       "llmRoutes": {
+2026-10-22T02:57:10.3342600Z         "current": "claude-code",
+2026-10-22T02:57:10.3343103Z         "ids": [
+2026-10-22T02:57:10.3343523Z           "claude-code",
+2026-10-22T02:57:10.3343967Z           "gateway",
+2026-10-22T02:57:10.3344413Z           "minimax"
+2026-10-22T02:57:10.3344926Z         ]
+2026-10-22T02:57:10.3345347Z       },
+2026-10-22T02:57:10.3345636Z       "packaged": true,
+2026-10-22T02:57:10.3346143Z       "resourcesPath": "D:\\a\\reelkiln\\reelkiln\\port\\release\\win-unpacked\\resources",
+2026-10-22T02:57:10.3347977Z       "agentSdk": {
+2026-10-22T02:57:10.3348356Z         "ok": true,
+2026-10-22T02:57:10.3348672Z         "source": "resources",
+2026-10-22T02:57:10.3349011Z         "version": "0.3.305",
+2026-10-22T02:57:10.3350208Z         "executable": "D:\\a\\reelkiln\\reelkiln\\port\\release\\win-unpacked\\resources\\claude-agent-sdk\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe"
+2026-10-22T02:57:10.3352355Z       },
+2026-10-22T02:57:10.3352763Z       "sqlite": {
+2026-10-22T02:57:10.3354035Z         "ok": true,
+2026-10-22T02:57:10.3354567Z         "sqliteVersion": "3.53.3"
+2026-10-22T02:57:10.3355144Z       },
+2026-10-22T02:57:10.3355447Z       "settingsPage": {
+2026-10-22T02:57:10.3355729Z         "select": true,
+2026-10-22T02:57:10.3356044Z         "restore": true
+2026-10-22T02:57:10.3356302Z       },
+2026-10-22T02:57:10.3356530Z       "ok": true
+2026-10-22T02:57:10.3356761Z     },
+2026-10-22T02:57:10.3357032Z     "sdkCheck": {
+2026-10-22T02:57:10.3357282Z       "ok": true,
+2026-10-22T02:57:10.3357581Z       "source": "resources",
+2026-10-22T02:57:10.3360762Z       "version": "0.3.305",
+2026-10-22T02:57:10.3361154Z       "matchesPin": true,
+2026-10-22T02:57:10.3362028Z       "executable": "D:\\a\\reelkiln\\reelkiln\\port\\release\\win-unpacked\\resources\\claude-agent-sdk\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe",
+2026-10-22T02:57:10.3363005Z       "resourcesPath": "D:\\a\\reelkiln\\reelkiln\\port\\release\\win-unpacked\\resources"
+2026-10-22T02:57:10.3363670Z     },
+2026-10-22T02:57:10.3363944Z     "sqliteNodeMode": {
+2026-10-22T02:57:10.3364360Z       "ok": true,
+2026-10-22T02:57:10.3364722Z       "sqliteVersion": "3.53.3",
+2026-10-22T02:57:10.3365029Z       "electron": "42.11.9",
+2026-10-22T02:57:10.3365355Z       "node": "24.19.0"
+2026-10-22T02:57:10.3365611Z     },
+2026-10-22T02:57:10.3365839Z     "ok": true
+2026-10-22T02:57:10.3366098Z   },
+2026-10-22T02:57:10.3366309Z   {
+2026-10-22T02:57:10.3366822Z     "artifact": "D:\\a\\reelkiln\\reelkiln\\port\\release\\Videoclaw-Port-0.0.40-port.0-win-x64-setup.exe",
+2026-10-22T02:57:10.3367363Z     "bytes": 240461954,
+2026-10-22T02:57:10.3367583Z     "kind": "nsis",
+2026-10-22T02:57:10.3367825Z     "install": {
+2026-10-22T02:57:10.3368100Z       "exit": 0,
+2026-10-22T02:57:10.3368342Z       "files": 21
+2026-10-22T02:57:10.3368572Z     },
+2026-10-22T02:57:10.3368751Z     "gui": {
+2026-10-22T02:57:10.3368920Z       "exit": 0,
+2026-10-22T02:57:10.3369094Z       "mode": "direct",
+2026-10-22T02:57:10.3369335Z       "done": "[smoke] DONE failed=[]",
+2026-10-22T02:57:10.3369668Z       "preloadMethods": 184,
+2026-10-22T02:57:10.3369962Z       "llmRoutes": {
+2026-10-22T02:57:10.3370219Z         "current": "claude-code",
+2026-10-22T02:57:10.3370516Z         "ids": [
+2026-10-22T02:57:10.3370753Z           "claude-code",
+2026-10-22T02:57:10.3371018Z           "gateway",
+2026-10-22T02:57:10.3371431Z           "minimax"
+2026-10-22T02:57:10.3371688Z         ]
+2026-10-22T02:57:10.3371996Z       },
+2026-10-22T02:57:10.3372495Z       "packaged": true,
+2026-10-22T02:57:10.3373480Z       "resourcesPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\vc-pkg-smoke-GrQ7fU\\installed\\resources",
+2026-10-22T02:57:10.3374230Z       "agentSdk": {
+2026-10-22T02:57:10.3374516Z         "ok": true,
+2026-10-22T02:57:10.3374843Z         "source": "resources",
+2026-10-22T02:57:10.3375332Z         "version": "0.3.305",
+2026-10-22T02:57:10.3376493Z         "executable": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\vc-pkg-smoke-GrQ7fU\\installed\\resources\\claude-agent-sdk\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe"
+2026-10-22T02:57:10.3377326Z       },
+2026-10-22T02:57:10.3377558Z       "sqlite": {
+2026-10-22T02:57:10.3377804Z         "ok": true,
+2026-10-22T02:57:10.3378096Z         "sqliteVersion": "3.53.3"
+2026-10-22T02:57:10.3378379Z       },
+2026-10-22T02:57:10.3378613Z       "settingsPage": {
+2026-10-22T02:57:10.3378897Z         "select": true,
+2026-10-22T02:57:10.3379150Z         "restore": true
+2026-10-22T02:57:10.3379398Z       },
+2026-10-22T02:57:10.3379618Z       "ok": true
+2026-10-22T02:57:10.3379846Z     },
+2026-10-22T02:57:10.3380071Z     "sdkCheck": {
+2026-10-22T02:57:10.3380309Z       "ok": true,
+2026-10-22T02:57:10.3380583Z       "source": "resources",
+2026-10-22T02:57:10.3381074Z       "version": "0.3.305",
+2026-10-22T02:57:10.3381361Z       "matchesPin": true,
+2026-10-22T02:57:10.3382256Z       "executable": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\vc-pkg-smoke-GrQ7fU\\installed\\resources\\claude-agent-sdk\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe",
+2026-10-22T02:57:10.3383323Z       "resourcesPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\vc-pkg-smoke-GrQ7fU\\installed\\resources"
+2026-10-22T02:57:10.3383844Z     },
+2026-10-22T02:57:10.3384076Z     "sqliteNodeMode": {
+2026-10-22T02:57:10.3384322Z       "ok": true,
+2026-10-22T02:57:10.3384557Z       "sqliteVersion": "3.53.3",
+2026-10-22T02:57:10.3384786Z       "electron": "42.11.9",
+2026-10-22T02:57:10.3385578Z       "node": "24.19.0"
+2026-10-22T02:57:10.3385816Z     },
+2026-10-22T02:57:10.3385987Z     "ok": true
+2026-10-22T02:57:10.3386163Z   }
+2026-10-22T02:57:10.3386322Z ]
+2026-10-22T02:57:10.3594661Z ##[group]Run actions/upload-artifact@v4
+2026-10-22T02:57:10.3595027Z with:
+2026-10-22T02:57:10.3595215Z   name: windows-package
+2026-10-22T02:57:10.3595759Z   path: D:\a\_temp/package-win.json
+D:\a\_temp/win-artifacts.sha256
+D:\a\_temp/packaged-smoke-win.json
+port/release/*.exe
+
+2026-10-22T02:57:10.3596516Z   if-no-files-found: warn
+2026-10-22T02:57:10.3596737Z   compression-level: 6
+2026-10-22T02:57:10.3596938Z   overwrite: false
+2026-10-22T02:57:10.3597136Z   include-hidden-files: false
+2026-10-22T02:57:10.3597364Z ##[endgroup]
+2026-10-22T02:57:10.5484495Z (node:8532) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:57:10.5485342Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:57:10.5592408Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-10-22T02:57:10.5597174Z The least common ancestor is D:\a. This will be the root directory of the artifact
+2026-10-22T02:57:10.5599193Z With the provided path, there will be 5 files uploaded
+2026-10-22T02:57:10.5605163Z Artifact name is valid!
+2026-10-22T02:57:10.5605974Z Root directory input is valid!
+2026-10-22T02:57:10.8064521Z Beginning upload of artifact content to blob storage
+2026-10-22T02:57:11.1188009Z (node:8532) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-22T02:57:11.3317858Z Uploaded bytes 8388608
+2026-10-22T02:57:11.6418586Z Uploaded bytes 16777216
+2026-10-22T02:57:11.9308356Z Uploaded bytes 25165824
+2026-10-22T02:57:12.2869270Z Uploaded bytes 33554432
+2026-10-22T02:57:12.4842497Z Uploaded bytes 41943040
+2026-10-22T02:57:12.7496709Z Uploaded bytes 50331648
+2026-10-22T02:57:13.1250857Z Uploaded bytes 58720256
+2026-10-22T02:57:13.3085333Z Uploaded bytes 67108864
+2026-10-22T02:57:13.5896062Z Uploaded bytes 75497472
+2026-10-22T02:57:13.9045879Z Uploaded bytes 83886080
+2026-10-22T02:57:14.1128485Z Uploaded bytes 92274688
+2026-10-22T02:57:14.3745116Z Uploaded bytes 100663296
+2026-10-22T02:57:14.6437806Z Uploaded bytes 109051904
+2026-10-22T02:57:14.9058018Z Uploaded bytes 117440512
+2026-10-22T02:57:15.2566069Z Uploaded bytes 125829120
+2026-10-22T02:57:15.4294691Z Uploaded bytes 134217728
+2026-10-22T02:57:15.6452418Z Uploaded bytes 142606336
+2026-10-22T02:57:15.9673775Z Uploaded bytes 150994944
+2026-10-22T02:57:16.1685836Z Uploaded bytes 159383552
+2026-10-22T02:57:16.4035361Z Uploaded bytes 167772160
+2026-10-22T02:57:16.7357399Z Uploaded bytes 176160768
+2026-10-22T02:57:16.8976187Z Uploaded bytes 184549376
+2026-10-22T02:57:17.1971238Z Uploaded bytes 192937984
+2026-10-22T02:57:17.4450392Z Uploaded bytes 201326592
+2026-10-22T02:57:17.6970919Z Uploaded bytes 209715200
+2026-10-22T02:57:17.8642996Z Uploaded bytes 218103808
+2026-10-22T02:57:18.1602111Z Uploaded bytes 226492416
+2026-10-22T02:57:18.5018788Z Uploaded bytes 234881024
+2026-10-22T02:57:18.7293750Z Uploaded bytes 243269632
+2026-10-22T02:57:18.9218805Z Uploaded bytes 251658240
+2026-10-22T02:57:19.1754076Z Uploaded bytes 260046848
+2026-10-22T02:57:19.4260751Z Uploaded bytes 268435456
+2026-10-22T02:57:19.6697625Z Uploaded bytes 276824064
+2026-10-22T02:57:19.9406044Z Uploaded bytes 285212672
+2026-10-22T02:57:20.2536643Z Uploaded bytes 293601280
+2026-10-22T02:57:20.4345484Z Uploaded bytes 301989888
+2026-10-22T02:57:20.6678567Z Uploaded bytes 310378496
+2026-10-22T02:57:20.9182932Z Uploaded bytes 318767104
+2026-10-22T02:57:21.1866324Z Uploaded bytes 327155712
+2026-10-22T02:57:21.4332288Z Uploaded bytes 335544320
+2026-10-22T02:57:21.7677569Z Uploaded bytes 343932928
+2026-10-22T02:57:21.9736304Z Uploaded bytes 352321536
+2026-10-22T02:57:22.2286594Z Uploaded bytes 360710144
+2026-10-22T02:57:22.4524831Z Uploaded bytes 369098752
+2026-10-22T02:57:22.6949041Z Uploaded bytes 377487360
+2026-10-22T02:57:22.9062571Z Uploaded bytes 385875968
+2026-10-22T02:57:23.2096513Z Uploaded bytes 394264576
+2026-10-22T02:57:23.3570241Z Uploaded bytes 402653184
+2026-10-22T02:57:23.6633259Z Uploaded bytes 411041792
+2026-10-22T02:57:23.8747051Z Uploaded bytes 419430400
+2026-10-22T02:57:24.1486096Z Uploaded bytes 427819008
+2026-10-22T02:57:24.3872048Z Uploaded bytes 436207616
+2026-10-22T02:57:24.6612485Z Uploaded bytes 444596224
+2026-10-22T02:57:24.8697312Z Uploaded bytes 450578927
+2026-10-22T02:57:24.8946778Z Finished uploading artifact content to blob storage!
+2026-10-22T02:57:24.8951602Z SHA256 digest of uploaded artifact zip is 77a7053d2b6fd5212c2d2975ecb351cb23983e2cbc720b74043004a6108d77d3
+2026-10-22T02:57:24.8954088Z Finalizing artifact upload
+2026-10-22T02:57:25.3305857Z Artifact windows-package.zip successfully finalized. Artifact ID 12398491639
+2026-10-22T02:57:25.3307025Z Artifact windows-package has been successfully uploaded! Final size is 450578927 bytes. Artifact ID is 12398491639
+2026-10-22T02:57:25.3320821Z Artifact download URL: https://github.com/pf-sjtu/reelkiln/actions/runs/39713813148/artifacts/12398491639
+2026-10-22T02:57:25.3688677Z Post job cleanup.
+2026-10-22T02:57:25.5118655Z (node:3520) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:57:25.5119782Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:57:25.5123974Z Cache hit occurred on the primary key node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61, not saving cache.
+2026-10-22T02:57:25.5427069Z Post job cleanup.
+2026-10-22T02:57:25.7451150Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-22T02:57:25.7830039Z git version 2.56.0.windows.2
+2026-10-22T02:57:25.7914086Z Temporarily overriding HOME='D:\a\_temp\7dfdafad-3f34-4045-8b3d-d9a56851aec1' before making global git config changes
+2026-10-22T02:57:25.7915846Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-22T02:57:25.7926249Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\reelkiln\reelkiln
+2026-10-22T02:57:25.8380569Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-22T02:57:25.8751947Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-22T02:57:26.4164854Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-22T02:57:26.4519024Z http.https://github.com/.extraheader
+2026-10-22T02:57:26.4570477Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-22T02:57:26.4968457Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-22T02:57:27.0730916Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-22T02:57:27.1107843Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-22T02:57:27.7163361Z Cleaning up orphan processes
+2026-10-22T02:57:27.7833364Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
