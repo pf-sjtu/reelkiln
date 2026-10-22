@@ -113,7 +113,7 @@ test("answerDeclined: the deny phrasing (devD2) counts, quoted 'declined proposa
 });
 
 test("docs/42 --files: attach list defaults to the S1 fixtures, else the given files; ready-regex escapes metachars", () => {
-  assert.deepEqual(attachFileList(undefined, "/in", { join, resolve }), S1_FIXTURE_FILES.map((f: string) => join("/in", f)));
+  assert.deepEqual(attachFileList(undefined, "/in", { join, resolve }), S1_FIXTURE_FILES.map((f) => join("/in", f)));
   assert.deepEqual(attachFileList("/m/a.mp4, /m/b c.jpg,", "/in", { join, resolve }), ["/m/a.mp4", "/m/b c.jpg"]);
   assert.throws(() => attachFileList(" , ", "/in", { join, resolve }), /empty/);
   const line = '{"name":"01-angler+fish (1).mp4","size":3,"status":"ready"}';
