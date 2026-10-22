@@ -113,3 +113,24 @@
 | W12 | NSIS `oneClick:false, perMachine:false` 的静默安装 | wine 下 exit 2，需要在真 Windows 上验证 `/S /D=` |
 | W13 | 找不到 Git Bash 时 runBash 退回 cmd | wine 下已经实际观察到这种退回（`sleep` 不是内部命令）。引擎命令依赖 bash 语法，没有 Git 的机器会表现为“能跑但结果错” |
 | W14 | M16 collector 的单测在 win32 上跳过 | 假引擎用的是 POSIX python 软链接，Windows 上的 late-result collector 没有覆盖 |
+
+## 增补（M18，docs/35）：真实 Windows 上已验证的项目
+仓库公开后 GitHub Actions 恢复，以下内容在 **windows-latest 真机**上跑过（不是 WINE）。最终全绿的一轮是 [39716976884](https://github.com/pf-sjtu/reelkiln/actions/runs/39716976884)（2026-10-22 11:28 SGT），各轮细节见 docs/35 §1。
+
+| # | 原风险 | 真实 Windows 上的结果 |
+|---|---|---|
+| W1 | `killTree` → `taskkill /T` | 在 runbook 的 codex 握手里实际执行：不带 `/F` 的 taskkill 对无窗口控制台程序**无效**，现在升级为 `/F`，`codex-leftover-tasklist.txt` 里没有残留（[39711542276](https://github.com/pf-sjtu/reelkiln/actions/runs/39711542276) 起） |
+| W2 / W13 | Git Bash 作为 runBash shell | runner 装有 Git：`run-bash` 输出 `MINGW64_NT-10.0-26100`，`python3` 解析到引擎 shim。**没有 Git 的机器仍未验证** |
+| W3 | `npmInvocation`（node.exe + npm-cli.js） | remotion `npm ci` + `browser ensure`、hyperframes 都成功 |
+| W4 | System32 bsdtar | 引擎 tarball 安装成功 |
+| W5 | `.cmd` 与 sh shim | `python.cmd --version`、`bin/python --version`（Git Bash）都成功 |
+| W9 | codex client 关闭 | 已修（见 W1）；握手 `{"ok":true}` |
+| W10 | `bin\` 下的 uv/ffmpeg/ffprobe | doctor 除 gateway（需真 key）外全绿 |
+| W12 | NSIS `/S /D=` 静默安装 | **已解决**：真 Windows 上 exit 0，安装后的应用 packaged smoke `DONE failed=[]`；wine 下的 exit 2 是 wine 的问题 |
+| — | 原版引擎在 Windows 上的完整渲染 | **L0 E1–E15 全部通过**。为此在端口创建的 venv 里加了一个只在 win32 生效的启动钩子（`port/src/main/engine/win-exec-shim.ts`）：裸 `npx`/`npm` 映射为 `node.exe npx-cli.js`（不经 cmd.exe）；只读句柄 `os.fsync` 的 EBADF 改由写句柄刷新。引擎源码没有改 |
+| — | port 单测 | 323 通过 / 9 跳过 / 0 失败 |
+
+仍未在真 Windows 上验证：W6（PATH 合并只在 runbook 子进程里间接覆盖）、W7（NTFS `dev:ino` 稳定性没有专门测试）、W8（editorRenderWorker 的 detached 控制台窗口）、W11（原版渲染器的 `vcmedia://` 拼接，需要 Windows 上的 UI 流程）、W13（无 Git 的机器）、W14（collector 测试在 win32 跳过），以及原版 UI 主流程（S1 UI e2e 未做，docs/35 §1.4）。
+
+新增弱于原版之处：
+5. **Windows 引擎钩子**：端口在引擎 venv 的 site-packages 里放了 `.pth` 钩子，改写了 `subprocess.Popen` 对裸 `npx`/`npm` 的处理和 `os.fsync` 的 EBADF 分支。只影响 win32；如果引擎以后自己处理了 Windows，这个钩子应当删掉。
