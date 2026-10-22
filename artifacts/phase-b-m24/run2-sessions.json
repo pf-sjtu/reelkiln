@@ -1,0 +1,33 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  },
+  {
+   "clientId": "s1-ui-e2e",
+   "name": "S1 UI e2e"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "aac8889c-6a94-404b-9786-1a5f88793f7f",
+   "title": "\u4e09\u7d20\u6750\u7ad6\u5c4f\u5feb\u526a",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.113075064,
+   "createdAt": 1792662551727,
+   "clientId": "s1-ui-e2e",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "automatic",
+   "jobId": "6-5-9-16-a-b-c-a-0-5-3-0-s-b-0-2-0-s-c-0-20261022-aac888",
+   "sdkSessionId": "5203ca48-bd68-4f02-8474-92f16ad7f48c",
+   "finalizedAtMs": 1792662850436,
+   "contextEpoch": "daf27a8f-9212-43b2-a65e-f48b7f4bcb36",
+   "sessionPlanRequired": true
+  }
+ ],
+ "trashWorkspaces": []
+}

@@ -1,0 +1,66 @@
+{
+ "run": 5,
+ "rc": 0,
+ "wallS": 931,
+ "allPass": true,
+ "steps": {
+  "home": true,
+  "project_video": true,
+  "attach": true,
+  "brief_send": true,
+  "stream": true,
+  "reply_link": true,
+  "play": true,
+  "approve": true,
+  "export": true,
+  "taste_question_card": true
+ },
+ "failedSteps": [],
+ "turnS": 289,
+ "numTurns": 33,
+ "toolStarts": 32,
+ "isError": false,
+ "totalCostUsd": 0.117103419,
+ "gateProxy": null,
+ "spendEvents": [
+  {}
+ ],
+ "modelsSeen": [
+  "MiniMax-M3.1-Flash"
+ ],
+ "accept": {
+  "passed": 20,
+  "total": 20,
+  "failed": [],
+  "pending": []
+ },
+ "export": {
+  "durationS": 6.507,
+  "streams": [
+   "video:h264 720x1280 30/1",
+   "audio:aac 96000Hz ch1"
+  ],
+  "sha256": "c8a168e9b65a15cedebd38ea8cf89c5c6b4243bf68705241ef3da1ce46d5964f"
+ },
+ "sha": {
+  "final": "c8a168e9b65a15cedebd38ea8cf89c5c6b4243bf68705241ef3da1ce46d5964f",
+  "v1": "c8a168e9b65a15cedebd38ea8cf89c5c6b4243bf68705241ef3da1ce46d5964f",
+  "export": "c8a168e9b65a15cedebd38ea8cf89c5c6b4243bf68705241ef3da1ce46d5964f"
+ },
+ "rateLimitMentions": {
+  "429": 0,
+  "529": 0,
+  "2067": 0,
+  "overloaded": 0
+ },
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "tasteCard": true,
+ "questionCards": 1,
+ "gateProxyNote": "No agent.runtime.closed record: the taste-capture follow-up turn was still running when the harness's --taste-wait-ms 600000 expired; Browser.close was blocked by the original QuitCoordinator 'still working' dialog, so the harness SIGTERM/SIGKILLed the app (run5 console +922 s) and the runtime never closed. The proxy WAS used: agent.spend.metered meter=proxy, priceSources models.dev:minimax-cn/MiniMax-M3.1-Flash, runtimeUsd 0.117103419 for the main turn (agent.turn.delivered), plus agent_proxy.drained_after_disconnect (one 200 response, 39003 in / 1069 out tokens). The taste continuation (~550 s) is NOT metered; cost 0.1171 is a lower bound. Estimate from run4's taste rate (~$0.00027/s): ~+$0.15.",
+ "costLowerBound": true,
+ "tasteTurnUnmeteredEstimateUsd": 0.15
+}

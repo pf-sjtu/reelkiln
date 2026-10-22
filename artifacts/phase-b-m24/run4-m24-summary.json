@@ -1,0 +1,82 @@
+{
+ "run": 4,
+ "rc": 0,
+ "wallS": 1239,
+ "allPass": true,
+ "steps": {
+  "home": true,
+  "project_video": true,
+  "attach": true,
+  "brief_send": true,
+  "stream": true,
+  "reply_link": true,
+  "play": true,
+  "approve": true,
+  "export": true,
+  "taste_question_card": true
+ },
+ "failedSteps": [],
+ "turnS": 906,
+ "numTurns": 36,
+ "toolStarts": 35,
+ "isError": false,
+ "totalCostUsd": 0.226216926,
+ "gateProxy": {
+  "requests": 81,
+  "rejected": 0,
+  "maxInflight": 1,
+  "inflight": 0,
+  "structuredEmulated": 0,
+  "structuredJsonOk": 0,
+  "usage": {
+   "MiniMax-M3.1-Flash": {
+    "inputTokens": 1060992,
+    "outputTokens": 31262,
+    "cacheReadTokens": 3290104,
+    "cacheWriteTokens": 0,
+    "calls": 80
+   }
+  }
+ },
+ "spendEvents": [
+  {},
+  {}
+ ],
+ "modelsSeen": [
+  "MiniMax-M3.1-Flash"
+ ],
+ "accept": {
+  "passed": 19,
+  "total": 20,
+  "failed": [
+   "E13_runlog_assemble_compose"
+  ],
+  "pending": []
+ },
+ "export": {
+  "durationS": 6.507,
+  "streams": [
+   "video:h264 720x1280 30/1",
+   "audio:aac 96000Hz ch1"
+  ],
+  "sha256": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d"
+ },
+ "sha": {
+  "final": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d",
+  "v1": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d",
+  "export": "898d9677fbf4fd860c91a856958fb7a04cebaaba767fdd814c9df64db19a683d"
+ },
+ "rateLimitMentions": {
+  "429": 0,
+  "529": 0,
+  "2067": 0,
+  "overloaded": 0
+ },
+ "consoleErrorCount": 0,
+ "knownTypeErrors": {
+  "index-D5K1mOs0.js:31748": 0,
+  "index-D5K1mOs0.js:39778": 0
+ },
+ "tasteCard": true,
+ "questionCards": 1
+}
