@@ -49,6 +49,7 @@ if (existsSync(RUN)) { console.error(`${RUN} exists; use a fresh dir`); process.
 const UD = join(RUN, ".config", "videoclaw-port");
 const OUT = join(RUN, "out"); const SHOTS = join(OUT, "shots"); const IN = join(RUN, "in"); const EXPORT = join(RUN, "export", "s1.mp4");
 mkdirSync(UD, { recursive: true }); mkdirSync(SHOTS, { recursive: true }); mkdirSync(dirname(EXPORT), { recursive: true });
+if (WIN) mkdirSync(join(RUN, "Downloads"), { recursive: true }); // USERPROFILE=RUN: app.getPath("downloads") (save-as default dir) needs it
 if (SRC) {
   cpSync(join(SRC, ".config", "videoclaw-port", "engine-current.json"), join(UD, "engine-current.json"));
   for (const d of [".cache", ".local", ".npm"]) if (existsSync(join(SRC, d))) execFileSync("cp", ["-al", join(SRC, d), RUN]);

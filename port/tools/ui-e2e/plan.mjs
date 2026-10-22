@@ -6,7 +6,9 @@ export const center = (r) => ({ x: Math.round(r.x + r.width / 2), y: Math.round(
 /** Chromium's native <video controls> panel: the play/pause button sits at the left of the bottom bar
  *  (≈24 px from the left edge, ≈50 px above the bottom on a ≥ 200 px tall player — measured on Electron 42). */
 export function nativePlayButton(r) {
-  return { x: Math.round(r.x + 24), y: Math.round(r.y + r.height - (r.height >= 200 ? 50 : 20)) };
+  // docs/36: a 144 px-high player (Windows S1 layout) still has the button row above the timeline; 20 px from the
+  // bottom hits the timeline (seek, no play). Below 120 px Chromium folds the controls into one row.
+  return { x: Math.round(r.x + 24), y: Math.round(r.y + r.height - (r.height >= 200 ? 50 : r.height >= 120 ? 48 : 20)) };
 }
 
 /** Playback is proven when the element is unpaused, fully buffered and the clock advanced over time. */

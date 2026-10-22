@@ -81,6 +81,7 @@ test("real-input helpers emit Input.* events (mouse press/release, insertText, E
 test("driver geometry + verdict helpers", () => {
   assert.deepEqual(center({ x: 10, y: 20, width: 100, height: 40 }), { x: 60, y: 40 });
   assert.deepEqual(nativePlayButton({ x: 905, y: 140, width: 359, height: 227.36 }), { x: 929, y: 317 });
+  assert.deepEqual(nativePlayButton({ x: 713, y: 140, width: 279, height: 144 }), { x: 737, y: 236 }); // Windows S1 (docs/36)
   const s = (t: number, o: any = {}) => ({ currentTime: t, paused: false, ended: false, readyState: 4, error: null, ...o });
   assert.equal(playbackVerdict([s(0.1), s(0.6), s(1.4)]).ok, true);
   assert.equal(playbackVerdict([s(0.1), s(0.2)]).ok, false, "clock must advance > 0.5 s");
