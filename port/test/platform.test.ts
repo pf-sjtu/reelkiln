@@ -141,3 +141,12 @@ test("needsNativePythonProbe only on darwin/arm64", () => {
   assert.equal(P.needsNativePythonProbe("win32", "x64"), false);
   assert.equal(P.needsNativePythonProbe("darwin", "arm64"), true);
 });
+
+test("docs/35 portRealpath: POSIX = realpathSync; win32 = native realpath (8.3 names expanded), no \\\\?\\ prefix, case-folded", async () => {
+  const { portRealpath } = await import("../src/main/platform/realpath");
+  const impl = { js: (p: string) => `js:${p}`, native: (p: string) => (p.includes("RUNNER~1") ? p.replace("RUNNER~1", "runneradmin") : p) };
+  assert.equal(portRealpath("/tmp/x", "linux", impl), "js:/tmp/x");
+  assert.equal(portRealpath("C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\h", "win32", impl), portRealpath("c:\\Users\\runneradmin\\AppData\\Local\\Temp\\h", "win32", impl));
+  assert.equal(portRealpath("\\\\?\\C:\\A\\B", "win32", impl), "c:\\a\\b");
+  assert.equal(portRealpath("\\\\?\\UNC\\srv\\share\\d", "win32", impl), "\\\\srv\\share\\d");
+});

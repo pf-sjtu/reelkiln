@@ -9,7 +9,10 @@
 //   app/reconstructed/main/index.js L24690-24771
 //   app/reconstructed/main/index.js L25089-25250
 // Substitutions (platform-layer routing only):
-import { realpathSync } from "node:fs";
+//   1× expectedHome = realpathSync(expectedProfileDir);  →  expectedHome = portRealpath(expectedProfileDir);
+//   1× if (actualHome) resolvedActual = realpathSync(actualHome);  →  if (actualHome) resolvedActual = portRealpath(actualHome);
+//   1× throw new Error("Codex app server started outside VideoClaw’s isolated profile.");  →  throw (portReportProfileMismatch(actualHome, expectedProfileDir), new Error("Codex app server started outside VideoClaw’s isolated profile."));
+import { portRealpath, portReportProfileMismatch } from "../platform/realpath";
 import { sanitizedAgentEnv } from "../llm/llm-route";
 import { ENGINE_TOOL_LAUNCHER } from "../agent/session-assembly.generated";
 
@@ -573,14 +576,14 @@ function assertCompatibleServer(result, expectedVersion, expectedProfileDir) {
     const actualHome = result.codexHome;
     let expectedHome = expectedProfileDir;
     try {
-      expectedHome = realpathSync(expectedProfileDir);
+      expectedHome = portRealpath(expectedProfileDir);
     } catch {}
     let resolvedActual = actualHome;
     try {
-      if (actualHome) resolvedActual = realpathSync(actualHome);
+      if (actualHome) resolvedActual = portRealpath(actualHome);
     } catch {}
     if (!resolvedActual || resolvedActual !== expectedHome) {
-      throw new Error("Codex app server started outside VideoClaw’s isolated profile.");
+      throw (portReportProfileMismatch(actualHome, expectedProfileDir), new Error("Codex app server started outside VideoClaw’s isolated profile."));
     }
   }
 }

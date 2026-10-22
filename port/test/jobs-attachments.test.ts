@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AgentHost, type AgentHostRouteService, type SessionEvent } from "../src/main/agent/agent-host";
@@ -49,7 +49,7 @@ class FakeQuery {
 }
 function harness() {
   setLoggerForTests(createLogger({ level: "silent" }));
-  const root = mkdtempSync(join(tmpdir(), "vc-jobs-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-jobs-")));
   const ws = join(root, "Videoclaw"); mkdirSync(join(ws, "jobs"), { recursive: true });
   const ud = join(root, "userData"); mkdirSync(ud, { recursive: true });
   const events: Array<{ sessionId: string; event: SessionEvent }> = []; const snapshots: any[] = []; const persisted: any[][] = []; const queries: FakeQuery[] = [];
@@ -71,7 +71,7 @@ function harness() {
 }
 
 test("VersionStore (L13344) + scanJob (L14365): a recorded final.mp4 is minted as versions/v1.mp4 (same bytes), approve records a final, registry survives a reload", () => {
-  const root = mkdtempSync(join(tmpdir(), "vc-vs-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-vs-")));
   try {
     const ws = join(root, "Videoclaw"); const job = join(ws, "jobs", "job-a"); mkdirSync(job, { recursive: true });
     const bytes = tinyMp4("a");
@@ -129,7 +129,7 @@ test("AgentHost job path (getJobSnapshot L45620, ensureWatcher L47956, approveVe
 });
 
 test("vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range / HEAD / 416, identity header", async () => {
-  const root = mkdtempSync(join(tmpdir(), "vc-media-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-media-")));
   try {
     const job = join(root, "jobs", "j"); mkdirSync(job, { recursive: true });
     const file = join(job, "final.mp4"); const bytes = tinyMp4("m"); writeFileSync(file, bytes);
@@ -151,7 +151,7 @@ test("vcmedia:// (L62452 + rangeMedia chunk): only granted files, full / Range /
 });
 
 test("file:saveItemAs (L61987) copies to the dialog's path; intake:pickFiles (L62157) checks the scope and grants picked files", async () => {
-  const root = mkdtempSync(join(tmpdir(), "vc-file-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-file-")));
   try {
     const src = join(root, "v1.mp4"); writeFileSync(src, tinyMp4("s"));
     const revealed: string[] = []; let answer: string | undefined = join(root, "out", "s1.mp4"); mkdirSync(join(root, "out"));

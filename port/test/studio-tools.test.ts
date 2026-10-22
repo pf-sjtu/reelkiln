@@ -2,7 +2,7 @@
 // lifecycle (SessionPlanHost, L36986-37530) over the verbatim schemas.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -31,7 +31,7 @@ const fakeSdk = () => {
 };
 
 test("studio toolset: 11 tools registered as the original's dynamic specs + one alwaysLoad SDK MCP server named studio", async () => {
-  const root = mkdtempSync(join(tmpdir(), "vc-studio-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-studio-")));
   try {
     const { made, sdk } = fakeSdk();
     const t = makeStudioToolset({ sessionId: "s1", cwd: root, clientId: "c1" }, fakeHost(), sdk);
@@ -54,10 +54,10 @@ test("studio toolset: 11 tools registered as the original's dynamic specs + one 
 });
 
 test("studio input tools: rights card → receipt; files card copies into the confined dest; Codex dynamic tools route only studio names", async () => {
-  const root = mkdtempSync(join(tmpdir(), "vc-studio-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-studio-")));
   try {
     mkdirSync(join(root, "jobs", "j1"), { recursive: true });
-    const src = join(mkdtempSync(join(tmpdir(), "vc-src-")), "clip.mp4"); writeFileSync(src, "fake");
+    const src = join(realpathSync(mkdtempSync(join(tmpdir(), "vc-src-"))), "clip.mp4"); writeFileSync(src, "fake");
     const noted: any[] = [];
     let answer: any = { kind: "rights", accepted: true };
     const host = fakeHost({ requestInput: async (req) => { (host as any).inputs.push(req); return answer; }, noteMaterial: (_s, a) => noted.push(a) });
@@ -80,7 +80,7 @@ test("studio input tools: rights card → receipt; files card copies into the co
 });
 
 function planHarness() {
-  const stateDir = mkdtempSync(join(tmpdir(), "vc-plan-"));
+  const stateDir = realpathSync(mkdtempSync(join(tmpdir(), "vc-plan-")));
   const sessionId = randomUUID();
   const s: PlanSession = { meta: { sessionId, clientId: "client-1", cwd: stateDir, jobId: "job_20261021_a1", permissionMode: "auto" }, runtime: { dead: false }, sessionPlanRequired: true };
   const emitted: any[] = []; const sent: any[] = []; let flushes = 0;

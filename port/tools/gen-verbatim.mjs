@@ -665,7 +665,7 @@ export const SPECS = [
   {
     out: "src/main/codex/codex-protocol.generated.ts",
     imports: [
-      'import { realpathSync } from "node:fs";',
+      'import { portRealpath, portReportProfileMismatch } from "../platform/realpath";',
       'import { sanitizedAgentEnv } from "../llm/llm-route";',
       'import { ENGINE_TOOL_LAUNCHER } from "../agent/session-assembly.generated";',
     ],
@@ -679,7 +679,15 @@ export const SPECS = [
       slice("main", /^const CODEX_VIDEO_INSTRUCTIONS = `$/, /^}$/, /^function codexDeveloperInstructions\(/),
       slice("main", /^function codexEventToSdkMessages\(/, /^}$/, /^function sdkUserText\(/),
     ],
-    subs: [],
+    // PORT-WIN (docs/35 M18, windows-latest CI): the profile check compares realpathSync(CODEX_HOME) with the codexHome
+    // the server reports. On Windows the JS realpath keeps 8.3 short names (C:\Users\RUNNER~1\…) and the drive-letter
+    // case the caller used, so an identical directory compared unequal. portRealpath = realpathSync elsewhere;
+    // on win32 realpathSync.native, minus a \\?\ prefix, case-folded (NTFS paths compare case-insensitively).
+    subs: [
+      ["expectedHome = realpathSync(expectedProfileDir);", "expectedHome = portRealpath(expectedProfileDir);", 1],
+      ["if (actualHome) resolvedActual = realpathSync(actualHome);", "if (actualHome) resolvedActual = portRealpath(actualHome);", 1],
+      ['throw new Error("Codex app server started outside VideoClaw’s isolated profile.");', 'throw (portReportProfileMismatch(actualHome, expectedProfileDir), new Error("Codex app server started outside VideoClaw’s isolated profile."));', 1],
+    ],
     exports: ["CODEX_OPENROUTER_ENV", "CODEX_OPENAI_ENV", "codexOpenRouterConfig", "codexOpenAiConfig", "codexChildEnv", "codexVideoConfig", "CodexMessagePhases", "isDynamicToolResponse", "normalizeCodexNotification", "normalizeCompletedItem", "normalizeCodexApproval", "normalizeDynamicToolCall", "normalizeCodexHistory", "codexToolKind", "codexToolTitle", "MAX_CODEX_MODEL_PAGES", "normalizedCodexModel", "normalizedReasoningEfforts", "redactDiagnostic", "assertCompatibleServer", "codexAppServerVersion", "CODEX_VIDEO_INSTRUCTIONS", "CODEX_TOOL_MAPPING", "codexDeveloperInstructions", "codexEventToSdkMessages", "sdkUserText"],
   },
   // docs/27: the agent-route evidence ledger + Codex route qualification / containment / effort rules

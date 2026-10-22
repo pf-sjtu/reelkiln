@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AgentHost, type AgentHostRouteService, type SessionEvent } from "../src/main/agent/agent-host";
@@ -35,7 +35,7 @@ class HangingQuery {
 }
 function harness() {
   setLoggerForTests(createLogger({ level: "silent" }));
-  const root = mkdtempSync(join(tmpdir(), "vc-m17-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-m17-")));
   const ws = join(root, "Videoclaw"); mkdirSync(join(ws, "jobs"), { recursive: true });
   const ud = join(root, "userData"); mkdirSync(ud, { recursive: true });
   const events: Array<{ sessionId: string; event: SessionEvent }> = []; const queries: HangingQuery[] = [];
@@ -164,7 +164,7 @@ function engineTarball(root: string, version: string) {
 }
 test("M17 engine:updated: background engine update installs alongside, parks while a video runs, flips when idle → onEngineUpdated (L10304-10430)", async () => {
   const P = process.platform === "win32" ? "win32" : "linux";
-  const root = mkdtempSync(join(tmpdir(), "vc-m17-eng-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-m17-eng-")));
   try {
     const bootDir = join(root, "bootstrap"); mkdirSync(bootDir); writeFileSync(join(bootDir, "uv"), "#!/bin/sh\n");
     const real = B.createRunner();
@@ -212,7 +212,7 @@ test("M17 engine:updated: background engine update installs alongside, parks whi
 
 test("M17 characters:voices:changed (L45041-45063): approve and remove emit the scope; the store is the verbatim CharacterVoiceStore", async () => {
   setLoggerForTests(createLogger({ level: "silent" }));
-  const root = mkdtempSync(join(tmpdir(), "vc-m17-voice-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "vc-m17-voice-")));
   try {
     const ud = join(root, "ud"); const cwd = join(root, "project"); mkdirSync(ud); mkdirSync(cwd);
     const authority = { gatewayUrl: "http://127.0.0.1:47735", canonicalKeyId: "k".repeat(64) };
