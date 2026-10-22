@@ -1,0 +1,604 @@
+﻿2026-10-22T02:37:06.8160477Z Current runner version: '2.338.0'
+2026-10-22T02:37:06.8190755Z ##[group]Runner Image Provisioner
+2026-10-22T02:37:06.8191633Z Hosted Compute Agent
+2026-10-22T02:37:06.8192192Z Version: 20261002.596
+2026-10-22T02:37:06.8192764Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-22T02:37:06.8193415Z Build Date: 2026-10-02T22:28:27Z
+2026-10-22T02:37:06.8194117Z Worker ID: {e81cb1fa-71a5-44ad-8792-470cf2b503e1}
+2026-10-22T02:37:06.8194764Z Region: centralus
+2026-10-22T02:37:06.8195263Z Cloud: Azure
+2026-10-22T02:37:06.8196327Z ##[endgroup]
+2026-10-22T02:37:06.8197746Z ##[group]Operating System
+2026-10-22T02:37:06.8198395Z Microsoft Windows Server 2025
+2026-10-22T02:37:06.8198950Z 10.0.26100
+2026-10-22T02:37:06.8199414Z Datacenter
+2026-10-22T02:37:06.8199885Z ##[endgroup]
+2026-10-22T02:37:06.8200796Z ##[group]Runner Image
+2026-10-22T02:37:06.8201666Z Image: windows-2025-vs2026
+2026-10-22T02:37:06.8202256Z Version: 20261007.264.1
+2026-10-22T02:37:06.8203665Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261007.264/images/windows/Windows2025-VS2026-Readme.md
+2026-10-22T02:37:06.8205226Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261007.264
+2026-10-22T02:37:06.8206172Z ##[endgroup]
+2026-10-22T02:37:06.8207169Z ##[group]GITHUB_TOKEN Permissions
+2026-10-22T02:37:06.8209009Z Contents: read
+2026-10-22T02:37:06.8209573Z Metadata: read
+2026-10-22T02:37:06.8210096Z ##[endgroup]
+2026-10-22T02:37:06.8212121Z Secret source: Actions
+2026-10-22T02:37:06.8213007Z Cache mode: write
+2026-10-22T02:37:06.8213674Z Prepare workflow directory
+2026-10-22T02:37:06.8653456Z Prepare all required actions
+2026-10-22T02:37:06.8726161Z Getting action download info
+2026-10-22T02:37:07.1836411Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-22T02:37:07.3664250Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-22T02:37:07.5385798Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-10-22T02:37:07.7131012Z Download action repository 'astral-sh/setup-uv@v6' (SHA:d0cc045d04ccac9d8b7881df0226f9e82c39688e)
+2026-10-22T02:37:08.2165756Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-22T02:37:08.6280362Z Complete job name: Windows runbook (docs/08 S3–S9: engine install, uv sync, doctor, e2e, codex handshake)
+2026-10-22T02:37:08.8285853Z ##[group]Run actions/checkout@v4
+2026-10-22T02:37:08.8287291Z with:
+2026-10-22T02:37:08.8288085Z   repository: pf-sjtu/reelkiln
+2026-10-22T02:37:08.8295465Z   token: ***
+2026-10-22T02:37:08.8296231Z   ssh-strict: true
+2026-10-22T02:37:08.8297252Z   ssh-user: git
+2026-10-22T02:37:08.8298057Z   persist-credentials: true
+2026-10-22T02:37:08.8298934Z   clean: true
+2026-10-22T02:37:08.8299741Z   sparse-checkout-cone-mode: true
+2026-10-22T02:37:08.8300679Z   fetch-depth: 1
+2026-10-22T02:37:08.8301481Z   fetch-tags: false
+2026-10-22T02:37:08.8302264Z   show-progress: true
+2026-10-22T02:37:08.8303274Z   lfs: false
+2026-10-22T02:37:08.8304030Z   submodules: false
+2026-10-22T02:37:08.8304835Z   set-safe-directory: true
+2026-10-22T02:37:08.8305740Z   allow-unsafe-pr-checkout: false
+2026-10-22T02:37:08.8307018Z env:
+2026-10-22T02:37:08.8307735Z   PYTHONUTF8: 1
+2026-10-22T02:37:08.8308494Z ##[endgroup]
+2026-10-22T02:37:08.9952166Z Syncing repository: pf-sjtu/reelkiln
+2026-10-22T02:37:08.9954623Z ##[group]Getting Git version info
+2026-10-22T02:37:08.9956197Z Working directory is 'D:\a\reelkiln\reelkiln'
+2026-10-22T02:37:09.0952955Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-22T02:37:09.5461027Z git version 2.56.0.windows.2
+2026-10-22T02:37:09.5508760Z ##[endgroup]
+2026-10-22T02:37:09.5527702Z Temporarily overriding HOME='D:\a\_temp\231d965d-9eba-4a43-9131-c59ac1c0ca71' before making global git config changes
+2026-10-22T02:37:09.5528629Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-22T02:37:09.5538823Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\reelkiln\reelkiln
+2026-10-22T02:37:09.6624674Z Deleting the contents of 'D:\a\reelkiln\reelkiln'
+2026-10-22T02:37:09.6630912Z ##[group]Initializing the repository
+2026-10-22T02:37:09.6639553Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\reelkiln\reelkiln
+2026-10-22T02:37:09.7611602Z Initialized empty Git repository in D:/a/reelkiln/reelkiln/.git/
+2026-10-22T02:37:09.7659236Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/pf-sjtu/reelkiln
+2026-10-22T02:37:09.8435521Z ##[endgroup]
+2026-10-22T02:37:09.8436115Z ##[group]Disabling automatic garbage collection
+2026-10-22T02:37:09.8445866Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-22T02:37:09.8825292Z ##[endgroup]
+2026-10-22T02:37:09.8826167Z ##[group]Setting up auth
+2026-10-22T02:37:09.8838755Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-22T02:37:09.9254903Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-22T02:37:11.7185174Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-22T02:37:11.7566915Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-22T02:37:12.3130719Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-22T02:37:12.3521009Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-22T02:37:12.9419667Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-22T02:37:12.9805644Z ##[endgroup]
+2026-10-22T02:37:12.9806841Z ##[group]Fetching the repository
+2026-10-22T02:37:12.9826473Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a31941472712a330c6aec1e9e3ffebe4501c4677:refs/remotes/origin/master
+2026-10-22T02:37:15.9870390Z From https://github.com/pf-sjtu/reelkiln
+2026-10-22T02:37:15.9873819Z  * [new ref]         a31941472712a330c6aec1e9e3ffebe4501c4677 -> origin/master
+2026-10-22T02:37:15.9914970Z ##[endgroup]
+2026-10-22T02:37:15.9915563Z ##[group]Determining the checkout info
+2026-10-22T02:37:15.9918963Z ##[endgroup]
+2026-10-22T02:37:15.9933998Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-22T02:37:16.0493946Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-22T02:37:16.0917356Z ##[group]Checking out the ref
+2026-10-22T02:37:16.0927387Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B master refs/remotes/origin/master
+2026-10-22T02:37:17.0229343Z Reset branch 'master'
+2026-10-22T02:37:17.0507431Z branch 'master' set up to track 'origin/master'.
+2026-10-22T02:37:17.0642601Z ##[endgroup]
+2026-10-22T02:37:17.1239502Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-22T02:37:17.1596249Z a31941472712a330c6aec1e9e3ffebe4501c4677
+2026-10-22T02:37:17.2073171Z ##[group]Run actions/setup-node@v4
+2026-10-22T02:37:17.2073520Z with:
+2026-10-22T02:37:17.2073709Z   node-version: 22
+2026-10-22T02:37:17.2073921Z   cache: npm
+2026-10-22T02:37:17.2074161Z   cache-dependency-path: port/package-lock.json
+2026-10-22T02:37:17.2074451Z   always-auth: false
+2026-10-22T02:37:17.2074649Z   check-latest: false
+2026-10-22T02:37:17.2077097Z   token: ***
+2026-10-22T02:37:17.2078142Z env:
+2026-10-22T02:37:17.2078317Z   PYTHONUTF8: 1
+2026-10-22T02:37:17.2078506Z ##[endgroup]
+2026-10-22T02:37:17.3969233Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.3\x64
+2026-10-22T02:37:17.3978110Z (node:4304) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:37:17.3979343Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:37:17.3983761Z ##[group]Environment details
+2026-10-22T02:37:23.6714437Z node: v22.23.3
+2026-10-22T02:37:23.6714919Z npm: 10.9.9
+2026-10-22T02:37:23.6715218Z yarn: 1.22.22
+2026-10-22T02:37:23.6716661Z ##[endgroup]
+2026-10-22T02:37:23.7665183Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\hostedtoolcache\windows\node\22.23.3\x64\npm.cmd config get cache"
+2026-10-22T02:37:24.4158107Z C:\npm\cache
+2026-10-22T02:37:24.8497652Z Cache hit for: node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61
+2026-10-22T02:37:24.8624258Z (node:4304) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-22T02:37:25.4860724Z Received 35406339 of 35406339 (100.0%), 65.7 MBs/sec
+2026-10-22T02:37:25.4862508Z Cache Size: ~34 MB (35406339 B)
+2026-10-22T02:37:25.4978004Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/ca13cf8b-602b-44a7-8a55-88ca1746f3a1/cache.tzst -P -C D:/a/reelkiln/reelkiln --force-local --use-compress-program "zstd -d"
+2026-10-22T02:37:27.9994791Z Cache restored successfully
+2026-10-22T02:37:28.0025885Z Cache restored from key: node-cache-Windows-x64-npm-c2148745f855442c84f8db5c84408c09199cfeeaf0087d064af3f826515a7b61
+2026-10-22T02:37:28.0391189Z ##[group]Run actions/setup-python@v5
+2026-10-22T02:37:28.0391525Z with:
+2026-10-22T02:37:28.0391718Z   python-version: 3.14
+2026-10-22T02:37:28.0391956Z   check-latest: false
+2026-10-22T02:37:28.0394393Z   token: ***
+2026-10-22T02:37:28.0394593Z   update-environment: true
+2026-10-22T02:37:28.0394826Z   allow-prereleases: false
+2026-10-22T02:37:28.0395039Z   freethreaded: false
+2026-10-22T02:37:28.0395232Z env:
+2026-10-22T02:37:28.0395397Z   PYTHONUTF8: 1
+2026-10-22T02:37:28.0395581Z ##[endgroup]
+2026-10-22T02:37:28.1996043Z ##[group]Installed versions
+2026-10-22T02:37:28.2195951Z (node:4336) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:37:28.2196808Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:37:28.2197316Z Successfully set up CPython (3.14.8)
+2026-10-22T02:37:28.2197774Z ##[endgroup]
+2026-10-22T02:37:28.2556057Z ##[group]Run astral-sh/setup-uv@v6
+2026-10-22T02:37:28.2556388Z with:
+2026-10-22T02:37:28.2556601Z   activate-environment: false
+2026-10-22T02:37:28.2556883Z   working-directory: D:\a\reelkiln\reelkiln
+2026-10-22T02:37:28.2557200Z   server-url: https://github.com
+2026-10-22T02:37:28.2559700Z   github-token: ***
+2026-10-22T02:37:28.2559918Z   enable-cache: auto
+2026-10-22T02:37:28.2560814Z   cache-dependency-glob: **/*requirements*.txt
+**/*requirements*.in
+**/*constraints*.txt
+**/*constraints*.in
+**/pyproject.toml
+**/uv.lock
+**/*.py.lock
+
+2026-10-22T02:37:28.2561564Z   restore-cache: true
+2026-10-22T02:37:28.2561778Z   save-cache: true
+2026-10-22T02:37:28.2561973Z   prune-cache: true
+2026-10-22T02:37:28.2562188Z   ignore-nothing-to-cache: false
+2026-10-22T02:37:28.2562443Z   ignore-empty-workdir: false
+2026-10-22T02:37:28.2562680Z   add-problem-matchers: true
+2026-10-22T02:37:28.2562898Z env:
+2026-10-22T02:37:28.2563063Z   PYTHONUTF8: 1
+2026-10-22T02:37:28.2563368Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:28.2563832Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:37:28.2564281Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:28.2564917Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:28.2565322Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:28.2565637Z ##[endgroup]
+2026-10-22T02:37:28.4728752Z (node:5344) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:37:28.4730210Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:37:28.4733114Z Trying to find version for uv in: D:\a\reelkiln\reelkiln\uv.toml
+2026-10-22T02:37:28.4734229Z Could not find file: D:\a\reelkiln\reelkiln\uv.toml
+2026-10-22T02:37:28.4735201Z Trying to find version for uv in: D:\a\reelkiln\reelkiln\pyproject.toml
+2026-10-22T02:37:28.4736267Z Could not find file: D:\a\reelkiln\reelkiln\pyproject.toml
+2026-10-22T02:37:28.4737330Z Could not determine uv version from uv.toml or pyproject.toml. Falling back to latest.
+2026-10-22T02:37:28.4738641Z Getting latest version from GitHub API...
+2026-10-22T02:37:28.7631391Z manifest-file not provided, reading from local file.
+2026-10-22T02:37:28.7696054Z manifest-file does not contain version 0.13.5, arch x86_64, platform pc-windows-msvc. Falling back to GitHub releases.
+2026-10-22T02:37:28.7713428Z Downloading uv from "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-x86_64-pc-windows-msvc.zip" ...
+2026-10-22T02:37:29.2821205Z [command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command "$ErrorActionPreference = 'Stop' ; try { Add-Type -AssemblyName System.IO.Compression.ZipFile } catch { } ; try { [System.IO.Compression.ZipFile]::ExtractToDirectory('D:\a\_temp\8ec2d28d-9d5e-4770-ad5f-d616c8b5492f.zip', 'D:\a\_temp\e910124c-7e54-451b-bcd6-796966a3f4f7', $true) } catch { if (($_.Exception.GetType().FullName -eq 'System.Management.Automation.MethodException') -or ($_.Exception.GetType().FullName -eq 'System.Management.Automation.RuntimeException') ){ Expand-Archive -LiteralPath 'D:\a\_temp\8ec2d28d-9d5e-4770-ad5f-d616c8b5492f.zip' -DestinationPath 'D:\a\_temp\e910124c-7e54-451b-bcd6-796966a3f4f7' -Force } else { throw $_ } } ;"
+2026-10-22T02:37:29.8599960Z Set UV_TOOL_BIN_DIR to D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:37:29.8604478Z Added D:\a\_temp\uv-tool-bin-dir to the path
+2026-10-22T02:37:29.8613008Z Added C:\hostedtoolcache\windows\uv\0.13.5\x86_64 to the path
+2026-10-22T02:37:29.8616322Z Set UV_TOOL_DIR to D:\a\_temp\uv-tool-dir
+2026-10-22T02:37:29.8624655Z Set UV_CACHE_DIR to D:\a\_temp\setup-uv-cache
+2026-10-22T02:37:29.8625329Z Successfully installed uv version 0.13.5
+2026-10-22T02:37:29.8629878Z Searching files using cache dependency glob: D:\a\reelkiln\reelkiln\**\*requirements*.txt,D:\a\reelkiln\reelkiln\**\*requirements*.in,D:\a\reelkiln\reelkiln\**\*constraints*.txt,D:\a\reelkiln\reelkiln\**\*constraints*.in,D:\a\reelkiln\reelkiln\**\pyproject.toml,D:\a\reelkiln\reelkiln\**\uv.lock,D:\a\reelkiln\reelkiln\**\*.py.lock
+2026-10-22T02:37:30.1015954Z D:\a\reelkiln\reelkiln\engine\pyproject.toml
+2026-10-22T02:37:30.1608954Z D:\a\reelkiln\reelkiln\engine\uv.lock
+2026-10-22T02:37:30.2332062Z Found 2 files to hash.
+2026-10-22T02:37:31.8332371Z Trying to restore uv cache from GitHub Actions cache with key: setup-uv-1-x86_64-pc-windows-msvc-3.14.8-pruned-6b72b914ea0b2a23a72f30959f4a90fe045845c9d8a02edc1d362cc710c62253
+2026-10-22T02:37:32.0417066Z No GitHub Actions cache found for key: setup-uv-1-x86_64-pc-windows-msvc-3.14.8-pruned-6b72b914ea0b2a23a72f30959f4a90fe045845c9d8a02edc1d362cc710c62253
+2026-10-22T02:37:32.0713671Z ##[group]Run command -v ffmpeg || choco install ffmpeg -y --no-progress
+2026-10-22T02:37:32.0714417Z command -v ffmpeg || choco install ffmpeg -y --no-progress
+2026-10-22T02:37:32.0737632Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:37:32.0738034Z env:
+2026-10-22T02:37:32.0738205Z   PYTHONUTF8: 1
+2026-10-22T02:37:32.0738495Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:32.0739177Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:37:32.0739625Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:32.0740025Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:32.0740426Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:37:32.0740817Z   UV_TOOL_BIN_DIR: D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:37:32.0741092Z   UV_TOOL_DIR: D:\a\_temp\uv-tool-dir
+2026-10-22T02:37:32.0741383Z   UV_CACHE_DIR: D:\a\_temp\setup-uv-cache
+2026-10-22T02:37:32.0741633Z ##[endgroup]
+2026-10-22T02:37:41.1317394Z Chocolatey v2.7.4
+2026-10-22T02:37:41.4589388Z Installing the following packages:
+2026-10-22T02:37:41.4594225Z ffmpeg
+2026-10-22T02:37:41.4597945Z By installing, you accept licenses for the packages.
+2026-10-22T02:37:55.7326301Z Downloading package from source 'https://community.chocolatey.org/api/v2/'
+2026-10-22T02:37:57.0604008Z 
+2026-10-22T02:37:57.0605727Z ffmpeg v9.0.2 [Approved]
+2026-10-22T02:37:57.0827433Z ffmpeg package files install completed. Performing other installation steps.
+2026-10-22T02:38:00.6674866Z Extracting 64-bit C:\ProgramData\chocolatey\lib\ffmpeg\tools\ffmpeg-release-essentials.7z to C:\ProgramData\chocolatey\lib\ffmpeg\tools...
+2026-10-22T02:38:03.3868642Z C:\ProgramData\chocolatey\lib\ffmpeg\tools
+2026-10-22T02:38:03.3876857Z Removing extracted archive.
+2026-10-22T02:38:03.3940936Z Sleeping for 2 seconds to allow anti-viruses to finish scanning...
+2026-10-22T02:38:05.4069554Z Renaming ffmpeg directory to common name (Try 1 / 3)
+2026-10-22T02:38:05.4110378Z Successfully renamed directory.
+2026-10-22T02:38:09.5303048Z  ShimGen has successfully created a shim for ffmpeg.exe
+2026-10-22T02:38:12.1279741Z  ShimGen has successfully created a shim for ffplay.exe
+2026-10-22T02:38:14.0830594Z  ShimGen has successfully created a shim for ffprobe.exe
+2026-10-22T02:38:14.1545111Z  The install of ffmpeg was successful.
+2026-10-22T02:38:14.1548020Z   Deployed to 'C:\ProgramData\chocolatey\lib\ffmpeg\tools'
+2026-10-22T02:38:14.1741221Z 
+2026-10-22T02:38:14.1741714Z Chocolatey installed 1/1 packages. 
+2026-10-22T02:38:14.1742512Z  See the log for details (C:\ProgramData\chocolatey\logs\chocolatey.log).
+2026-10-22T02:38:14.1751901Z 
+2026-10-22T02:38:14.1752482Z Did you know the proceeds of Pro (and some proceeds from other
+2026-10-22T02:38:14.1753424Z  licensed editions) go into bettering the community infrastructure?
+2026-10-22T02:38:14.1754394Z  Your support ensures an active community, keeps Chocolatey tip-top,
+2026-10-22T02:38:14.1755748Z  plus it nets you some awesome features!
+2026-10-22T02:38:14.1756371Z  https://chocolatey.org/compare
+2026-10-22T02:38:14.2391342Z ##[group]Run npm ci && npm run build
+2026-10-22T02:38:14.2391709Z npm ci && npm run build
+2026-10-22T02:38:14.2409659Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:38:14.2410480Z env:
+2026-10-22T02:38:14.2410696Z   PYTHONUTF8: 1
+2026-10-22T02:38:14.2410987Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:38:14.2411451Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:38:14.2411902Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:38:14.2412305Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:38:14.2412708Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:38:14.2413053Z   UV_TOOL_BIN_DIR: D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:38:14.2413333Z   UV_TOOL_DIR: D:\a\_temp\uv-tool-dir
+2026-10-22T02:38:14.2413588Z   UV_CACHE_DIR: D:\a\_temp\setup-uv-cache
+2026-10-22T02:38:14.2413891Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+2026-10-22T02:38:14.2414126Z ##[endgroup]
+2026-10-22T02:38:18.6514540Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-10-22T02:38:18.7189312Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-10-22T02:38:18.7458178Z npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+2026-10-22T02:38:18.8330170Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-22T02:38:19.2675652Z npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2026-10-22T02:45:17.8633853Z 
+2026-10-22T02:45:17.8635054Z added 293 packages in 7m
+2026-10-22T02:45:17.8635641Z 
+2026-10-22T02:45:17.8636279Z 49 packages are looking for funding
+2026-10-22T02:45:17.8636960Z   run `npm fund` for details
+2026-10-22T02:45:19.6997210Z 
+2026-10-22T02:45:19.6997892Z > videoclaw-port@0.0.40-port.0 build
+2026-10-22T02:45:19.6998470Z > npm run gen && npm run typecheck && npm run bundle
+2026-10-22T02:45:19.6998761Z 
+2026-10-22T02:45:19.9895854Z 
+2026-10-22T02:45:19.9898475Z > videoclaw-port@0.0.40-port.0 gen
+2026-10-22T02:45:19.9899849Z > node tools/gen-ipc-contract.mjs && node tools/gen-verbatim.mjs && node tools/gen-studio-paid-tools.mjs
+2026-10-22T02:45:19.9900664Z 
+2026-10-22T02:45:20.0706209Z {"invoke":157,"send":3,"push":23,"unused":1,"argsNamed":198,"argsVerified":16,"argsPlaceholder":182,"resultVerified":57,"resultFull":23,"resultPartial":34,"resultPlaceholder":100,"pushVerified":19,"pushFull":3,"pushPartial":16,"pushPlaceholder":4,"sendVoid":3,"sharedTypes":17}
+2026-10-22T02:45:20.3815553Z studio-paid-tools.generated.ts: 4 descriptions ok
+2026-10-22T02:45:20.6750798Z 
+2026-10-22T02:45:20.6751580Z > videoclaw-port@0.0.40-port.0 typecheck
+2026-10-22T02:45:20.6752458Z > tsc -p tsconfig.json --noEmit
+2026-10-22T02:45:20.6752848Z 
+2026-10-22T02:45:27.3406234Z 
+2026-10-22T02:45:27.3406955Z > videoclaw-port@0.0.40-port.0 bundle
+2026-10-22T02:45:27.3407599Z > node tools/build.mjs
+2026-10-22T02:45:27.3407903Z 
+2026-10-22T02:45:27.7089038Z 
+2026-10-22T02:45:27.7090661Z   dist\main\index.cjs      3.1mb
+2026-10-22T02:45:27.7091556Z   dist\main\index.cjs.map  5.7mb
+2026-10-22T02:45:27.7092075Z 
+2026-10-22T02:45:27.7092425Z Done in 254ms
+2026-10-22T02:45:27.7143419Z 
+2026-10-22T02:45:27.7144034Z   dist\main\editorRenderWorker.cjs      4.8kb
+2026-10-22T02:45:27.7144846Z   dist\main\editorRenderWorker.cjs.map  8.3kb
+2026-10-22T02:45:27.7145315Z 
+2026-10-22T02:45:27.7148956Z Done in 3ms
+2026-10-22T02:45:27.7195074Z 
+2026-10-22T02:45:27.7195824Z   dist\main\hyperframesPolicyWorker.cjs       10.1kb
+2026-10-22T02:45:27.7196679Z   dist\main\hyperframesPreviewWorker.cjs       8.9kb
+2026-10-22T02:45:27.7197469Z   dist\main\hyperframesPreviewWorker.cjs.map  18.2kb
+2026-10-22T02:45:27.7198223Z   dist\main\hyperframesPolicyWorker.cjs.map   16.1kb
+2026-10-22T02:45:27.7198676Z 
+2026-10-22T02:45:27.7198878Z Done in 4ms
+2026-10-22T02:45:27.7859878Z 
+2026-10-22T02:45:27.7861395Z   dist\cli\port-cli.cjs      1013.7kb
+2026-10-22T02:45:27.7861917Z   dist\cli\port-cli.cjs.map     2.1mb
+2026-10-22T02:45:27.7862139Z 
+2026-10-22T02:45:27.7862273Z Done in 65ms
+2026-10-22T02:45:27.8084317Z 
+2026-10-22T02:45:27.8085932Z   dist\preload\index.cjs       26.9kb
+2026-10-22T02:45:27.8086677Z   dist\preload\index.cjs.map  199.4kb
+2026-10-22T02:45:27.8087039Z 
+2026-10-22T02:45:27.8087270Z Done in 8ms
+2026-10-22T02:45:27.8164741Z 
+2026-10-22T02:45:27.8165468Z   dist\renderer\renderer.js      17.5kb
+2026-10-22T02:45:27.8166165Z   dist\renderer\renderer.js.map  36.1kb
+2026-10-22T02:45:27.8166402Z 
+2026-10-22T02:45:27.8166540Z Done in 7ms
+2026-10-22T02:45:27.8784753Z ##[group]Run # the real binaries, not chocolatey shims (shims resolve their target relative to themselves)
+2026-10-22T02:45:27.8785960Z # the real binaries, not chocolatey shims (shims resolve their target relative to themselves)
+2026-10-22T02:45:27.8786662Z export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
+2026-10-22T02:45:27.8787196Z bash tools/windows_runbook.sh "$RUNNER_TEMP/vc"
+2026-10-22T02:45:27.8806464Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:45:27.8806942Z env:
+2026-10-22T02:45:27.8807186Z   PYTHONUTF8: 1
+2026-10-22T02:45:27.8807564Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:45:27.8808077Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:45:27.8808587Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:45:27.8809144Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:45:27.8809598Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:45:27.8810082Z   UV_TOOL_BIN_DIR: D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:45:27.8810891Z   UV_TOOL_DIR: D:\a\_temp\uv-tool-dir
+2026-10-22T02:45:27.8811268Z   UV_CACHE_DIR: D:\a\_temp\setup-uv-cache
+2026-10-22T02:45:27.8811773Z   OUT: D:\a\_temp\windows-run
+2026-10-22T02:45:27.8812042Z ##[endgroup]
+2026-10-22T02:45:30.2675001Z {
+2026-10-22T02:45:30.2675513Z   "version": "0.1.57-rc7-15f8f2d",
+2026-10-22T02:45:30.2675878Z   "variant": "full",
+2026-10-22T02:45:30.2676365Z   "sha256": "b0975db47d56c4ca2d878da5f4a8f22ef80860b172c91a336c78c316ffcf7505",
+2026-10-22T02:45:30.2676912Z   "file": "engine-0.1.57-rc7-15f8f2d-win.tar.gz",
+2026-10-22T02:45:30.2677299Z   "minAppVersion": "0.0.38-rc.5",
+2026-10-22T02:45:30.2677660Z   "pythonVersion": "3.14.6",
+2026-10-22T02:45:30.2677988Z   "builtAt": "2026-10-06T13:37:53Z",
+2026-10-22T02:45:30.2678331Z   "gitSha": "15f8f2d",
+2026-10-22T02:45:30.2678653Z   "gitBranch": "HEAD",
+2026-10-22T02:45:30.2678915Z   "gitDirty": "clean"
+2026-10-22T02:45:30.2679175Z }
+2026-10-22T02:45:34.1003021Z uv 0.13.5 (46776a95d 2026-10-21 x86_64-pc-windows-msvc)
+2026-10-22T02:45:34.2431580Z ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers
+2026-10-22T02:45:34.3301918Z v22.23.3
+2026-10-22T02:45:34.9394222Z {"ok":true,"step":"install-engine","path":"D:\\a\\_temp\\vc\\ud\\engines\\engine-0.1.57-rc7-15f8f2d","ms":395}
+2026-10-22T02:45:35.0833084Z ffmpeg.exe
+2026-10-22T02:45:35.0834369Z ffprobe.exe
+2026-10-22T02:45:35.0835493Z uv.exe
+2026-10-22T02:45:35.2716170Z {"ok":true,"step":"shims"}
+2026-10-22T02:45:35.4141386Z ffmpeg.exe
+2026-10-22T02:45:35.4142240Z ffprobe.exe
+2026-10-22T02:45:35.4142698Z git
+2026-10-22T02:45:35.4143079Z git.cmd
+2026-10-22T02:45:35.4143444Z pip
+2026-10-22T02:45:35.4143800Z pip.cmd
+2026-10-22T02:45:35.4144202Z pip3
+2026-10-22T02:45:35.4144581Z pip3.cmd
+2026-10-22T02:45:35.4145050Z python
+2026-10-22T02:45:35.4145450Z python.cmd
+2026-10-22T02:45:35.4145926Z python3
+2026-10-22T02:45:35.4146282Z python3.cmd
+2026-10-22T02:45:35.4146680Z uv.exe
+2026-10-22T02:46:11.2587790Z {"ok":true,"step":"venv","detail":"uv sync --frozen: venv ready","ms":35642}
+2026-10-22T02:46:11.3515731Z Python 3.14.6
+2026-10-22T02:46:11.4149943Z Python 3.14.6
+2026-10-22T02:46:11.4785824Z Python 3.14.6
+2026-10-22T02:46:44.6129598Z {"ok":true,"step":"remotion","detail":"npm ci + browser ensure","ms":32900}
+2026-10-22T02:46:52.4407390Z {"ok":true,"step":"hyperframes","detail":"npm ci: HyperFrames renderer/player ready","ms":7576}
+2026-10-22T02:46:53.5069136Z {"ok":true,"step":"engine-contracts","sessionContext":{"operatingRules":"06d4a913c4025cdb36e5a492ddbd3a8b56982fd45fad4cbf9c3e7e814ef2ea57","laws":"b014278d78f18b13b642b6c844df730d6c3fe6acb55164cc266ab46dfed361af","capabilityDigest":"56def7f03fa353456281426658444f6e994f275dcc2d00cbc8af3333d3d50f6a","router":"a0c0beebae2b8910e2d3884816cb4de98347f8320155e63eac530e0a2ca98ebc","preflightHook":"5095ed283f6ba7ba44e2684fbf373fd77f7721d79be38a6d1f48ee55b33502df","preflightBlock":"4306bb336a8ece019944e67a55a1599fe8cf095738d4dea0ec4eae051cf02291","productionGuard":"3330979f7166a4b480ce4cae301f5f09b5f7c039c523737d4b79bd53776dc6eb","engineSettings":"a45709c6835d009004118101aa8015ca7b2a37eff07d02955914c55b86b05ba3","prepareProductionTool":"a6b8a07b533df14cf7f70e5b08dc80f0226ba6e75b83f1ad0eae69ca1e049df6","projectBriefTool":"71020e89b57aabdebf971a4c7830b04377cec38ebc1d9a5c70e65d0bec3b2129","qaGateTool":"00b297236a1fbf607a412a9ccc38560ffbed85d15f95da023318fb5ee32eafff","engineBuildSha256":"b0975db47d56c4ca2d878da5f4a8f22ef80860b172c91a336c78c316ffcf7505"},"production":{"compatible":true},"money":{"status":"compatible","capabilities":{"plan":true,"advisoryEstimate":true}}}
+2026-10-22T02:46:53.7440772Z {"ok":true,"step":"stage-workspace","notPorted":["auditWorkspaceChannel","workspace symlink guards"]}
+2026-10-22T02:46:58.8311049Z {"ok":false,"step":"doctor","failing":[{"check":"gateway","detail":"no VIDEOCLAW_API_KEY (env or engine .env)","fix":"enter the key in the app (AccountModal) — bootstrap writes .env"}],"ms":4893}
+2026-10-22T02:47:00.7691000Z doctor OK   ffmpeg: D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d\bin\ffmpeg.EXE · ffmpeg version 9.0.2-e
+2026-10-22T02:47:00.7692820Z doctor OK   ffprobe: D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d\bin\ffprobe.EXE · ffprobe version 9.0.2
+2026-10-22T02:47:00.7694203Z doctor OK   node: D:\a\_temp\vc\bootstrap\node\node.EXE · v22.23.3
+2026-10-22T02:47:00.7695425Z doctor OK   python venv: imports ok: PIL, numpy, scipy, requests, dotenv, elevenlabs, fontTools, openai
+2026-10-22T02:47:00.7696466Z doctor OK   yt-dlp: venv yt-dlp 2026.06.09
+2026-10-22T02:47:00.7697456Z doctor OK   remotion: package.json + node_modules present (use --deep for a smoke render)
+2026-10-22T02:47:00.7698461Z doctor FAIL gateway: no VIDEOCLAW_API_KEY (env or engine .env)
+2026-10-22T02:47:00.7699502Z doctor OK   workspace: split · jobs=D:\a\_temp\vc\ws\jobs
+2026-10-22T02:47:00.7700700Z doctor OK   hooks: all hook paths use portable engine root · workspace bytes canonical
+2026-10-22T02:47:00.7701730Z doctor OK   taste packs: 2 pack(s): _default, _starter
+2026-10-22T02:47:08.4913239Z beat            role           start     end    dur  source
+2026-10-22T02:47:08.4914171Z b1_hook         broll           0.00    2.00   2.00  broll/clip_a.mp4
+2026-10-22T02:47:08.4915030Z b2_card         card            2.00    3.50   1.50  images/card.png
+2026-10-22T02:47:08.4915823Z b3_broll        broll           3.50    5.50   2.00  broll/clip_b.mp4
+2026-10-22T02:47:08.4916520Z                 TOTAL                   5.50
+2026-10-22T02:47:08.4917505Z VO vo.mp3: 5.50s · timeline 5.50s · delta +0.00s [OK]
+2026-10-22T02:47:08.4918218Z   seg 00 b1_hook          2.00s ✓
+2026-10-22T02:47:08.4918803Z   seg 01 b2_card          1.50s ✓
+2026-10-22T02:47:08.4919331Z   seg 02 b3_broll         2.00s ✓
+2026-10-22T02:47:08.4919648Z 
+2026-10-22T02:47:08.4920378Z [assemble] 3 beats → D:\a\_temp\vc\ws\jobs\linux-e2e-20261020-a1b2c3\final_raw.mp4 (5.50s)
+2026-10-22T02:47:08.4921678Z ▶ WATCH → file://D:\a\_temp\vc\ws\jobs\linux-e2e-20261020-a1b2c3\final_raw.mp4
+2026-10-22T02:47:08.8880996Z [verify_output] mode=render  avatar_type=synthetic_avatar (default (no markers found))
+2026-10-22T02:47:08.8882480Z [verify_output] input=D:\a\_temp\vc\ws\jobs\linux-e2e-20261020-a1b2c3\final_raw.mp4
+2026-10-22T02:47:08.8883972Z 
+2026-10-22T02:47:08.8884917Z Video:    D:\a\_temp\vc\ws\jobs\linux-e2e-20261020-a1b2c3\final_raw.mp4 (5.50s)
+2026-10-22T02:47:08.8885992Z Sampling: 1 frames at [2.75]
+2026-10-22T02:47:08.8887081Z 
+2026-10-22T02:47:08.8887738Z Wrote 1 frame(s). Read each one inline to inspect:
+2026-10-22T02:47:08.8889028Z   Read D:\a\_temp\vc\ws\jobs\linux-e2e-20261020-a1b2c3\verify_frames\frame_002.75s.png  (3KB)
+2026-10-22T02:47:08.8890546Z 
+2026-10-22T02:47:08.8891193Z [verify_output] STATUS: OK (mechanical checks passed)
+2026-10-22T02:47:09.0544906Z aa722d83a7a33d3ed4f1cb25b6e1a3584e16fce5c6d62d009244164fbee1e7d4 */d/a/_temp/vc/ws/jobs/linux-e2e-20261020-a1b2c3/final_raw.mp4
+2026-10-22T02:47:16.2696761Z npm notice
+2026-10-22T02:47:16.2699925Z npm notice package: @openai/codex@0.160.1-win32-x64
+2026-10-22T02:47:16.2700498Z npm notice Tarball Contents
+2026-10-22T02:47:16.2707292Z npm notice 3.3kB README.md
+2026-10-22T02:47:16.2707880Z npm notice 511B package.json
+2026-10-22T02:47:16.2708724Z npm notice 74.7MB vendor/x86_64-pc-windows-msvc/bin/codex-code-mode-host.exe
+2026-10-22T02:47:16.2709432Z npm notice 326.9MB vendor/x86_64-pc-windows-msvc/bin/codex.exe
+2026-10-22T02:47:16.2710047Z npm notice 215B vendor/x86_64-pc-windows-msvc/codex-package.json
+2026-10-22T02:47:16.2710640Z npm notice 4.2MB vendor/x86_64-pc-windows-msvc/codex-path/rg.exe
+2026-10-22T02:47:16.2711325Z npm notice 8.2MB vendor/x86_64-pc-windows-msvc/codex-resources/codex-command-runner.exe
+2026-10-22T02:47:16.2712186Z npm notice 17.7MB vendor/x86_64-pc-windows-msvc/codex-resources/codex-windows-sandbox-setup.exe
+2026-10-22T02:47:16.2713411Z npm notice 8.6MB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/codex-voice-host.exe
+2026-10-22T02:47:16.2715266Z npm notice 1.7MB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gio-2.0-0.dll
+2026-10-22T02:47:16.2716130Z npm notice 1.4MB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/glib-2.0-0.dll
+2026-10-22T02:47:16.2716968Z npm notice 34.6kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gmodule-2.0-0.dll
+2026-10-22T02:47:16.2717844Z npm notice 348.5kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gobject-2.0-0.dll
+2026-10-22T02:47:16.2718864Z npm notice 100.1kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstapp-1.0-0.dll
+2026-10-22T02:47:16.2719680Z npm notice 25.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstapp.dll
+2026-10-22T02:47:16.2720975Z npm notice 512.3kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstaudio-1.0-0.dll
+2026-10-22T02:47:16.2721828Z npm notice 48.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstaudioconvert.dll
+2026-10-22T02:47:16.2722655Z npm notice 45.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstaudioresample.dll
+2026-10-22T02:47:16.2723408Z npm notice 484.1kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstbase-1.0-0.dll
+2026-10-22T02:47:16.2724150Z npm notice 409.9kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstcoreelements.dll
+2026-10-22T02:47:16.2724923Z npm notice 116.5kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstnet-1.0-0.dll
+2026-10-22T02:47:16.2725628Z npm notice 69.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstopus.dll
+2026-10-22T02:47:16.2726355Z npm notice 262.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstpbutils-1.0-0.dll
+2026-10-22T02:47:16.2727127Z npm notice 1.3MB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstreamer-1.0-0.dll
+2026-10-22T02:47:16.2727807Z npm notice 167.2kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstrtp-1.0-0.dll
+2026-10-22T02:47:16.2728511Z npm notice 607.5kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstrtp.dll
+2026-10-22T02:47:16.2729293Z npm notice 501.0kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstrtpmanager.dll
+2026-10-22T02:47:16.2730028Z npm notice 254.3kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gsttag-1.0-0.dll
+2026-10-22T02:47:16.2730782Z npm notice 769.8kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/gstvideo-1.0-0.dll
+2026-10-22T02:47:16.2731535Z npm notice 25.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/intl-8.dll
+2026-10-22T02:47:16.2732214Z npm notice 43.3kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/libffi-8.dll
+2026-10-22T02:47:16.2732919Z npm notice 440.1kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/opus.dll
+2026-10-22T02:47:16.2733625Z npm notice 398.1kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/pcre2-8.dll
+2026-10-22T02:47:16.2735234Z npm notice 123.5kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/vcruntime140.dll
+2026-10-22T02:47:16.2736870Z npm notice 105.3kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/bin/z.dll
+2026-10-22T02:47:16.2737638Z npm notice 26.9kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/LGPL-2.1.txt
+2026-10-22T02:47:16.2738374Z npm notice 1.2kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/libffi.txt
+2026-10-22T02:47:16.2739091Z npm notice 2.0kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/Opus.txt
+2026-10-22T02:47:16.2739780Z npm notice 4.1kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/PCRE2.md
+2026-10-22T02:47:16.2740496Z npm notice 25.8kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/proxy-libintl.txt
+2026-10-22T02:47:16.2741248Z npm notice 1.5kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/sljit.txt
+2026-10-22T02:47:16.2741928Z npm notice 1.0kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/licenses/zlib.txt
+2026-10-22T02:47:16.2742588Z npm notice 4.8kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/manifest.json
+2026-10-22T02:47:16.2743289Z npm notice 2.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/NOTICE.md
+2026-10-22T02:47:16.2743934Z npm notice 16.9kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/runtime.json
+2026-10-22T02:47:16.2744580Z npm notice 4.9kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/sources.json
+2026-10-22T02:47:16.2745281Z npm notice 1.4kB vendor/x86_64-pc-windows-msvc/codex-resources/voice/windows-crt.json
+2026-10-22T02:47:16.2745764Z npm notice Tarball Details
+2026-10-22T02:47:16.2746107Z npm notice name: @openai/codex
+2026-10-22T02:47:16.2746491Z npm notice version: 0.160.1-win32-x64
+2026-10-22T02:47:16.2746923Z npm notice filename: openai-codex-0.160.1-win32-x64.tgz
+2026-10-22T02:47:16.2747333Z npm notice package size: 162.6 MB
+2026-10-22T02:47:16.2747683Z npm notice unpacked size: 450.6 MB
+2026-10-22T02:47:16.2748178Z npm notice shasum: 26287e7ceb2a564b3bc68d0673f7df7832cdaf63
+2026-10-22T02:47:16.2748686Z npm notice integrity: sha512-yyqykHtHNhm0Z[...]wpw1W7uae2nlg==
+2026-10-22T02:47:16.2749109Z npm notice total files: 47
+2026-10-22T02:47:16.2749421Z npm notice
+2026-10-22T02:47:21.2356979Z codex-cli 0.160.1
+2026-10-22T02:47:22.6452739Z codex-handshake exit 0
+2026-10-22T02:47:22.6937169Z {"ok":true,"step":"codex-handshake","account":{"account":null,"requiresOpenaiAuth":true,"workspaceRouting":null},"warnings":[],"ms":1065}
+2026-10-22T02:47:24.8680014Z INFO: No tasks are running which match the specified criteria.
+2026-10-22T02:47:25.0692428Z {"ok":true,"step":"run-bash","output":"hi\nMINGW64_NT-10.0-26100\n/d/a/_temp/vc/ud/engines/engine-0.1.57-rc7-15f8f2d/bin/python3\n"}
+2026-10-22T02:47:25.0700007Z WINDOWS RUNBOOK OK
+2026-10-22T02:47:25.0907893Z ##[group]Run export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
+2026-10-22T02:47:25.0909252Z export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
+2026-10-22T02:47:25.0909815Z ENG="$(cat "$(cygpath -u "$OUT")/engine-path.txt")"
+2026-10-22T02:47:25.0910426Z bash tools/accept_engine_chain.sh "$ENG" "$RUNNER_TEMP/l0" 2>&1 | tee "$(cygpath -u "$OUT")/l0.log"
+2026-10-22T02:47:25.0911103Z cp "$RUNNER_TEMP/l0/accept.json" "$(cygpath -u "$OUT")/accept-L0.json"
+2026-10-22T02:47:25.0911736Z sha256sum "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$(cygpath -u "$OUT")/l0-final.sha256"
+2026-10-22T02:47:25.0912773Z ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json "$RUNNER_TEMP"/l0/ws/jobs/*/final.mp4 | tee "$(cygpath -u "$OUT")/l0-final.ffprobe.json"
+2026-10-22T02:47:25.0933151Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:47:25.0933657Z env:
+2026-10-22T02:47:25.0933903Z   PYTHONUTF8: 1
+2026-10-22T02:47:25.0934263Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:47:25.0934798Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:47:25.0935540Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:47:25.0936020Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:47:25.0936485Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:47:25.0936922Z   UV_TOOL_BIN_DIR: D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:47:25.0937267Z   UV_TOOL_DIR: D:\a\_temp\uv-tool-dir
+2026-10-22T02:47:25.0937590Z   UV_CACHE_DIR: D:\a\_temp\setup-uv-cache
+2026-10-22T02:47:25.0937915Z   OUT: D:\a\_temp\windows-run
+2026-10-22T02:47:25.0938230Z ##[endgroup]
+2026-10-22T02:48:04.7286356Z FAILED: uv run --project "$VIDEOCLAW_ENGINE" python "$VIDEOCLAW_ENGINE/tools/compose_render.py" --job accept-s1-l0-000001 --mode render --resolution 720p --no-captions --no-overlays
+2026-10-22T02:48:04.7288357Z --- tail of step2.log ---
+2026-10-22T02:48:04.7502460Z Mode:   render  (usage_role)
+2026-10-22T02:48:04.7503332Z Job:    D:\a\_temp\l0\ws\jobs\accept-s1-l0-000001
+2026-10-22T02:48:04.7505527Z Linked: D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d\remotion\public\_jobs\accept-s1-l0-000001 → D:\a\_temp\l0\ws\jobs\accept-s1-l0-000001
+2026-10-22T02:48:04.7507302Z JobOverlays: stub (none authored)
+2026-10-22T02:48:04.7522059Z No <job_dir>/overlays.tsx authored; rendering the intentional captions-only/minimal path.
+2026-10-22T02:48:04.7525131Z Canvas: 1080x1920, following the source's orientation (a video_transform keeps 1080x1920). Set width and height in style_directives.json for another shape.
+2026-10-22T02:48:04.7528569Z   Running: npx --no-install remotion render src/index.ts Captioned ... D:\a\_temp\l0\ws\jobs\accept-s1-l0-000001\.final.984.1792637284646375200.partial.mp4
+2026-10-22T02:48:04.7533088Z   Props (truncated): videoPath=_jobs/accept-s1-l0-000001/final_raw.mp4, duration=6.5s, overlays=0
+2026-10-22T02:48:04.7535237Z Traceback (most recent call last):
+2026-10-22T02:48:04.7536484Z   File "D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d/tools/compose_render.py", line 2034, in <module>
+2026-10-22T02:48:04.7537692Z     main()
+2026-10-22T02:48:04.7538091Z     ~~~~^^
+2026-10-22T02:48:04.7539016Z   File "D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d/tools/compose_render.py", line 2018, in main
+2026-10-22T02:48:04.7539931Z     run_render(args, job_dir, retrofit=False)
+2026-10-22T02:48:04.7540519Z     ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7541523Z   File "D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d/tools/compose_render.py", line 1134, in run_render
+2026-10-22T02:48:04.7542688Z     return _run_render_unlocked(args, job_dir, retrofit=retrofit)
+2026-10-22T02:48:04.7546617Z   File "D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d/tools/compose_render.py", line 1031, in _run_render_unlocked
+2026-10-22T02:48:04.7547825Z     remotion_render(props, staging)
+2026-10-22T02:48:04.7548422Z     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7549769Z   File "D:\a\_temp\vc\ud\engines\engine-0.1.57-rc7-15f8f2d/tools/compose_render.py", line 350, in remotion_render
+2026-10-22T02:48:04.7551178Z     result = subprocess.run(cmd, cwd=REMOTION_DIR)
+2026-10-22T02:48:04.7552548Z   File "C:\Users\runneradmin\AppData\Roaming\uv\python\cpython-3.14.6-windows-x86_64-none\Lib\subprocess.py", line 555, in run
+2026-10-22T02:48:04.7553755Z     with Popen(*popenargs, **kwargs) as process:
+2026-10-22T02:48:04.7554379Z          ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7555616Z   File "C:\Users\runneradmin\AppData\Roaming\uv\python\cpython-3.14.6-windows-x86_64-none\Lib\subprocess.py", line 1039, in __init__
+2026-10-22T02:48:04.7556907Z     self._execute_child(args, executable, preexec_fn, close_fds,
+2026-10-22T02:48:04.7557694Z     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7558385Z                         pass_fds, cwd, env,
+2026-10-22T02:48:04.7558963Z                         ^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7559470Z     ...<5 lines>...
+2026-10-22T02:48:04.7560566Z                         gid, gids, uid, umask,
+2026-10-22T02:48:04.7561488Z                         ^^^^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7562140Z                         start_new_session, process_group)
+2026-10-22T02:48:04.7562896Z                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7564194Z   File "C:\Users\runneradmin\AppData\Roaming\uv\python\cpython-3.14.6-windows-x86_64-none\Lib\subprocess.py", line 1553, in _execute_child
+2026-10-22T02:48:04.7565819Z     hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+2026-10-22T02:48:04.7566560Z                        ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7567249Z                              # no special security
+2026-10-22T02:48:04.7567870Z                              ^^^^^^^^^^^^^^^^^^^^^
+2026-10-22T02:48:04.7568412Z     ...<4 lines>...
+2026-10-22T02:48:04.7568867Z                              cwd,
+2026-10-22T02:48:04.7569404Z                              ^^^^
+2026-10-22T02:48:04.7569930Z                              startupinfo)
+2026-10-22T02:48:04.7570488Z                              ^^^^^^^^^^^^
+2026-10-22T02:48:04.7571719Z FileNotFoundError: [WinError 2] The system cannot find the file specified
+2026-10-22T02:48:04.7583286Z ##[error]Process completed with exit code 1.
+2026-10-22T02:48:04.7770743Z ##[group]Run mkdir -p "$(cygpath -u "$OUT")/l0-steps"
+2026-10-22T02:48:04.7771341Z mkdir -p "$(cygpath -u "$OUT")/l0-steps"
+2026-10-22T02:48:04.7771971Z cp "$RUNNER_TEMP"/l0/step*.log "$RUNNER_TEMP"/l0/verify.log "$(cygpath -u "$OUT")/l0-steps/" 2>/dev/null || true
+2026-10-22T02:48:04.7795339Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-22T02:48:04.7796102Z env:
+2026-10-22T02:48:04.7796486Z   PYTHONUTF8: 1
+2026-10-22T02:48:04.7797030Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.7797926Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:48:04.7798793Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.7799572Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.7800355Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.7801134Z   UV_TOOL_BIN_DIR: D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:48:04.7801729Z   UV_TOOL_DIR: D:\a\_temp\uv-tool-dir
+2026-10-22T02:48:04.7802262Z   UV_CACHE_DIR: D:\a\_temp\setup-uv-cache
+2026-10-22T02:48:04.7803184Z   OUT: D:\a\_temp\windows-run
+2026-10-22T02:48:04.7803648Z ##[endgroup]
+2026-10-22T02:48:04.9461742Z ##[group]Run actions/upload-artifact@v4
+2026-10-22T02:48:04.9462379Z with:
+2026-10-22T02:48:04.9462748Z   name: windows-run
+2026-10-22T02:48:04.9463162Z   path: D:\a\_temp\windows-run
+2026-10-22T02:48:04.9463534Z   if-no-files-found: warn
+2026-10-22T02:48:04.9463944Z   compression-level: 6
+2026-10-22T02:48:04.9464406Z   overwrite: false
+2026-10-22T02:48:04.9464837Z   include-hidden-files: false
+2026-10-22T02:48:04.9465373Z env:
+2026-10-22T02:48:04.9465736Z   PYTHONUTF8: 1
+2026-10-22T02:48:04.9466279Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.9467200Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.14.8\x64/lib/pkgconfig
+2026-10-22T02:48:04.9467999Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.9468781Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.9469599Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.14.8\x64
+2026-10-22T02:48:04.9470361Z   UV_TOOL_BIN_DIR: D:\a\_temp\uv-tool-bin-dir
+2026-10-22T02:48:04.9470926Z   UV_TOOL_DIR: D:\a\_temp\uv-tool-dir
+2026-10-22T02:48:04.9471475Z   UV_CACHE_DIR: D:\a\_temp\setup-uv-cache
+2026-10-22T02:48:04.9471994Z ##[endgroup]
+2026-10-22T02:48:05.1571771Z (node:6552) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-22T02:48:05.1572740Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-22T02:48:05.1692727Z With the provided path, there will be 16 files uploaded
+2026-10-22T02:48:05.1699817Z Artifact name is valid!
+2026-10-22T02:48:05.1701609Z Root directory input is valid!
+2026-10-22T02:48:05.4281615Z Beginning upload of artifact content to blob storage
+2026-10-22T02:48:05.4874466Z (node:6552) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-22T02:48:05.6483476Z Uploaded bytes 8651
+2026-10-22T02:48:05.6969014Z Finished uploading artifact content to blob storage!
+2026-10-22T02:48:05.6970250Z SHA256 digest of uploaded artifact zip is da4c65c77e987dbbdfebc695d28c3969ecf88e6ab1786fbd03f7ee60848019b7
+2026-10-22T02:48:05.6972532Z Finalizing artifact upload
+2026-10-22T02:48:06.1496745Z Artifact windows-run.zip successfully finalized. Artifact ID 12397178567
+2026-10-22T02:48:06.1498930Z Artifact windows-run has been successfully uploaded! Final size is 8651 bytes. Artifact ID is 12397178567
+2026-10-22T02:48:06.1509275Z Artifact download URL: https://github.com/pf-sjtu/reelkiln/actions/runs/39712365635/artifacts/12397178567
+2026-10-22T02:48:06.1910626Z Post job cleanup.
+2026-10-22T02:48:06.3973980Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-22T02:48:06.4347814Z git version 2.56.0.windows.2
+2026-10-22T02:48:06.4418244Z Temporarily overriding HOME='D:\a\_temp\61ba716f-9050-473f-bf3c-bc64883aa83a' before making global git config changes
+2026-10-22T02:48:06.4419320Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-22T02:48:06.4429991Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\reelkiln\reelkiln
+2026-10-22T02:48:06.4853577Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-22T02:48:06.5278341Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-22T02:48:07.1115257Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-22T02:48:07.1472616Z http.https://github.com/.extraheader
+2026-10-22T02:48:07.1524869Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-22T02:48:07.1928788Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-22T02:48:07.7783041Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-22T02:48:07.8182223Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-22T02:48:08.3876421Z Cleaning up orphan processes
+2026-10-22T02:48:08.4405737Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/setup-python@v5, actions/upload-artifact@v4, astral-sh/setup-uv@v6. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

@@ -12,6 +12,7 @@
 // `BootstrapHooks` and listed as stubs in docs/10.
 // OS-specific behaviour goes through the platform layer: PATH delimiter/keys, exe suffixes,
 // npm/npx (.cmd + CVE-2024-27980), tar (System32 bsdtar), chmod no-op on win32.
+import { writeWindowsExecShim } from "./win-exec-shim";
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { chmodSync, copyFileSync, createReadStream, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -343,6 +344,7 @@ export class BootstrapCore {
     const uv = this.tool("uv");
     const python = await this.hooks.nativePythonArgs(uv, { cwd: enginePath, project: enginePath });
     await this.run(uv, syncArgv(enginePath, python), { cwd: enginePath, env: { ...UV_PYTHON_POLICY_ENV }, timeoutMs: 20 * 6e4 });
+    if (isWin(this.env.platform)) writeWindowsExecShim(enginePath); // PORT-NEW docs/35: bare npx/npm from engine Python
     return "uv sync --frozen: venv ready";
   }
 

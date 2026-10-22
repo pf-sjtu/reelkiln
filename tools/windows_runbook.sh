@@ -42,6 +42,7 @@ step venv "$ENGW" "$(W "$B")"
 "$ENG/.venv/Scripts/python.exe" --version | tee -a "$OUT/tool-versions.txt"
 "$ENG/bin/python.cmd" --version | tee -a "$OUT/tool-versions.txt"
 "$ENG/bin/python" --version | tee -a "$OUT/tool-versions.txt"   # sh shim through Git Bash
+ls "$ENG/.venv/Lib/site-packages/" | grep -i winexec | tee -a "$OUT/tool-versions.txt"   # docs/35 bare-npx hook
 # S6
 step remotion "$ENGW" "$(W "$B")"
 step hyperframes "$ENGW" "$(W "$B")"
