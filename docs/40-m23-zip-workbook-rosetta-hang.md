@@ -11,7 +11,8 @@
 | `f9dd6af` | `ui-e2e.mjs --extra-docs`：经原版渲染器拖入 .zip/.xlsx/.pdf；macOS / Windows S1 job 各加一步（非阻断） |
 | `f871cf0` | 探针循环修正（`set +e`，保留失败尾部） |
 | `83f367e` | 泄漏句柄修复（`AgentHost.closeAll` 按原版退役 job watcher）+ 去掉 `--test-force-exit` + Rosetta 步骤改为阻断 + 证据 |
-| （后续） | 本文档；docs/39 §4 更新；`--extra-docs` 两次全绿后改阻断 |
+| `bc98561` | 本文档；docs/39 §4、docs/34、docs/13 |
+| （本提交） | `--extra-docs` 两步两次全绿后改阻断；探针步骤移除（工具保留）；修复后证据 |
 
 ## 1. `.zip` 附件解包（#11）
 - 依赖：`yauzl 3.4.0`（原版 `app/package.json` 锁定的同一版本；port 用 esbuild 打包，记在 devDependencies）。
@@ -35,6 +36,7 @@ macos-native 新步骤（`port/test/mac-rosetta.test.ts`，仅在 darwin arm64 +
 - 结果（39741744182）：只有 `m16-collector.test.cjs` 不退出（60 s 被 test-timeout 杀掉，6/6 子测试本身通过）；子进程残留 **3 个 `FSWatcher`（FSEventWrap）**。
 - 根因：原版 `JobWatcher` 对 job 目录做递归 `fs.watch`；port 的 `AgentHost.closeAll()` 没有按原版 L45572 退役 watcher（也漏了 L45551 中止 operation collector）。Linux 上递归 watch 是 inotify，目录被删时 watcher 随之出错关闭，所以不挂；macOS 上 FSEvents watcher 在目录删除后依然存活 → 进程不退。这也是产品退出路径（`beginShutdown` → `h.closeAll()`）与原版的一处真实偏差。
 - 修复：`closeAll()` 现在按原版中止 collector、退役所有 watcher 并清空 map；测试 teardown 调用 `host.closeAll()` 并断言 watcher 数为 0。`port/package.json` 的 test 脚本去掉 `--test-force-exit`（保留 `--test-timeout`）。本机全量 373 个测试（363 过 / 10 跳过 / 0 失败）7 s 正常退出。
+- 验证（39743103095）：三个 OS 的 port job 不带 `--test-force-exit` 全绿（373 个测试，0 失败）；macOS 逐文件探针 61/61 rc=0、无残留句柄，`m16-collector` 6 s 退出。探针步骤随后从 CI 移除（`tools/hang-probe.cjs` 保留，用法见文件头）。
 
 ## 5. UI e2e：经原版渲染器附加 zip / 工作簿 / PDF（额外项）
 `node tools/ui-e2e.mjs … --extra-docs --stop-after attach`：在 4 个媒体附件之后，再把 harness 生成的 `docs.zip`（cover.png + boards/storyboard.pdf + tools/skip.exe）、`plan.xlsx`（两张表）、`brief.pdf` 拖到原版渲染器的 composer 上，然后从 main 的附件存储读结果。判定：zip 解出 2 个子附件（带 `archive.parentName/entryPath`）且 `skip.exe` 以 `unsupported` 跳过；xlsx 经 utilityProcess worker 读出 `2 sheets — "Plan" A1:C3, "Notes" A1:A2`；PDF 在 macOS 上 `read`（PDFKit，1 页、有文字，含 zip 里的那份），在 Linux/Windows 上为原版自己的 `unavailable`；四个 chip 都出现在 composer。
@@ -43,7 +45,7 @@ macos-native 新步骤（`port/test/mac-rosetta.test.ts`，仅在 darwin arm64 +
 | box Linux（dev） | PASS |
 | macOS 打包 .app（CI 39740107828） | PASS（PDF `read`） |
 | Windows win-unpacked（CI 39740107828） | PASS（PDF `unavailable`） |
-证据：`artifacts/phase-b-m23/ui-docs-*`（summary + 截图）。两次全绿后改为阻断。
+第二次（CI 39741744182）macOS / Windows 同样 PASS → 两步改为阻断。证据：`artifacts/phase-b-m23/ui-docs-*`（summary + 截图）。
 
 ## 6. 未验证 / 说明
 - yauzl / SheetJS 与原版同版本，但原版二进制里它们是否被打补丁无法从 bundle 外部确认；逐字生成的是原版自己的调用代码。
