@@ -273,7 +273,46 @@ export const SPECS = [
       slice("main", /^const PNG_SIGNATURE = /, /^}$/, /^class ComposerAttachmentStore \{/),
     ],
     subs: [],
-    exports: ["voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFile", "streamCopyFileTo", "HEIC_RE$1", "convertHeicToJpg", "friendlyCopyError", "fileSha256", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
+    exports: ["PDF_SCHEMA", "hasText", "voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFile", "streamCopyFileTo", "HEIC_RE$1", "convertHeicToJpg", "friendlyCopyError", "fileSha256", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
+  },
+  {
+    // docs/39 M22: the packaged staging Flight profile (L6159-6235) + applicationChannel (L9171, hard-wired "prod" in
+    // the shipped build) + workspaceLeafForChannel (wb L24). main/staging-flight.ts applies it like L60305-60318
+    // (hidden + darwin → app.setActivationPolicy("accessory")).
+    out: "src/main/platform/staging-flight.generated.ts",
+    imports: [
+      'import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync } from "node:fs";',
+      'import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";',
+      'import { readResetMarker } from "../account/local-reset.generated";',
+    ],
+    slices: () => [
+      slice("wb", /^function workspaceLeafForChannel\(channel\) \{/, /^}$/),
+      slice("main", /^function isWithin\$2\(parent, child\) \{/, /^}$/),
+      slice("main", /^function realContainedDirectory\(root, requested, label\) \{/, /^}$/),
+      slice("main", /^function resolveStagingFlightProfile\(channel, env = process\.env\) \{/, /^}$/),
+      slice("main", /^function applicationChannel\(\) \{/, /^}$/),
+    ],
+    subs: [],
+    exports: ["workspaceLeafForChannel", "realContainedDirectory", "resolveStagingFlightProfile", "applicationChannel"],
+  },
+  {
+    // docs/39 M22: readOwnedPdf (L56967) — the ORIGINAL PDFKit reader: JXA script via /usr/bin/osascript on
+    // darwin, {kind:"unread",cause:"unavailable"} everywhere else (L56968-56970). Wired as
+    // host.setPdfReader((path, sha) => readOwnedPdf(path, sha)) exactly like L61127.
+    out: "src/main/attachments/pdf-reader.generated.ts",
+    imports: [
+      'import { spawn } from "node:child_process";',
+      'import { createHash } from "node:crypto";',
+      'import { constants } from "node:fs";',
+      'import { open } from "node:fs/promises";',
+      'import { PDF_MAX_BYTES, PDF_MAX_PAGES, PDF_MAX_TEXT_CHARS } from "./asset-kinds.generated";',
+      'import { hasText, PDF_SCHEMA } from "./composer-attachments.generated";',
+    ],
+    slices: () => [
+      sliceUntil("main", /^const PDFKIT_READER_SCRIPT = `$/, /^const FEEDBACK_LIMITS = \{$/),
+    ],
+    subs: [],
+    exports: ["PDFKIT_READER_SCRIPT", "PDF_READ_TIMEOUT_MS", "MAX_STDOUT_BYTES", "interpretPdfKitOutput", "readOwnedPdf"],
   },
   {
     // docs/24 (B): characters:list (L61860) → host.listCharacters → the ORIGINAL CharacterStore (L11564-11792).
@@ -471,9 +510,11 @@ export const SPECS = [
       slice("main", /^const VOICE_NOTE_MAX_BYTES = /, /^const VOICE_NOTE_MAX_SECONDS = /),
       slice("main", /^const errors = \{$/, /^};$/),
       slice("main", /^function isVoiceNoteAudio\(audio\) \{/, /^}$/, /^async function voiceNoteIntakeFile\(/),
+      // docs/39 M22: the on-device transcription operation (L10599-10703) — ffmpeg → 16 kHz wav → voice-dictation <wav>
+      slice("main", /^class VoiceDictation \{$/, /^}$/),
     ],
     subs: [],
-    exports: ["VOICE_NOTE_MAX_BYTES", "VOICE_NOTE_MAX_SECONDS", "errors as voiceErrors", "isVoiceNoteAudio", "wavSeconds", "voiceNoteIntakeFile"],
+    exports: ["VOICE_NOTE_MAX_BYTES", "VOICE_NOTE_MAX_SECONDS", "errors as voiceErrors", "isVoiceNoteAudio", "wavSeconds", "voiceNoteIntakeFile", "VoiceDictation"],
   },
   {
     // hfPreview:* composition helpers — the shipped compositionEdit chunk (parseComposition / applyTextEdit), whole file.

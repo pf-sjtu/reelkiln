@@ -35,6 +35,7 @@
 //   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
 //   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
 //   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
+import { readOwnedPdf } from "./attachments/pdf-reader.generated";
 import { readQuitState as readQuitStateFrom } from "./quit/read-quit-state";
 import { characterVoiceErrorText } from "./characters/character-voice-store.generated";
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, session as electronSession, shell, systemPreferences, utilityProcess } from "electron";
@@ -608,6 +609,8 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         ...(Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) > 0 ? { turnTimeoutMs: Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) } : {}),
       });
       const h = host;
+      // L61127 verbatim: PDFKit via /usr/bin/osascript on darwin; "unavailable" elsewhere (docs/39 M22)
+      h.setPdfReader((path, sha2562) => readOwnedPdf(path, sha2562));
       if (engineDeps) {
         // loadRegistry hand-off: the host owns (and persists) every sessions.json row from now on
         pendingRows = () => h.registryRows();

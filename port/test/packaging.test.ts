@@ -118,3 +118,9 @@ test("portDiagnostics: app facts + node:sqlite probe + SDK status (no secrets)",
   assert.equal(d.agentSdk.pinned, PINNED_CLAUDE_AGENT_SDK_VERSION);
   assert.ok(!JSON.stringify(d).includes("sk-should-not-appear"));
 });
+
+test("builderConfig (mac): docs/39 M22 bootstrapDir → resources/bootstrap (the original voiceTools root, L9296/L10465)", () => {
+  const c = builderConfig({ platform: "mac", arch: "arm64", sdkDir: null, version: pkg.version, bootstrapDir: "/b/native/darwin-arm64/bootstrap" });
+  assert.ok(c.extraResources.some((r: any) => r.from === "/b/native/darwin-arm64/bootstrap" && r.to === "bootstrap"));
+  assert.ok(!builderConfig({ platform: "mac", arch: "arm64", sdkDir: null, version: pkg.version }).extraResources.some((r: any) => r.to === "bootstrap"));
+});

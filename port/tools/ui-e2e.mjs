@@ -205,6 +205,9 @@ try {
   await shot("01-home");
   const homeText = await bodyText();
   verdict("home", /What are we making today\?/.test(homeText) && /New video/.test(homeText) && !/Welcome to Videoclaw/.test(homeText), { composer: !!(await find("textarea.new-video-composer")) });
+  // docs/39 M22 (information, not a verdict): what the packaged app's OWN media:voiceDictationStatus reports — on macOS
+  // it finds resources/bootstrap/voice-dictation (the helper built from VoiceDictation.swift) and runs `--check`.
+  try { summary.voiceDictationStatus = await cdp.eval("window.videoclaw.voiceDictationStatus()"); say(`voiceDictationStatus ${JSON.stringify(summary.voiceDictationStatus)}`); } catch (e) { summary.voiceDictationStatus = { error: String(e?.message ?? e) }; }
   if (CHECK_QUICKSTART) {
     // docs/24 (C1): sidebar "Quickstarts" → original gallery → quickstart:catalog; "Loading Quickstarts…" must give way to cards
     await click("sidebar Quickstarts", "button.quickstart-entry"); drove("sidebar 'Quickstarts' (button.quickstart-entry)", "click → original quickstart:catalog");

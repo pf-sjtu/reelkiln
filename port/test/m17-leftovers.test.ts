@@ -92,7 +92,7 @@ test("M17 authenticatedWorkPaused gates: send shows the original error card, ret
     assert.equal(h.host.retryTurn(a.sessionId), false, "retryTurn → gateSpendTurn blocked (L42596)");
     const fence = (h.host as any).spendAdmissionFence(s, { jobId: "job-x", quote: { tool: "mint_image", maximumUsd: 1 } }, 0);
     assert.deepEqual(fence, { refusal: { allowed: false, reason: "Sign in again to restart Videoclaw before paid work." } });
-    await assert.rejects(h.host.transcribeVoice(a.sessionId, "0".repeat(36), new Uint8Array(4), { helper: "x", ffmpeg: "y" }, () => true, "bad"), /Open an editable conversation and sign in before transcribing\./);
+    await assert.rejects(async () => h.host.transcribeVoice(a.sessionId, "0".repeat(36), new Uint8Array(4), { helper: "x", ffmpeg: "y" }, () => true, "bad"), /Open an editable conversation and sign in before transcribing\./);
     await assert.rejects((h.host as any).installSpendPolicy(a.sessionId, { kind: "ask_each" }), /Sign in again to restart Videoclaw before changing spending settings\./);
     await assert.rejects((h.host as any).writeGatewaySpendPolicy("job-x", { kind: "ask_each" }), /Budget accounting is unavailable; the draft is safe\./);
     assert.deepEqual(h.host.collectAcceptedOperations(), [], "the operation collector does not start");

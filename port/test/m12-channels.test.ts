@@ -210,16 +210,17 @@ test("credits: a Claude usage-limit failure → accountLimit card → creditHand
   assert.equal(claudeLimitInjection("gateway", { VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_E2E_CLAUDE_LIMIT_TEXT: "x" }), undefined, "never on the credits route");
 });
 
-test("media:transcribeVoice: the original session checks, then VoiceDictation's unavailable branch", async () => {
+test("media:transcribeVoice: the original session checks, then VoiceDictation.execute (L10663) audio / missing-helper branches", async () => {
   quiet();
   const root = mkdtempSync(join(tmpdir(), "vc-voice-"));
   try {
     const host = new AgentHost({ emit: { sessionEvent: () => {}, sessionsChanged: () => {} }, service: { newSessionLlmRoute: () => "minimax", llmRouteReadiness: async () => ({ ready: true }) } as any, loadSdk: async () => { throw new Error("no"); }, sessionsRoot: root });
     const { sessionId } = host.createSession({});
     const ch = remainingChannels(base({ host, voice: { tools: () => ({ helper: "", ffmpeg: "/usr/bin/ffmpeg" }), isAudio: (a: unknown) => a instanceof Uint8Array, invalidAudio: "bad audio" } }));
-    await assert.rejects(Promise.resolve(ch["media:transcribeVoice"](sessionId, "nope", new Uint8Array(4))) as Promise<unknown>, /Invalid recording\./);
-    assert.deepEqual(await ch["media:transcribeVoice"](sessionId, randomUUID(), "x"), { status: "failed", message: "bad audio" });
-    assert.deepEqual(await ch["media:transcribeVoice"](sessionId, randomUUID(), new Uint8Array(4)), { status: "failed", message: "Voice notes are unavailable in this build." });
+    await assert.rejects(async () => ch["media:transcribeVoice"](sessionId, "nope", new Uint8Array(4)), /Invalid recording\./);
+    // docs/39 M22: VoiceDictation.execute is verbatim now — its own isVoiceNoteAudio (EBML magic) + errors.invalid_audio
+    assert.deepEqual(await ch["media:transcribeVoice"](sessionId, randomUUID(), "x"), { status: "failed", message: "This recording could not be read. Record a new short note." });
+    assert.deepEqual(await ch["media:transcribeVoice"](sessionId, randomUUID(), new Uint8Array([26, 69, 223, 163])), { status: "failed", message: "Voice notes are unavailable in this build." });
     await host.dispose();
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

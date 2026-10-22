@@ -9,7 +9,7 @@
 //           via install-agent-sdk.mjs --os/--cpu. Installed on demand, validated against the pin.
 //        3) electron-builder with builderConfig() (tools/packaging-config.mjs).
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, statSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { builderConfig, PLATFORMS, validateSdkStaging } from "./packaging-config.mjs";
@@ -47,7 +47,26 @@ if (!args.includes("--no-sdk")) {
 const outDir = resolve(root, opt("out") ?? "release");
 const originalRendererDir = join(root, "..", "app", "out", "renderer");
 const quickstartsDir = join(root, "..", "app", "resources", "quickstarts");
-const config = builderConfig({ platform, arch, sdkDir, version: opt("version") ?? pkg.version, outDir, originalRendererDir: existsSync(join(originalRendererDir, "index.html")) ? originalRendererDir : null, quickstartsDir: existsSync(join(quickstartsDir, "catalog.json")) ? quickstartsDir : null });
+// docs/39 M22: macOS — build the original VoiceDictation.swift helper (macOS 26 SpeechAnalyzer) into
+// resources/bootstrap/voice-dictation, the original layout (voiceTools L10465 → resolveBootstrapToolRoots L9296).
+// Needs swiftc (Xcode / CLT) on a Mac host; elsewhere (or with --no-voice-helper) the .app ships without it and
+// reports the original's "On-device transcription is unavailable on this Mac" copy.
+let bootstrapDir = null;
+if (p.os === "darwin" && !args.includes("--no-voice-helper")) {
+  if (process.platform !== "darwin") console.error("[package] not on macOS: the voice-dictation helper is NOT built (swiftc needs a Mac)");
+  else {
+    bootstrapDir = join(root, "build", "native", `darwin-${arch}`, "bootstrap");
+    mkdirSync(bootstrapDir, { recursive: true });
+    const swiftSrc = join(root, "..", "app", "native", "VoiceDictation.swift");
+    // deployment target below 26 so the helper itself can answer {"error":"unsupported_os"} on an older Mac (the
+    // Swift source guards with #available(macOS 26, *)); falls back to the SDK default target if that fails
+    const target = `${arch === "arm64" ? "arm64" : "x86_64"}-apple-macos14.0`;
+    const out = join(bootstrapDir, "voice-dictation");
+    try { execFileSync("xcrun", ["swiftc", "-parse-as-library", "-O", "-target", target, swiftSrc, "-o", out], { stdio: "inherit" }); console.error(`[package] built voice-dictation (${target}) → resources/bootstrap/voice-dictation`); }
+    catch { execFileSync("xcrun", ["swiftc", "-parse-as-library", "-O", swiftSrc, "-o", out], { stdio: "inherit" }); console.error("[package] built voice-dictation (SDK default target) → resources/bootstrap/voice-dictation"); }
+  }
+}
+const config = builderConfig({ platform, arch, sdkDir, version: opt("version") ?? pkg.version, outDir, originalRendererDir: existsSync(join(originalRendererDir, "index.html")) ? originalRendererDir : null, quickstartsDir: existsSync(join(quickstartsDir, "catalog.json")) ? quickstartsDir : null, bootstrapDir });
 const targetsArg = opt("targets");
 if (targetsArg) config[platform].target = targetsArg.split(",").map((t) => ({ target: t, arch: [arch] }));
 

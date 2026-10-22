@@ -47,7 +47,7 @@ export function attachmentIntakeHandlers(d: AttachmentIpcDeps) {
       host.assertComposerWritable(sessionId);
       if (typeof recordingId !== "string" || !/^[a-f0-9-]{36}$/.test(recordingId)) throw new Error("Invalid recording.");
       const note = await voiceNoteIntakeFile(d.intakeDir, recordingId, audio);
-      return host.stageVoiceNote(sessionId, recordingId, note, d.onChanged);
+      return host.stageVoiceNote(sessionId, recordingId, note, audio, d.onChanged); // L62270
     },
     // L62269
     pasteImage: (sessionId: string, destination: unknown, png: unknown) => {

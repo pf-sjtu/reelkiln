@@ -2038,4 +2038,4 @@ class ComposerAttachmentStore {
   }
 }
 
-export { voiceNoteClock, sha256Utf8, composerTurnMessageUuid, expandIntakeFolder, streamCopyFile, streamCopyFileTo, HEIC_RE$1, convertHeicToJpg, friendlyCopyError, fileSha256, isClipboardPng, clipboardImageIntakeFile, sweepClipboardImageIntake, attachmentContextLines, ComposerAttachmentStore };
+export { PDF_SCHEMA, hasText, voiceNoteClock, sha256Utf8, composerTurnMessageUuid, expandIntakeFolder, streamCopyFile, streamCopyFileTo, HEIC_RE$1, convertHeicToJpg, friendlyCopyError, fileSha256, isClipboardPng, clipboardImageIntakeFile, sweepClipboardImageIntake, attachmentContextLines, ComposerAttachmentStore };

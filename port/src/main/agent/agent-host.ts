@@ -33,6 +33,9 @@
 // docs/25: session:history replays the display-transcript sidecar + the SDK transcript (resume on respawn).
 // DEFERRED: spend gates, studio MCP,
 //   steer/queued turns, retry, setModel/setPermissionMode, materials ledger, done-accounting.
+import { VoiceDictation } from "../attachments/voice-note.generated";
+import { voiceTools } from "../attachments/voice-tools";
+import { voiceDictationStatus } from "../platform/voice";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -351,6 +354,9 @@ export class AgentHost {
   /** docs/22 M3: original AgentHost.versionStore / watchers (L34848, L47956). */
   readonly versionStore?: any;
   private readonly watchers = new Map<string, any>();
+  /** docs/39 M22: original AgentHost.voiceDictations (L35022) / voiceNoteTranscripts — VoiceDictation (L10599, verbatim). */
+  private voiceDictations = new Map<string, any>();
+  private voiceNoteTranscripts = new Map<string, { sessionId: string; operation: any }>();
   /** docs/22 M4: original AgentHost.attachmentStore (L34841). */
   readonly attachmentStore?: any;
   /** sends between the turn-slot claim and the runtime enqueue (attachment copies, job mint) */
@@ -1022,6 +1028,10 @@ export class AgentHost {
   removeSession(sessionId: string): boolean {
     const s = this.sessions.get(sessionId);
     if (!s) return false;
+    // L39049-39051
+    this.voiceDictations.get(sessionId)?.cancel();
+    this.voiceDictations.delete(sessionId);
+    this.cancelVoiceNoteTranscripts((owner) => owner === sessionId);
     this.teardownRuntime(s, "removed");
     this.retireWatcher(sessionId);
     this.cancelSessionTitle(s);
@@ -1343,6 +1353,10 @@ export class AgentHost {
   stopAuthenticatedWork(): { interrupted: AgentSessionMeta[] } {
     this.authenticatedWorkPaused = true;
     for (const controller of this.operationCollectors.values()) controller.abort();
+    // L43260-43262
+    for (const operation of this.voiceDictations.values()) operation.cancel();
+    this.voiceDictations.clear();
+    this.cancelVoiceNoteTranscripts(() => true);
     const interrupted: AgentSessionMeta[] = [];
     const proxy = this.d.agentGatewayProxy?.();
     for (const s of this.sessions.values()) {
@@ -1369,8 +1383,21 @@ export class AgentHost {
     for (const id of this.preparing) working.add(id);
     return [...working];
   }
-  /** hasActiveVoiceTranscription (L44824): voiceDictations is always empty in the port (no on-device helper). */
-  hasActiveVoiceTranscription(): boolean { return false; }
+  /** hasActiveVoiceTranscription (L44824), verbatim. */
+  hasActiveVoiceTranscription(): boolean {
+    for (const operation of this.voiceDictations.values()) {
+      if (operation.isRunning()) return true;
+    }
+    return false;
+  }
+  /** cancelVoiceNoteTranscripts (L44787), verbatim. */
+  cancelVoiceNoteTranscripts(match: (sessionId: string, attachmentId: string) => boolean): void {
+    for (const [attachmentId, { sessionId, operation }] of this.voiceNoteTranscripts) {
+      if (!match(sessionId, attachmentId)) continue;
+      operation.cancel();
+      this.voiceNoteTranscripts.delete(attachmentId);
+    }
+  }
   /** nameSession (L41776). The original requests a title only for route "claude-code" (+ subscription
    *  login, local runtime, claude-code harness); the port does the same request for PORT-NEW provider
    *  routes instead (session-title.ts) — claude-code proposals are NOT PORTED (no login probe). */
@@ -2179,6 +2206,7 @@ export class AgentHost {
     const version = vs.approve(s.meta.jobId, n);
     if (!version) return;
     (s.meta as any).finalizedAtMs = Date.now();
+    this.voiceDictations.get(sessionId)?.cancel(); // L47500
     this.saveRegistry();
     this.d.emit.sessionsChanged(this.listSessions());
     this.log.info("agent.version.approved", { sessionId, jobId: s.meta.jobId, n });
@@ -2239,7 +2267,12 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   }
   listComposerAttachments(sessionId: string): unknown[] { this.mustGet(sessionId); return this.attachmentStore ? this.attachmentStore.list(sessionId) : []; }
   composerAttachmentOwnership(sessionId: string, attachmentId: string): unknown { this.mustGet(sessionId); return this.requireStore().ownership(sessionId, attachmentId); }
-  removeComposerAttachment(sessionId: string, attachmentId: string): unknown { this.mustGetWritable(sessionId); return this.requireStore().remove(sessionId, attachmentId); }
+  removeComposerAttachment(sessionId: string, attachmentId: string): unknown {
+    this.mustGetWritable(sessionId);
+    const removed = this.requireStore().remove(sessionId, attachmentId);
+    if (removed) this.cancelVoiceNoteTranscripts((_, id2) => id2 === attachmentId); // L44971
+    return removed;
+  }
   retryComposerAttachment(sessionId: string, attachmentId: string, onChanged: (a: unknown) => void): unknown { this.mustGetWritable(sessionId); return this.requireStore().retry(sessionId, attachmentId, onChanged); }
   setComposerAttachmentDestination(sessionId: string, attachmentIds: string[], destination: string): unknown {
     this.mustGetWritable(sessionId);
@@ -2376,6 +2409,8 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   }
   /** setQuickstartResume (L38880). */
   setQuickstartResume(resume: (meta: AgentSessionMeta) => boolean): void { this.quickstartResume = resume; }
+  /** #785 — main supplies the PDF text reader (original AgentHost.setPdfReader L44737). docs/39 M22. */
+  setPdfReader(reader: (path: string, sha256: string) => Promise<unknown>): void { this.attachmentStore?.setPdfReader(reader); }
   /** quickstartStartFailed (L38888). */
   quickstartStartFailed(sessionId: string, message: string): void {
     const s = this.sessions.get(sessionId);
@@ -2679,20 +2714,31 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     const s = this.sessions.get(sessionId);
     if (s) this.send(s, event as any);
   }
-  /** transcribeVoice (L45689) — media:transcribeVoice. The session checks are the original's; VoiceDictation.execute
-   *  (L10599) then needs the bundled macOS `voice-dictation` helper (Apple on-device speech). Linux ships no such
-   *  helper, so the run ends in the original's own "unavailable in this build" result (docs/29 §9). */
-  async transcribeVoice(sessionId: string, recordingId: unknown, audio: unknown, tools: { helper: string; ffmpeg: string }, isAudio: (a: unknown) => boolean, invalidAudio: string): Promise<{ status: string; message: string }> {
-    const s = this.mustGet(sessionId);
-    if (this.authenticatedWorkPaused || s.meta.finalizedAtMs) throw new Error("Open an editable conversation and sign in before transcribing.");
-    if (typeof recordingId !== "string" || !/^[a-f0-9-]{36}$/.test(recordingId)) throw new Error("Invalid recording.");
-    if (!isAudio(audio)) return { status: "failed", message: invalidAudio };
-    if (!tools.helper || !tools.ffmpeg) return { status: "failed", message: "Voice notes are unavailable in this build." };
-    // a helper binary named voice-dictation on Linux would still be the macOS Speech bridge — not ported
-    return { status: "failed", message: "Voice notes are unavailable in this build." };
+  /** transcribeVoice (L45689) — media:transcribeVoice, verbatim; VoiceDictation (L10599) runs ffmpeg → 16 kHz wav →
+   *  the bundled `voice-dictation <wav>` helper (macOS 26 SpeechAnalyzer). docs/39 M22: ported (was a fixed
+   *  "unavailable" reply). `tools` = voiceTools() (the original's constructor default); isAudio/invalidAudio are kept
+   *  for the call site's compatibility — VoiceDictation.execute performs the same checks itself. */
+  transcribeVoice(sessionId: string, recordingId: unknown, audio: unknown, tools?: { helper: string; ffmpeg: string }, _isAudio?: unknown, _invalidAudio?: unknown): Promise<{ status: string; message?: string; text?: string }> {
+    const session2 = this.mustGet(sessionId);
+    if (this.authenticatedWorkPaused || session2.meta.finalizedAtMs) {
+      throw new Error("Open an editable conversation and sign in before transcribing.");
+    }
+    if (typeof recordingId !== "string" || !/^[a-f0-9-]{36}$/.test(recordingId)) {
+      throw new Error("Invalid recording.");
+    }
+    let operation = this.voiceDictations.get(sessionId);
+    if (operation?.recordingId !== recordingId) {
+      operation?.cancel();
+      operation = new VoiceDictation(recordingId, tools ?? voiceTools());
+      this.voiceDictations.set(sessionId, operation);
+    }
+    return operation.run(audio);
   }
-  /** discardVoice (L45705) — media:discardVoice: voiceDictations is empty (no on-device dictation helper). */
-  discardVoice(_sessionId: string, _recordingId: string): void {}
+  /** discardVoice (L45705), verbatim. */
+  discardVoice(sessionId: string, recordingId: string): void {
+    const operation = this.voiceDictations.get(sessionId);
+    if (operation?.recordingId === recordingId) operation.cancel();
+  }
   /** assertComposerWritable (L44801). */
   assertComposerWritable(sessionId: string): void { this.mustGetWritable(sessionId); }
   /** stageComposerAttachments with a captured moment (L44747). */
@@ -2700,11 +2746,29 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
     this.mustGetWritable(String(request?.sessionId));
     return this.requireStore().stage(request, onChanged, moment);
   }
-  /** stageVoiceNote (L44753): an ordinary audio chip. The on-device transcript (voiceDictationStatus) is
-   *  unavailable off macOS, so no background transcription starts — the original's `available:false` path. */
-  stageVoiceNote(sessionId: string, _recordingId: string, note: { file: unknown; seconds: number }, onChanged: (a: unknown) => void): unknown[] {
+  /** stageVoiceNote (L44753), verbatim: an ordinary audio chip; where Apple's on-device speech is available
+   *  (voiceDictationStatus) its transcript is added in the background (docs/39 M22). */
+  stageVoiceNote(sessionId: string, recordingId: string, note: { file: unknown; seconds: number }, audio: unknown, onChanged: (a: unknown) => void, tools: () => { helper: string; ffmpeg: string } = voiceTools): unknown[] {
     this.mustGetWritable(sessionId);
-    return this.requireStore().stage({ sessionId, destination: "video", files: [note.file] }, onChanged, undefined, { seconds: note.seconds });
+    const staged: any[] = this.requireStore().stage({ sessionId, destination: "video", files: [note.file] }, onChanged, undefined, { seconds: note.seconds });
+    const attachmentId = staged[0]?.id;
+    if (attachmentId && !this.authenticatedWorkPaused && !this.voiceNoteTranscripts.has(attachmentId)) {
+      const t = tools();
+      const operation = new VoiceDictation(recordingId, t);
+      this.voiceNoteTranscripts.set(attachmentId, { sessionId, operation });
+      void voiceDictationStatus(t)
+        .then((status) => (status.available ? operation.run(audio) : undefined))
+        .then((result: any) => {
+          if (result?.status === "complete" && this.voiceNoteTranscripts.get(attachmentId)?.operation === operation) {
+            this.attachmentStore.setVoiceNoteTranscript(sessionId, attachmentId, result.text);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (this.voiceNoteTranscripts.get(attachmentId)?.operation === operation) this.voiceNoteTranscripts.delete(attachmentId);
+        });
+    }
+    return staged;
   }
   /** composerMomentPreview (L44956). */
   composerMomentPreview(sessionId: string, attachmentId: string, thumbnail?: (b: Buffer) => Buffer): unknown { this.mustGet(sessionId); return this.requireStore().momentPreview(sessionId, attachmentId, thumbnail); }
@@ -3761,7 +3825,14 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   /** runningVideoCount (local reset prepare). */
   runningVideoCount(): number { let n = 0; for (const s of this.sessions.values()) if (s.meta.status === "running" || s.meta.status === "awaiting_permission") n++; return n; }
   /** closeAll (L43010) slice: tear every runtime down (local reset commit). */
-  closeAll(): number[] { for (const s of this.sessions.values()) this.teardownRuntime(s, "local-reset"); return []; }
+  closeAll(): number[] {
+    // L45553-45555
+    for (const operation of this.voiceDictations.values()) operation.cancel();
+    this.voiceDictations.clear();
+    this.cancelVoiceNoteTranscripts(() => true);
+    for (const s of this.sessions.values()) this.teardownRuntime(s, "local-reset");
+    return [];
+  }
   /** host session meta by id (HyperFrames preview / editor render liveSession L62403). */
   /** docs/29: the session view ProjectMemoryHost reads (the original reads this.sessions directly). */
   memorySessionView(sessionId: string): { meta: any; lastAssistantMessageId?: string } | undefined {

@@ -16,6 +16,8 @@ import { homeSmokeScript, reloadSmokeScript, s1SmokeScript } from "./original-ui
 import { resolveRendererEntry } from "./renderer-entry";
 import { redactText } from "./llm/logger";
 import { wireWindowState } from "./window-state";
+import { applicationChannel, resolveStagingFlightProfile } from "./platform/staging-flight.generated";
+import { applyStagingFlightStartup, flightWindowFlags, type StagingFlightProfile } from "./staging-flight";
 // PORT-NEW smoke helper: surface renderer-side exceptions instead of an opaque "Script failed to execute"
 const catchingScript = (script: string) => `(async () => { try { return await ${script}; } catch (e) { return { ok: false, error: String((e && e.stack) || e), events: [] }; } })()`;
 
@@ -36,6 +38,11 @@ async function logInvoke(ch: string, real: boolean, args: unknown[], run: (a: un
   const row = (o: Record<string, unknown>) => { try { appendFileSync(IPC_LOG!, JSON.stringify({ t: new Date().toISOString(), ch, real, ms: Date.now() - t0, args: shapeOf(args), ...o }) + "\n"); } catch {} };
   try { const r = await run(args); row({ ok: true, result: shapeOf(r) }); return r; } catch (e) { row({ ok: false, error: redactText(String((e as Error)?.message ?? e)).slice(0, 300) }); throw e; }
 }
+
+// docs/39 M22: L60298 CHANNEL + L60305-60318 staging Flight profile (hidden + darwin → setActivationPolicy("accessory")).
+const CHANNEL = applicationChannel();
+const stagingFlightProfile = resolveStagingFlightProfile(CHANNEL) as StagingFlightProfile | undefined;
+applyStagingFlightStartup(app as any, stagingFlightProfile);
 
 // docs/22 M3: original L60356 — vcmedia:// is a privileged, streamable, CSP-bypassing scheme
 protocol.registerSchemesAsPrivileged([VCMEDIA_SCHEME as any]);
@@ -73,15 +80,20 @@ function createWindow() {
   const entry = resolveRendererEntry({ env: process.env, packaged: app.isPackaged, appPath: app.getAppPath(), resourcesPath: process.resourcesPath ?? "", mainDir: __dirname, exists: existsSync });
   log(`[port] renderer: ${entry.kind} ${entry.url}${entry.note ? ` (${entry.note})` : ""}`);
   const rendererEntry = entry.url;
+  const flight = flightWindowFlags(stagingFlightProfile);
   const created = new BrowserWindow({
+    show: flight.show, // L60542
     width: 1280,
     height: 840,
     minWidth: 900,
     minHeight: 600,
     title: "Videoclaw",
-    // original: titleBarStyle "hiddenInset" + trafficLightPosition (macOS-only, ignored on win32)
+    // L60547-60548 titleBarStyle "hiddenInset" + trafficLightPosition (docs/39 M22). The original only shipped on
+    // macOS; on Windows/Linux "hiddenInset" would remove the native frame, so it is applied on darwin only.
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 16, y: 16 } } : {}),
     backgroundColor: "#faf6ec",
     webPreferences: {
+      backgroundThrottling: flight.backgroundThrottling, // L60552
       // original preload is ESM (index.mjs) with sandbox:false; port ships CJS (index.cjs)
       // which works under both sandbox settings. Isolation flags identical to the original.
       preload: join(__dirname, "../preload/index.cjs"),

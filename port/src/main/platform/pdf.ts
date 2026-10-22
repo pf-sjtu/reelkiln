@@ -1,3 +1,4 @@
+// docs/39 M22: the live reader is attachments/pdf-reader.generated.ts (readOwnedPdf, verbatim), wired in real-backend.ts.
 // PDF text extraction. Original (main/index.js L56966-57000): JXA PDFKit script via
 // `/usr/bin/osascript -l JavaScript`; on non-darwin the ORIGINAL itself returns
 // { kind: "unread", cause: "unavailable" } (L56968-56970). The port keeps that exact

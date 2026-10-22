@@ -5,5 +5,5 @@ export const SDK_RESOURCE_DIR: string;
 export const ORIGINAL_RENDERER_RESOURCE_DIR: string;
 export function nativeSdkPackage(os: string, arch: string): string;
 export function sdkResourceFilter(os: string, arch: string): string[];
-export function builderConfig(o: { platform: "linux" | "win" | "mac"; arch: "x64" | "arm64"; sdkDir?: string | null; version: string; outDir?: string; originalRendererDir?: string | null; quickstartsDir?: string | null }): Record<string, any>;
+export function builderConfig(o: { platform: "linux" | "win" | "mac"; arch: "x64" | "arm64"; sdkDir?: string | null; version: string; outDir?: string; originalRendererDir?: string | null; quickstartsDir?: string | null; bootstrapDir?: string | null }): Record<string, any>;
 export function validateSdkStaging(sdkDir: string, o: { os: string; arch: string; pinned: string; exists: (p: string) => boolean; readJson: (p: string) => any }): string[];

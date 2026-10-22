@@ -59,6 +59,9 @@ export function builderConfig(o) {
     // docs/24: the shipped bundled Quickstart catalog (app/resources/quickstarts) → resources/quickstarts,
     // the original QuickstartCatalogStore candidate root join(process.resourcesPath, "quickstarts") (L61021)
     ...(o.quickstartsDir ? [{ from: o.quickstartsDir, to: "quickstarts" }] : []),
+    // docs/39 M22: the original's bootstrap tool root join(process.resourcesPath, "bootstrap") (L9296) — on macOS it
+    // carries the `voice-dictation` helper built from app/native/VoiceDictation.swift (voiceTools L10465)
+    ...(o.bootstrapDir ? [{ from: o.bootstrapDir, to: "bootstrap" }] : []),
   ];
   return {
     appId: "com.videoclaw.port",

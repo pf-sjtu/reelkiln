@@ -9,7 +9,7 @@ import { execFile } from "node:child_process";
 
 /** Verbatim error table (const errors, L10452-10464). */
 export const VOICE_ERRORS: Record<string, string> = {
-  os_version:
+  unsupported_os:
     "Transcription needs macOS 26 or later. You can still use your Mac’s Dictation shortcut in the message box.",
   unsupported_language:
     "Your Mac’s current language is not supported for transcription. You can still type your message.",

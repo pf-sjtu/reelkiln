@@ -3,6 +3,7 @@
 //   app/reconstructed/main/index.js L282-283
 //   app/reconstructed/main/index.js L10452-10464
 //   app/reconstructed/main/index.js L10504-10598
+//   app/reconstructed/main/index.js L10599-10705
 // Substitutions (platform-layer routing only):
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -122,5 +123,112 @@ async function voiceNoteIntakeFile(intakeDir, recordingId, audio, ffmpeg = voice
     if (directory) await rm(directory, { recursive: true, force: true });
   }
 }
+class VoiceDictation {
+  constructor(recordingId, tools = voiceTools()) {
+    this.recordingId = recordingId;
+    this.tools = tools;
+  }
+  child;
+  cancelled = false;
+  pending;
+  completed;
+  /** #592 — a transcription is executing right now (quit would abandon it). */
+  isRunning() {
+    return this.pending !== void 0;
+  }
+  cancel() {
+    this.cancelled = true;
+    this.completed = void 0;
+    this.child?.kill("SIGKILL");
+  }
+  run(audio) {
+    if (this.cancelled)
+      return Promise.resolve({ status: "cancelled", message: "Recording discarded." });
+    if (this.pending) return this.pending;
+    if (this.completed) return Promise.resolve(this.completed);
+    this.pending = this.execute(audio)
+      .then((result) => {
+        if (this.cancelled) return { status: "cancelled", message: "Recording discarded." };
+        if (result.status === "complete") this.completed = result;
+        return result;
+      })
+      .finally(() => {
+        this.pending = void 0;
+      });
+    return this.pending;
+  }
+  exec(command, args, timeout) {
+    if (this.cancelled) return Promise.reject(new Error("Cancelled"));
+    return new Promise((resolve2, reject) => {
+      this.child = execFile(
+        command,
+        args,
+        { timeout, killSignal: "SIGKILL", maxBuffer: 65536, encoding: "utf8" },
+        (error, stdout) => {
+          this.child = void 0;
+          if (error) reject(new Error("Local transcription unavailable"));
+          else resolve2(stdout);
+        },
+      );
+    });
+  }
+  async execute(audio) {
+    let directory;
+    try {
+      if (!isVoiceNoteAudio(audio)) return { status: "failed", message: errors.invalid_audio };
+      if (!this.tools.helper || !this.tools.ffmpeg)
+        return { status: "failed", message: "Voice notes are unavailable in this build." };
+      directory = await mkdtemp(join(tmpdir(), "videoclaw-voice-"));
+      const input = join(directory, "note.webm");
+      const wav = join(directory, "note.wav");
+      await writeFile(input, audio, { mode: 384 });
+      await this.exec(
+        this.tools.ffmpeg,
+        [
+          "-nostdin",
+          "-v",
+          "error",
+          "-protocol_whitelist",
+          "file",
+          "-f",
+          "matroska",
+          "-i",
+          input,
+          "-t",
+          String(VOICE_NOTE_MAX_SECONDS),
+          "-vn",
+          "-ac",
+          "1",
+          "-ar",
+          "16000",
+          "-c:a",
+          "pcm_s16le",
+          wav,
+        ],
+        3e4,
+      );
+      const reply = JSON.parse(await this.exec(this.tools.helper, [wav], 3e5));
+      if (this.cancelled) return { status: "cancelled", message: "Recording discarded." };
+      if (typeof reply.text === "string" && reply.text.trim() && reply.text.length <= 2e4) {
+        return { status: "complete", text: reply.text.trim() };
+      }
+      return {
+        status: "failed",
+        message:
+          errors[reply.error] ??
+          "Transcription did not finish. Your note is kept; try again or discard it.",
+      };
+    } catch {
+      return this.cancelled
+        ? { status: "cancelled", message: "Recording discarded." }
+        : {
+            status: "failed",
+            message: "Transcription did not finish. Your note is kept; try again or discard it.",
+          };
+    } finally {
+      if (directory) await rm(directory, { recursive: true, force: true });
+    }
+  }
+}
 
-export { VOICE_NOTE_MAX_BYTES, VOICE_NOTE_MAX_SECONDS, errors as voiceErrors, isVoiceNoteAudio, wavSeconds, voiceNoteIntakeFile };
+export { VOICE_NOTE_MAX_BYTES, VOICE_NOTE_MAX_SECONDS, errors as voiceErrors, isVoiceNoteAudio, wavSeconds, voiceNoteIntakeFile, VoiceDictation };
