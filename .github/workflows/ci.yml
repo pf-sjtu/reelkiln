@@ -203,6 +203,68 @@ jobs:
             port/release/*.exe
           if-no-files-found: warn
 
+  windows-s1-ui:
+    # docs/36 M19: acceptance S1 through the ORIGINAL renderer on a real Windows runner, driven over CDP with real
+    # input (tools/ui-e2e.mjs --exe): import (drag-and-drop) → agent edit → play via vcmedia:// (W11) → Approve →
+    # Download/export → ffprobe + sha (final == v1 == export). The agent is real (packaged Claude Code SDK → Bash/Write
+    # → real engine); the MODEL is FAKE-LLM (tools/s1-fake-upstream.mjs, a scripted replay). No key exists in CI.
+    # Non-blocking until it has been green twice (docs/36).
+    name: "Windows S1 UI e2e (original renderer over CDP, FAKE-LLM)"
+    runs-on: windows-latest
+    timeout-minutes: 60
+    continue-on-error: true
+    env:
+      PYTHONUTF8: "1"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v6
+      - name: ffmpeg
+        run: command -v ffmpeg || choco install ffmpeg -y --no-progress
+      - name: build + package win-unpacked
+        working-directory: port
+        run: npm ci && npm run build && node tools/package.mjs --platform win --arch x64 --targets dir
+      - name: install the engine (tools/windows_runbook.sh S3–S9)
+        env:
+          OUT: ${{ runner.temp }}\windows-run
+        run: |
+          export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
+          bash tools/windows_runbook.sh "$RUNNER_TEMP/vc"
+      - name: S1 UI e2e (FAKE-LLM upstream)
+        working-directory: port
+        env:
+          OUT: ${{ runner.temp }}\windows-run
+        run: |
+          export PATH="/c/ProgramData/chocolatey/lib/ffmpeg/tools/ffmpeg/bin:$PATH"
+          ENGW="$(cygpath -w "$(cat "$(cygpath -u "$OUT")/engine-path.txt")")"
+          mkdir -p "$RUNNER_TEMP/s1-evidence"
+          FAKE_REQ_LOG="$RUNNER_TEMP/s1-evidence/fake-upstream-requests.jsonl" node tools/s1-fake-upstream.mjs 47999 > "$RUNNER_TEMP/s1-evidence/fake-upstream.out" 2>&1 &
+          sleep 2
+          MINIMAX_API_KEY=fake-s1-ci-key-not-real MINIMAX_BASE_URL=http://127.0.0.1:47999/anthropic \
+            node tools/ui-e2e.mjs --run "$(cygpath -w "$RUNNER_TEMP/s1run")" --engine "$ENGW" --exe "$(cygpath -w "$PWD/release/win-unpacked/videoclaw-port.exe")" --port 9371 --turn-timeout-ms 1500000 --taste-wait-ms 60000
+      - name: collect evidence (no media)
+        if: always()
+        run: |
+          E="$RUNNER_TEMP/s1-evidence"; mkdir -p "$E"
+          cp -r "$RUNNER_TEMP/s1run/out/." "$E/" 2>/dev/null || true
+          find "$E" \( -name '*.mp4' -o -name '*.mp3' -o -name '*.jpg' -o -name '*.sqlite' \) -delete || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-s1-ui
+          path: ${{ runner.temp }}/s1-evidence
+          if-no-files-found: warn
+
   macos-package:
     # docs/34 M17: the cheap macOS leg — unsigned dmg (identity: null) + packaged-smoke is Linux/Windows only,
     # so this records the build and the bundle layout only.

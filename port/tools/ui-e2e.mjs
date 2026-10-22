@@ -8,6 +8,8 @@
 // versions.json, events JSONL, job dir, export).
 //
 //   node tools/ui-e2e.mjs --run RUN_DIR --engine-home SRC_HOME [--appimage PATH] [--port 9333]
+//   docs/36 M19 Windows: node tools/ui-e2e.mjs --run RUN_DIR --engine ENGINE --exe <win-unpacked or installed>\videoclaw-port.exe
+//   (no Xvfb / dbus / gnome-keyring: the packaged CredentialStore uses Windows DPAPI; HOME and USERPROFILE → RUN)
 //
 // RUN_DIR must not exist; it becomes HOME (userData = RUN/.config/videoclaw-port). SRC_HOME has an
 // installed engine (engine-current.json reused, like tools/accept_s1_app.sh). Needs MINIMAX_API_KEY in env
@@ -29,6 +31,8 @@ const RUN = resolve(opt("--run") ?? "");
 const SRC = opt("--engine-home") ? resolve(opt("--engine-home")) : null;
 const ENGINE = opt("--engine") ? resolve(opt("--engine")) : null; // docs/33: point at an installed (read-only) engine dir instead of copying an engine home
 const APPIMAGE = opt("--appimage");
+const EXE = opt("--exe"); // docs/36: a packaged Windows (or any directly runnable) app executable
+const WIN = process.platform === "win32";
 const CDP_PORT = Number(opt("--port", "9351"));
 const PROJECT = opt("--project", "S1 UI e2e");
 const TURN_TIMEOUT_MS = Number(opt("--turn-timeout-ms", String(26 * 60_000)));
@@ -70,14 +74,15 @@ const readJson = (p) => { try { return JSON.parse(readFileSync(p, "utf8")); } ca
 const steps = {}; const verdict = (id, ok, detail) => { steps[id] = { ok, ...detail }; say(`STEP ${id}: ${ok ? "PASS" : "FAIL"} ${JSON.stringify(detail).slice(0, 400)}`); };
 
 // ---- launch ----------------------------------------------------------------------------------
-const env = { ...process.env, HOME: RUN, UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python", ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
+const env = { ...process.env, HOME: RUN, ...(WIN ? { USERPROFILE: RUN } : { UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? "/home/box/.local/share/uv/python" }), ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
   VIDEOCLAW_PORT_SMOKE_SAVE_AS: EXPORT, VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl"),
   VIDEOCLAW_PORT_TURN_TIMEOUT_MS: String(TURN_TIMEOUT_MS - 60_000) };
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;
 const appArgs = ["--no-sandbox", `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${UD}`];
 let cmd, args;
 let keyringPids = [];
-if (APPIMAGE) {
+if (EXE) { cmd = resolve(EXE); args = appArgs; }
+else if (APPIMAGE) {
   env.APPIMAGE_EXTRACT_AND_RUN = "1";
   // docs/33 harness input: a packaged build stores credentials only through the OS keychain (CredentialStore) —
   // give it a private session bus + an unlocked gnome-keyring Secret Service, and tell Chromium to use it.
@@ -89,9 +94,9 @@ if (APPIMAGE) {
 }
 else { cmd = "xvfb-run"; args = ["-a", "-s", "-screen 0 1440x960x24", join(PORT_DIR, "node_modules", ".bin", "electron"), ...appArgs, PORT_DIR]; }
 if (await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`).then(() => true, () => false)) { console.error(`port ${CDP_PORT} already in use — pick another --port`); process.exit(2); }
-say(`launch ${APPIMAGE ? "AppImage " + APPIMAGE : "dev electron"} (UI_E2E mode, CDP :${CDP_PORT})`);
+say(`launch ${EXE ? "exe " + EXE : APPIMAGE ? "AppImage " + APPIMAGE : "dev electron"} (UI_E2E mode, CDP :${CDP_PORT})`);
 const mainLog = join(OUT, "main.log");
-const child = spawn(cmd, args, { cwd: PORT_DIR, env, stdio: ["ignore", "pipe", "pipe"], detached: true });
+const child = spawn(cmd, args, { cwd: PORT_DIR, env, stdio: ["ignore", "pipe", "pipe"], detached: !WIN, windowsHide: true });
 child.stdout.on("data", (b) => appendFileSync(mainLog, b)); child.stderr.on("data", (b) => appendFileSync(mainLog, b));
 let exited = false; child.on("exit", (c) => { exited = true; say(`app exited ${c}`); });
 
@@ -181,7 +186,7 @@ async function settleVerdict(card, ms = 180_000) { // wait for the tool_end + th
   card.verdict = answerVerdict(card); say(`answer verdict ${JSON.stringify(card.verdict).slice(0, 700)}`); return card.verdict;
 }
 
-const summary = { started: new Date().toISOString(), mode: APPIMAGE ? "AppImage" : "dev", steps, driven: [], notDriven: [], fallbacksToIpc: [], questionCards: [] };
+const summary = { started: new Date().toISOString(), mode: EXE ? `exe (${process.platform})` : APPIMAGE ? "AppImage" : "dev", steps, driven: [], notDriven: [], fallbacksToIpc: [], questionCards: [] };
 const drove = (el, how) => summary.driven.push({ element: el, how });
 let sid = null, jobId = null;
 try {
@@ -362,6 +367,7 @@ try {
   // follow-up) is still running, the original native "Videoclaw is still working" dialog blocks Browser.close.
   cdp.close();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
+  if (!exited && WIN) { say("teardown: app still running after Browser.close → taskkill /T /F"); spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"]); for (let i = 0; i < 20 && !exited; i++) await sleep(250); }
   if (!exited) { say("teardown: app still running after Browser.close (QuitCoordinator dialog?) → SIGTERM, then SIGKILL"); try { process.kill(-child.pid, "SIGTERM"); } catch {} for (let i = 0; i < 20 && !exited; i++) await sleep(250); }
   if (!exited) { try { process.kill(-child.pid, "SIGKILL"); } catch {} }
   for (const pid of keyringPids) { try { process.kill(pid, "SIGTERM"); } catch {} }
