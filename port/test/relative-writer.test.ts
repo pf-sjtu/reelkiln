@@ -31,15 +31,17 @@ test("identity change → 73 / original message; stream error → 76 rethrows th
   assert.deepEqual(readdirSync(d), []);
 });
 
-test("differential: original RELATIVE_WRITER shell script vs Node port (linux branch, same exit codes)", { skip: process.platform !== "linux" && "the original script's linux branch needs GNU coreutils" }, async (t) => {
+// docs/38 M21: on macOS the ORIGINAL's darwin branch runs (BSD stat -f, publish via osascript renamex_np RENAME_EXCL)
+const SH_PLAT = process.platform === "darwin" ? "darwin" : "linux";
+test("differential: original RELATIVE_WRITER shell script vs Node port (linux branch / darwin branch, same exit codes)", { skip: process.platform !== "linux" && process.platform !== "darwin" && "the original script has only linux and darwin branches" }, async (t) => {
   const script = slice(lineOf(/^const RELATIVE_WRITER = String\.raw`/) + 1, lineOf(/^const RELATIVE_WRITER = String\.raw`/) + 54).replace(/`;$/, "");
   const runSh = (dir: string, ident: string, name: string, data: string) => new Promise<number>((resolve) => {
-    const c = spawn("/bin/sh", ["-c", script, "videoclaw-relative-writer", ident, name, "linux", `.videoclaw-write-${Math.random()}`, "0"], { cwd: dir, env: { LANG: "C", PATH: "/usr/bin:/bin" }, stdio: ["pipe", "ignore", "pipe", "pipe"] });
+    const c = spawn("/bin/sh", ["-c", script, "videoclaw-relative-writer", ident, name, SH_PLAT, `.videoclaw-write-${Math.random()}`, "0"], { cwd: dir, env: { LANG: "C", PATH: "/usr/bin:/bin" }, stdio: ["pipe", "ignore", "pipe", "pipe"] });
     c.on("exit", (code) => resolve(code ?? -1));
     (c.stdio[3] as any).on("error", () => {});
     c.stdin!.end(data, () => (c.stdio[3] as any).end("publish\n"));
   });
-  try { statSync("/usr/bin/stat"); statSync("/bin/dd"); statSync("/bin/ln"); } catch { t.skip("coreutils not at original paths"); return; }
+  try { statSync("/usr/bin/stat"); statSync("/bin/dd"); statSync(SH_PLAT === "darwin" ? "/usr/bin/osascript" : "/bin/ln"); } catch { t.skip("tools not at original paths"); return; }
   const a = mkdtempSync(join(tmpdir(), "vc-sh-"));
   const b = mkdtempSync(join(tmpdir(), "vc-nd-"));
   const node = async (name: string, data: string, ident = dirIdentity(b)) => (await relativeWrite({ dir: b, expectedIdentity: ident, name, stagingName: `.s-${Math.random()}`, input: chunks(data) })).code;

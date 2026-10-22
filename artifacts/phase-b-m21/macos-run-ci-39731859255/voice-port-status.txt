@@ -1,0 +1,17 @@
+TAP version 13
+# \# voice helper status: {"available":false,"attach":true,"message":"On-device transcription is unavailable on this Mac. You can still type your message."}
+# Subtest: mac voice helper: --check through voiceDictationStatus → available, or one of the original's error messages
+ok 1 - mac voice helper: --check through voiceDictationStatus → available, or one of the original's error messages
+  ---
+  duration_ms: 26.916625
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 98.269583
