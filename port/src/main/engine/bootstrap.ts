@@ -18,7 +18,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { chmodSync, copyFileSync, createReadStream, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { promisify } from "node:util";
 import { EngineMoneyCompatibilityError } from "./money-compat.generated";
-import { composeEnginePath, exeName, isWin, npmInvocation, pathEnvKey, pathMod, tarInvocation, type Invocation, type Plat } from "../platform";
+import { composeEnginePath, exeName, nativePythonArgs, isWin, npmInvocation, pathEnvKey, pathMod, tarInvocation, type Invocation, type Plat } from "../platform";
 
 export const UV_PYTHON_POLICY_ENV = { UV_PYTHON_PREFERENCE: "only-managed" } as const; // L7145
 export const MIN_PLAN_FREE_ENGINE_APP_VERSION = "0.0.11"; // L9464
@@ -616,7 +616,7 @@ export function notPortedHooks(partial: Partial<BootstrapHooks> = {}): Bootstrap
     writeWorkspace: np("writeWorkspace L9650"),
     assertEngineMoneyCompatibility: async () => np("assertEngineMoneyCompatibility")(),
     revalidateStudioBundle: async () => {},
-    nativePythonArgs: async () => [], // faithful on non-darwin-arm64 (L7172 early return)
+    nativePythonArgs: (uv, o) => nativePythonArgs(uv, o), // L7172 verbatim (platform/python.ts); [] off darwin-arm64
     ensureEngineCommandShims: np("ensureEngineCommandShims"),
     ...partial,
   };
