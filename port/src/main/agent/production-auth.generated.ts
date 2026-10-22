@@ -13,6 +13,7 @@
 //   app/reconstructed/main/index.js L15698-15752
 // Substitutions (platform-layer routing only):
 //   1× const python = join(engine, ".venv", "bin", "python");  →  const python = venvPython(engine);
+//   1× const line = stdout.endsWith("\n") ? stdout.slice(0, -1) : stdout;  →  const line = process.platform === "win32" && stdout.endsWith("\r\n") ? stdout.slice(0, -2) : stdout.endsWith("\n") ? stdout.slice(0, -1) : stdout;
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -146,7 +147,7 @@ function parseProductionVerdictResult(stdout, stderr, exitCode) {
   if (stderr !== "") {
     return { valid: false, reason: "Production verdict wrote unexpected stderr." };
   }
-  const line = stdout.endsWith("\n") ? stdout.slice(0, -1) : stdout;
+  const line = process.platform === "win32" && stdout.endsWith("\r\n") ? stdout.slice(0, -2) : stdout.endsWith("\n") ? stdout.slice(0, -1) : stdout;
   if (!line || line.includes("\n") || line.includes("\r")) {
     return {
       valid: false,

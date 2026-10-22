@@ -177,6 +177,10 @@ export const SPECS = [
     ],
     subs: [
       ['const python = join(engine, ".venv", "bin", "python");', "const python = venvPython(engine);", 1],
+      // PORT-WIN docs/36 (M19 Windows S1 finding): Windows Python text-mode stdout ends the verdict line with "\r\n";
+      // the original only strips "\n", so every agent Bash call was refused ("exactly one JSON line"). Strip exactly
+      // one trailing CRLF on win32 only; an embedded \r or a second line is still rejected.
+      ['const line = stdout.endsWith("\\n") ? stdout.slice(0, -1) : stdout;', 'const line = process.platform === "win32" && stdout.endsWith("\\r\\n") ? stdout.slice(0, -2) : stdout.endsWith("\\n") ? stdout.slice(0, -1) : stdout;', 1],
     ],
     exports: ["PRODUCTION_VERDICT_SCHEMA", "PRODUCTION_ANALYZER", "parseProductionVerdictResult", "checkProductionVerdict", "BOUND_JOB_ENV", "PROTECTED_TOOLS", "READ_ONLY_MODES", "productionVerdictNeedsInputBinding", "argValue", "blockedGatewayToolForVerdict", "authorizeProductionCommand", "AUTOMATIC_ENGINE_STEP_REFUSAL", "appOwnedVideoCommandRefusal", "FINAL_RENDER_TIMEOUT_MS", "verdictRunsFinalRender", "verdictRunsVerifiedEngineTool", "withFinalRenderWindow"],
   },
