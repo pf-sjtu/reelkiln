@@ -35,6 +35,7 @@
 //   docs/24: characters:list (L61860) → the verbatim CharacterStore + exposeCharacters (L60415);
 //   quickstart:catalog (L61215, + push quickstart:catalogChanged) → the verbatim QuickstartCatalogStore
 //   over the shipped bundled catalog (quickstart/quickstart-ipc.ts); session:history (agent-ipc.ts).
+import { readWorkbookInWorker } from "./attachments/workbook-reader.generated";
 import { readOwnedPdf } from "./attachments/pdf-reader.generated";
 import { readQuitState as readQuitStateFrom } from "./quit/read-quit-state";
 import { characterVoiceErrorText } from "./characters/character-voice-store.generated";
@@ -162,8 +163,8 @@ function forkEditorRenderWorker(): RenderWorker { // original L60654-60670
 }
 
 /** forkHfPreviewWorker / forkHfPolicyWorker (original L60687 / L60716). */
-function forkUtility(file: string, serviceName: string): RenderWorker {
-  const child = utilityProcess.fork(join(__dirname, file), [], { serviceName });
+function forkUtility(file: string, serviceName: string, execArgv?: string[]): RenderWorker {
+  const child = utilityProcess.fork(join(__dirname, file), [], { serviceName, ...(execArgv ? { execArgv } : {}) });
   return {
     postMessage: (m) => child.postMessage(m),
     onMessage: (cb) => { child.on("message", (m: any) => cb(m)); },
@@ -610,6 +611,10 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
       });
       const h = host;
       // L61127 verbatim: PDFKit via /usr/bin/osascript on darwin; "unavailable" elsewhere (docs/39 M22)
+      // L61124-61126 verbatim: forkWorkbookWorker (L60704) = utilityProcess workbookWorker, --max-old-space-size=512
+      h.setWorkbookReader((path, name, sha2562) =>
+        readWorkbookInWorker(() => forkUtility("workbookWorker.cjs", "videoclaw-workbook", ["--max-old-space-size=512"]), { path, name, sha256: sha2562 }),
+      );
       h.setPdfReader((path, sha2562) => readOwnedPdf(path, sha2562));
       if (engineDeps) {
         // loadRegistry hand-off: the host owns (and persists) every sessions.json row from now on

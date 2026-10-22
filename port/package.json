@@ -26,9 +26,10 @@
     "electron-updater": "6.8.9",
     "esbuild": "^0.28.2",
     "typescript": "~5.9.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "yauzl": "3.4.0",
     "zod": "^4.6.7"
   },
-  "dependencies": {},
   "config": {
     "claudeAgentSdkVersion": "0.3.305"
   },

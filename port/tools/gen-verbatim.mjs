@@ -17,6 +17,7 @@ const SRC = {
   ce: "app/out/main/chunks/compositionEdit-Dc8_ecez.js",
   hfw: "app/out/main/hyperframesPreviewWorker.js",
   hfp: "app/out/main/hyperframesPolicyWorker.js",
+  wbw: "app/out/main/workbookWorker.js",
 };
 const lines = Object.fromEntries(Object.entries(SRC).map(([k, f]) => [k, readFileSync(join(repo, f), "utf8").split(/\r?\n/)]));
 
@@ -247,7 +248,10 @@ export const SPECS = [
       slice("wb", /^const WORKBOOK_SCHEMA = /, /^}$/, /^function workbookSummary\(/),
     ],
     subs: [],
-    exports: ["assetExt", "assetKind", "isWorkbookName", "isPdfName", "isAcceptedAsset", "assetRejectReason", "INTAKE_FOLDER_MAX_DEPTH", "INTAKE_FOLDER_MAX_FILES", "INTAKE_FOLDER_MAX_BYTES", "INTAKE_FOLDER_MAX_VISITS", "folderRejectReason", "archiveRejectReason", "ARCHIVE_MAX_WORKBOOKS", "ARCHIVE_MAX_PDFS", "WORKBOOK_MAX_OUTPUT_BYTES", "PDF_MAX_BYTES", "PDF_MAX_PAGES", "PDF_MAX_TEXT_CHARS", "workbookRejectReason", "CLIPBOARD_IMAGE_MAX_BYTES", "CLIPBOARD_IMAGE_MAX_PIXELS", "isWorkbookContents", "workbookPage", "workbookSummary"],
+    exports: ["assetExt", "assetKind", "isWorkbookName", "isPdfName", "isAcceptedAsset", "assetRejectReason", "INTAKE_FOLDER_MAX_DEPTH", "INTAKE_FOLDER_MAX_FILES", "INTAKE_FOLDER_MAX_BYTES", "INTAKE_FOLDER_MAX_VISITS", "folderRejectReason", "archiveRejectReason", "ARCHIVE_MAX_WORKBOOKS", "ARCHIVE_MAX_PDFS", "WORKBOOK_MAX_OUTPUT_BYTES", "PDF_MAX_BYTES", "PDF_MAX_PAGES", "PDF_MAX_TEXT_CHARS", "workbookRejectReason", "CLIPBOARD_IMAGE_MAX_BYTES", "CLIPBOARD_IMAGE_MAX_PIXELS", "isWorkbookContents", "workbookPage", "workbookSummary",
+      // docs/40 M23: archive extraction + workbook worker
+      "ARCHIVE_MAX_ENTRIES", "ARCHIVE_MAX_FILES", "ARCHIVE_MAX_DEPTH", "ARCHIVE_MAX_FILE_BYTES", "ARCHIVE_MAX_TOTAL_BYTES", "ARCHIVE_MAX_RATIO", "ARCHIVE_RATIO_FLOOR_BYTES",
+      "WORKBOOK_MAX_BYTES", "WORKBOOK_MAX_SHEETS", "WORKBOOK_MAX_CELLS", "WORKBOOK_MAX_CELL_CHARS", "WORKBOOK_CONTAINER_MAX_RATIO", "WORKBOOK_CONTAINER_MAX_BYTES", "WORKBOOK_CONTAINER_MAX_ENTRIES", "WORKBOOK_SCHEMA", "columnName"],
   },
   {
     // docs/22 M4: ComposerAttachmentStore (L16681) + intake copy helpers (L11240-11407), HEIC (L11525),
@@ -274,6 +278,49 @@ export const SPECS = [
     ],
     subs: [],
     exports: ["PDF_SCHEMA", "hasText", "voiceNoteClock", "sha256Utf8", "composerTurnMessageUuid", "expandIntakeFolder", "streamCopyFile", "streamCopyFileTo", "HEIC_RE$1", "convertHeicToJpg", "friendlyCopyError", "fileSha256", "isClipboardPng", "clipboardImageIntakeFile", "sweepClipboardImageIntake", "attachmentContextLines", "ComposerAttachmentStore"],
+  },
+  {
+    // docs/40 M23: .zip attachment extraction — the ORIGINAL extractArchive / planEntries / EntryMeter (yauzl 3.4.0,
+    // the exact version the original pins) and the workbook-container helpers inspectZipContainer / storedZip
+    // (wb chunk L4027-4319). Replaces the attachments-unported.ts refusal.
+    out: "src/main/attachments/archive-extract.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { rmSync, mkdirSync, createWriteStream, statfsSync } from "node:fs";',
+      'import { Transform } from "node:stream";',
+      'import { pipeline } from "node:stream/promises";',
+      'import { join } from "node:path";',
+      'import { crc32 } from "node:zlib";',
+      'import yauzl from "yauzl";',
+      'import { ARCHIVE_MAX_DEPTH, ARCHIVE_MAX_ENTRIES, ARCHIVE_MAX_FILE_BYTES, ARCHIVE_MAX_FILES, ARCHIVE_MAX_RATIO, ARCHIVE_MAX_TOTAL_BYTES, ARCHIVE_RATIO_FLOOR_BYTES, assetKind, isAcceptedAsset } from "./asset-kinds.generated";',
+    ],
+    slices: () => [sliceUntil("wb", /^const ARCHIVE_LIMITS = \{$/, /^const WORKBOOK_SCHEMA = /)],
+    subs: [],
+    exports: ["ARCHIVE_LIMITS", "FREE_SPACE_RESERVE_BYTES", "planEntries", "extractArchive", "inspectZipContainer", "storedZip", "yauzlCause"],
+  },
+  {
+    // docs/40 M23: readWorkbookInWorker (wb L4447-4478) — main side of the workbook reader (L61124-61126).
+    out: "src/main/attachments/workbook-reader.generated.ts",
+    imports: ['import { isWorkbookContents } from "./asset-kinds.generated";'],
+    slices: () => [sliceUntil("wb", /^const WORKBOOK_READ_TIMEOUT_MS = /, /^export \{$/)],
+    subs: [],
+    exports: ["WORKBOOK_READ_TIMEOUT_MS", "readWorkbookInWorker"],
+  },
+  {
+    // docs/40 M23: the ORIGINAL out/main/workbookWorker.js (SheetJS xlsx 0.20.3, the version the original pins), run
+    // in an Electron utilityProcess (forkWorkbookWorker L60704) and built to dist/main/workbookWorker.cjs.
+    out: "src/main/workers/workbook-worker.generated.ts",
+    imports: [
+      'import { createHash } from "node:crypto";',
+      'import { constants } from "node:fs";',
+      'import { open } from "node:fs/promises";',
+      'import * as XLSX from "xlsx";',
+      'import { assetExt, WORKBOOK_MAX_BYTES, WORKBOOK_MAX_SHEETS, WORKBOOK_MAX_CELLS, WORKBOOK_MAX_OUTPUT_BYTES, WORKBOOK_SCHEMA, WORKBOOK_MAX_CELL_CHARS, ARCHIVE_RATIO_FLOOR_BYTES, WORKBOOK_CONTAINER_MAX_RATIO, WORKBOOK_CONTAINER_MAX_BYTES, WORKBOOK_CONTAINER_MAX_ENTRIES, columnName } from "../attachments/asset-kinds.generated";',
+      'import { inspectZipContainer, storedZip } from "../attachments/archive-extract.generated";',
+    ],
+    slices: () => [sliceUntil("wbw", /^const ZIP_MAGIC = /, /^export \{$/)],
+    subs: [],
+    exports: ["parseWorkbook", "readOwnedWorkbook"],
   },
   {
     // docs/39 M22: the packaged staging Flight profile (L6159-6235) + applicationChannel (L9171, hard-wired "prod" in

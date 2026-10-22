@@ -2409,6 +2409,8 @@ ${quotes}` : ""), [`✅ V${n} approved`]).catch((e) => this.log.info("agent.vers
   }
   /** setQuickstartResume (L38880). */
   setQuickstartResume(resume: (meta: AgentSessionMeta) => boolean): void { this.quickstartResume = resume; }
+  /** #983 — main supplies the out-of-process workbook parser (original AgentHost.setWorkbookReader L44733). docs/40 M23. */
+  setWorkbookReader(reader: (path: string, name: string, sha256: string) => Promise<unknown>): void { this.attachmentStore?.setWorkbookReader(reader); }
   /** #785 — main supplies the PDF text reader (original AgentHost.setPdfReader L44737). docs/39 M22. */
   setPdfReader(reader: (path: string, sha256: string) => Promise<unknown>): void { this.attachmentStore?.setPdfReader(reader); }
   /** quickstartStartFailed (L38888). */

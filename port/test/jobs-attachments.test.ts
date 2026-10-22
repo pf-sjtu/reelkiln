@@ -190,7 +190,7 @@ test("ComposerAttachmentStore via AgentHost (stage L44743, Send L41588-41656): c
     assert.equal(staged.length, 4);
     assert.equal(staged[2].status, "failed"); assert.match(staged[2].error, /\.xyz files/);
     await until(() => (h.host.listComposerAttachments(meta.sessionId) as any[]).filter((a) => a.status === "ready").length === 2 && changed.some((a) => a.name === "pack.zip" && a.status === "failed"));
-    assert.match(changed.find((a) => a.name === "pack.zip" && a.status === "failed").error, /compression method/, "archives are refused while extractArchive is unported");
+    assert.match(changed.find((a) => a.name === "pack.zip" && a.status === "failed").error, /is damaged or incomplete/, "docs/40 M23: a truncated zip → the original extractArchive cause corrupt");
     const ids = staged.slice(0, 2).map((a) => a.id);
     assert.ok(!existsSync(join(h.ws, "incoming")) || readdirSync(join(h.ws, "incoming")).length === 0, "staging is private (userData), nothing in the workspace yet");
     const r = await h.host.sendMessage(meta.sessionId, { text: "cut these together", clientTurnId: "turn-1", attachmentIds: ids });

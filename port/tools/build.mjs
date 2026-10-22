@@ -17,6 +17,8 @@ if (process.argv.includes("--tests")) {
   await build({ ...common, entryPoints: { "main/editorRenderWorker": "src/main/workers/editor-render-worker.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   // docs/26: HyperFrames preview + policy utilityProcess workers (original out/main/hyperframesPreviewWorker.js / hyperframesPolicyWorker.js)
   await build({ ...common, entryPoints: { "main/hyperframesPreviewWorker": "src/main/workers/hf-preview-worker.generated.ts", "main/hyperframesPolicyWorker": "src/main/workers/hf-policy-worker.generated.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
+  // docs/40 M23: the workbook utilityProcess worker (original out/main/workbookWorker.js, SheetJS bundled)
+  await build({ ...common, entryPoints: { "main/workbookWorker": "src/main/workers/workbook-worker.generated.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   // PORT-NEW verification CLI (no Electron): dist/cli/port-cli.cjs
   await build({ ...common, entryPoints: { "cli/port-cli": "src/cli/port-cli.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
   await build({ ...common, entryPoints: { "preload/index": "src/preload/index.ts" }, outdir: "dist", platform: "node", format: "cjs", target: "node20", external: ["electron"], outExtension: { ".js": ".cjs" } });
