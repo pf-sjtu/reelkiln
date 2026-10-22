@@ -38,6 +38,7 @@ const CDP_PORT = Number(opt("--port", "9351"));
 const PROJECT = opt("--project", "S1 UI e2e");
 const TURN_TIMEOUT_MS = Number(opt("--turn-timeout-ms", String(26 * 60_000)));
 const ATTACH_VIA = opt("--attach-via", "drop"); // drop | picker
+const EXTRA_DOCS = argv.includes("--extra-docs"); // docs/40 M23: also drop a .zip, an .xlsx and a .pdf (archive / workbook / PDF readers)
 const STOP_AFTER = opt("--stop-after"); // "attach" ($0 UI check) | "quickstart" | "card" (stop once an answered question card is acknowledged)
 const ANSWER_CARD = !argv.includes("--no-answer-card");
 const TASTE_WAIT_MS = Number(opt("--taste-wait-ms", String(6 * 60_000)));
@@ -251,6 +252,28 @@ try {
   await sleep(800);
   await shot("03-attachments");
   verdict("attach", true, { via: ATTACH_VIA, ready: atts, storeFile: existsSync(attStore) });
+  if (EXTRA_DOCS) {
+    // docs/40 M23: the original intake readers through the ORIGINAL renderer — extractArchive (yauzl) unpacks the
+    // zip into child chips, the workbook utilityProcess (SheetJS) reads the xlsx, readOwnedPdf reads the PDF
+    // (PDFKit on macOS; the original's own "unavailable" elsewhere). Files are generated here (harness inputs).
+    const { makeDocs } = await import("./ui-e2e/docs-fixtures.mjs");
+    const docs = await makeDocs(IN);
+    const dropAt = center(await find("textarea"));
+    await dropFiles(cdp, dropAt.x, dropAt.y, docs.files); drove("composer dropzone: docs.zip + plan.xlsx + brief.pdf", "Input.dispatchDragEvent drop (3 real files)");
+    const want = ["cover.png", "storyboard.pdf", "plan.xlsx", "brief.pdf"];
+    const rec = await waitFor("zip children + workbook + pdf ready (store)", async () => {
+      const st = readJson(attStore); const rows = (st?.attachments ?? []).filter((a) => a.sessionId === sid);
+      const by = (n) => rows.find((a) => a.name === n);
+      return want.every((n) => by(n)?.status === "ready") ? { rows: rows.map((a) => ({ name: a.name, status: a.status, archive: a.archive ? { parentName: a.archive.parentName, entryPath: a.archive.entryPath } : undefined, workbook: a.workbook ? { sheets: a.workbook.sheets, cells: a.workbook.cells, summary: a.workbook.summary } : undefined, pdf: a.pdf ? { status: a.pdf.status, pages: a.pdf.pages, summary: a.pdf.summary } : undefined, unpacked: a.unpacked })), by } : null;
+    }, { timeoutMs: 120_000 });
+    await sleep(600); await shot("03b-extra-docs");
+    const by = (n) => rec.rows.find((a) => a.name === n);
+    const pdfWant = process.platform === "darwin" ? "read" : "unavailable";
+    const ok = by("cover.png")?.archive?.parentName === "docs.zip" && by("storyboard.pdf")?.archive?.entryPath === "boards/storyboard.pdf"
+      && by("plan.xlsx")?.workbook?.sheets === 2 && by("brief.pdf")?.pdf?.status === pdfWant && by("docs.zip")?.unpacked?.files === 2 && by("docs.zip")?.unpacked?.skippedTotal === 1;
+    const chips = await bodyText();
+    verdict("extra_docs", ok && want.every((n) => chips.includes(n)), { rows: rec.rows.filter((a) => [...want, "docs.zip", "skip.exe"].includes(a.name)), pdfExpected: pdfWant, chipsInComposer: want.filter((n) => chips.includes(n)) });
+  }
   if (STOP_AFTER === "attach") throw Object.assign(new Error("stop-after attach"), { planned: true });
 
   // 4. brief + Send ---------------------------------------------------------------------------

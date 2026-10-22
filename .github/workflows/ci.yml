@@ -252,6 +252,15 @@ jobs:
           sleep 2
           MINIMAX_API_KEY=fake-s1-ci-key-not-real MINIMAX_BASE_URL=http://127.0.0.1:47999/anthropic \
             node tools/ui-e2e.mjs --run "$(cygpath -w "$RUNNER_TEMP/s1run")" --engine "$ENGW" --exe "$(cygpath -w "$PWD/release/win-unpacked/videoclaw-port.exe")" --port 9371 --turn-timeout-ms 1500000 --taste-wait-ms 60000
+      - name: attach .zip/.xlsx/.pdf through the original renderer (docs/40 M23, $0, stop after attach)
+        continue-on-error: true # docs/40 M23: non-blocking until green twice
+        working-directory: port
+        env:
+          OUT: ${{ runner.temp }}\windows-run
+        run: |
+          ENGW="$(cygpath -w "$(cat "$(cygpath -u "$OUT")/engine-path.txt")")"
+          MINIMAX_API_KEY=fake-s1-ci-key-not-real \
+            node tools/ui-e2e.mjs --run "$(cygpath -w "$RUNNER_TEMP/docsrun")" --engine "$ENGW" --exe "$(cygpath -w "$PWD/release/win-unpacked/videoclaw-port.exe")" --port 9373 --extra-docs --stop-after attach
       - name: S1 UI e2e on the NSIS-installed app (silent per-user install, docs/37)
         working-directory: port
         env:
@@ -273,6 +282,7 @@ jobs:
           E="$RUNNER_TEMP/s1-evidence"; mkdir -p "$E/nsis"
           cp -r "$RUNNER_TEMP/s1run/out/." "$E/" 2>/dev/null || true
           cp -r "$RUNNER_TEMP/s1run-nsis/out/." "$E/nsis/" 2>/dev/null || true
+          mkdir -p "$E/docs" && cp -r "$RUNNER_TEMP/docsrun/out/." "$E/docs/" 2>/dev/null || true
           find "$E" \( -name '*.mp4' -o -name '*.mp3' -o -name '*.jpg' -o -name '*.sqlite' \) -delete || true
       - uses: actions/upload-artifact@v4
         if: always()
@@ -384,11 +394,22 @@ jobs:
           sleep 2
           MINIMAX_API_KEY=fake-s1-ci-key-not-real MINIMAX_BASE_URL=http://127.0.0.1:47999/anthropic \
             node tools/ui-e2e.mjs --run "$RUNNER_TEMP/s1run" --engine "$ENG" --exe "$APP" --port 9371 --turn-timeout-ms 1500000 --taste-wait-ms 60000
+      - name: attach .zip/.xlsx/.pdf through the original renderer (docs/40 M23, $0, stop after attach; PDF read by PDFKit)
+        continue-on-error: true # docs/40 M23: non-blocking until green twice
+        working-directory: port
+        env:
+          OUT: ${{ runner.temp }}/macos-run
+        run: |
+          ENG="$(cat "$OUT/engine-path.txt")"
+          APP="$(ls -d release/mac*/*.app | head -n 1)"
+          MINIMAX_API_KEY=fake-s1-ci-key-not-real \
+            node tools/ui-e2e.mjs --run "$RUNNER_TEMP/docsrun" --engine "$ENG" --exe "$APP" --port 9373 --extra-docs --stop-after attach
       - name: collect evidence (no media)
         if: always()
         run: |
           E="$RUNNER_TEMP/s1-evidence"; mkdir -p "$E"
           cp -R "$RUNNER_TEMP/s1run/out/." "$E/" 2>/dev/null || true
+          mkdir -p "$E/docs" && cp -R "$RUNNER_TEMP/docsrun/out/." "$E/docs/" 2>/dev/null || true
           find "$E" \( -name '*.mp4' -o -name '*.mp3' -o -name '*.jpg' -o -name '*.sqlite' \) -delete || true
       - uses: actions/upload-artifact@v4
         if: always()
