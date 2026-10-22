@@ -24,7 +24,7 @@ i=0; for c in "$L/assemble.py\" --job $JOB" "$L/compose_render.py\" --job $JOB -
   # the PreToolUse guard the agent's Bash would pass through (auto-records a route receipt)
   "$PY3" -c 'import json,sys;print(json.dumps({"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":sys.argv[1]},"cwd":sys.argv[2],"session_id":"l0"}))' "$c" "$(P "$W/ws")" \
     | "$VPY" "$(P "$ENG/.claude/hooks/production_guard.py")"
-  i=$((i+1)); bash -c "$c" > "$W/step$i.log" 2>&1 || { echo "FAILED: $c"; exit 1; }
+  i=$((i+1)); bash -c "$c" > "$W/step$i.log" 2>&1 || { echo "FAILED: $c"; echo "--- tail of step$i.log ---"; tail -n 120 "$W/step$i.log"; exit 1; }
 done
 uv run --project "$VIDEOCLAW_ENGINE" python "$(P "$ENG/tools/verify_output.py")" --job "$JOB" --mode render --input final.mp4 | tee "$W/verify.log" | tail -1
 grep -q "STATUS: OK" "$W/verify.log"
