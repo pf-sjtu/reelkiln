@@ -28,6 +28,11 @@ function fakeMiniMax(calls: string[]) {
       assert.equal(body.model, "speech-2.8-turbo"); assert.equal(body.stream, false); assert.equal(body.output_format, "hex");
       return j({ data: { audio: AUDIO_HEX, status: 2 }, extra_info: { usage_characters: 9, audio_length: 1200 }, trace_id: "t1", base_resp: { status_code: 0, status_msg: "success" } });
     }
+    if (u.pathname === "/v1/image_generation") {
+      const body = JSON.parse(init.body);
+      assert.equal(body.model, "image-01");
+      return j({ data: { image_base64: Array.from({ length: body.n ?? 1 }, () => Buffer.from([0xff, 0xd8, 0xff, 0xd9]).toString("base64")) }, metadata: { success_count: body.n ?? 1 }, base_resp: { status_code: 0 } });
+    }
     if (u.pathname === "/v1/video_generation") {
       const body = JSON.parse(init.body);
       assert.equal(body.model, "MiniMax-Hailuo-02"); assert.equal(body.resolution, "512P"); assert.equal(body.duration, 6);
@@ -132,5 +137,25 @@ test("substitute: unmappable synth_voice modes (design/voice_change) and other p
     const m = await h.call("POST", "/v1/mint_image", JSON.stringify({ params: {}, client_job: "job-a" }));
     assert.ok(m.status >= 400);
     assert.equal(h.calls.length, 0);
+  } finally { await h.close(); }
+});
+
+test("substitute: mint_image (text-only, jpeg) is served by MiniMax image-01, labelled; png/references/odd aspects stay refused", async () => {
+  const body = (over: any = {}, params: any = {}) => ({ params: { aspect_ratio: "9:16", output_format: "jpeg", number_of_images: 1, ...params }, mode: "background", prompt: "a paper boat", quality: "high", client_job: "job-a", ...over });
+  assert.equal(substituteCall("mint_image", body())!.model, "minimax/image-01");
+  assert.deepEqual(substituteCall("mint_image", body())!.params, { prompt: "a paper boat", aspect_ratio: "9:16", n: 1 });
+  assert.equal(substituteCall("mint_image", body({}, { output_format: "png" })), null);
+  assert.equal(substituteCall("mint_image", body({ references: ["https://x/y.png"] })), null);
+  assert.equal(substituteCall("mint_image", body({}, { aspect_ratio: "5:4" })), null);
+  assert.equal(substituteCall("mint_image", body({}, { number_of_images: 5 })), null);
+  const h = await harness(["mint_image"]);
+  try {
+    assert.deepEqual((h.shim as any).operationRecovery().tools, ["model_call", "mint_image"]);
+    const { result } = await h.runOperation("/v1/mint_image", JSON.stringify(body({}, { number_of_images: 2 })));
+    assert.equal(result.status, "succeeded", JSON.stringify(result));
+    assert.equal(result.tool, "mint_image"); assert.equal(result.model, "minimax/image-01");
+    assert.equal(result.substitute.requested_model, "engine default image model");
+    assert.equal(result.assets.length, 2); assert.equal(result.assets[0].content_type, "image/jpeg");
+    assert.deepEqual(h.calls, ["POST /v1/image_generation"]);
   } finally { await h.close(); }
 });

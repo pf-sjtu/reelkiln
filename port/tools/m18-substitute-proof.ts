@@ -50,7 +50,7 @@ const probe = (f: string) => { try { return JSON.parse(execFileSync("ffprobe", [
   const root = mkdtempSync(join(tmpdir(), "vc-m18-sub-proof-"));
   const ws = join(root, "Videoclaw"); mkdirSync(join(ws, ".claude"), { recursive: true }); mkdirSync(join(ws, "jobs"), { recursive: true });
   copyFileSync(resolve(arg("--ws-settings") ?? ""), join(ws, ".claude", "settings.json"));
-  const shim = new LocalGatewayShim({ substitutes: ["synth_voice"], dir: join(root, "lg"), provider: () => minimaxConfig(MODE === "real" ? process.env : { MINIMAX_API_KEY: "fake-key-proof-only" }), ...(MODE === "real" ? {} : { mediaFetch: fakeMiniMax(), sleep: async () => {} }), monthUsd: 5, log: (l) => console.log(scrub(l)) });
+  const shim = new LocalGatewayShim({ substitutes: ["synth_voice", "mint_image"], dir: join(root, "lg"), provider: () => minimaxConfig(MODE === "real" ? process.env : { MINIMAX_API_KEY: "fake-key-proof-only" }), ...(MODE === "real" ? {} : { mediaFetch: fakeMiniMax(), sleep: async () => {} }), monthUsd: 5, log: (l) => console.log(scrub(l)) });
   const url = await shim.start(); const { key } = shim.issueKey();
   const proxy = await AgentGatewayProxy.start(url, key);
   const jobId = `m18sub-${Date.now().toString(36)}`; const jobPath = join(ws, "jobs", jobId); mkdirSync(jobPath, { recursive: true });
@@ -71,11 +71,20 @@ const probe = (f: string) => { try { return JSON.parse(execFileSync("ffprobe", [
     execFile(join(ENGINE, ".venv", "bin", "python"), [join(ENGINE, "tools", "synth_voice.py"), "--job", jobPath, "--mode", "tts", "--voice", "Kore", "--text", text, "--beat-id", "m18sub", "--no-stretch"], { cwd: ws, env, timeout: 10 * 60_000, maxBuffer: 16 << 20 }, (e, out, err) => (e ? rej(new Error(scrub(String(out) + "\n" + String(err || e)))) : res({ stdout: scrub(String(out)).slice(-2500), stderr: scrub(String(err)).slice(-1500) })));
   });
   const results: any = { mode: MODE, jobId, engine: ENGINE.split("/").pop(), calls: [] };
-  const t = Date.now();
-  const r = await runTts(arg("--text", "Hello. This line is spoken by the substitute voice route.")!);
-  const ttsDir = join(jobPath, "tts");
-  const saved = existsSync(ttsDir) ? readdirSync(ttsDir).map((rel) => { const f = join(ttsDir, rel); const b = readFileSync(f); return { rel: `tts/${rel}`, bytes: b.length, sha256: createHash("sha256").update(b).digest("hex"), ffprobe: rel.endsWith(".mp3") ? probe(f) : undefined, json: rel.endsWith(".json") ? JSON.parse(b.toString("utf8")) : undefined }; }) : [];
-  results.calls.push({ call: "synth_voice --mode tts --voice Kore", seconds: (Date.now() - t) / 1000, stdout: r.stdout, stderr: r.stderr, saved });
+  const runImage = (prompt: string) => new Promise<any>((res, rej) => {
+    execFile(join(ENGINE, ".venv", "bin", "python"), [join(ENGINE, "tools", "mint_image.py"), "--job", jobPath, "--role", "cover", "--prompt", prompt, "--aspect", "9:16", "--output-format", "jpeg", "--name", "m18img"], { cwd: ws, env, timeout: 10 * 60_000, maxBuffer: 16 << 20 }, (e, out, err) => (e ? rej(new Error(scrub(String(out) + "\n" + String(err || e)))) : res({ stdout: scrub(String(out)).slice(-2500), stderr: scrub(String(err)).slice(-1500) })));
+  });
+  const listDir = (d: string, pre: string) => existsSync(d) ? readdirSync(d).filter((rel) => statSync(join(d, rel)).isFile()).map((rel) => { const f = join(d, rel); const b = readFileSync(f); return { rel: `${pre}/${rel}`, bytes: b.length, sha256: createHash("sha256").update(b).digest("hex"), ffprobe: /\.(mp3|jpe?g|png)$/.test(rel) ? probe(f) : undefined, json: rel.endsWith(".json") ? JSON.parse(b.toString("utf8")) : undefined }; }) : [];
+  for (const c of (arg("--calls", "tts") ?? "tts").split(",")) {
+    const t = Date.now();
+    if (c === "tts") {
+      const r = await runTts(arg("--text", "Hello. This line is spoken by the substitute voice route.")!);
+      results.calls.push({ call: "synth_voice --mode tts --voice Kore", seconds: (Date.now() - t) / 1000, stdout: r.stdout, stderr: r.stderr, saved: listDir(join(jobPath, "tts"), "tts") });
+    } else if (c === "image") {
+      const r = await runImage("a small red paper boat on a calm blue pond, soft morning light");
+      results.calls.push({ call: "mint_image --role cover --aspect 9:16 --output-format jpeg", seconds: (Date.now() - t) / 1000, stdout: r.stdout, stderr: r.stderr, saved: listDir(join(jobPath, "images"), "images") });
+    }
+  }
   const led: any = shim.snapshot();
   results.decisions = decisions; results.remembered = remembered;
   results.ledger = { paidTool: led.entries.filter((e: any) => e.kind === "paid_tool").map((e: any) => ({ tool: e.tool, substitute: e.substitute, model: e.model, upstreamModel: e.upstreamModel, usd: e.usd, units: e.units, maximumUsd: e.pricing.maximumUsd, clientJob: e.clientJob })), operations: Object.values(led.operations ?? {}).map((o: any) => ({ tool: o.tool, substitute: o.substitute, status: o.status, model: o.model, costUsd: o.costUsd, maximumUsd: o.maximumUsd, upstream: o.upstream, error: o.error })), quotes: (led.spendQuotes ?? []).length };

@@ -1,0 +1,151 @@
+{
+ "mode": "real",
+ "jobId": "m18sub-mviy6s17",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "calls": [
+  {
+   "call": "mint_image --role cover --aspect 9:16 --output-format jpeg",
+   "seconds": 18.634,
+   "stdout": "Generating 1 image(s) with default  role=cover\n  aspect=9:16  fmt=jpeg  quality=high  bg=opaque  strip_chroma=off\n  ⏱ Nano default is normally seconds; keep a ≥300s safety timeout; several stills → --batch\n  ✓ m18img.jpeg (143KB)\n\n1 image(s) written to $TMP/Videoclaw/jobs/m18sub-mviy6s17/images/ in 17.3s\n",
+   "stderr": "",
+   "saved": [
+    {
+     "rel": "images/_index.json",
+     "bytes": 297,
+     "sha256": "c6a82b3412fbbfea1fcadf1d80c14a9955c810f9504b1da80423a8a3209074fc",
+     "json": {
+      "m18img": {
+       "file": "images/m18img.jpeg",
+       "prompt_file": "images/m18img.prompt.txt",
+       "model": "default",
+       "role": "cover",
+       "aspect": "9:16",
+       "output_format": "jpeg",
+       "quality": "high",
+       "background": "opaque",
+       "chroma_keyed": false,
+       "references": []
+      }
+     }
+    },
+    {
+     "rel": "images/m18img.jpeg",
+     "bytes": 146970,
+     "sha256": "ff5202e3fe4c3d2642bb11f38cc9d6d2666a1ce6b3a9c22d10b9b68b8fa6121e",
+     "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "mjpeg",
+        "codec_type": "video",
+        "width": 720,
+        "height": 1280
+       }
+      ],
+      "format": {
+       "format_name": "image2",
+       "duration": "0.040000",
+       "size": "146970"
+      }
+     }
+    },
+    {
+     "rel": "images/m18img.prompt.txt",
+     "bytes": 62,
+     "sha256": "ebe82f608391acdf61f13470e02d21f53b47c4a420ccd6798710fa8d3b286d39"
+    }
+   ]
+  }
+ ],
+ "decisions": [
+  {
+   "tool": "mint_image",
+   "routeMode": "substitute:minimax/image-01",
+   "maximumUsd": 0.003735,
+   "quoteId": "vsq_3.cUSv…"
+  }
+ ],
+ "remembered": [
+  {
+   "id": "f81a5d27-2808-4639-98c7-a2175b397285",
+   "path": "/v1/mint_image",
+   "sha256": "ad8ca8638f3f8dda72d6a9a10cb039e88521f08b4846076947a184f9352453a5"
+  }
+ ],
+ "ledger": {
+  "paidTool": [
+   {
+    "tool": "mint_image",
+    "substitute": {
+     "label": "SUBSTITUTE (not the named model)",
+     "requested_model": "engine default image model",
+     "served_model": "minimax/image-01"
+    },
+    "model": "minimax/image-01",
+    "upstreamModel": "image-01",
+    "usd": 0.003735,
+    "units": {
+     "images": 1
+    },
+    "maximumUsd": 0.003735,
+    "clientJob": "m18sub-mviy6s17"
+   }
+  ],
+  "operations": [
+   {
+    "tool": "mint_image",
+    "substitute": {
+     "label": "SUBSTITUTE (not the named model)",
+     "requested_model": "engine default image model",
+     "served_model": "minimax/image-01"
+    },
+    "status": "succeeded",
+    "model": "minimax/image-01",
+    "costUsd": 0.003735,
+    "maximumUsd": 0.003735,
+    "upstream": {
+     "id": "0728adf03af47c9d759ed9c459dbd2e1",
+     "success_count": "1",
+     "failed_count": "0"
+    }
+   }
+  ],
+  "quotes": 1
+ },
+ "jobBudget": {
+  "job_id": "m18sub-mviy6s17",
+  "client_job": "m18sub-mviy6s17",
+  "revision": 1792637678,
+  "mode": "capped",
+  "ceiling_usd": 0.5,
+  "spent_usd": 0.003735,
+  "llm_spent_usd": 0,
+  "llm_in_flight": 0,
+  "reserved_usd": 0,
+  "state": "ready",
+  "in_flight": [],
+  "available_credit_usd": 4.996265
+ },
+ "engineJournal": [
+  {
+   "file": "f81a5d27-2808-4639-98c7-a2175b397285.json",
+   "path": "/v1/mint_image",
+   "status": "succeeded",
+   "outputs": [
+    "images/m18img.jpeg"
+   ],
+   "delivered": [
+    "images/m18img.jpeg"
+   ]
+  }
+ ],
+ "runLogCost": [
+  {
+   "tool": "mint_image",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  }
+ ],
+ "totalPaidUsd": 0.003735
+}

@@ -55,7 +55,7 @@ import { providerGate } from "../llm/retry";
 import { withMiniMaxRetry } from "../llm/minimax";
 import { registerSecret } from "../llm/logger";
 import { createHmac } from "node:crypto";
-import { catalog, ModelInputError, operationSha256, pollMiniMaxVideo, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, TTS_VOICES, type PricedCall } from "./minimax-media";
+import { catalog, ModelInputError, operationSha256, pollMiniMaxVideo, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, TTS_VOICES, IMAGE_ASPECTS, type PricedCall } from "./minimax-media";
 
 export const LOCAL_GATEWAY_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY";
 export const LOCAL_GATEWAY_PORT_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY_PORT";
@@ -136,15 +136,27 @@ export function emptyLedger(now: number, monthUsd: number | null): Ledger {
 // mint_image / mint_video / preview_session_shot / character_voice / plan_paid_operations stay refused (docs/35 §3).
 export const SUBSTITUTE_ENV = "VIDEOCLAW_PORT_MINIMAX_SUBSTITUTE";
 export const SUBSTITUTE_VOICE_ENV = "VIDEOCLAW_PORT_MINIMAX_SUBSTITUTE_VOICE";
-export type SubstituteTool = "synth_voice";
-export interface SubstituteLabel { label: "SUBSTITUTE (not the named model)"; requested_model: string | null; requested_voice: string | null; served_model: string; served_voice: string }
-export const SUBSTITUTABLE: readonly SubstituteTool[] = ["synth_voice"];
+export type SubstituteTool = "synth_voice" | "mint_image";
+export interface SubstituteLabel { label: "SUBSTITUTE (not the named model)"; requested_model: string | null; requested_voice?: string | null; served_model: string; served_voice?: string }
+export const SUBSTITUTABLE: readonly SubstituteTool[] = ["synth_voice", "mint_image"];
 export function substitutesFromEnv(env: NodeJS.ProcessEnv = process.env): SubstituteTool[] {
   const want = String(env[SUBSTITUTE_ENV] ?? "").split(",").map((x) => x.trim()).filter(Boolean);
   return SUBSTITUTABLE.filter((t) => want.includes(t));
 }
 /** Map one substitutable request onto a MiniMax catalog call, or null (→ refused as before). */
 export function substituteCall(tool: string, body: any, env: NodeJS.ProcessEnv = process.env): { model: string; params: Record<string, unknown>; label: SubstituteLabel } | null {
+  if (tool === "mint_image") {
+    // engine tools/mint_image.py L1670 single-request path: {params:{aspect_ratio, output_format, number_of_images}, mode: role, prompt, quality, references}.
+    // Served only when MiniMax image-01 can honour the request as asked: text-only (no references = no edit), JPEG output
+    // (image-01 returns JPEG; a .png delivery would carry the wrong bytes), a supported aspect, 1-4 images.
+    const pr = body?.params ?? {};
+    const prompt = typeof body?.prompt === "string" ? body.prompt : null;
+    const aspect = pr.aspect_ratio ?? "1:1";
+    const n = pr.number_of_images ?? 1;
+    if (!prompt || prompt.length > 1500 || (Array.isArray(body?.references) && body.references.length) || pr.output_format !== "jpeg"
+      || !(IMAGE_ASPECTS as readonly string[]).includes(aspect) || !Number.isSafeInteger(n) || n < 1 || n > 4) return null;
+    return { model: "minimax/image-01", params: { prompt, aspect_ratio: aspect, n }, label: { label: "SUBSTITUTE (not the named model)", requested_model: typeof body?.model === "string" ? body.model : "engine default image model", served_model: "minimax/image-01" } };
+  }
   if (tool !== "synth_voice" || body?.mode !== "tts") return null;
   const params = body?.params ?? {};
   const text = typeof params.text === "string" ? params.text : null;
@@ -427,7 +439,7 @@ export class LocalGatewayShim {
       if (!op) return this.json(res, 404, { detail: "unknown job" });
       return this.json(res, 200, this.operationView(op));
     }
-    if (method === "POST" && path === "/v1/synth_voice" && this.substitutes().includes("synth_voice")) return this.modelCall(req, res, key.id, "synth_voice");
+    if (method === "POST" && (path === "/v1/synth_voice" || path === "/v1/mint_image") && (this.substitutes() as string[]).includes(path.slice(4))) return this.modelCall(req, res, key.id, path.slice(4) as SubstituteTool);
     if (method === "POST" && (m = /^\/v1\/(mint_image|mint_video|embed|audio\/enhance|media\/pull|synth_voice|lipsync_footage|llm|model_call|qa_video|enumerate_profile|harness\/review|[a-z][a-z0-9_]{1,63})$/.exec(path))) {
       req.resume();
       return this.paidToolRefusal(res, m[1]);
@@ -587,7 +599,7 @@ export class LocalGatewayShim {
     let body: any; try { body = JSON.parse(raw.toString("utf8")); } catch { return this.json(res, 400, { detail: "operation body must be JSON" }); }
     if (body?.client_job !== jobId) return this.refuse(res, 409, "OPERATION_MISMATCH", "The operation names a different video.");
     const sub = subTool ? substituteCall(subTool, body) : null;
-    if (subTool && !sub) { this.appendSink("paid-refusal", { tool, stage: "quote", substitute: "unmappable" }); return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway cannot substitute this ${tool} request (only mode "tts" with text). Nothing was charged.`); }
+    if (subTool && !sub) { this.appendSink("paid-refusal", { tool, stage: "quote", substitute: "unmappable" }); return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway cannot substitute this ${tool} request (synth_voice: mode "tts" with text; mint_image: text-only, --output-format jpeg, a supported aspect, 1-4 images). Nothing was charged.`); }
     let priced: PricedCall;
     try { priced = sub ? priceCall(sub.model, sub.params) : priceCall(body?.model, body?.params); }
     catch (e) { return this.refuse(res, 422, e instanceof ModelInputError ? e.code : "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
@@ -597,7 +609,7 @@ export class LocalGatewayShim {
     (this.ledger.spendQuotes ??= []).push(q);
     if (this.ledger.spendQuotes.length > 200) this.ledger.spendQuotes.splice(0, this.ledger.spendQuotes.length - 200);
     this.write();
-    if (sub) this.o.log?.(`[local-gateway] SUBSTITUTE quote: ${tool} ${sub.label.requested_model ?? "?"} → ${sub.label.served_model} (${sub.label.served_voice})`);
+    if (sub) this.o.log?.(`[local-gateway] SUBSTITUTE quote: ${tool} ${sub.label.requested_model ?? "?"} → ${sub.label.served_model}${sub.label.served_voice ? ` (${sub.label.served_voice})` : ""}`);
     return this.json(res, 200, { quote_id: quoteId, operation_sha256: sha256, tool: subTool ?? "model_call", route_mode: sub ? `substitute:${priced.model.model_slug}` : priced.model.model_slug, estimate_usd: priced.estimateUsd, maximum_usd: priced.maximumUsd, bound_proven: true, currency: "USD", units: priced.units, price_source: PRICE_SOURCE, ...(sub ? { substitute: sub.label } : {}) });
   }
   /** POST /v1/spend-authorities/{job}/permits (mintSpendPermit L30250): one-shot approval for one exact quote. */
@@ -720,7 +732,7 @@ export class LocalGatewayShim {
     const scoped = req.headers["x-videoclaw-scoped-job"];
     if (!clientJob || (typeof scoped === "string" && scoped !== clientJob)) return this.refuse(res, 409, "OPERATION_MISMATCH", "The operation names a different video.");
     const sub = tool === "model_call" ? null : substituteCall(tool, body);
-    if (tool !== "model_call" && !sub) return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway cannot substitute this ${tool} request (only mode "tts" with text). Nothing was charged.`);
+    if (tool !== "model_call" && !sub) return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway cannot substitute this ${tool} request (synth_voice: mode "tts" with text; mint_image: text-only, --output-format jpeg, a supported aspect, 1-4 images). Nothing was charged.`);
     const sha256 = operationSha256(`/v1/${tool}`, raw);
     const ops = (this.ledger.operations ??= {});
     const existing = ops[operationId];
