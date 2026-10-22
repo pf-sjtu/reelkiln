@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createRunner } from "../src/main/engine/bootstrap";
 import { dirIdentity, relativeWrite, RELATIVE_WRITER_CODES } from "../src/main/studio/relative-writer";
 import { startEngineRender } from "../src/main/workers/editor-render-worker";
@@ -57,31 +57,44 @@ test("W7 (real win32/NTFS): dir identity stable across reads, content changes an
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-const CONSOLE_PROBE = [
-  'Add-Type -Namespace W8 -Name K -MemberDefinition \'[DllImport("kernel32.dll")] public static extern System.IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h);\'',
-  '$h = [W8.K]::GetConsoleWindow()',
-  '[Console]::Out.WriteLine("W8 hwnd=" + $h + " visible=" + [W8.K]::IsWindowVisible($h))',
-].join("; ");
 
+
+let lastSpawnedPid = 0;
 function runWorker(cmd: any, o: { cancelAfterMs?: number; graceMs?: number } = {}) {
   return new Promise<{ posts: any[]; out: string }>((resolve) => {
     const posts: any[] = []; let out = "";
     const tapSpawn = (f: string, a: string[], opts: any) => { const c = spawn(f, a, opts); c.stdout?.on("data", (b) => { out += String(b); }); c.stderr?.on("data", (b) => { out += String(b); }); return c; };
     const job = startEngineRender({ type: "start", requestId: "w8", ...cmd }, {
       spawn: tapSpawn as any, cancelGraceMs: o.graceMs ?? 1500,
-      post: (m) => { posts.push(m); if (m.type === "exit" || m.type === "cancelled") resolve({ posts, out }); },
+      post: (m) => { posts.push(m); if (m.type === "spawned") lastSpawnedPid = m.pgid; if (m.type === "exit" || m.type === "cancelled") resolve({ posts, out }); },
     });
     if (o.cancelAfterMs !== undefined) setTimeout(() => job.cancel(), o.cancelAfterMs);
   });
 }
 
-test("W8 (real win32): the detached render child gets no visible console window (windowsHide)", { skip: SKIP, timeout: 90_000 }, async () => {
-  const r = await runWorker({ executable: "powershell.exe", args: ["-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(CONSOLE_PROBE, "utf16le").toString("base64")], cwd: tmpdir(), env: process.env });
-  const m = /W8 hwnd=(\d+) visible=(True|False)/.exec(r.out);
-  assert.ok(m, `probe output: ${r.out.slice(0, 300)}`);
-  console.log(`# W8 console: hwnd=${m![1]} visible=${m![2]} (exit ${r.posts.at(-1)?.code})`);
-  assert.equal(m![2], "False", "no visible console window for the detached child");
-  assert.equal(r.posts.at(-1).type, "exit"); assert.equal(r.posts.at(-1).code, 0);
+// Process.MainWindowHandle is non-zero only for a process that owns a VISIBLE top-level window (for a console program:
+// its console window). Probe the running child from a separate (non-detached) PowerShell.
+function mainWindowHandle(pid: number): string {
+  const r = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `(Get-Process -Id ${pid}).MainWindowHandle`], { encoding: "utf8", windowsHide: true, timeout: 60_000 });
+  return `${r.stdout ?? ""}`.trim() || `ERR ${r.status} ${String(r.stderr ?? "").slice(0, 200)}`;
+}
+
+test("W8 (real win32): the detached render child gets no visible console window (windowsHide); control without windowsHide", { skip: SKIP, timeout: 120_000 }, async () => {
+  const keep = ["-e", "setInterval(() => {}, 1000)"];
+  // the worker's own spawn (detached: true, windowsHide: true)
+  let pid = 0;
+  const done = runWorker({ executable: process.execPath, args: keep, cwd: tmpdir(), env: process.env }, { cancelAfterMs: 6000, graceMs: 1000 });
+  for (let i = 0; i < 20 && !pid; i++) { await sleep(250); pid = lastSpawnedPid; }
+  await sleep(1500);
+  const hidden = mainWindowHandle(pid);
+  // control: same spawn WITHOUT windowsHide (what the original's detached:true alone does on win32)
+  const ctl = spawn(process.execPath, keep, { detached: true, stdio: "ignore" });
+  await sleep(1500);
+  const control = mainWindowHandle(ctl.pid!);
+  try { spawnSync("taskkill", ["/PID", String(ctl.pid), "/T", "/F"], { windowsHide: true }); } catch {}
+  await done;
+  console.log(`# W8 console window: worker child MainWindowHandle=${hidden}; control (detached, no windowsHide)=${control}`);
+  assert.equal(hidden, "0", "the worker's detached child has no visible console window");
 });
 
 test("W8 (real win32): cancel takes down the detached child AND its grandchild (taskkill /T, /F after the grace)", { skip: SKIP, timeout: 90_000 }, async () => {
