@@ -1,0 +1,87 @@
+TAP version 13
+# \# voice helper status: {"available":false,"attach":true,"message":"On-device transcription is unavailable on this Mac. You can still type your message."}
+# Subtest: mac voice helper: --check through voiceDictationStatus → available, or one of the original's error messages
+ok 1 - mac voice helper: --check through voiceDictationStatus → available, or one of the original's error messages
+  ---
+  duration_ms: 20.094792
+  type: 'test'
+  ...
+# Subtest: readOwnedPdf: non-darwin keeps the original's own behaviour → unread/unavailable (L56968-56970)
+ok 2 - readOwnedPdf: non-darwin keeps the original's own behaviour → unread/unavailable (L56968-56970) # SKIP darwin runs the real reader
+  ---
+  duration_ms: 3.10225
+  type: 'test'
+  ...
+# Subtest: readOwnedPdf plumbing with an injected osascript (stdin bytes, sha check, args, interpret)
+ok 3 - readOwnedPdf plumbing with an injected osascript (stdin bytes, sha check, args, interpret)
+  ---
+  duration_ms: 61.00925
+  type: 'test'
+  ...
+# \# pdfkit read: {"kind":"read","contents":{"schema":"videoclaw.pdf-text/v1","sourceSha256":"3f1614fe41ebeced3d94e3c220d1de074a644e270a2d36336c03b9cfece8b050","pages":["Hello Reelkiln page one","Second page text"]}}
+# Subtest: readOwnedPdf on macOS: real /usr/bin/osascript + PDFKit (read / image-only / damaged / sha)
+ok 4 - readOwnedPdf on macOS: real /usr/bin/osascript + PDFKit (read / image-only / damaged / sha)
+  ---
+  duration_ms: 536.047291
+  type: 'test'
+  ...
+# \# store pdf: {"status":"read","pages":1,"summary":"1 page, text on every page","contentsSha256":"0f23b588354a489ca11d6795f95a7e18c94616d2f24ec5ddc1fe62ad8523ebb8"}
+# \# read_pdf: {"attachment_id":"att-1","name":"brief.pdf","ok":true,"source_sha256":"5b9c45a94a3b710bdbaf7db10ec71d37658413a85228000aff4e84b38ee4f39c","page_count":1,"pages":[{"page":1,"text":"Brief: three clips and a song"}]}
+# Subtest: ComposerAttachmentStore.readContents → setPdfReader(readOwnedPdf) → record.pdf summary + read_pdf window (real PDFKit on macOS, injected osascript elsewhere)
+ok 5 - ComposerAttachmentStore.readContents → setPdfReader(readOwnedPdf) → record.pdf summary + read_pdf window (real PDFKit on macOS, injected osascript elsewhere)
+  ---
+  duration_ms: 215.233959
+  type: 'test'
+  ...
+# Subtest: applicationChannel() is hard-wired to "prod" in the shipped build (L9172) → no Flight profile, whatever the env
+ok 6 - applicationChannel() is hard-wired to "prod" in the shipped build (L9172) → no Flight profile, whatever the env
+  ---
+  duration_ms: 3.401875
+  type: 'test'
+  ...
+# Subtest: resolveStagingFlightProfile("staging"): complete env + marker → profile (hidden only for VIDEOCLAW_FLIGHT_HIDDEN=1); incomplete / mismatched → throws
+ok 7 - resolveStagingFlightProfile("staging"): complete env + marker → profile (hidden only for VIDEOCLAW_FLIGHT_HIDDEN=1); incomplete / mismatched → throws
+  ---
+  duration_ms: 7.640042
+  type: 'test'
+  ...
+# Subtest: applyStagingFlightStartup (L60306-60318): hidden + darwin → setActivationPolicy("accessory"); userData + loopback CDP switches; dev VIDEOCLAW_USERDATA_DIR branch
+ok 8 - applyStagingFlightStartup (L60306-60318): hidden + darwin → setActivationPolicy("accessory"); userData + loopback CDP switches; dev VIDEOCLAW_USERDATA_DIR branch
+  ---
+  duration_ms: 2.742875
+  type: 'test'
+  ...
+# Subtest: VOICE_ERRORS (platform/voice.ts) == the original errors table (L10452) — key unsupported_os, not os_version
+ok 9 - VOICE_ERRORS (platform/voice.ts) == the original errors table (L10452) — key unsupported_os, not os_version
+  ---
+  duration_ms: 1.053291
+  type: 'test'
+  ...
+# Subtest: VoiceDictation.execute (verbatim): ffmpeg webm → 16 kHz mono s16 wav → helper <wav> → complete / error copy / failure / cancel
+ok 10 - VoiceDictation.execute (verbatim): ffmpeg webm → 16 kHz mono s16 wav → helper <wav> → complete / error copy / failure / cancel
+  ---
+  duration_ms: 635.417542
+  type: 'test'
+  ...
+# Subtest: AgentHost: media:transcribeVoice → VoiceDictation; hasActiveVoiceTranscription; discardVoice; stageVoiceNote background transcript (L44767)
+ok 11 - AgentHost: media:transcribeVoice → VoiceDictation; hasActiveVoiceTranscription; discardVoice; stageVoiceNote background transcript (L44767)
+  ---
+  duration_ms: 495.082208
+  type: 'test'
+  ...
+# \# real helper status: {"available":false,"attach":true,"message":"On-device transcription is unavailable on this Mac. You can still type your message."} transcribe: {"status":"failed","message":"On-device transcription is unavailable on this Mac. You can still type your message."}
+# Subtest: macOS: the REAL voice-dictation helper (built from app/native/VoiceDictation.swift) through VoiceDictation.execute
+ok 12 - macOS: the REAL voice-dictation helper (built from app/native/VoiceDictation.swift) through VoiceDictation.execute
+  ---
+  duration_ms: 195.985833
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 1664.813916

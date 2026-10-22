@@ -39,7 +39,7 @@
 | PDF 读取 `readOwnedPdf` 经 `/usr/bin/osascript`（L56967） | `pdfReaderFor` 存在但**未接线** → 附件 PDF 读取在所有平台都未移植 | 能（osascript 在 runner 上可用），未做 |
 | `setActivationPolicy("accessory")`（L60307，隐藏的 staging 飞行配置） | 未移植（仅内部 staging 通道） | 能起，但无可见效果可断言 |
 | 应用菜单 | 原版不调用 `setApplicationMenu`（Electron 默认菜单），无缺口 | — |
-| `titleBarStyle: hiddenInset` + `trafficLightPosition`、`activate` 重建窗口、`window-all-closed` 不退出、`before-quit` QuitCoordinator | 已移植；S1 收尾印证了不退出行为 | 部分（仅进程行为；视觉/dock 不可） |
+| `titleBarStyle: hiddenInset` + `trafficLightPosition`（**更正：M21 时其实未设置，M22 才补上，见 docs/39 §1.2**）、`activate` 重建窗口、`window-all-closed` 不退出、`before-quit` QuitCoordinator | 已移植；S1 收尾印证了不退出行为 | 部分（仅进程行为；视觉/dock 不可） |
 | 自动更新（L2229：仅 packaged + darwin + 可信 https gateway） | app-updater 有 darwin 分支 | 否：没有生产 update feed |
 | Gatekeeper / 公证、dock 行为 | 未签名构建 | 否 |
 

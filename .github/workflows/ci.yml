@@ -405,7 +405,6 @@ jobs:
     name: "macOS native (PDFKit reader, packaged voice-dictation helper, Flight accessory policy)"
     runs-on: macos-latest
     timeout-minutes: 45
-    continue-on-error: true # docs/39 M22: non-blocking until green twice
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
