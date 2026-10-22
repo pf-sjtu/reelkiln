@@ -17,7 +17,7 @@
 import { spawn, execFileSync, spawnSync } from "node:child_process";
 import { appendFileSync, cpSync, existsSync, linkSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Cdp, waitForPageTarget, mouseClick, mouseMove, typeText, dropFiles, screenshot } from "./ui-e2e/cdp.mjs";
 import { answerDeclined, center, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
@@ -228,14 +228,14 @@ try {
     await click("Add footage, images, audio… (attach button)", "button.attach-btn", { aria: "Add footage" }); drove("composer 'Add footage, images, audio…' (button.attach-btn)", "click → original intake:pickFiles → open dialog (answered by env preset)");
   } else {
     const dropAt = center(ta);
-    log({ action: "dropFiles", at: dropAt, files: FILES.map((f) => f.split("/").pop()) });
+    log({ action: "dropFiles", at: dropAt, files: FILES.map((f) => basename(f)) });
     await dropFiles(cdp, dropAt.x, dropAt.y, FILES); drove("composer dropzone (original window-level drop handler of the active video; dropped over the composer)", "Input.dispatchDragEvent dragEnter/dragOver/drop with DragData.files (4 real files)");
   }
   const attStore = join(UD, "composer-attachments.json");
   const atts = await waitFor("4 attachments ready (main store) + tiles in composer", async () => {
-    const txt = await bodyText(); if (!FILES.every((f) => txt.includes(f.split("/").pop()))) return null;
-    const ev = readFileSync(mainLog, "utf8"); const ready = FILES.filter((f) => new RegExp(`"name":"${f.split("/").pop().replace(".", "\\.")}"[^\\n]*"status":"ready"`).test(ev));
-    return ready.length === 4 ? ready.map((f) => f.split("/").pop()) : null;
+    const txt = await bodyText(); if (!FILES.every((f) => txt.includes(basename(f)))) return null;
+    const ev = readFileSync(mainLog, "utf8"); const ready = FILES.filter((f) => new RegExp(`"name":"${basename(f).replace(".", "\\.")}"[^\\n]*"status":"ready"`).test(ev));
+    return ready.length === 4 ? ready.map((f) => basename(f)) : null;
   }, { timeoutMs: 120_000 });
   await sleep(800);
   await shot("03-attachments");
