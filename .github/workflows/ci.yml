@@ -397,6 +397,67 @@ jobs:
           path: ${{ runner.temp }}/s1-evidence
           if-no-files-found: warn
 
+  macos-native:
+    # docs/39 M22: the original's macOS-native paths on macos-latest — PDFKit PDF reading via /usr/bin/osascript
+    # (readOwnedPdf L56967), the voice-dictation helper built from app/native/VoiceDictation.swift and shipped in
+    # the .app at Contents/Resources/bootstrap (the original layout) + VoiceDictation.execute up to Apple's speech
+    # assets, and the hidden staging Flight profile's setActivationPolicy("accessory") in a real Electron.
+    name: "macOS native (PDFKit reader, packaged voice-dictation helper, Flight accessory policy)"
+    runs-on: macos-latest
+    timeout-minutes: 45
+    continue-on-error: true # docs/39 M22: non-blocking until green twice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - name: ffmpeg (Homebrew)
+        run: command -v ffmpeg || brew install ffmpeg
+      - name: build + package .app (dir, no SDK) — builds resources/bootstrap/voice-dictation
+        working-directory: port
+        run: npm ci && npm run build && node tools/package.mjs --platform mac --arch arm64 --targets dir --no-sdk
+      - name: packaged helper layout + --check
+        working-directory: port
+        run: |
+          set -x
+          OUT="$RUNNER_TEMP/macos-native"; mkdir -p "$OUT"
+          APP="$(ls -d release/mac*/*.app | head -n 1)"; H="$APP/Contents/Resources/bootstrap/voice-dictation"
+          test -x "$H"
+          { echo "app: $(basename "$APP")"; ls -l "$APP/Contents/Resources/bootstrap"; file "$H"; lipo -archs "$H"; otool -l "$H" | grep -A4 LC_BUILD_VERSION | head -n 6; codesign -dv "$H" 2>&1 | grep -E "Signature|Identifier|flags" || true; } | tee "$OUT/helper-layout.txt"
+          "$H" --check | tee "$OUT/helper-check.json"; echo
+          echo "$PWD/$H" > "$RUNNER_TEMP/helper-path.txt"
+      - name: "PDFKit reader + VoiceDictation tests (real osascript, real packaged helper, a `say` recording)"
+        working-directory: port
+        run: |
+          OUT="$RUNNER_TEMP/macos-native"
+          say -o "$RUNNER_TEMP/note.aiff" "Make a vertical video from my three clips"
+          ffmpeg -nostdin -v error -y -i "$RUNNER_TEMP/note.aiff" -c:a libopus -f webm "$RUNNER_TEMP/note.webm"
+          node tools/build.mjs --tests >/dev/null
+          VIDEOCLAW_TEST_PDFKIT=1 VIDEOCLAW_TEST_VOICE_HELPER="$(cat "$RUNNER_TEMP/helper-path.txt")" VIDEOCLAW_TEST_VOICE_WEBM="$RUNNER_TEMP/note.webm" \
+            node --test dist-test/pdf-reader.test.cjs dist-test/voice-dictation.test.cjs dist-test/mac-voice-helper.test.cjs dist-test/staging-flight.test.cjs 2>&1 | tee "$OUT/native-tests.txt"
+          ! grep -q "^not ok" "$OUT/native-tests.txt"
+          grep -q "^# fail 0" "$OUT/native-tests.txt"
+      - name: "real Electron: hidden staging Flight → accessory activation policy (Dock hidden) vs control"
+        working-directory: port
+        run: |
+          OUT="$RUNNER_TEMP/macos-native"
+          npx esbuild tools/m22-flight-probe.ts --bundle --platform=node --format=cjs --external:electron --outfile="$RUNNER_TEMP/flight-probe.cjs"
+          VIDEOCLAW_FLIGHT_HIDDEN=1 perl -e 'alarm 120; exec @ARGV' npx electron "$RUNNER_TEMP/flight-probe.cjs" 2>&1 | grep FLIGHT_PROBE | tee "$OUT/flight-hidden.txt"
+          perl -e 'alarm 120; exec @ARGV' npx electron "$RUNNER_TEMP/flight-probe.cjs" 2>&1 | grep FLIGHT_PROBE | tee "$OUT/flight-control.txt"
+          node -e '
+            const fs = require("fs"); const r = (f) => JSON.parse(fs.readFileSync(f, "utf8").replace(/^FLIGHT_PROBE /, ""));
+            const h = r(process.argv[1]), c = r(process.argv[2]);
+            const ok = h.hidden && h.dockVisible === false && h.windowVisible === false && h.backgroundThrottling === false && h.userDataIsFlight && h.cdpAddress === "127.0.0.1"
+              && !c.hidden && c.dockVisible === true && c.windowVisible === true && c.backgroundThrottling === true && c.userDataIsFlight;
+            console.log(JSON.stringify({ ok, hidden: h, control: c })); process.exit(ok ? 0 : 1);' "$OUT/flight-hidden.txt" "$OUT/flight-control.txt" | tee "$OUT/flight-verdict.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-native
+          path: ${{ runner.temp }}/macos-native
+
   macos-package:
     # docs/34 M17: the cheap macOS leg — unsigned dmg (identity: null). docs/36 M19: plus the packaged smoke on the
     # .app bundle (GUI boot + node-mode SDK/sqlite checks; never calls a model).
