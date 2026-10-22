@@ -1,0 +1,17 @@
+{"t":4,"note":"L1 launched pid 2027886"}
+{"action":"click","desc":"Skip tour","at":{"x":667.390625,"y":672.5,"w":56.78125,"h":27,"disabled":false}}
+{"action":"click","desc":"New video","at":{"x":125.5,"y":74,"w":233,"h":32,"disabled":false}}
+{"t":5873,"note":"STEP L1_setup: PASS {\"accountStep\":\"ready\",\"storedKeyIdPrefix\":\"2c79ffacd8ab\",\"gatewayUrl\":\"http://127.0.0.1:47738\",\"clientId\":\"personal\",\"cwd\":\"$RUN/Videoclaw\",\"sessionCreate\":true,\"lastEngineVersionL1\":\"0.1.57-rc7-15f8f2d\"}"}
+{"t":5877,"note":"L1 exited SIGTERM"}
+{"t":7911,"note":"HARNESS seeded voice {\"ok\":true,\"id\":\"0b8886ae-7b0d-46ec-8bed-a49d3ce0ff3e\",\"file\":\"$RUN/.config/videoclaw-port/character-voices/ed8ad425a9c70a6129ab8d949eb243a09cf85cfb73dcd8cfec1669a7d0603b03/4a0a339b0c6d0553897752a84115adc81c75812e1743eb2519258e5000f70deb.json\",\"voices\":[{\"id\":\"0b8886ae-7b0d-46ec-8bed-a49d3ce0ff3e\",\"state\":\"pending\",\"name\":\"Ada (M18 harness)\",\"characterSlug\":\"ada-m18-harness\",\"isDefault\":false,\"sam"}
+{"t":7913,"note":"L2 launched pid 2028341"}
+{"action":"click","desc":"Skip tour","at":{"x":667.390625,"y":672.5,"w":56.78125,"h":27,"disabled":false}}
+{"action":"click","desc":"Characters (sidebar)","at":{"x":125.5,"y":159.5,"w":233,"h":31,"disabled":false}}
+{"action":"click","desc":"Sounds right · use for this project","at":{"x":1033.515625,"y":409.671875,"w":249.03125,"h":37,"disabled":false}}
+{"t":13582,"note":"STEP V_approve_push: PASS {\"sampleHeard\":true,\"approve\":{\"ok\":true,\"real\":true},\"pushes\":[\"[{\\\"clientId\\\":\\\"personal\\\",\\\"gatewayUrl\\\":\\\"http://127.0.0.1:47738\\\",\\\"canonicalKeyId\\\":\\\"2c79ffacd8ab…\\\"}]\"],\"relistAfterApprove\":1,\"projectVoiceChip\":true}"}
+{"action":"click","desc":"Remove…","at":{"x":951.984375,"y":369.671875,"w":85.96875,"h":37,"disabled":false}}
+{"action":"click","desc":"Remove voice","at":{"x":751.4765625,"y":448.640625,"w":115.046875,"h":29,"disabled":false}}
+{"t":15050,"note":"STEP V_remove_push: PASS {\"remove\":{\"ok\":true,\"real\":true},\"pushesTotal\":2,\"relistAfterRemove\":1,\"cardGone\":true,\"voicesOnDisk\":0}"}
+{"t":16058,"note":"STEP E_engine_updated_live: PASS {\"push\":\"[{\\\"version\\\":\\\"0.1.57-rc8-m18harness\\\"}]\",\"toast\":\"⚡\\nengine updated — new tricks available\\n✕\",\"toastAtMs\":13500,\"lastEngineVersion\":\"0.1.57-rc8-m18harness\",\"pointer\":{\"version\":\"0.1.57-rc8-m18harness\",\"previous\":\"0.1.57-rc7-15f8f2d\",\"path\":\"$RUN/.config/videoclaw-port/engines/engine-0.1.57-rc8-m18harness\"},\"sameProcessNoRelaunch\":true,\"log\":[\"[engine-update] check skipped: no compatible engine source: gateway unreachable/keyless and no bundled tarball (dev: set VIDEOCLAW_ENGINE_DIST to a dir with engine.manifest.json + tarball)\",\"[port] HARNESS: engine update re-check every 20000 ms (VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS)\",\"[engine-update] pointer flipped to 0.1.57-rc8-m18harness\",\"[port] engine updated → 0.1.57-rc8-m18harness\"]}"}
+{"t":16060,"note":"L2 exited SIGTERM"}
+{"t":17861,"note":"DONE allPass=true L1_setup:ok V_approve_push:ok V_remove_push:ok E_engine_updated_live:ok out=$RUN/out-m18-pushes-1792636025419"}

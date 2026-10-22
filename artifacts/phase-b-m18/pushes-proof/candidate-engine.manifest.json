@@ -1,0 +1,12 @@
+{
+ "version": "0.1.57-rc8-m18harness",
+ "variant": "full",
+ "sha256": "2b66f17ddc55810998945862803b64d0805a091cae23784b3e1c082f51ef8323",
+ "file": "engine-0.1.57-rc8-m18harness.tar.gz",
+ "minAppVersion": "0.0.38-rc.5",
+ "pythonVersion": "3.14.6",
+ "builtAt": "2026-10-06T13:37:53Z",
+ "gitSha": "m18h",
+ "gitBranch": "HEAD",
+ "gitDirty": "clean"
+}

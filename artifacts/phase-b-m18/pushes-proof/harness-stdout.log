@@ -1,0 +1,11 @@
+[m18 pushes +0.0s] L1 launched pid 2027886
+[m18 pushes +5.9s] STEP L1_setup: PASS {"accountStep":"ready","storedKeyIdPrefix":"2c79ffacd8ab","gatewayUrl":"http://127.0.0.1:47738","clientId":"personal","cwd":"$RUN/Videoclaw","sessionCreate":true,"lastEngineVersionL1":"0.1.57-rc7-15f8f2d"}
+[m18 pushes +5.9s] L1 exited SIGTERM
+[m18 pushes +7.9s] HARNESS seeded voice {"ok":true,"id":"0b8886ae-7b0d-46ec-8bed-a49d3ce0ff3e","file":"$RUN/.config/videoclaw-port/character-voices/ed8ad425a9c70a6129ab8d949eb243a09cf85cfb73dcd8cfec1669a7d0603b03/4a0a339b0c6d0553897752a84115adc81c75812e1743eb2519258e5000f70deb.json","voices":[{"id":"0b8886ae-7b0d-46ec-8bed-a49d3ce0ff3e","state":"pending","name":"Ada (M18 harness)","characterSlug":"ada-m18-harness","isDefault":false,"sam
+[m18 pushes +7.9s] L2 launched pid 2028341
+[m18 pushes +13.6s] STEP V_approve_push: PASS {"sampleHeard":true,"approve":{"ok":true,"real":true},"pushes":["[{\"clientId\":\"personal\",\"gatewayUrl\":\"http://127.0.0.1:47738\",\"canonicalKeyId\":\"2c79ffacd8ab…\"}]"],"relistAfterApprove":1,"projectVoiceChip":true}
+[m18 pushes +15.1s] STEP V_remove_push: PASS {"remove":{"ok":true,"real":true},"pushesTotal":2,"relistAfterRemove":1,"cardGone":true,"voicesOnDisk":0}
+[m18 pushes +16.1s] STEP E_engine_updated_live: PASS {"push":"[{\"version\":\"0.1.57-rc8-m18harness\"}]","toast":"⚡\nengine updated — new tricks available\n✕","toastAtMs":13500,"lastEngineVersion":"0.1.57-rc8-m18harness","pointer":{"version":"0.1.57-rc8-m18harness","previous":"0.1.57-rc7-15f8f2d","path":"$RUN/.config/videoclaw-port/engines/engine-0.1.57-rc8-m18harness"},"sameProcessNoRelaunch":true,"log":["[engine-update] check skipped: no compatible engine source: gateway unreachable/keyless and no bundled tarball (dev: set VIDEOCLAW_ENGINE_DIST to a dir with engine.manifest.json + tarball)","[port] HARNESS: engine update re-check every 20000 ms (VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS)","[engine-update] pointer flipped to 0.1.57-rc8-m18harness","[port] engine updated → 0.1.57-rc8-m18harness"]}
+[m18 pushes +16.1s] L2 exited SIGTERM
+[m18 pushes +17.9s] DONE allPass=true L1_setup:ok V_approve_push:ok V_remove_push:ok E_engine_updated_live:ok out=$RUN/out-m18-pushes-1792636025419
+EXIT 0

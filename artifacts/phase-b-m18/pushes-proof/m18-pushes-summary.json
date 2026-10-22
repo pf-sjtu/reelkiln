@@ -1,0 +1,130 @@
+{
+ "llm": "FAKE-LLM (MINIMAX_API_KEY is a fake string; no model call is made)",
+ "spendUsd": 0,
+ "harnessInputs": [
+  "own Xvfb (xvfb-run)",
+  "saved voice prepared through the verbatim CharacterVoiceStore while the app is down (tools/m18-seed-voice.ts)",
+  "fake WAV reference + sample (ffmpeg sine)",
+  "candidate engine dist 0.1.57-rc8-m18harness = the installed 0.1.57-rc7-15f8f2d tarball with ENGINE_VERSION bumped; remotion/hyperframes node_modules symlinked to the read-only engine (disk budget)",
+  "VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS (re-check cadence seam)",
+  "VIDEOCLAW_PORT_ACCEPT_GATEWAY_RED=1 (doctor's gateway check needs a real key)"
+ ],
+ "engine": {
+  "installed": "0.1.57-rc7-15f8f2d",
+  "candidate": "0.1.57-rc8-m18harness"
+ },
+ "started": "2026-10-22T02:27:05.420Z",
+ "steps": {
+  "L1_setup": {
+   "ok": true,
+   "accountStep": "ready",
+   "storedKeyIdPrefix": "2c79ffacd8ab",
+   "gatewayUrl": "http://127.0.0.1:47738",
+   "clientId": "personal",
+   "cwd": "$RUN/Videoclaw",
+   "sessionCreate": true,
+   "lastEngineVersionL1": "0.1.57-rc7-15f8f2d"
+  },
+  "V_approve_push": {
+   "ok": true,
+   "sampleHeard": true,
+   "approve": {
+    "ok": true,
+    "real": true
+   },
+   "pushes": [
+    "[{\"clientId\":\"personal\",\"gatewayUrl\":\"http://127.0.0.1:47738\",\"canonicalKeyId\":\"2c79ffacd8ab…\"}]"
+   ],
+   "relistAfterApprove": 1,
+   "projectVoiceChip": true
+  },
+  "V_remove_push": {
+   "ok": true,
+   "remove": {
+    "ok": true,
+    "real": true
+   },
+   "pushesTotal": 2,
+   "relistAfterRemove": 1,
+   "cardGone": true,
+   "voicesOnDisk": 0
+  },
+  "E_engine_updated_live": {
+   "ok": true,
+   "push": "[{\"version\":\"0.1.57-rc8-m18harness\"}]",
+   "toast": "⚡\nengine updated — new tricks available\n✕",
+   "toastAtMs": 13500,
+   "lastEngineVersion": "0.1.57-rc8-m18harness",
+   "pointer": {
+    "version": "0.1.57-rc8-m18harness",
+    "previous": "0.1.57-rc7-15f8f2d",
+    "path": "$RUN/.config/videoclaw-port/engines/engine-0.1.57-rc8-m18harness"
+   },
+   "sameProcessNoRelaunch": true,
+   "log": [
+    "[engine-update] check skipped: no compatible engine source: gateway unreachable/keyless and no bundled tarball (dev: set VIDEOCLAW_ENGINE_DIST to a dir with engine.manifest.json + tarball)",
+    "[port] HARNESS: engine update re-check every 20000 ms (VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS)",
+    "[engine-update] pointer flipped to 0.1.57-rc8-m18harness",
+    "[port] engine updated → 0.1.57-rc8-m18harness"
+   ]
+  }
+ },
+ "scope": {
+  "accountStep": "ready",
+  "storedKeyIdPrefix": "2c79ffacd8ab",
+  "gatewayUrl": "http://127.0.0.1:47738",
+  "clientId": "personal",
+  "cwd": "$RUN/Videoclaw",
+  "sessionCreate": true,
+  "lastEngineVersionL1": "0.1.57-rc7-15f8f2d"
+ },
+ "seed": {
+  "ok": true,
+  "id": "0b8886ae-7b0d-46ec-8bed-a49d3ce0ff3e",
+  "file": "$RUN/.config/videoclaw-port/character-voices/ed8ad425a9c70a6129ab8d949eb243a09cf85cfb73dcd8cfec1669a7d0603b03/4a0a339b0c6d0553897752a84115adc81c75812e1743eb2519258e5000f70deb.json",
+  "voices": [
+   {
+    "id": "0b8886ae-7b0d-46ec-8bed-a49d3ce0ff3e",
+    "state": "pending",
+    "name": "Ada (M18 harness)",
+    "characterSlug": "ada-m18-harness",
+    "isDefault": false,
+    "sampleSha256": "13e24b6f2e317f2b9894c172c02e458cd5e3ef932c33595f67775f078ff27ec1"
+   }
+  ]
+ },
+ "sampleAttempts": [
+  {
+   "attempt": 1,
+   "heard": true,
+   "audio": {
+    "paused": true,
+    "ended": true,
+    "t": 1,
+    "err": null,
+    "ready": 4
+   }
+  }
+ ],
+ "sampleHeard": true,
+ "engineUpdate": {
+  "push": "[{\"version\":\"0.1.57-rc8-m18harness\"}]",
+  "toast": "⚡\nengine updated — new tricks available\n✕",
+  "toastAtMs": 13500,
+  "lastEngineVersion": "0.1.57-rc8-m18harness",
+  "pointer": {
+   "version": "0.1.57-rc8-m18harness",
+   "previous": "0.1.57-rc7-15f8f2d",
+   "path": "$RUN/.config/videoclaw-port/engines/engine-0.1.57-rc8-m18harness"
+  },
+  "sameProcessNoRelaunch": true,
+  "log": [
+   "[engine-update] check skipped: no compatible engine source: gateway unreachable/keyless and no bundled tarball (dev: set VIDEOCLAW_ENGINE_DIST to a dir with engine.manifest.json + tarball)",
+   "[port] HARNESS: engine update re-check every 20000 ms (VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS)",
+   "[engine-update] pointer flipped to 0.1.57-rc8-m18harness",
+   "[port] engine updated → 0.1.57-rc8-m18harness"
+  ]
+ },
+ "allPass": true,
+ "finished": "2026-10-22T02:27:21.478Z"
+}

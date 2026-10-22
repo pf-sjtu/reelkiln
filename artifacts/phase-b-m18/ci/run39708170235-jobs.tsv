@@ -1,0 +1,10 @@
+port (TS typecheck + tests) · windows-latest	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592993737
+Windows package (nsis + portable) + packaged smoke	failure			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592993941
+macOS package (dmg, unsigned)	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592993967
+port (TS typecheck + tests) · macos-latest	cancelled			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994003
+engine compat (py_compile + compat tests + import smoke) · windows-latest	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994008
+engine compat (py_compile + compat tests + import smoke) · ubuntu-latest	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994010
+port (TS typecheck + tests) · ubuntu-latest	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994023
+engine compat (py_compile + compat tests + import smoke) · macos-latest	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994050
+Linux baseline (real engine, uv sync + doctor + e2e render + Electron smoke)	success			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994094
+Windows runbook (docs/08 S3–S9: engine install, uv sync, doctor, e2e, codex handshake)	cancelled			https://github.com/pf-sjtu/reelkiln/actions/runs/39708170235/job/119592994096

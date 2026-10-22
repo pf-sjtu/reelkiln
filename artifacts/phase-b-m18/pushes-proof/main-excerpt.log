@@ -1,0 +1,47 @@
+[smoke] push port:llm:routesChanged [{"current":"gateway","routes":[{"id":"claude-code","kind":"builtin","label":"Claude Code (local sign-in)"},{"id":"gateway","kind":"builtin","label":"Videoclaw gateway"},{"id":"minimax","kind":"provider","label":"MiniMax (Anthropic-compatible)","protocol":"anthropic-messages","model":"MiniMax-M3.1-Flash","keyEnv":"MINIMAX_API_KEY","keyPresent":true,"agentCapable":true,"helperCapable":true,"structu
+[engine-update] check skipped: no compatible engine source: gateway unreachable/keyless and no bundled tarball (dev: set VIDEOCLAW_ENGINE_DIST to a dir with engine.manifest.json + tarball)
+[2027906:1022/102706.727927:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2027906:1022/102706.735447:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[smoke] push app:update [null]
+[smoke] push account:changed [{"loaded":true,"signInAvailable":false,"signInUnavailableReason":"unconfigured","signedIn":false,"account":null,"hasStoredKey":true,"storedKeyId":"2c79ffacd8abc6b34503769c6b285aeb0cdb1c31c5a9336d67bbc7dde9c2b3a4","storedKeyInvalid":false,"verifyingKey":false,"pendingKey":false,"secureStorageUnavailable":true,"credentialVaultUnreadable":false,"accountUnavailable":false,"legacyKeyOnly":true,"accoun
+[smoke] push window:state [{"fullscreen":false}]
+[2027906:1022/102708.587951:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2027906:1022/102708.588021:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[smoke] push spend:snapshot [{"sessionId":"cd051b98-64c8-4b07-a4b8-e999ed265d66","snapshot":{"policy":"unlimited_for_video","reservedUsd":0,"unknownSpend":false}}]
+[smoke] push session:changed [[{"sessionId":"cd051b98-64c8-4b07-a4b8-e999ed265d66","title":"New video","cwd":"$RUN/Videoclaw","status":"idle","permissionMode":"auto","totalCostUsd":0,"createdAt":1792636028694,"clientId":"personal","agentHarness":"claude-code","llmRoute":"gateway","portAgentHost":true,"liveWork":[],"mediaRecoveryNeeded":false}]]
+[smoke] push materials:changed [{"sessionId":"cd051b98-64c8-4b07-a4b8-e999ed265d66","total":0,"entries":[]}]
+[2027906:1022/102711.197252:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2027906:1022/102711.197345:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[port] HARNESS: engine update re-check every 20000 ms (VIDEOCLAW_PORT_ENGINE_UPDATE_KICK_MS)
+[2028360:1022/102713.742686:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102713.748741:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[smoke] push app:update [null]
+[smoke] push account:changed [{"loaded":true,"signInAvailable":false,"signInUnavailableReason":"unconfigured","signedIn":false,"account":null,"hasStoredKey":true,"storedKeyId":"2c79ffacd8abc6b34503769c6b285aeb0cdb1c31c5a9336d67bbc7dde9c2b3a4","storedKeyInvalid":false,"verifyingKey":false,"pendingKey":false,"secureStorageUnavailable":false,"credentialVaultUnreadable":false,"accountUnavailable":false,"legacyKeyOnly":true,"accou
+[smoke] push window:state [{"fullscreen":false}]
+[2028360:1022/102715.567497:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102715.567577:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102715.700222:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102715.700275:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5728:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5205:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5728:(snd_config_expand) Evaluate error: No such file or directory
+[2028360:1022/102715.949496:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102715.949583:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[smoke] push characters:voices:changed [{"clientId":"personal","gatewayUrl":"http://127.0.0.1:47738","canonicalKeyId":"2c79ffacd8abc6b34503769c6b285aeb0cdb1c31c5a9336d67bbc7dde9c2b3a4"}]
+[engine-update] pointer flipped to 0.1.57-rc8-m18harness
+[port] engine updated → 0.1.57-rc8-m18harness
+[smoke] push engine:updated [{"version":"0.1.57-rc8-m18harness"}]
+[2028360:1022/102718.853951:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102718.853997:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[smoke] push characters:voices:changed [{"clientId":"personal","gatewayUrl":"http://127.0.0.1:47738","canonicalKeyId":"2c79ffacd8abc6b34503769c6b285aeb0cdb1c31c5a9336d67bbc7dde9c2b3a4"}]
+[2028360:1022/102720.369936:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2028360:1022/102720.370012:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
