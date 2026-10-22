@@ -16,8 +16,31 @@ export function installWinVcmediaShim(): void {
     const segs = rest.replace(/\\/g, "/").split("/").filter((s, i) => i > 0 || s !== "");
     return `vcmedia://local/${encodeURIComponent(m[1].toUpperCase() + ":")}/${segs.map(encodeURIComponent).join("/")}${m[3] ?? ""}`;
   };
+  // W11b (docs/37): the original resolveDeliveryUrl(href, cwd) resolves an agent reply's relative job link against
+  // `file://${encodeFilePath(cwd)}/`; with a native cwd (`D:\a\…`) the base becomes `file://D%3A%5Ca%5C…/` — the path
+  // lands in the host and the link renders "Link unavailable". Rewrite such a base/input to `file:///D:/a/…/` so the
+  // original builder yields pathname `/D:/a/…/jobs/<id>/final.mp4` (mediaUrl → vcmedia://local/D%3A/…; main maps
+  // `/D:/…` back to `D:\…` for vcmedia and file:openPath / revealItem / saveItemAs).
+  const fixFile = (url: unknown): unknown => {
+    if (typeof url !== "string") return url;
+    const m = /^file:\/\/([A-Za-z])(?:%3A|:)((?:%5C|%2F|\\|\/)[^?#]*)([?#].*)?$/i.exec(url);
+    if (!m) return url;
+    let rest: string;
+    try { rest = decodeURIComponent(m[2]); } catch { return url; }
+    const segs = rest.replace(/\\/g, "/").split("/").slice(1);
+    return `file:///${m[1].toUpperCase()}:/${segs.map(encodeURIComponent).join("/")}${m[3] ?? ""}`;
+  };
   const g: any = globalThis as any;
   g.__videoclawPortFixWinVcmedia = fix;
+  g.__videoclawPortFixWinFileUrl = fixFile;
+  if (typeof g.URL === "function" && !g.URL.__videoclawPortWin) {
+    const URL0 = g.URL;
+    class PortURL extends URL0 {
+      static __videoclawPortWin = true;
+      constructor(input: unknown, base?: unknown) { if (arguments.length > 1) super(fixFile(input), fixFile(base)); else super(fixFile(input)); }
+    }
+    g.URL = PortURL;
+  }
   const ATTRS = new Set(["src", "poster", "href"]);
   const wrapProp = (ctor: any, prop: string) => {
     const proto = ctor && ctor.prototype; if (!proto) return;

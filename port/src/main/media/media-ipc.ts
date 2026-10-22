@@ -109,15 +109,19 @@ export interface FileIpcDeps {
   hasPendingInput?: (sessionId: string, requestId: string) => boolean;
 }
 export function fileIpcHandlers(d: FileIpcDeps): Record<string, (...a: any[]) => unknown> {
-  const openLocalPath = async (path: unknown) => { // L55678
+  // PORT-WIN docs/37 (W11b): chat-reply job links reach the renderer as `/D:/…` (see preload win-vcmedia.ts); map back.
+  const native = (p: unknown) => (typeof p === "string" ? vcmediaFilePath(p) : p);
+  const openLocalPath = async (path0: unknown) => { // L55678
+    const path = native(path0);
     if (typeof path !== "string" || !isAbsolute(path) || path.includes("\0")) throw new Error("Invalid file path");
     const error = await d.shell.openPath(path);
     if (error) throw new Error("Could not open this file");
   };
   return {
     "file:openPath": async (path: unknown) => { await openLocalPath(path); },
-    "file:revealItem": (path: unknown) => { d.shell.showItemInFolder(String(path)); },
-    "file:saveItemAs": async (path: unknown) => { // L61987
+    "file:revealItem": (path: unknown) => { d.shell.showItemInFolder(String(native(path))); },
+    "file:saveItemAs": async (path0: unknown) => { // L61987
+      const path = native(path0);
       if (typeof path !== "string" || !path.trim() || path.length > 4096 || !existsSync(path)) {
         throw new Error("This file is no longer available. Refresh the preview and try again.");
       }

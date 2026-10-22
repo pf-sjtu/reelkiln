@@ -289,6 +289,12 @@ try {
   await shot("05c-title");
   verdict("stream", !!result && !result.isError, { turnS: Math.round((Date.now() - tSend) / 1000), toolStarts: evs.filter((e) => e.kind === "tool_start").length, textDeltas: evs.filter((e) => e.kind === "text_delta").length, domTextChanges: growth, numTurns: result.numTurns, isError: result.isError, jobId, controlsDuringTurn });
 
+  // 5b. docs/37 (W11b): the agent reply's relative job link ([Watch the finished cut](jobs/<id>/final.mp4)) must render
+  // as the original inline media block (resolveDeliveryUrl → InlineVideo), not "Link unavailable".
+  const replyProbe = `(() => { const vs = [...document.querySelectorAll("video.inline-media")].filter((v) => /\\/final\\.mp4/.test(decodeURIComponent(v.currentSrc || v.src || ""))); const unavailable = [...document.querySelectorAll(".inline-media-status")].filter((e) => /Link unavailable/.test(e.innerText)).length; const v = vs[0]; return { inlineVideos: vs.length, unavailable, src: v ? (v.currentSrc || v.src).slice(0, 220) : null, readyState: v ? v.readyState : null, duration: v ? v.duration : null, openLink: !!document.querySelector("a.media-open") }; })()`;
+  const reply = await waitFor("reply link inline video", async () => { const r = await cdp.eval(replyProbe); return r.inlineVideos > 0 && r.readyState >= 1 ? r : null; }, { timeoutMs: 30_000 }).catch(async () => cdp.eval(replyProbe));
+  verdict("reply_link", reply.inlineVideos > 0 && reply.readyState >= 1 && reply.unavailable === 0 && /^vcmedia:\/\/local\//.test(reply.src ?? ""), { ...reply, src: reply.src && reply.src.replace(RUN, "<RUN>") });
+
   // 6. play in the original Output panel player -----------------------------------------------
   await waitFor("V1 in the version strip", () => find("button.v-pill", { text: "^V1" }), { timeoutMs: 120_000 });
   const vSel = ".op-preview-stage video";
@@ -361,7 +367,7 @@ try {
     { what: "native GTK save dialog of file:saveItemAs", why: "OS dialog outside the renderer (not a DOM element, not reachable over CDP) → answered by VIDEOCLAW_PORT_SMOKE_SAVE_AS in UI_E2E mode; the renderer's Download button and main's copy are real" },
   ];
   summary.attachVia = ATTACH_VIA; summary.stopAfter = STOP_AFTER ?? null;
-  summary.allPass = STOP_AFTER ? Object.values(steps).every((x) => x.ok) && !summary.error : S1_UI_STEPS.length > 0 && ["home", "project_video", "attach", "brief_send", "stream", "play", "approve", "export"].every((k) => steps[k]?.ok);
+  summary.allPass = STOP_AFTER ? Object.values(steps).every((x) => x.ok) && !summary.error : S1_UI_STEPS.length > 0 && ["home", "project_video", "attach", "brief_send", "stream", "reply_link", "play", "approve", "export"].every((k) => steps[k]?.ok);
   summary.finished = new Date().toISOString();
   writeFileSync(join(OUT, "ui-e2e-summary.json"), JSON.stringify(summary, null, 1));
   // graceful quit: Browser.close over the browser endpoint (will-quit flushes the registry)
