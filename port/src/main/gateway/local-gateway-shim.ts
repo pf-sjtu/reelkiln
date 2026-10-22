@@ -55,7 +55,7 @@ import { providerGate } from "../llm/retry";
 import { withMiniMaxRetry } from "../llm/minimax";
 import { registerSecret } from "../llm/logger";
 import { createHmac } from "node:crypto";
-import { catalog, ModelInputError, operationSha256, pollMiniMaxVideo, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, type PricedCall } from "./minimax-media";
+import { catalog, ModelInputError, operationSha256, pollMiniMaxVideo, priceCall, PRICE_SOURCE, runMiniMaxCall, searchCatalog, TTS_VOICES, type PricedCall } from "./minimax-media";
 
 export const LOCAL_GATEWAY_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY";
 export const LOCAL_GATEWAY_PORT_ENV = "VIDEOCLAW_PORT_LOCAL_GATEWAY_PORT";
@@ -79,8 +79,8 @@ export const DEFAULT_TOOL_QUOTE_CENTS = 5;
 
 export interface LedgerEntry { id: string; at: number; kind: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number; status: number; pricing: ModelPrice; /** docs/30: X-VideoClaw-Client-Job of the call (route-service anthropicClientJobCustomHeaders, chunk L149) */ clientJob?: string }
 /** docs/31: one paid model call charged at MiniMax's list price (minimax-media.ts) */
-export interface PaidToolEntry { id: string; at: number; kind: "paid_tool"; tool: "model_call"; usd: number; keyId: string; model: string; upstreamModel: string; units: Record<string, number>; pricing: { source: string; maximumUsd: number }; operationId: string; clientJob: string; status: number }
-export interface OperationRow { id: string; jobId: string; projectId: string; clientJob: string; sha256: string; model: string; quoteId: string; maximumUsd: number; status: "running" | "succeeded" | "failed" | "canceled" | "timeout"; createdAt: number; finishedAt?: number; costUsd?: number; assets: Array<{ asset_id: string; content_type: string }>; error?: string; upstream?: Record<string, unknown>; keyId: string;
+export interface PaidToolEntry { id: string; at: number; kind: "paid_tool"; tool: "model_call" | SubstituteTool; /** docs/35: opt-in substitute route — what was asked vs what served it */ substitute?: SubstituteLabel; usd: number; keyId: string; model: string; upstreamModel: string; units: Record<string, number>; pricing: { source: string; maximumUsd: number }; operationId: string; clientJob: string; status: number }
+export interface OperationRow { /** docs/35: the gateway tool (default model_call) */ tool?: "model_call" | SubstituteTool; substitute?: SubstituteLabel; id: string; jobId: string; projectId: string; clientJob: string; sha256: string; model: string; quoteId: string; maximumUsd: number; status: "running" | "succeeded" | "failed" | "canceled" | "timeout"; createdAt: number; finishedAt?: number; costUsd?: number; assets: Array<{ asset_id: string; content_type: string }>; error?: string; upstream?: Record<string, unknown>; keyId: string;
   /** docs/32: the validated params of a video call (needed to resume polling after a restart; images are inlined by MiniMax already) */
   request?: string;
   /** docs/32 M15: where the call is — "queued" behind the media gate (nothing sent to MiniMax yet) or "sent". */
@@ -126,8 +126,39 @@ export function emptyLedger(now: number, monthUsd: number | null): Ledger {
   };
 }
 
+// ── docs/35 M18: OPT-IN substitute route for named-model paid tools ─────────────────────────────────
+// The original gateway serves e.g. synth_voice/tts with a NAMED model (gemini-3.1-flash-tts / ElevenLabs voices). The
+// MiniMax backend has no such model, so by default the shim refuses (422 TOOL_NOT_OFFERED, nothing charged — docs/31).
+// With VIDEOCLAW_PORT_MINIMAX_SUBSTITUTE=synth_voice (comma list; owner opt-in) the shim serves synth_voice mode "tts"
+// with MiniMax speech-2.8-turbo instead: SAME durable operation / exact quote / permit / signed asset contract as
+// model_call, but every quote, operation view, ledger row and log line carries a `substitute` label naming the model
+// that was asked for and the one that served it. Not a faithful reproduction: different voice, different model.
+// mint_image / mint_video / preview_session_shot / character_voice / plan_paid_operations stay refused (docs/35 §3).
+export const SUBSTITUTE_ENV = "VIDEOCLAW_PORT_MINIMAX_SUBSTITUTE";
+export const SUBSTITUTE_VOICE_ENV = "VIDEOCLAW_PORT_MINIMAX_SUBSTITUTE_VOICE";
+export type SubstituteTool = "synth_voice";
+export interface SubstituteLabel { label: "SUBSTITUTE (not the named model)"; requested_model: string | null; requested_voice: string | null; served_model: string; served_voice: string }
+export const SUBSTITUTABLE: readonly SubstituteTool[] = ["synth_voice"];
+export function substitutesFromEnv(env: NodeJS.ProcessEnv = process.env): SubstituteTool[] {
+  const want = String(env[SUBSTITUTE_ENV] ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  return SUBSTITUTABLE.filter((t) => want.includes(t));
+}
+/** Map one substitutable request onto a MiniMax catalog call, or null (→ refused as before). */
+export function substituteCall(tool: string, body: any, env: NodeJS.ProcessEnv = process.env): { model: string; params: Record<string, unknown>; label: SubstituteLabel } | null {
+  if (tool !== "synth_voice" || body?.mode !== "tts") return null;
+  const params = body?.params ?? {};
+  const text = typeof params.text === "string" ? params.text : null;
+  if (!text) return null;
+  const requestedVoice = typeof params.voice === "string" ? params.voice : typeof params.voice_id === "string" ? params.voice_id : null;
+  const configured = String(env[SUBSTITUTE_VOICE_ENV] ?? "").trim();
+  const voice = (TTS_VOICES as readonly string[]).includes(configured) ? configured : /[\u3000-\u9fff]/.test(text) ? "female-shaonv" : "English_expressive_narrator";
+  return { model: "minimax/speech-2.8-turbo", params: { text, voice_id: voice }, label: { label: "SUBSTITUTE (not the named model)", requested_model: typeof body?.model === "string" ? body.model : null, requested_voice: requestedVoice, served_model: "minimax/speech-2.8-turbo", served_voice: voice } };
+}
+
 export interface ShimOptions {
   dir: string;
+  /** docs/35: opt-in substitute tools (default: from VIDEOCLAW_PORT_MINIMAX_SUBSTITUTE) */
+  substitutes?: SubstituteTool[];
   /** MiniMax provider (Anthropic surface). null → model calls answer 503 (no upstream configured). */
   provider: () => ResolvedProvider | null;
   port?: number;
@@ -396,6 +427,7 @@ export class LocalGatewayShim {
       if (!op) return this.json(res, 404, { detail: "unknown job" });
       return this.json(res, 200, this.operationView(op));
     }
+    if (method === "POST" && path === "/v1/synth_voice" && this.substitutes().includes("synth_voice")) return this.modelCall(req, res, key.id, "synth_voice");
     if (method === "POST" && (m = /^\/v1\/(mint_image|mint_video|embed|audio\/enhance|media\/pull|synth_voice|lipsync_footage|llm|model_call|qa_video|enumerate_profile|harness\/review|[a-z][a-z0-9_]{1,63})$/.exec(path))) {
       req.resume();
       return this.paidToolRefusal(res, m[1]);
@@ -498,11 +530,12 @@ export class LocalGatewayShim {
   }
 
   // ── docs/31: the paid model plane ──────────────────────────────────────
+  private substitutes(): SubstituteTool[] { return this.o.substitutes ?? substitutesFromEnv(); }
   private accountFingerprint(): string { return createHash("sha256").update(`videoclaw-port-account\0${this.ledger.account.id}`).digest("hex"); }
   /** GET /v1/me .operation_recovery — the capability operationContext (L28817) verifies. Only model_call is durable
    *  here: it is the only paid tool this gateway offers. accepting=false when no MiniMax key is configured. */
   operationRecovery() {
-    return { schema: "videoclaw.operation-recovery/v1", account_fingerprint: this.accountFingerprint(), environment: "local", accepting: !!this.o.provider(), tools: ["model_call"] };
+    return { schema: "videoclaw.operation-recovery/v1", account_fingerprint: this.accountFingerprint(), environment: "local", accepting: !!this.o.provider(), tools: ["model_call", ...this.substitutes()] };
   }
   private signingKey(): Buffer {
     const f = join(this.o.dir, "asset-signing.key");
@@ -546,22 +579,26 @@ export class LocalGatewayShim {
     const opPath = String(req.headers["x-videoclaw-operation-path"] ?? "");
     if (String(req.headers["x-videoclaw-operation-method"] ?? "") !== "POST" || !/^\/v1\//.test(opPath)) return this.json(res, 400, { detail: "operation method/path required" });
     const tool = opPath.slice(4).replaceAll("/", ".");
-    if (opPath !== "/v1/model_call") {
+    const subTool = (this.substitutes() as string[]).includes(tool) ? (tool as SubstituteTool) : null;
+    if (opPath !== "/v1/model_call" && !subTool) {
       this.appendSink("paid-refusal", { tool, stage: "quote" });
       return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway does not offer ${tool}: its model backend (MiniMax) has no faithful equivalent for this paid tool. Nothing was charged.`);
     }
     let body: any; try { body = JSON.parse(raw.toString("utf8")); } catch { return this.json(res, 400, { detail: "operation body must be JSON" }); }
     if (body?.client_job !== jobId) return this.refuse(res, 409, "OPERATION_MISMATCH", "The operation names a different video.");
+    const sub = subTool ? substituteCall(subTool, body) : null;
+    if (subTool && !sub) { this.appendSink("paid-refusal", { tool, stage: "quote", substitute: "unmappable" }); return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway cannot substitute this ${tool} request (only mode "tts" with text). Nothing was charged.`); }
     let priced: PricedCall;
-    try { priced = priceCall(body?.model, body?.params); }
+    try { priced = sub ? priceCall(sub.model, sub.params) : priceCall(body?.model, body?.params); }
     catch (e) { return this.refuse(res, 422, e instanceof ModelInputError ? e.code : "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
     const sha256 = operationSha256(opPath, raw);
     const quoteId = `vsq_3.${randomBytes(18).toString("base64url")}`;
-    const q = { quoteId, sha256, jobId, tool: "model_call", model: priced.model.model_slug, estimateUsd: priced.estimateUsd, maximumUsd: priced.maximumUsd, at: this.now() };
+    const q = { quoteId, sha256, jobId, tool: subTool ?? "model_call", model: priced.model.model_slug, estimateUsd: priced.estimateUsd, maximumUsd: priced.maximumUsd, at: this.now() };
     (this.ledger.spendQuotes ??= []).push(q);
     if (this.ledger.spendQuotes.length > 200) this.ledger.spendQuotes.splice(0, this.ledger.spendQuotes.length - 200);
     this.write();
-    return this.json(res, 200, { quote_id: quoteId, operation_sha256: sha256, tool: "model_call", route_mode: priced.model.model_slug, estimate_usd: priced.estimateUsd, maximum_usd: priced.maximumUsd, bound_proven: true, currency: "USD", units: priced.units, price_source: PRICE_SOURCE });
+    if (sub) this.o.log?.(`[local-gateway] SUBSTITUTE quote: ${tool} ${sub.label.requested_model ?? "?"} → ${sub.label.served_model} (${sub.label.served_voice})`);
+    return this.json(res, 200, { quote_id: quoteId, operation_sha256: sha256, tool: subTool ?? "model_call", route_mode: sub ? `substitute:${priced.model.model_slug}` : priced.model.model_slug, estimate_usd: priced.estimateUsd, maximum_usd: priced.maximumUsd, bound_proven: true, currency: "USD", units: priced.units, price_source: PRICE_SOURCE, ...(sub ? { substitute: sub.label } : {}) });
   }
   /** POST /v1/spend-authorities/{job}/permits (mintSpendPermit L30250): one-shot approval for one exact quote. */
   private spendPermit(req: IncomingMessage, res: ServerResponse, jobId: string, raw: Buffer) {
@@ -664,14 +701,14 @@ export class LocalGatewayShim {
   private operationView(op: OperationRow): Record<string, unknown> {
     const terminal = op.status !== "running";
     return {
-      operation_id: op.id, project_id: op.projectId, client_job: op.clientJob, job_id: op.jobId, tool: "model_call", model: op.model, status: op.status,
+      operation_id: op.id, project_id: op.projectId, client_job: op.clientJob, job_id: op.jobId, tool: op.tool ?? "model_call", model: op.model, status: op.status, ...(op.substitute ? { substitute: op.substitute } : {}),
       assets: op.status === "succeeded" ? op.assets.map((a) => ({ asset_id: a.asset_id, content_type: a.content_type, url: this.signedUrl(`/v1/assets/${a.asset_id}`) })) : [],
       ...(terminal ? { cost_usd: op.costUsd ?? 0, cost_source: "minimax-list-price" } : {}),
       ...(op.error ? { error: op.error } : {}),
     };
   }
   /** POST /v1/model_call — durable, exact-quoted, charged once at MiniMax's list price on success. */
-  private async modelCall(req: IncomingMessage, res: ServerResponse, keyId: string): Promise<void> {
+  private async modelCall(req: IncomingMessage, res: ServerResponse, keyId: string, tool: "model_call" | SubstituteTool = "model_call"): Promise<void> {
     const raw = await this.body(req);
     const operationId = req.headers["x-videoclaw-operation-id"];
     const projectId = req.headers["x-videoclaw-project-id"];
@@ -682,7 +719,9 @@ export class LocalGatewayShim {
     const clientJob = typeof body?.client_job === "string" ? body.client_job : "";
     const scoped = req.headers["x-videoclaw-scoped-job"];
     if (!clientJob || (typeof scoped === "string" && scoped !== clientJob)) return this.refuse(res, 409, "OPERATION_MISMATCH", "The operation names a different video.");
-    const sha256 = operationSha256("/v1/model_call", raw);
+    const sub = tool === "model_call" ? null : substituteCall(tool, body);
+    if (tool !== "model_call" && !sub) return this.refuse(res, 422, "TOOL_NOT_OFFERED", `This self-hosted Videoclaw gateway cannot substitute this ${tool} request (only mode "tts" with text). Nothing was charged.`);
+    const sha256 = operationSha256(`/v1/${tool}`, raw);
     const ops = (this.ledger.operations ??= {});
     const existing = ops[operationId];
     if (existing) {
@@ -709,9 +748,9 @@ export class LocalGatewayShim {
     const p = this.o.provider();
     if (!p) return this.refuse(res, 503, "PROVIDER_UNAVAILABLE", "The self-hosted gateway has no MiniMax key configured. Nothing was submitted.");
     let priced: PricedCall;
-    try { priced = priceCall(body.model, body.params); } catch (e) { return this.refuse(res, 422, "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
+    try { priced = sub ? priceCall(sub.model, sub.params) : priceCall(body.model, body.params); } catch (e) { return this.refuse(res, 422, "MODEL_INPUT_INVALID", e instanceof Error ? e.message : "invalid input"); }
     registerSecret(p.key);
-    const op: OperationRow = { id: operationId, jobId: `mc_${randomBytes(12).toString("hex")}`, projectId, clientJob, sha256, model: priced.model.model_slug, quoteId: quote.quoteId, maximumUsd: quote.maximumUsd, status: "running", createdAt: this.now(), assets: [], keyId, ...(priced.model.output_type === "video" ? { request: JSON.stringify({ params: body.params }) } : {}) };
+    const op: OperationRow = { ...(sub ? { tool, substitute: sub.label } : {}), id: operationId, jobId: `mc_${randomBytes(12).toString("hex")}`, projectId, clientJob, sha256, model: priced.model.model_slug, quoteId: quote.quoteId, maximumUsd: quote.maximumUsd, status: "running", createdAt: this.now(), assets: [], keyId, ...(priced.model.output_type === "video" ? { request: JSON.stringify({ params: body.params }) } : {}) };
     ops[operationId] = op;
     this.write();
     const run = this.runOperation(op, priced, p);
@@ -751,10 +790,10 @@ export class LocalGatewayShim {
         op.assets.push({ asset_id: assetId, content_type: o.contentType });
       }
       op.costUsd = out.costUsd; op.upstream = { ...op.upstream, ...out.upstream }; op.status = "succeeded"; op.finishedAt = this.now();
-      const entry: PaidToolEntry = { id: `spend_${randomBytes(6).toString("hex")}`, at: this.now(), kind: "paid_tool", tool: "model_call", usd: out.costUsd, keyId: op.keyId, model: op.model, upstreamModel: priced.model.upstream_model, units: out.units, pricing: { source: PRICE_SOURCE, maximumUsd: op.maximumUsd }, operationId: op.id, clientJob: op.clientJob, status: 200 };
+      const entry: PaidToolEntry = { id: `spend_${randomBytes(6).toString("hex")}`, at: this.now(), kind: "paid_tool", tool: op.tool ?? "model_call", ...(op.substitute ? { substitute: op.substitute } : {}), usd: out.costUsd, keyId: op.keyId, model: op.model, upstreamModel: priced.model.upstream_model, units: out.units, pricing: { source: PRICE_SOURCE, maximumUsd: op.maximumUsd }, operationId: op.id, clientJob: op.clientJob, status: 200 };
       this.ledger.entries.push(entry);
       this.write();
-      this.o.log?.(`[local-gateway] model_call ${op.model} succeeded: $${out.costUsd} (max $${op.maximumUsd})`);
+      this.o.log?.(`[local-gateway] ${op.tool ?? "model_call"} ${op.model}${op.substitute ? ` (SUBSTITUTE for ${op.substitute.requested_model ?? "?"})` : ""} succeeded: $${out.costUsd} (max $${op.maximumUsd})`);
     } catch (e: any) {
       if (op.status !== "running") return; // already canceled (before send / upstream cancelled): keep that settlement
       op.status = e?.terminal === "timeout" ? "timeout" : e?.terminal === "canceled" ? "canceled" : "failed"; op.costUsd = 0; op.finishedAt = this.now();

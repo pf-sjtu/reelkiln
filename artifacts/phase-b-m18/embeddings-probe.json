@@ -1,0 +1,28 @@
+{
+ "when_utc8": "2026-10-22 ~10:30",
+ "endpoint": "POST https://api.minimaxi.com/v1/embeddings",
+ "calls": [
+  {
+   "body_shape": "OpenAI-compatible {model:'embo-01', input:[text]}",
+   "http": 200,
+   "base_resp": {
+    "status_code": 2013,
+    "status_msg": "invalid params, binding: expr_path=texts, cause=missing required parameter"
+   },
+   "verdict": "NOT OpenAI-compatible: the OpenAI `input` field is rejected"
+  },
+  {
+   "body_shape": "native {model:'embo-01', texts:[text], type:'query'}",
+   "http": 200,
+   "base_resp": {
+    "status_code": 0
+   },
+   "vectors": "1 x 1536",
+   "total_tokens": 16,
+   "verdict": "text-only, fixed 1536-d"
+  }
+ ],
+ "engine_contract": "tools/_media/embedder.py GatewayEmbedder: gateway.run('embed', mode=video|image|text, params={dims:768, task_type, ...}, references=[path]); library:sync embeds VIDEO chunks + still IMAGES only (index_media.py); search compares a text/image query against those vectors in one multimodal space",
+ "decision": "cannot serve: no video/image modality, no shared text\u2194video space, 1536 \u2260 768 (not Matryoshka). Shim keeps 422 TOOL_NOT_OFFERED for embed (not_submitted, $0).",
+ "cost_usd_estimate": "<0.00001 (16 tokens, embo-01)"
+}

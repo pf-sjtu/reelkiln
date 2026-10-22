@@ -1,0 +1,210 @@
+{
+ "mode": "real",
+ "jobId": "m18sub-mvixejsl",
+ "engine": "engine-0.1.57-rc7-15f8f2d",
+ "calls": [
+  {
+   "call": "synth_voice --mode tts --voice Kore",
+   "seconds": 4,
+   "stdout": "  Generating TTS (10 words) with voice=Kore via gateway...\n  Natural TTS: 4.43s, 136 WPM (10 words)\n  Wrote: tts/m18sub.mp3\n  Meta:  tts/m18sub.json\n",
+   "stderr": "",
+   "saved": [
+    {
+     "rel": "tts/m18sub.json",
+     "bytes": 1496,
+     "sha256": "cbd94da2152acdda17f6b5502d9d38989eb6ab93f315f43041c02b119635257a",
+     "json": {
+      "evidence_kind": "engine_generated_tts",
+      "beat_id": "m18sub",
+      "text": "Hello. This line is spoken by the substitute voice route.",
+      "voice_preset": "Kore",
+      "voice": "Kore",
+      "voice_id": "Kore",
+      "model": "gemini-3.1-flash-tts",
+      "provider_model": "fal-ai/gemini-3.1-flash-tts",
+      "delivery": "Speak warmly and clearly.",
+      "language_code": "English (US)",
+      "temperature": 1,
+      "natural_duration_sec": 4.428,
+      "natural_wpm": 135.5,
+      "speed": 1,
+      "final_duration_sec": 4.428,
+      "final_wpm": 135.5,
+      "word_count": 10,
+      "audio_sha256": "b21be539d90a435085676bbe45a22760087abda0b8cd56a74298f16b15b59c17",
+      "timing_kind": "utterance_envelope",
+      "words": [
+       {
+        "word": "Hello.",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "This",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "line",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "is",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "spoken",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "by",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "the",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "substitute",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "voice",
+        "start": 0,
+        "end": 4.428
+       },
+       {
+        "word": "route.",
+        "start": 0,
+        "end": 4.428
+       }
+      ],
+      "natural_path": "tts/m18sub.mp3",
+      "final_path": "tts/m18sub.mp3"
+     }
+    },
+    {
+     "rel": "tts/m18sub.mp3",
+     "bytes": 72564,
+     "sha256": "b21be539d90a435085676bbe45a22760087abda0b8cd56a74298f16b15b59c17",
+     "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+       {
+        "codec_name": "mp3",
+        "codec_type": "audio",
+        "sample_rate": "32000"
+       }
+      ],
+      "format": {
+       "format_name": "mp3",
+       "duration": "4.428000",
+       "size": "72564"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "decisions": [
+  {
+   "tool": "synth_voice",
+   "routeMode": "substitute:minimax/speech-2.8-turbo",
+   "maximumUsd": 0.001703,
+   "quoteId": "vsq_3.o9Ao…"
+  }
+ ],
+ "remembered": [
+  {
+   "id": "657e96e7-206c-41f6-9aec-6ea6712951e6",
+   "path": "/v1/synth_voice",
+   "sha256": "d9560004712ec835f02446f116aa8142b39512e38903f9877c9258111de59ef4"
+  }
+ ],
+ "ledger": {
+  "paidTool": [
+   {
+    "tool": "synth_voice",
+    "substitute": {
+     "label": "SUBSTITUTE (not the named model)",
+     "requested_model": "gemini-3.1-flash-tts",
+     "requested_voice": "Kore",
+     "served_model": "minimax/speech-2.8-turbo",
+     "served_voice": "English_expressive_narrator"
+    },
+    "model": "minimax/speech-2.8-turbo",
+    "upstreamModel": "speech-2.8-turbo",
+    "usd": 0.001703,
+    "units": {
+     "billed_characters": 57
+    },
+    "maximumUsd": 0.001703,
+    "clientJob": "m18sub-mvixejsl"
+   }
+  ],
+  "operations": [
+   {
+    "tool": "synth_voice",
+    "substitute": {
+     "label": "SUBSTITUTE (not the named model)",
+     "requested_model": "gemini-3.1-flash-tts",
+     "requested_voice": "Kore",
+     "served_model": "minimax/speech-2.8-turbo",
+     "served_voice": "English_expressive_narrator"
+    },
+    "status": "succeeded",
+    "model": "minimax/speech-2.8-turbo",
+    "costUsd": 0.001703,
+    "maximumUsd": 0.001703,
+    "upstream": {
+     "trace_id": "0728a8caf0637d2c9b96d3c7a537afb2",
+     "audio_length_ms": 4428,
+     "usage_characters": 57
+    }
+   }
+  ],
+  "quotes": 1
+ },
+ "jobBudget": {
+  "job_id": "m18sub-mvixejsl",
+  "client_job": "m18sub-mvixejsl",
+  "revision": 1792636360,
+  "mode": "capped",
+  "ceiling_usd": 0.5,
+  "spent_usd": 0.001703,
+  "llm_spent_usd": 0,
+  "llm_in_flight": 0,
+  "reserved_usd": 0,
+  "state": "ready",
+  "in_flight": [],
+  "available_credit_usd": 4.998297
+ },
+ "engineJournal": [
+  {
+   "file": "657e96e7-206c-41f6-9aec-6ea6712951e6.json",
+   "path": "/v1/synth_voice",
+   "status": "succeeded",
+   "outputs": [
+    "tts/m18sub.mp3"
+   ],
+   "delivered": [
+    "tts/m18sub.mp3"
+   ]
+  }
+ ],
+ "runLogCost": [
+  {
+   "tool": "synth_voice",
+   "status": "succeeded",
+   "cost_source": "minimax-list-price"
+  }
+ ],
+ "totalPaidUsd": 0.001703
+}
