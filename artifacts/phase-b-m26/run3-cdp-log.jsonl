@@ -1,0 +1,106 @@
+{"t":29,"note":"launch dev electron (UI_E2E mode, CDP :47917)"}
+{"t":1062,"cdp":"Page.enable","params":{}}
+{"t":1096,"cdp":"Runtime.enable","params":{}}
+{"t":1105,"note":"page target file://<REPO>/app/out/renderer/index.html"}
+{"t":2832,"action":"click","desc":"Skip tour","selector":"button.tour-skip","at":{"x":667,"y":673},"element":{"x":639,"y":659,"width":56.78125,"height":27,"tag":"BUTTON","cls":"tour-skip","label":"Skip tour"},"hit":{"hitTag":"BUTTON","hitCls":"tour-skip","onTarget":true}}
+{"t":2832,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":667,"y":673}}
+{"t":2834,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":2836,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":667,"y":673,"button":"left","clickCount":1}}
+{"t":3435,"screenshot":"01-home.png"}
+{"t":3439,"note":"STEP home: PASS {\"composer\":true}"}
+{"t":3441,"note":"voiceDictationStatus {\"available\":false,\"attach\":true,\"message\":\"On-device transcription is unavailable on this Mac. You can still type your message.\"}"}
+{"t":3442,"action":"click","desc":"Projects + (Create project)","selector":"button.new-client","at":{"x":218,"y":203},"element":{"x":206,"y":191,"width":24,"height":24,"tag":"BUTTON","cls":"new-client","label":"Create project"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":3443,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":218,"y":203}}
+{"t":3460,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":3462,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":218,"y":203,"button":"left","clickCount":1}}
+{"t":3474,"action":"click","desc":"Project name input","selector":"input.new-client-input","at":{"x":652,"y":407},"element":{"x":439,"y":390,"width":425,"height":33,"tag":"INPUT","cls":"pd-input new-client-input","label":"Project name"},"hit":{"hitTag":"INPUT","hitCls":"pd-input new-client-input","onTarget":true}}
+{"t":3474,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":652,"y":407}}
+{"t":3477,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":3478,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":652,"y":407,"button":"left","clickCount":1}}
+{"t":3480,"cdp":"Input.insertText","params":{"text":"Deep sea short"}}
+{"t":3482,"action":"insertText","into":"input.new-client-input","text":"Deep sea short"}
+{"t":3483,"action":"click","desc":"Create","selector":"button.pd-save","at":{"x":843,"y":456},"element":{"x":806.703125,"y":441,"width":72.296875,"height":29,"tag":"BUTTON","cls":"pd-save","label":"Create"},"hit":{"hitTag":"BUTTON","hitCls":"pd-save","onTarget":true}}
+{"t":3483,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":843,"y":456}}
+{"t":3494,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":3496,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":843,"y":456,"button":"left","clickCount":1}}
+{"t":3802,"action":"click","desc":"New video in Deep sea short","selector":"button.client-new-chat","at":{"x":227,"y":277},"element":{"x":214,"y":264,"width":25,"height":25,"tag":"BUTTON","cls":"client-new-chat","label":"New video in Deep sea short"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":3802,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":95,"y":277}}
+{"t":4062,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":227,"y":277}}
+{"t":4077,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":4079,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":227,"y":277,"button":"left","clickCount":1}}
+{"t":4463,"screenshot":"02-new-video.png"}
+{"t":4463,"note":"STEP project_video: PASS {\"clientId\":\"deep-sea-short\",\"sessionId\":\"317a5691-b65a-4d52-a337-1d3ba7534fb9\",\"title\":\"New video\"}"}
+{"t":4465,"action":"dropFiles","at":{"x":766,"y":721},"files":["narration.mp3","transcript.json","music.mp3","01-anglerfish.mp4","02-firefly-squid.mp4","03-jellyfish.mp4","04-vampire-squid.mp4","05-glowing-waves.mp4","06-ending.jpg"]}
+{"t":4466,"cdp":"Input.dispatchDragEvent","params":{"type":"dragEnter","x":766,"y":721,"data":{"items":[],"files":["<M25_IN>/narration.mp3","<M25_IN>/transcript.json","<M25_IN>/music.mp3","<M25_IN>/01-anglerfish.mp4","<M25_IN>/02-firefly-squid.mp4","<M25_IN>/03-jellyfish.mp4","<M25_IN>/04-vampire-squid.mp4","<M25_IN>/05-glowing-waves.mp4","<M25_IN>/06-ending.jpg"],"dragOperationsMask":19}}}
+{"t":4468,"cdp":"Input.dispatchDragEvent","params":{"type":"dragOver","x":766,"y":721,"data":{"items":[],"files":["<M25_IN>/narration.mp3","<M25_IN>/transcript.json","<M25_IN>/music.mp3","<M25_IN>/01-anglerfish.mp4","<M25_IN>/02-firefly-squid.mp4","<M25_IN>/03-jellyfish.mp4","<M25_IN>/04-vampire-squid.mp4","<M25_IN>/05-glowing-waves.mp4","<M25_IN>/06-ending.jpg"],"dragOperationsMask":19}}}
+{"t":4474,"cdp":"Input.dispatchDragEvent","params":{"type":"drop","x":766,"y":721,"data":{"items":[],"files":["<M25_IN>/narration.mp3","<M25_IN>/transcript.json","<M25_IN>/music.mp3","<M25_IN>/01-anglerfish.mp4","<M25_IN>/02-firefly-squid.mp4","<M25_IN>/03-jellyfish.mp4","<M25_IN>/04-vampire-squid.mp4","<M25_IN>/05-glowing-waves.mp4","<M25_IN>/06-ending.jpg"],"dragOperationsMask":19}}}
+{"t":5674,"screenshot":"03-attachments.png"}
+{"t":5674,"note":"STEP attach: PASS {\"via\":\"drop\",\"ready\":[\"narration.mp3\",\"transcript.json\",\"music.mp3\",\"01-anglerfish.mp4\",\"02-firefly-squid.mp4\",\"03-jellyfish.mp4\",\"04-vampire-squid.mp4\",\"05-glowing-waves.mp4\",\"06-ending.jpg\"],\"storeFile\":true}"}
+{"t":5678,"action":"click","desc":"composer textarea","selector":"textarea","at":{"x":766,"y":721},"element":{"x":287,"y":697,"width":958,"height":48,"tag":"TEXTAREA","cls":"","label":""},"hit":{"hitTag":"TEXTAREA","hitCls":"","onTarget":true}}
+{"t":5678,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":766,"y":721}}
+{"t":5694,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":5697,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":766,"y":721,"button":"left","clickCount":1}}
+{"t":5698,"cdp":"Input.insertText","params":{"text":"Make a vertical YouTube Short (9:16, 1080x1920, 30 fps) called \"Bioluminescent creatures of the deep sea\" from the attac…"}}
+{"t":5709,"action":"insertText","into":"textarea","chars":2258}
+{"t":6186,"screenshot":"04-brief-typed.png"}
+{"t":6190,"action":"click","desc":"Send","selector":"button.send-btn","at":{"x":1228,"y":768},"element":{"x":1211,"y":751,"width":34,"height":34,"tag":"BUTTON","cls":"send-btn","label":"Send"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":6190,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1228,"y":768}}
+{"t":6194,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":6196,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1228,"y":768,"button":"left","clickCount":1}}
+{"t":6562,"note":"STEP brief_send: PASS {\"typedMatches\":true}"}
+{"t":30719,"screenshot":"05-turn-streaming.png"}
+{"t":30722,"controlsDuringTurn":[{"cls":"send-btn stop","aria":null,"title":"Stop","disabled":false}]}
+{"t":1100461,"screenshot":"05b-turn-done.png"}
+{"t":1100467,"note":"title {\"title\":\"Bioluminescent creatures of the deep sea\",\"titleOrigin\":\"automatic\",\"notNewVideo\":true,\"inSidebarDom\":true,\"sequence\":[\"-:New video\",\"fallback:New video\",\"automatic:Bioluminescent creatures of the deep sea\"]}"}
+{"t":1100537,"screenshot":"05c-title.png"}
+{"t":1100537,"note":"STEP stream: PASS {\"turnS\":1094,\"toolStarts\":99,\"textDeltas\":106,\"domTextChanges\":156,\"numTurns\":0,\"isError\":false,\"jobId\":\"make-a-vertical-youtube-short-9-16-1080x-20261023-317a56\",\"controlsDuringTurn\":[{\"cls\":\"send-btn stop\",\"aria\":null,\"title\":\"Stop\",\"disabled\":false}]}"}
+{"t":1130812,"note":"STEP reply_link: FAIL {\"inlineVideos\":0,\"unavailable\":0,\"src\":null,\"readyState\":null,\"duration\":null,\"openLink\":false}"}
+{"t":1130820,"action":"click","desc":"player native play control","selector":".op-preview-stage video","at":{"x":929,"y":317},"element":{"x":905,"y":140,"width":359,"height":227.359375,"tag":"VIDEO","cls":"","label":""},"hit":{"hitTag":"VIDEO","hitCls":"","onTarget":true}}
+{"t":1130820,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":929,"y":317}}
+{"t":1130824,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":929,"y":317,"button":"left","clickCount":1}}
+{"t":1130829,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":929,"y":317,"button":"left","clickCount":1}}
+{"t":1132423,"screenshot":"06-player-playing.png"}
+{"t":1133932,"playbackSamples":[{"t":1792763174908,"currentTime":0.409579,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792763175411,"currentTime":0.912021,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792763175912,"currentTime":1.413887,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792763176501,"currentTime":2.00211,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792763177004,"currentTime":2.505289,"paused":false,"ended":false,"readyState":4,"error":null},{"t":1792763177508,"currentTime":3.009867,"paused":false,"ended":false,"readyState":4,"error":null}]}
+{"t":1133932,"note":"STEP play: PASS {\"ok\":true,\"advancedS\":2.6,\"maxReadyState\":4,\"src\":\"vcmedia://local<RUN>/Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/versions/v1.mp4?consumer=primary-preview-35&version=811e9571312697f67fd08d731e884d88736e27407de77658e5672cdcd77e6158\",\"duration\":43.7,\"size\":\"1080x1920\",\"controls\":true}"}
+{"t":1133936,"action":"click","desc":"Approve V1","selector":"button.v-approve","at":{"x":1085,"y":413},"element":{"x":1038.890625,"y":401.359375,"width":91.21875,"height":24,"tag":"BUTTON","cls":"v-approve","label":"Mark this cut as the final one"},"hit":{"hitTag":"BUTTON","hitCls":"v-approve","onTarget":true}}
+{"t":1133936,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1085,"y":413}}
+{"t":1133949,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1085,"y":413,"button":"left","clickCount":1}}
+{"t":1133954,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1085,"y":413,"button":"left","clickCount":1}}
+{"t":1136026,"screenshot":"07-approved.png"}
+{"t":1136026,"note":"STEP approve: PASS {\"finalizedAtMs\":1792763177610,\"v1Approved\":true,\"finals\":[{\"n\":1,\"via\":\"promote\",\"madeFinalAtMs\":1792763177562}]}"}
+{"t":1136030,"action":"click","desc":"Download v1.mp4","selector":"button.op-preview-download","at":{"x":1241,"y":163},"element":{"x":1226,"y":148,"width":30,"height":30,"tag":"BUTTON","cls":"op-preview-download","label":"Download v1.mp4"},"hit":{"hitTag":"path","hitCls":"[object SVGAnimatedString]","onTarget":true}}
+{"t":1136030,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":1241,"y":163}}
+{"t":1136034,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":1241,"y":163,"button":"left","clickCount":1}}
+{"t":1136037,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":1241,"y":163,"button":"left","clickCount":1}}
+{"t":1138250,"screenshot":"08-exported.png"}
+{"t":1138449,"note":"STEP export: PASS {\"sha\":{\"final\":\"69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732\",\"v1\":\"69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732\",\"export\":\"69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732\"},\"ffprobeRc\":0,\"video\":\"h264 1080x1920 30/1\",\"audio\":\"aac\",\"durationS\":\"43.700000\",\"saveDialogLog\":true}"}
+{"t":1180671,"screenshot":"09a-question-card-1.png"}
+{"t":1180674,"action":"click","desc":"question 1 first option","at":{"x":409,"y":109},"element":{"x":292,"y":94.8125,"width":233.640625,"height":29,"label":"Bold white, 2–4 words, word-timed"}}
+{"t":1180674,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":409,"y":109}}
+{"t":1180680,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":409,"y":109,"button":"left","clickCount":1}}
+{"t":1180683,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":409,"y":109,"button":"left","clickCount":1}}
+{"t":1180989,"action":"click","desc":"question 2 first option","at":{"x":395,"y":271},"element":{"x":292,"y":256.09375,"width":205.875,"height":29,"label":"Bed 14–18 dB under, −14 LUFS"}}
+{"t":1180989,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":395,"y":271}}
+{"t":1180990,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":395,"y":271,"button":"left","clickCount":1}}
+{"t":1180993,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":395,"y":271,"button":"left","clickCount":1}}
+{"t":1181296,"action":"click","desc":"question 3 first option","at":{"x":394,"y":432},"element":{"x":292,"y":417.375,"width":203.125,"height":29,"label":"Hook opens cold, no title card"}}
+{"t":1181296,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":394,"y":432}}
+{"t":1181298,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":394,"y":432,"button":"left","clickCount":1}}
+{"t":1181300,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":394,"y":432,"button":"left","clickCount":1}}
+{"t":1181605,"action":"click","desc":"question 4 first option","at":{"x":408,"y":582},"element":{"x":292,"y":567.65625,"width":231.0625,"height":29,"label":"Project pack only (Recommended)"}}
+{"t":1181605,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":408,"y":582}}
+{"t":1181613,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":408,"y":582,"button":"left","clickCount":1}}
+{"t":1181615,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":408,"y":582,"button":"left","clickCount":1}}
+{"t":1181999,"screenshot":"09b-question-card-1-selected.png"}
+{"t":1182006,"action":"click","desc":"question card Answer","selector":".question-card .q-submit","at":{"x":333,"y":581},"element":{"x":292,"y":565.65625,"width":82.78125,"height":31,"tag":"BUTTON","cls":"q-submit","label":"Answer"},"hit":{"hitTag":"BUTTON","hitCls":"q-submit","onTarget":true}}
+{"t":1182006,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseMoved","x":333,"y":581}}
+{"t":1182008,"cdp":"Input.dispatchMouseEvent","params":{"type":"mousePressed","x":333,"y":581,"button":"left","clickCount":1}}
+{"t":1182010,"cdp":"Input.dispatchMouseEvent","params":{"type":"mouseReleased","x":333,"y":581,"button":"left","clickCount":1}}
+{"t":1182015,"note":"answered question card 1 (taste) [\"Bold white, 2–4 words, word-timed\",\"Bed 14–18 dB under, −14 LUFS\",\"Hook opens cold, no title card\",\"Project pack only (Recommended)\"]"}
+{"t":1219713,"note":"answer verdict {\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":4,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[],\"textsAfter\":1,\"firstTextsAfter\":[\"The user picked 3 rules: captions (bold white 2-4 words word-timed), audio (bed 14-18 dB under, -14 LUFS), edit (hook opens cold, no title card). Scope: project pack only.\\n\\nNow write these into the appropriate COMMITMENTS block. Project scope = the tenant pack for this project. The promise's taste resolution lists project scope as `taste/packs/default/README.md` (doesn't exist). The workspace has `taste/packs/_starter/README.md` — the seed tenant pack with `## COMM"}
+{"t":1219713,"note":"STEP taste_question_card: PASS {\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":4,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[],\"textsAfter\":1,\"firstTextsAfter\":[\"The user picked 3 rules: captions (bold white 2-4 words word-timed), audio (bed 14-18 dB under, -14 LUFS), edit (hook opens cold, no title card). Scope: project pack only."}
+{"t":1289966,"screenshot":"09-after-taste-turn.png"}
+{"t":1289966,"note":"taste-capture {\"stopControlVisibleWhileFinalized\":false,\"cardAnswered\":{\"questions\":4,\"picked\":[\"Bold white, 2–4 words, word-timed\",\"Bed 14–18 dB under, −14 LUFS\",\"Hook opens cold, no title card\",\"Project pack only (Recommended)\"]},\"answerVerdict\":{\"permissionResolved\":true,\"toolEnd\":{\"isError\":false,\"terminal\":\"ok\"},\"mainDecision\":{\"behavior\":\"allow\",\"answers\":4,\"tool\":\"AskUserQuestion\"},\"declinedMentioned\":false,\"pickedLabelsEchoed\":[],\"textsAfter\":1,\"firstTextsAfter\":[\"The user picked 3 rules: captions (bold white 2-4 words word-timed), audio (bed 14-18 dB under, -14 LUFS), edit (hook opens cold, no title card). Scope: project pack only.\\n\\nNow write these into the appropriate COMMITMENTS block. Project scope = the tenant pack for this project. The promise's taste resolution lists project scope as `t"}
+{"t":1289980,"cdp":"Browser.close","params":{}}
+{"t":1290065,"note":"app exited 0"}
+{"t":1290289,"note":"DONE allPass=false"}

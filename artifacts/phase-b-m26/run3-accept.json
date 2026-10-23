@@ -1,0 +1,93 @@
+{
+ "failed": [
+  "E7_duration_6.5s",
+  "E10_cuts_at_2.5_4.5",
+  "E11_music_bed_is_audio",
+  "E13_runlog_assemble_compose",
+  "X1_export_copy_playable",
+  "L2_attachments_materialized"
+ ],
+ "pending": [],
+ "results": {
+  "E1_final_exists": {
+   "ok": true,
+   "detail": "<RUN>/Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/final.mp4"
+  },
+  "E2_ffprobe_exit0": {
+   "ok": true,
+   "detail": ""
+  },
+  "E3_one_h264_video": {
+   "ok": true,
+   "detail": "[('h264', 'yuvj420p')]"
+  },
+  "E4_vertical_9x16": {
+   "ok": true,
+   "detail": "1080x1920"
+  },
+  "E5_fps_30": {
+   "ok": true,
+   "detail": "30/1"
+  },
+  "E6_one_aac_audio": {
+   "ok": true,
+   "detail": "['aac']"
+  },
+  "E7_duration_6.5s": {
+   "ok": false,
+   "detail": "43.700s"
+  },
+  "E8_full_decode_clean": {
+   "ok": true,
+   "detail": ""
+  },
+  "E9_no_black_segments": {
+   "ok": true,
+   "detail": ""
+  },
+  "E10_cuts_at_2.5_4.5": {
+   "ok": false,
+   "detail": "cuts=[32.3, 37.6]"
+  },
+  "E11_music_bed_is_audio": {
+   "ok": false,
+   "detail": "330Hz=-29.3dB 440Hz=-28.6dB"
+  },
+  "E12_render_manifest_binds_final": {
+   "ok": true,
+   "detail": "videoclaw.render-manifest/v4"
+  },
+  "E13_runlog_assemble_compose": {
+   "ok": false,
+   "detail": "['beat_assembled', 'beat_assembled', 'beat_assembled', 'beat_assembled', 'beat_assembled', 'beat_assembled', 'timeline_assembled', 'render_started', 'deliverable_published', 'render_completed', 'finishing_look_done']"
+  },
+  "E14_zero_spend": {
+   "ok": true,
+   "detail": "sum(estimate_usd)=0.0"
+  },
+  "E15_inputs_untouched": {
+   "ok": true,
+   "detail": "originals unchanged"
+  },
+  "A1_version_v1_minted": {
+   "ok": true,
+   "detail": "<RUN>/Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/versions/v1.mp4"
+  },
+  "A2_session_bound_to_job": {
+   "ok": true,
+   "detail": "jobId=make-a-vertical-youtube-short-9-16-1080x-20261023-317a56"
+  },
+  "A3_version_approved": {
+   "ok": true,
+   "detail": "finalizedAtMs=1792763177610 finals(v1)=1 madeFinalAtMs=1792763177562 v1Recorded=True"
+  },
+  "X1_export_copy_playable": {
+   "ok": false,
+   "detail": "sha==v1:True ffprobe_rc=0 duration=43.7"
+  },
+  "L2_attachments_materialized": {
+   "ok": false,
+   "detail": "incoming=['01-anglerfish.mp4', '02-firefly-squid.mp4', '03-jellyfish.mp4', '04-vampire-squid.mp4', '05-glowing-waves.mp4', '06-ending.jpg', 'music.mp3', 'narration.mp3', 'transcript.json']"
+  }
+ }
+}

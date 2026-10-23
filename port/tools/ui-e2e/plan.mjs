@@ -63,3 +63,17 @@ export function attachFileList(filesOpt, fixtureDir, { join, resolve }) {
 export function attachmentReadyRe(name) {
   return new RegExp(`"name":"${String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"[^\\n]*"status":"ready"`);
 }
+
+/** docs/43 M26: the last `agent.spend.metered` main-log record for `sessionId` (optionally only those at/after `sinceIso`),
+ *  so a harness that stops a turn on its own wait-timeout can confirm the spend was written before it quits the app. */
+export function lastSpendMetered(logText, sessionId, sinceIso) {
+  let last = null;
+  for (const line of String(logText).split("\n")) {
+    if (!line.startsWith("{") || !line.includes('"agent.spend.metered"')) continue;
+    let r; try { r = JSON.parse(line); } catch { continue; }
+    if (r.event !== "agent.spend.metered" || (sessionId && r.sessionId !== sessionId)) continue;
+    if (sinceIso && typeof r.ts === "string" && r.ts < sinceIso) continue;
+    last = { ts: r.ts, meter: r.meter, totalUsd: r.totalUsd, runtimeUsd: r.runtimeUsd };
+  }
+  return last;
+}

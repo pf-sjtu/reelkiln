@@ -1,0 +1,12 @@
+[ui-e2e +0.0s] launch dev electron (UI_E2E mode, CDP :47917)
+[ui-e2e +1.6s] page target file://<REPO>/app/out/renderer/index.html
+[ui-e2e +3.4s] STEP home: PASS {"composer":true}
+[ui-e2e +3.5s] voiceDictationStatus {"available":false,"attach":true,"message":"On-device transcription is unavailable on this Mac. You can still type your message."}
+[ui-e2e +4.5s] STEP project_video: PASS {"clientId":"deep-sea-short","sessionId":"015fb471-148c-4beb-9075-bef177b3ef95","title":"New video"}
+[ui-e2e +5.7s] STEP attach: PASS {"via":"drop","ready":["narration.mp3","transcript.json","music.mp3","01-anglerfish.mp4","02-firefly-squid.mp4","03-jellyfish.mp4","04-vampire-squid.mp4","05-glowing-waves.mp4","06-ending.jpg"],"storeFile":true}
+[ui-e2e +6.5s] STEP brief_send: PASS {"typedMatches":true}
+[ui-e2e +6.5s] ERROR Error: turn ended in error (status error): installed engine cannot start a session: the engine's own Python (.venv/bin/python) is missing or damaged
+    at file://<REPO>/port/tools/ui-e2e.mjs:330:97
+[ui-e2e +21.7s] teardown: app still running after Browser.close (QuitCoordinator dialog?) → SIGTERM, then SIGKILL
+[ui-e2e +21.7s] app exited null
+[ui-e2e +21.9s] DONE allPass=false

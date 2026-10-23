@@ -1,0 +1,29 @@
+{
+ "make-a-vertical-youtube-short-9-16-1080x-20261023-317a56": {
+  "lastQaMs": 0,
+  "versions": [
+   {
+    "n": 1,
+    "path": "<RUN>/Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/versions/v1.mp4",
+    "createdAtMs": 1792762964902.2878,
+    "completedAtMs": 1792762964902.2878,
+    "sizeBytes": 27705885,
+    "approved": true,
+    "reviewed": false,
+    "feedback": [],
+    "renderSha256": "69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732",
+    "approvedAtMs": 1792763177562
+   }
+  ],
+  "finals": [
+   {
+    "id": "07bd356f-6ce7-4512-b1a9-ed54576dd904",
+    "n": 1,
+    "path": "<RUN>/Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/versions/v1.mp4",
+    "qaSha256": "69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732",
+    "madeFinalAtMs": 1792763177562,
+    "via": "promote"
+   }
+  ]
+ }
+}

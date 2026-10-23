@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 import { resolveRendererEntry } from "../src/main/renderer-entry";
 import { smokeDialog } from "../src/main/media/media-ipc";
 import { Cdp, mouseClick, dropFiles, pressKey, typeText } from "../tools/ui-e2e/cdp.mjs";
-import { answerDeclined, attachFileList, attachmentReadyRe, center, nativePlayButton, playbackVerdict, redactEvidence, S1_FIXTURE_FILES, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
+import { answerDeclined, attachFileList, attachmentReadyRe, center, lastSpendMetered, nativePlayButton, playbackVerdict, redactEvidence, S1_FIXTURE_FILES, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
 
 const base = { packaged: false, appPath: "/repo/port", resourcesPath: "/res", mainDir: "/repo/port/dist/main", exists: () => true };
 
@@ -121,4 +121,16 @@ test("docs/42 --files: attach list defaults to the S1 fixtures, else the given f
   assert.ok(!attachmentReadyRe("ab+c.mp4").test('{"name":"abbc.mp4","status":"ready"}'), "'+' is literal, not a quantifier");
   assert.ok(!attachmentReadyRe("a.b.mp4").test('{"name":"aXbXmp4","status":"ready"}'), "every '.' escaped (the old replace only escaped the first)");
   assert.ok(!attachmentReadyRe("clip_a.mp4").test('{"name":"clip_a.mp4","status":"uploading"}'));
+});
+
+test("docs/43 M26: lastSpendMetered finds the session's spend record written after the harness's own Stop", () => {
+  const log = [
+    '{"ts":"2026-10-23T06:00:00.000Z","level":"info","event":"agent.spend.metered","sessionId":"s1","meter":"proxy","totalUsd":0.1,"runtimeUsd":0.1}',
+    "not json",
+    '{"ts":"2026-10-23T06:10:00.000Z","level":"info","event":"agent.spend.metered","sessionId":"s2","meter":"proxy","totalUsd":9}',
+    '{"ts":"2026-10-23T06:20:00.000Z","level":"info","event":"agent.spend.metered","sessionId":"s1","meter":"proxy","totalUsd":0.42,"runtimeUsd":0.32}',
+  ].join("\n");
+  assert.deepEqual(lastSpendMetered(log, "s1"), { ts: "2026-10-23T06:20:00.000Z", meter: "proxy", totalUsd: 0.42, runtimeUsd: 0.32 });
+  assert.equal(lastSpendMetered(log, "s1", "2026-10-23T06:30:00.000Z"), null);
+  assert.equal(lastSpendMetered(log, "s3"), null);
 });

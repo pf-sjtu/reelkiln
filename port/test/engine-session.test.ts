@@ -30,7 +30,7 @@ class FakeQuery {
 }
 const result = { type: "result", subtype: "success", is_error: false, num_turns: 1, duration_ms: 5, total_cost_usd: 0 };
 
-function engineHarness(o: { script?: (text: string, q: FakeQuery) => AsyncGenerator<Record<string, any>>; engineEnv?: Record<string, string> } = {}) {
+function engineHarness(o: { script?: (text: string, q: FakeQuery) => AsyncGenerator<Record<string, any>>; engineEnv?: Record<string, string>; maxTurns?: number; turnTimeoutMs?: number } = {}) {
   setLoggerForTests(createLogger({ level: "silent" }));
   const root = mkdtempSync(join(tmpdir(), "vc-engsess-"));
   const ws = join(root, "Videoclaw"); mkdirSync(join(ws, "jobs"), { recursive: true });
@@ -58,6 +58,8 @@ function engineHarness(o: { script?: (text: string, q: FakeQuery) => AsyncGenera
     sessionsRoot: join(root, "agent-sessions"),
     engine,
     persist: (rows) => persisted.push(rows),
+    ...(o.maxTurns !== undefined ? { maxTurns: o.maxTurns } : {}),
+    ...(o.turnTimeoutMs !== undefined ? { turnTimeoutMs: o.turnTimeoutMs } : {}),
   });
   return { host, root, ws, events, perms, persisted, queries, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
@@ -256,4 +258,28 @@ test("M1 home boot: account snapshot (local studio default / honest signed-out w
   assert.equal(resolveRendererEntry({ ...base, env: { VIDEOCLAW_PORT_SMOKE: "1", VIDEOCLAW_PORT_SMOKE_HOME: "1" } }).kind, "original");
   assert.equal(resolveRendererEntry({ ...base, env: {}, exists: () => false }).kind, "port");
   assert.equal(resolveRendererEntry({ ...base, env: { ELECTRON_RENDERER_URL: "http://x" } }).url, "http://x");
+});
+
+test("docs/43: an ENGINE turn has no wall-clock limit and no maxTurns by default (the original sets neither); both stay opt-in", async () => {
+  const hang = async function* () { yield { type: "system", subtype: "init", model: "MiniMax-M3.1-Flash" }; await new Promise(() => {}); };
+  const h = engineHarness({ script: hang });
+  try {
+    const meta = h.host.createSession({});
+    await h.host.sendMessage(meta.sessionId, "long production");
+    await until(() => h.queries.length === 1);
+    assert.equal("maxTurns" in h.queries[0].options, false, "no maxTurns on the engine query (original parity)");
+    const s: any = (h.host as any).sessions.get(meta.sessionId);
+    assert.equal(s.turnTimer, undefined, "no per-turn wall-clock timer");
+    assert.equal(h.host.listSessions()[0].status, "running");
+  } finally { await h.host.dispose(); h.cleanup(); }
+  const o = engineHarness({ script: hang, maxTurns: 7, turnTimeoutMs: 40 });
+  try {
+    const meta = o.host.createSession({});
+    await o.host.sendMessage(meta.sessionId, "bounded test turn");
+    await until(() => o.queries.length === 1);
+    assert.equal(o.queries[0].options.maxTurns, 7, "explicit opt-in bound is passed through");
+    await until(() => o.events.some((e) => e.event.kind === "error"));
+    assert.match((o.events.find((e) => e.event.kind === "error")!.event as any).message, /did not finish within 0 s/);
+    assert.equal(o.host.listSessions()[0].status, "error");
+  } finally { await o.host.dispose(); o.cleanup(); }
 });

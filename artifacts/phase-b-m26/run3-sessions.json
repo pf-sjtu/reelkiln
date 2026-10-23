@@ -1,0 +1,33 @@
+{
+ "clients": [
+  {
+   "clientId": "personal",
+   "name": "Personal"
+  },
+  {
+   "clientId": "deep-sea-short",
+   "name": "Deep sea short"
+  }
+ ],
+ "sessions": [
+  {
+   "sessionId": "317a5691-b65a-4d52-a337-1d3ba7534fb9",
+   "title": "Bioluminescent creatures of the deep sea",
+   "cwd": "<RUN>/Videoclaw",
+   "status": "idle",
+   "permissionMode": "auto",
+   "totalCostUsd": 0.56457031,
+   "createdAt": 1792762047658,
+   "clientId": "deep-sea-short",
+   "agentHarness": "claude-code",
+   "llmRoute": "minimax",
+   "titleOrigin": "automatic",
+   "jobId": "make-a-vertical-youtube-short-9-16-1080x-20261023-317a56",
+   "sdkSessionId": "2dd95872-d4fc-40c2-9d9e-941e75c1ca82",
+   "finalizedAtMs": 1792763177610,
+   "contextEpoch": "60a2e3a8-2771-44c7-9c3d-b3ebcc2bbab0",
+   "sessionPlanRequired": true
+  }
+ ],
+ "trashWorkspaces": []
+}

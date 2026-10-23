@@ -1,0 +1,55 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "beats": [
+    {
+      "name": "b1_anglerfish",
+      "source": "slow/01-anglerfish.mp4",
+      "in": 0.0,
+      "out": 10.2,
+      "role": "hook"
+    },
+    {
+      "name": "b2_firefly_squid",
+      "source": "slow/02-firefly-squid.mp4",
+      "in": 0.0,
+      "out": 7.6,
+      "role": "broll"
+    },
+    {
+      "name": "b3_jellyfish",
+      "source": "slow/03-jellyfish.mp4",
+      "in": 0.0,
+      "out": 7.5,
+      "role": "broll"
+    },
+    {
+      "name": "b4_vampire_squid",
+      "source": "slow/04-vampire-squid.mp4",
+      "in": 0.0,
+      "out": 7.0,
+      "role": "broll"
+    },
+    {
+      "name": "b5_glowing_waves",
+      "source": "slow/05-glowing-waves.mp4",
+      "in": 0.0,
+      "out": 5.3,
+      "role": "broll"
+    },
+    {
+      "name": "b6_ending",
+      "source": "images/06-ending.jpg",
+      "duration": 6.1,
+      "motion": "kenburns_in",
+      "role": "endcard"
+    }
+  ],
+  "audio": {
+    "from_beats": false,
+    "vo": {"source": "audio/narration.mp3"},
+    "bed": {"source": "audio/music_bed.wav", "under_voice_db": 16}
+  },
+  "output": "final_raw.mp4"
+}

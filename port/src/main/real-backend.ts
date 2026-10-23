@@ -606,8 +606,9 @@ export function createRealHandlers(push: (channel: string, ...a: unknown[]) => b
         },
         // docs/28: the Claude Code half — no login probe / login child (PORT defaults); catalog = MiniMax
         claude: { modelSource: miniMaxClaudeModelSource(() => resolveMiniMaxCodexProvider()) },
-        // PORT-NEW: VIDEOCLAW_PORT_TURN_TIMEOUT_MS overrides the per-turn safety net (engine default 20 min)
+        // PORT-NEW opt-in bounds (docs/43): the original sets no per-turn wall clock and no maxTurns; tests may set them
         ...(Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) > 0 ? { turnTimeoutMs: Number(process.env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS) } : {}),
+        ...(Number(process.env.VIDEOCLAW_PORT_MAX_TURNS) > 0 ? { maxTurns: Number(process.env.VIDEOCLAW_PORT_MAX_TURNS) } : {}),
       });
       const h = host;
       // L61127 verbatim: PDFKit via /usr/bin/osascript on darwin; "unavailable" elsewhere (docs/39 M22)

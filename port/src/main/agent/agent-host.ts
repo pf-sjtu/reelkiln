@@ -166,7 +166,8 @@ export interface AgentHostDeps {
   maxConcurrentTurns?: number;
   maxTurns?: number;
   interruptAckTimeoutMs?: number;
-  /** Safety net for a turn that never produces a result (default 5 min). */
+  /** OPT-IN wall-clock bound for one turn (docs/43). The original sets NO per-turn time limit (a long engine
+   *  turn — e.g. CPU-bound ffmpeg — simply runs until it ends or the user presses Stop), so unset = no timer. */
   turnTimeoutMs?: number;
   logger?: Logger;
   now?: () => number;
@@ -1310,9 +1311,12 @@ export class AgentHost {
       throw new ComposerDeliveryError(message);
     }
     if ((s.meta.status as SessionStatus) !== "running" || s.runtime !== rt) return false; // stopped while spawning
-    const timeoutMs = this.d.turnTimeoutMs ?? (this.d.engine ? 20 * 60_000 : 5 * 60_000);
-    s.turnTimer = setTimeout(() => { if (s.meta.status === "running" || s.meta.status === "awaiting_permission") { this.send(s, { kind: "error", message: `The turn did not finish within ${Math.round(timeoutMs / 1000)} s and was stopped.`, canRetry: true }); this.teardownRuntime(s, "turn-timeout"); this.setStatus(s, "error"); } }, timeoutMs);
-    (s.turnTimer as any).unref?.();
+    // docs/43: the original has no per-turn wall clock (M25's 2640 s stop was this PORT-NEW timer) → opt-in only
+    const timeoutMs = this.d.turnTimeoutMs;
+    if (timeoutMs !== undefined && timeoutMs > 0) {
+      s.turnTimer = setTimeout(() => { if (s.meta.status === "running" || s.meta.status === "awaiting_permission") { this.send(s, { kind: "error", message: `The turn did not finish within ${Math.round(timeoutMs / 1000)} s and was stopped.`, canRetry: true }); this.teardownRuntime(s, "turn-timeout"); this.setStatus(s, "error"); } }, timeoutMs);
+      (s.turnTimer as any).unref?.();
+    }
     // docs/25: persistDisplayTurn (L41820) BEFORE delivery — the sidecar row the history replay maps
     // the SDK transcript's engine text back to (what the user typed, not the app-owned preambles)
     this.persistDisplayTurn(s, input.msg, input.displayTexts, input.attachmentIds);
@@ -1881,8 +1885,9 @@ export class AgentHost {
       hooks: makeEngineHooks(engine, policyHost, sessionId, sp.engineEnv),
       mcpServers: studioServer ? { studio: studioServer } : {}, // L23280: the studio MCP (makeStudioToolset L48166)
       strictMcpConfig: true,
-      // PORT-NEW safety net (the original sets none): bounds a looping model on a shared key
-      maxTurns: this.d.maxTurns ?? 120,
+      // docs/43: the original sets no maxTurns on an engine session (a real production needs >120 model calls;
+      // M25 made 106 in 44 min) → only an explicit opt-in bound (VIDEOCLAW_PORT_MAX_TURNS) is passed
+      ...(this.d.maxTurns !== undefined && this.d.maxTurns > 0 ? { maxTurns: this.d.maxTurns } : {}),
       // docs/25: the original keeps the SDK's local transcript (persistSession default) and resumes the
       // video's sdkSessionId on every respawn (createLocalRuntime resume L39544) — session:history replays it
       ...(this.resumableSdkSession(s) ? { resume: s.meta.sdkSessionId } : {}),
@@ -2056,6 +2061,9 @@ export class AgentHost {
     }
     const rt = s.runtime;
     if (!rt) return;
+    // docs/43: a runtime retired without an SDK result (turn-timeout, stream end, ack timeout) still spent real
+    // tokens — the gate proxy metered them, so record that cost before the runtime goes (max(), never double)
+    try { if (s.runtime === rt) this.meterResultCost(s, rt, undefined); } catch (e) { this.log.warn("agent.spend.teardown_meter_failed", { error: e }); }
     rt.dead = true;
     s.runtime = undefined;
     s.staleResults = 0;

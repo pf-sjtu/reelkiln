@@ -10,3 +10,4 @@ export function answerDeclined(texts: unknown[]): boolean;
 export const S1_FIXTURE_FILES: string[];
 export function attachFileList(filesOpt: string | undefined | null, fixtureDir: string, path: { join: (...p: string[]) => string; resolve: (...p: string[]) => string }): string[];
 export function attachmentReadyRe(name: string): RegExp;
+export function lastSpendMetered(logText: string, sessionId?: string, sinceIso?: string): { ts?: string; meter?: string; totalUsd?: number; runtimeUsd?: number } | null;

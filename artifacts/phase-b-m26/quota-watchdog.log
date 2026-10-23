@@ -1,0 +1,13 @@
+21:40:51 general=32
+21:41:23 general=32
+21:41:54 general=32
+21:42:25 general=31
+21:42:57 general=31
+21:43:29 general=31
+21:44:02 general=30
+21:44:33 general=30
+21:45:09 general=30
+21:45:41 general=29
+BELOW 30 → Stop
+stop button { x: 836, y: 768 }
+clicked Stop

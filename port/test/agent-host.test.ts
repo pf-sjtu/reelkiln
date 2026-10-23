@@ -53,7 +53,7 @@ const textTurn = (reply: string, id = "msg_1"): Script => async function* () {
   yield { type: "assistant", message: { id, content: [{ type: "text", text: reply }] }, parent_tool_use_id: null };
   yield { type: "result", subtype: "success", is_error: false, num_turns: 1, duration_ms: 12, total_cost_usd: 0.01 };
 };
-function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxConcurrentTurns?: number; interruptAckTimeoutMs?: number; route?: string; price?: (m: string) => any; proxyStats?: () => any } = {}) {
+function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxConcurrentTurns?: number; interruptAckTimeoutMs?: number; route?: string; price?: (m: string) => any; proxyStats?: () => any; turnTimeoutMs?: number } = {}) {
   silent();
   const root = mkdtempSync(join(tmpdir(), "vc-agenthost-"));
   const events: Array<{ sessionId: string; event: SessionEvent }> = [];
@@ -73,6 +73,7 @@ function harness(o: { script?: Script; readiness?: Record<string, unknown>; maxC
     loadSdk: async () => { sdkLoads++; return { sdk: { query: ({ prompt, options }) => { const q = new FakeQuery(prompt as any, options, o.script ?? textTurn("Hello from the agent.")); queries.push(q); return q as any; } }, executable: "/x/claude" }; },
     sessionsRoot: root, maxConcurrentTurns: o.maxConcurrentTurns, interruptAckTimeoutMs: o.interruptAckTimeoutMs ?? 200,
     ...(o.price ? { price: o.price, servedModel: () => "MiniMax-M3.1-Flash" } : {}),
+    ...(o.turnTimeoutMs !== undefined ? { turnTimeoutMs: o.turnTimeoutMs } : {}),
   });
   const kinds = (sid: string) => events.filter((e) => e.sessionId === sid).map((e) => e.event.kind);
   return { host, events, changed, queries, handles, root, kinds, setRoute: (r: string) => { route = r; }, sdkLoads: () => sdkLoads, cleanup: () => rmSync(root, { recursive: true, force: true }) };
@@ -499,5 +500,22 @@ test("docs/30 inputs: requestInput (L48142) parks a pending input card, respondI
     const settled = h.events.map((e) => e.event).find((e: any) => e.kind === "ask_settled") as any;
     assert.ok(settled, "ask_settled event");
     assert.deepEqual([settled.record.askId, settled.record.family, settled.record.outcome, settled.record.title], [pending[0].request.requestId, "rights", "answered", "Rights confirmation"]);
+  } finally { await h.host.dispose(); h.cleanup(); }
+});
+
+test("docs/43 spend: a runtime retired WITHOUT an SDK result (opt-in turn timeout) still meters the gate proxy's upstream usage, once", async () => {
+  const usage: any = { "MiniMax-M3.1-Flash": { inputTokens: 1000, outputTokens: 100, cacheReadTokens: 2000, cacheWriteTokens: 0, calls: 3 } };
+  const hang: Script = async function* () { yield { type: "system", subtype: "init", model: "MiniMax-M3.1-Flash" }; await new Promise(() => {}); };
+  const h = harness({ price: () => FLASH, proxyStats: () => ({ usage }), script: hang, turnTimeoutMs: 30 });
+  try {
+    const { sessionId } = h.host.createSession({});
+    await h.host.sendMessage(sessionId, { text: "hi", clientTurnId: "c1" });
+    await until(() => h.kinds(sessionId).includes("error"));
+    const want = (1000 * 0.15 + 100 * 0.6 + 2000 * 0.015) / 1e6;
+    const meta = h.host.listSessions().find((m) => m.sessionId === sessionId)!;
+    assert.ok(Math.abs(meta.totalCostUsd - want) < 1e-12, `teardown metered ${meta.totalCostUsd} vs ${want}`);
+    const s: any = (h.host as any).sessions.get(sessionId);
+    (h.host as any).teardownRuntime(s, "again"); // no runtime left → nothing re-metered
+    assert.ok(Math.abs(h.host.listSessions().find((m) => m.sessionId === sessionId)!.totalCostUsd - want) < 1e-12, "never double-counted");
   } finally { await h.host.dispose(); h.cleanup(); }
 });

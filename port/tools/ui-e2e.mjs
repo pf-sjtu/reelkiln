@@ -21,7 +21,7 @@ import { createHash } from "node:crypto";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Cdp, waitForPageTarget, mouseClick, mouseMove, typeText, dropFiles, screenshot } from "./ui-e2e/cdp.mjs";
-import { answerDeclined, attachFileList, attachmentReadyRe, center, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
+import { answerDeclined, attachFileList, attachmentReadyRe, center, lastSpendMetered, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PORT_DIR = resolve(HERE, "..");
@@ -36,7 +36,9 @@ const EXE = opt("--exe"); // docs/36: a packaged Windows (or any directly runnab
 const WIN = process.platform === "win32";
 const CDP_PORT = Number(opt("--port", "9351"));
 const PROJECT = opt("--project", "S1 UI e2e");
-const TURN_TIMEOUT_MS = Number(opt("--turn-timeout-ms", String(26 * 60_000)));
+const TURN_TIMEOUT_MS = Number(opt("--turn-timeout-ms", String(26 * 60_000))); // the HARNESS wait only
+// docs/43 M26: the original has no per-turn wall clock, so the app gets one only on request (PORT-NEW, opt-in)
+const APP_TURN_TIMEOUT_MS = opt("--app-turn-timeout-ms") ? Number(opt("--app-turn-timeout-ms")) : null;
 const ATTACH_VIA = opt("--attach-via", "drop"); // drop | picker
 const EXTRA_DOCS = argv.includes("--extra-docs"); // docs/40 M23: also drop a .zip, an .xlsx and a .pdf (archive / workbook / PDF readers)
 const STOP_AFTER = opt("--stop-after"); // "attach" ($0 UI check) | "quickstart" | "card" (stop once an answered question card is acknowledged)
@@ -79,8 +81,8 @@ const steps = {}; const verdict = (id, ok, detail) => { steps[id] = { ok, ...det
 
 // ---- launch ----------------------------------------------------------------------------------
 const env = { ...process.env, HOME: RUN, ...(WIN ? { USERPROFILE: RUN } : { UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? join(process.env.HOME ?? "/home/box", ".local", "share", "uv", "python") }), ...(ATTACH_VIA === "picker" ? { VIDEOCLAW_PORT_SMOKE_PICK_FILES: FILES.join("\n") } : {}), VIDEOCLAW_PORT_UI_E2E: "1", VIDEOCLAW_PORT_SMOKE_LLM_ROUTE: "minimax",
-  VIDEOCLAW_PORT_SMOKE_SAVE_AS: EXPORT, VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl"),
-  VIDEOCLAW_PORT_TURN_TIMEOUT_MS: String(TURN_TIMEOUT_MS - 60_000) };
+  VIDEOCLAW_PORT_SMOKE_SAVE_AS: EXPORT, VIDEOCLAW_PORT_EVENT_LOG: join(OUT, "events.jsonl") };
+delete env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS; if (APP_TURN_TIMEOUT_MS) env.VIDEOCLAW_PORT_TURN_TIMEOUT_MS = String(APP_TURN_TIMEOUT_MS);
 delete env.VIDEOCLAW_CLAUDE_AGENT_SDK; delete env.VIDEOCLAW_PORT_SMOKE;
 // docs/38 M21: macOS — HOME=RUN has no login keychain; Chromium's mock keychain keeps safeStorage off the real one
 const appArgs = ["--no-sandbox", `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${UD}`, ...(process.platform === "darwin" ? ["--use-mock-keychain"] : [])];
@@ -198,6 +200,27 @@ async function settleVerdict(card, ms = 180_000) { // wait for the tool_end + th
 
 const summary = { started: new Date().toISOString(), mode: EXE ? `exe (${process.platform})` : APPIMAGE ? "AppImage" : "dev", steps, driven: [], notDriven: [], fallbacksToIpc: [], questionCards: [] };
 const drove = (el, how) => summary.driven.push({ element: el, how });
+
+/** docs/43 M26: harness wait-timeout → click the original composer Stop, wait for the turn to settle and for the
+ *  main process's agent.spend.metered record, then let the normal quit (original QuitCoordinator dialog) run. */
+async function stopTurnFromUi(sessionId, phase) {
+  const sinceIso = new Date().toISOString(); const out = { phase, at: sinceIso };
+  try {
+    await click("Stop (harness wait timed out)", "button.send-btn.stop", { timeoutMs: 15_000 });
+    drove("composer Stop (button.send-btn.stop) on harness wait-timeout", "click → session interrupt");
+    out.clicked = true;
+  } catch (e) { out.clicked = false; out.clickError = String(e?.message ?? e).slice(0, 200); }
+  const settled = await waitFor("turn settled after Stop", async () => {
+    const evs = events().filter((e) => e.ch === "session:event" && e.payload?.sessionId === sessionId).map((e) => e.payload.event);
+    const r = sessions().sessions.find((x) => x.sessionId === sessionId);
+    return evs.some((e) => e?.kind === "result") || (r && r.status !== "running" && r.status !== "awaiting_permission") ? (r?.status ?? "result") : null;
+  }, { timeoutMs: 90_000, every: 1000 }).catch(() => null);
+  out.settled = settled;
+  out.metered = await waitFor("agent.spend.metered after Stop", async () => lastSpendMetered(readFileSync(mainLog, "utf8"), sessionId, sinceIso), { timeoutMs: 60_000, every: 1000 }).catch(() => null);
+  await shot(`05x-${phase}-stopped`).catch(() => {});
+  log({ turnWaitTimeout: out });
+  return out;
+}
 let sid = null, jobId = null;
 try {
   // 1. home -----------------------------------------------------------------------------------
@@ -301,6 +324,10 @@ try {
       log({ controlsDuringTurn });
     }
     if (result) break;
+    // docs/43 M26: a turn that ended in an error (e.g. the SDK failed to spawn) never yields a result — fail now, not at the wait limit
+    const errEv = evs.map((e) => e.payload.event).filter((e) => e?.kind === "error").pop();
+    const row = errEv && sessions().sessions.find((x) => x.sessionId === sid);
+    if (errEv && row && row.status !== "running" && row.status !== "awaiting_permission") throw new Error(`turn ended in error (status ${row.status}): ${String(errEv.message).slice(0, 300)}`);
     const card = await answerQuestionCard("main");
     if (card) {
       await settleVerdict(card);
@@ -309,7 +336,11 @@ try {
     }
     await sleep(2000);
   }
-  if (!result) throw new Error("turn timeout");
+  if (!result) {
+    // docs/43 M26: stop the turn the way a user would (composer Stop) BEFORE quitting, so the app writes its spend record
+    summary.turnWaitTimeout = await stopTurnFromUi(sid, "main");
+    throw new Error(`turn timeout: harness wait ${Math.round(TURN_TIMEOUT_MS / 1000)} s elapsed; stopped from the UI (${JSON.stringify(summary.turnWaitTimeout).slice(0, 300)})`);
+  }
   const evs = events().filter((e) => e.ch === "session:event" && e.payload?.sessionId === sid).map((e) => e.payload.event);
   await sleep(2000);
   await shot("05b-turn-done");

@@ -1,0 +1,17 @@
+69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/final.mp4
+69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/versions/v1.mp4
+69bf7e4d87e99dde97ae373081f7842efb6db47f15ae72074cd9f3f42a23c732  export/s1.mp4
+a693fb8aecc794ef6f20970dd6d9e1fe4e00b9d9c6ceaea4cdf628a361400cd3  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/01-anglerfish.mp4
+23b48507b9dbeb2f6de637ba49683bead6ffda84728f4474985061e86908898b  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/02-firefly-squid.mp4
+fcd74ac4271c7ad6f79aff67e0078de51d8e7f9c69b79aa0867613c26b4ab51d  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/03-jellyfish.mp4
+ff21fa685e887ac01cd5b1e5d183371eee8486626f132f83ac654330ea55ca46  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/04-vampire-squid.mp4
+70fd436b96d1e72dd42c7169ca9dbfb874fde15c5e5855b4b2a9f2ab15a17cc4  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/05-glowing-waves.mp4
+68e34878d35f9777de454bfb93d6c1359e9aa89783b18393d452380fd10e6558  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/06-ending.jpg
+7b0c052f4479fccbcc869da9996e29ec83da0c3043b56bf6f439416ca72ab076  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/music.mp3
+ccd1a89545433984caa7bbff6bf4f16f88431e4d2028f22d03f48d4e46e34ec9  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/narration.mp3
+581a646333ebafa8e6e96356b12d147c0f4672e34c5ac91acd033d981afe896a  Videoclaw/jobs/make-a-vertical-youtube-short-9-16-1080x-20261023-317a56/incoming/transcript.json
+9724939462d08bfa34e1f8ad407cc608fdd11d9c28a8c5a020aa8ef3d445b058  in/SHA256SUMS
+6c87f8d98d1c39e1267371b88a8d790d65b7d13f269926943e1be4b4b2fd37f1  in/clip_a.mp4
+572389d3b0a03bcfc5688172b121edd3d0e3a5fc8b9b46d662003b5464dbee64  in/clip_b.mp4
+f21e9d4b2e9d4aa2fcc9d5beee32919fa185ecf5090b306dbaacf59cd53aac2b  in/clip_c.mp4
+c79d88498e1e0442e81819a149690b0e0f9d354fd9e5c2d365b0b4ae2082e242  in/music.mp3
