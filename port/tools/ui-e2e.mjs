@@ -22,6 +22,15 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Cdp, waitForPageTarget, mouseClick, mouseMove, typeText, dropFiles, screenshot } from "./ui-e2e/cdp.mjs";
 import { answerDeclined, attachFileList, attachmentReadyRe, center, lastSpendMetered, nativePlayButton, playbackVerdict, S1_UI_STEPS } from "./ui-e2e/plan.mjs";
+// docs/43 M26: halt (tools/quota-watchdog.mjs writes --halt-file and SIGTERMs us): stop the running turn, start no
+// further turn, quit normally. While unwinding, the halt check is off so Stop/quit can still wait on the UI.
+const HALT_FILE_ARG = process.argv.includes("--halt-file") ? process.argv[process.argv.indexOf("--halt-file") + 1] : null;
+let HALT = null, UNWINDING = false;
+for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, () => { HALT ??= { via: sig, at: new Date().toISOString() }; });
+function checkHalt() {
+  if (!HALT && HALT_FILE_ARG && existsSync(HALT_FILE_ARG)) HALT = { via: "halt-file", at: new Date().toISOString(), file: readFileSync(HALT_FILE_ARG, "utf8").trim() };
+  if (HALT && !UNWINDING) throw Object.assign(new Error(`halted (${HALT.via})`), { planned: true, halted: true });
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PORT_DIR = resolve(HERE, "..");
@@ -126,7 +135,7 @@ const shot = async (name) => { const p = join(SHOTS, `${name}.png`); writeFileSy
 const bodyText = () => cdp.eval("document.body ? document.body.innerText : ''");
 async function waitFor(desc, fn, { timeoutMs = 30_000, every = 300 } = {}) {
   const ts = Date.now(); let v;
-  while (Date.now() - ts < timeoutMs) { v = await fn().catch(() => null); if (v) return v; await sleep(every); }
+  while (Date.now() - ts < timeoutMs) { checkHalt(); v = await fn().catch(() => null); if (v) return v; await sleep(every); }
   throw new Error(`timeout waiting for ${desc}`);
 }
 /** geometry of the first VISIBLE element matching selector (+ optional text/aria regex); read-only. */
@@ -314,6 +323,7 @@ try {
   // 5. stream ---------------------------------------------------------------------------------
   let streamShot = false, controlsDuringTurn = null, lastLen = 0, growth = 0, result = null;
   while (Date.now() - tSend < TURN_TIMEOUT_MS) {
+    checkHalt();
     const evs = events().filter((e) => e.ch === "session:event" && e.payload?.sessionId === sid);
     result = evs.map((e) => e.payload.event).find((e) => e?.kind === "result") ?? null;
     const txt = await bodyText().catch(() => ""); if (txt.length !== lastLen) { growth++; lastLen = txt.length; }
@@ -404,6 +414,7 @@ try {
   // 9. taste-capture follow-up turn (original behaviour after the first approval) ------------
   const tTaste = Date.now(); let tasteResult = null; let tasteStarted = false;
   while (Date.now() - tTaste < TASTE_WAIT_MS) {
+    checkHalt();
     const evs2 = events().filter((e) => e.ch === "session:event" && e.payload?.sessionId === sid && Date.parse(e.t) >= row.finalizedAtMs).map((e) => e.payload.event);
     tasteStarted = tasteStarted || evs2.some((e) => e?.kind === "status" && e.status === "running");
     tasteResult = evs2.find((e) => e?.kind === "result") ?? null;
@@ -421,6 +432,12 @@ try {
   say(`taste-capture ${JSON.stringify(summary.tasteCapture).slice(0, 800)}`);
 } catch (e) {
   if (e?.planned) say(String(e.message)); else { summary.error = String(e?.stack ?? e); say(`ERROR ${summary.error}`); }
+  if (e?.halted) { // docs/43 M26: stop a running turn (so its spend is metered) and go straight to the normal quit
+    UNWINDING = true; summary.halt = { ...HALT };
+    const row = sid && sessions().sessions.find((x) => x.sessionId === sid);
+    if (row && (row.status === "running" || row.status === "awaiting_permission")) summary.halt.stop = await stopTurnFromUi(sid, "halt").catch((x) => ({ error: String(x?.message ?? x) }));
+    summary.error = `halted (${HALT.via}) — no further turn started`;
+  }
   try { await shot("99-error"); } catch {}
 } finally {
   summary.sessionId = sid; summary.jobId = jobId; summary.consoleErrors = consoleErrors.slice(0, 20);

@@ -77,3 +77,14 @@ export function lastSpendMetered(logText, sessionId, sinceIso) {
   }
   return last;
 }
+
+/** docs/43 M26: quota-floor verdict from a token-plan "remains" probe's output (last JSON line carrying a numeric
+ *  `general` percent). Unreadable output never halts on its own (the watchdog logs it and polls again). */
+export function quotaHalt(remainsText, floor = 30) {
+  const lines = String(remainsText ?? "").trim().split("\n").reverse();
+  for (const l of lines) {
+    let r; try { r = JSON.parse(l.trim()); } catch { continue; }
+    if (r && typeof r.general === "number" && Number.isFinite(r.general)) return { halt: r.general < floor, general: r.general, floor };
+  }
+  return { halt: false, general: null, floor };
+}

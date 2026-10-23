@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 import { resolveRendererEntry } from "../src/main/renderer-entry";
 import { smokeDialog } from "../src/main/media/media-ipc";
 import { Cdp, mouseClick, dropFiles, pressKey, typeText } from "../tools/ui-e2e/cdp.mjs";
-import { answerDeclined, attachFileList, attachmentReadyRe, center, lastSpendMetered, nativePlayButton, playbackVerdict, redactEvidence, S1_FIXTURE_FILES, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
+import { answerDeclined, attachFileList, attachmentReadyRe, center, lastSpendMetered, nativePlayButton, playbackVerdict, quotaHalt, redactEvidence, S1_FIXTURE_FILES, S1_UI_STEPS } from "../tools/ui-e2e/plan.mjs";
 
 const base = { packaged: false, appPath: "/repo/port", resourcesPath: "/res", mainDir: "/repo/port/dist/main", exists: () => true };
 
@@ -133,4 +133,39 @@ test("docs/43 M26: lastSpendMetered finds the session's spend record written aft
   assert.deepEqual(lastSpendMetered(log, "s1"), { ts: "2026-10-23T06:20:00.000Z", meter: "proxy", totalUsd: 0.42, runtimeUsd: 0.32 });
   assert.equal(lastSpendMetered(log, "s1", "2026-10-23T06:30:00.000Z"), null);
   assert.equal(lastSpendMetered(log, "s3"), null);
+});
+
+test("docs/43 M26: quotaHalt reads the last remains JSON line; below the floor halts, unreadable never halts", () => {
+  assert.deepEqual(quotaHalt('probing…\n{"host":"x","general":29,"weekly":100}\n', 30), { halt: true, general: 29, floor: 30 });
+  assert.deepEqual(quotaHalt('{"general":30}', 30), { halt: false, general: 30, floor: 30 });
+  assert.equal(quotaHalt('{"general":10}\n{"general":55}').halt, false, "the latest reading wins");
+  assert.deepEqual(quotaHalt("HTTP 500\n", 30), { halt: false, general: null, floor: 30 });
+  assert.equal(quotaHalt('{"general":"12"}').general, null);
+});
+
+test("docs/43 M26: quota-watchdog writes the halt file and TERMINATES the harness below the floor (no follow-up turn); leaves it alone above", { skip: process.platform === "win32" ? "POSIX signals + sh quoting" : false }, async () => {
+  const { spawn } = await import("node:child_process");
+  const { mkdtempSync, existsSync, readFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const dir = mkdtempSync(join(tmpdir(), "vc-qwd-"));
+  const WD = resolve(__dirname, "..", "tools", "quota-watchdog.mjs");
+  // fake harness: on SIGTERM records it and exits like the real one does after its normal quit; else idles
+  const fake = (marker: string) => spawn(process.execPath, ["-e", `process.on("SIGTERM",()=>{require("fs").writeFileSync(${JSON.stringify(marker)},"term");process.exit(0)});setTimeout(()=>{},60000)`], { stdio: "ignore" });
+  const run = (args: string[]) => new Promise<{ code: number | null; out: string }>((res) => { const c = spawn(process.execPath, [WD, ...args], { encoding: "utf8" } as any); let out = ""; c.stdout!.on("data", (b) => (out += b)); c.on("exit", (code) => res({ code, out })); });
+  try {
+    const marker = join(dir, "term1"), halt = join(dir, "halt1"); const h = fake(marker);
+    await new Promise((r) => setTimeout(r, 300));
+    const r = await run(["--harness-pid", String(h.pid), "--halt-file", halt, "--remains-cmd", `echo '{"general":29,"weekly":100}'`, "--floor", "30", "--every-ms", "100", "--grace-ms", "5000"]);
+    assert.equal(r.code, 3, r.out);
+    assert.equal(readFileSync(marker, "utf8"), "term", "harness got SIGTERM");
+    assert.deepEqual((({ reason, general, floor }) => ({ reason, general, floor }))(JSON.parse(readFileSync(halt, "utf8"))), { reason: "quota-floor", general: 29, floor: 30 });
+    assert.match(r.out, /harness exited after/);
+
+    const marker2 = join(dir, "term2"), halt2 = join(dir, "halt2"); const h2 = fake(marker2);
+    await new Promise((r2) => setTimeout(r2, 300));
+    const p = run(["--harness-pid", String(h2.pid), "--halt-file", halt2, "--remains-cmd", `echo '{"general":31}'`, "--every-ms", "100"]);
+    await new Promise((r2) => setTimeout(r2, 600)); h2.kill("SIGKILL");
+    const r2 = await p;
+    assert.equal(r2.code, 0, r2.out); assert.equal(existsSync(halt2), false); assert.equal(existsSync(marker2), false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

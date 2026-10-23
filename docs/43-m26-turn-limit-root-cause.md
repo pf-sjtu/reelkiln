@@ -100,6 +100,17 @@
 
 ## 9. 仍然存在的缺口
 - run3 的结束方式是额度看门狗点了 Stop，而不是 agent 自己交付，所以 agent 没有发出带内嵌视频的最终回复（`reply_link` FAIL）。导出的是 agent 自己渲染并经过 review 的 final.mp4，没有人工补做。
-- 看门狗应该同时终止 harness，避免 taste 轮在额度低于阈值后继续调用 LLM。
+- ~~看门狗应该同时终止 harness~~ → 已修复，见 §10。
 - 没有账号时 plan 卡会被拒。如果要测「Build it」这条路径，需要开启本地网关 shim 并使用已验证的账号。
 - harness 的「等待超时 → Stop → 等计费 → 退出」逻辑本次没有在现场触发（这一轮在上限之前就结束了）。它的辅助函数有单测；Stop 之后会写出计费记录这一点，已经由看门狗那次 Stop 在现场验证过。
+
+## 10. 后续修复：额度看门狗同时终止 harness
+- 新增 `port/tools/quota-watchdog.mjs`。它定期运行 `--remains-cmd` 查询额度；general 一旦低于 `--floor`（默认 30%），就写入 `--halt-file`，并向 harness 发 SIGTERM。如果超过 `--grace-ms` harness 仍未退出，就 SIGKILL。
+- `ui-e2e.mjs` 在收到 SIGTERM/SIGINT 或检测到 `--halt-file` 时：
+  - 进入 halt 状态。每个 `waitFor` 和每个等待循环（主轮、taste 轮）都会检查这个状态，所以**不会再发起新的一轮**（taste 问卡、Approve 之后的跟进都不会开始）。
+  - 如果有正在运行的一轮，先点原版 Stop，等它写出 `agent.spend.metered`。
+  - 然后走正常退出流程（Browser.close → 原版 QuitCoordinator）。
+- 纯函数 `plan.mjs: quotaHalt` 有单测。`ui-e2e.test.ts` 用真实进程测了看门狗：低于阈值时写出 halt 文件、假 harness 收到 SIGTERM、看门狗退出码为 3；高于阈值时不做任何事。这个进程测试在 Windows 上跳过。
+- $0 现场验证（`--stop-after attach`，没有 LLM 调用）：halt 文件和 SIGTERM 两条路径都打出了 `halted (…)`，app 正常退出（exit 0），没有残留进程，proxy 请求数为 0。
+- 用法：
+  `node tools/quota-watchdog.mjs --harness-pid <pid> --halt-file <f> --remains-cmd "node <remains.mjs> out.json" --floor 30`，harness 端加 `--halt-file <f>`。
